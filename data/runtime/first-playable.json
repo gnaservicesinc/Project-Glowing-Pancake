@@ -10,7 +10,7 @@
     "music.weitblick": "9da14349e75eaa6e799a45522c2c8cb00046372efefd2a6121caf1959b10140b"
   },
   "content_schema": 1,
-  "content_version": "0.76.0-dev.1",
+  "content_version": "0.77.0-dev.1",
   "currency_basis": "constant_2014_cents",
   "definitions": [
     {
@@ -80231,6 +80231,42 @@
           "maximum_candidate_age": 60,
           "maximum_term_years": 20,
           "minimum_candidate_age": 35,
+          "outside_candidates": [
+            {
+              "appointment_effect_bp": [
+                -80,
+                -60,
+                110,
+                0,
+                230,
+                150
+              ],
+              "background": "She ran a state digital services office and published its record of missed deadlines alongside its successes.",
+              "birth_year": 1974,
+              "id": "outside.elena-mora",
+              "monthly_salary_cents": 1960000,
+              "name": "Elena Mora",
+              "priorities": "Publish service reliability reports and give public-sector customers a clear way to challenge missed commitments.",
+              "signing_cost_cents": 3150000
+            },
+            {
+              "appointment_effect_bp": [
+                -200,
+                0,
+                -90,
+                240,
+                50,
+                180
+              ],
+              "background": "They built a worker-owned hosting cooperative and negotiated shared capacity for small regional providers.",
+              "birth_year": 1977,
+              "id": "outside.kiran-desai",
+              "monthly_salary_cents": 1820000,
+              "name": "Kiran Desai",
+              "priorities": "Protect staff training and negotiate shared capacity before committing to new sites.",
+              "signing_cost_cents": 2950000
+            }
+          ],
           "personal_cash_cents": 0,
           "personal_liabilities_cents": 0,
           "personal_life": {
@@ -80631,7 +80667,7 @@
         "research.compute.batched_serving"
       ],
       "resilience": "resilience.domestic",
-      "revision": 48,
+      "revision": 49,
       "rivals": [
         {
           "capacity_milli_CU_per_day": 380000,

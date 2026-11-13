@@ -42,10 +42,12 @@ int main(int argc,char** argv) {
         bool refused=false;try {(void)leadership_candidate(state(game),"asi.1",OrdinalDay{state(game).date.value()-1});}catch(const std::exception&){refused=true;}
         check(refused,"Later qualification cannot authorize an earlier nomination.");
         game=reload(game);
-        const auto directory=argc==3 && std::string_view{argv[1]}=="--smoke-fixture"?std::filesystem::path{argv[2]}:std::filesystem::path{PGP_ASI_SCRATCH};
-        std::filesystem::create_directories(directory);
-        std::ofstream{directory/"asi.collection.json"}<<p.canonical_content_bytes;
-        persistence::save_file(p,game.current_state(),directory/"asi-start.pgpsave");
+        const auto directory=argc==3?std::filesystem::path{argv[2]}:std::filesystem::path{};
+        if(!directory.empty()) {
+            std::filesystem::create_directories(directory);
+            persistence::save_file(p,game.current_state(),directory/"asi-start.pgpsave");
+            std::ofstream{directory/"asi.collection.json"}<<p.canonical_content_bytes;
+        }
         const auto due=advance_days(state(game).date,Days{44});
         apply(game,ProposeSuccession{ai->id,due,true,{"lease.initial",MilliCUPerDay{10000},1}});
         check(state(game).succession->plans.back().asi==ai->asi,"The nomination must freeze qualification and control evidence.");
@@ -77,7 +79,8 @@ int main(int argc,char** argv) {
         advance(game,to_ordinal(next_month));
         const auto invoice=std::ranges::find_if(state(game).accounts->invoices,[](const auto& i){return i.id.starts_with("recurring/leadership/ceo.");});
         check(invoice!=state(game).accounts->invoices.end() && invoice->settled.value()>0,"AI hosting and human oversight must create actual paid company costs.");
-        game=reload(game);persistence::save_file(p,game.current_state(),directory/"asi-appointed.pgpsave");
+        game=reload(game);
+        if(!directory.empty()) persistence::save_file(p,game.current_state(),directory/"asi-appointed.pgpsave");
         std::cout<<"ASI succession passed with actual research, field work, independent qualification, board fees, paid exercises, frozen control evidence, finite mandate, operating costs and exact reloads.\n";
     } catch(const std::exception& error) {std::cerr<<error.what()<<'\n';return 1;}
 }

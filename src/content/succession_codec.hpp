@@ -19,6 +19,10 @@ template<class T,class F> void fields(T& r,F field) {
         field("departure",r.departure,true);
         field("personal_life",r.personal_life,true);
         field("asi",r.asi,true);
+        field("outside_candidates",r.outside_candidates,true);
+    } else if constexpr(std::is_same_v<V,core::OutsideLeadershipCandidate>) {
+        field("id",r.id);field("name",r.name);field("background",r.background);field("priorities",r.priorities);field("birth_year",r.birth_year);
+        field("signing_cost_cents",r.signing_cost);field("monthly_salary_cents",r.monthly_salary);field("appointment_effect_bp",r.appointment_effect);
     } else if constexpr(std::is_same_v<V,core::AsiLeadershipRules>) {
         field("priorities",r.priorities);field("signing_cost_cents",r.signing_cost);field("monthly_operations_cents",r.monthly_operations);
         field("maximum_term_years",r.maximum_term_years);field("control_scrutiny_below_bp",r.control_scrutiny_below);
@@ -58,6 +62,7 @@ template<class T,class F> void fields(T& r,F field) {
         field("retain_chair",r.retain_chair);field("allocation",r.allocation);field("status",r.status);
         field("decided_on",r.decided_on);field("finished_on",r.finished_on);field("player_vote",r.player_vote);
         field("reviewed_cash_cents",r.reviewed_cash);field("posting_cursor",r.posting_cursor);field("control_cursor",r.control_cursor);field("ballots",r.ballots);
+        field("charter_cursor",r.charter_cursor,true);
         field("asi",r.asi,true);
     } else if constexpr(std::is_same_v<V,core::BoardBallot>) {
         field("member",r.member);field("seats",r.seats);field("support",r.support);

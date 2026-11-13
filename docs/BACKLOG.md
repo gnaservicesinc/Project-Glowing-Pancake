@@ -44,9 +44,14 @@ publication commitments, with evidence preserved at announcement. A documented
 executive departure can lead coverage. An unsupported claim earns no positive
 audience effect from the handover; a contradiction also reduces confidence.
 
+The founder can nominate two outside candidates with distinct professional
+backgrounds and audience reactions. The board review shows the authority,
+seats and costs that follow a funded handover. An approved outsider can lead
+resignation coverage and changes audience confidence on taking office.
+
 Next implement the personal career state across forced departures and guaranteed
-re-entry. Broader public controversies and surprising human appointments remain
-selected work.
+re-entry. Broader public controversies and surprising internal appointments
+remain selected work.
 Sorting and efficient serving now have finite innovation paths. Required levels,
 actual project costs and dated serving compute effects use the ordinary research
 and deployment commands. Rival profiles can pursue batched inference.

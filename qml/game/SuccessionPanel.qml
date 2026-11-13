@@ -117,7 +117,7 @@ ColumnLayout {
         model: panel.desk.available ? panel.desk.candidatesAt(handover.value) : []
         Accessible.name: qsTr("Successor eligible at the handover date")
     }
-    Copy { text: candidate.currentIndex >= 0 ? candidate.model[candidate.currentIndex].detail : qsTr("Choose a future date with an eligible leadership cohort.") }
+    Copy { text: candidate.currentIndex >= 0 ? candidate.model[candidate.currentIndex].detail : qsTr("Choose a handover date with an eligible successor.") }
     GameCheck {
         id: chair
         objectName: "leadershipRetainChair"

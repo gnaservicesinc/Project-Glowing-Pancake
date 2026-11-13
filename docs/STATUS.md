@@ -10,7 +10,7 @@ The user accepted the current core as the starting point for the next phase
 and directed the initial implementation pass to wrap up. The gameplay
 checkpoint was `d1f2bd3`, with internal content 0.29.0-dev.1. The current
 immersive redesign, journal and press coverage advance content to
-**0.76.0-dev.1**, generation **80**.
+**0.77.0-dev.1**, generation **81**.
 
 ## Campaign journal and founder walkthrough
 
@@ -126,11 +126,19 @@ reservations. Rival plans can pursue the same batched inference project. Focused
 checks cover actual prerequisites, cost, equipment, work, dated savings, exact
 reload and the native compact preview.
 
+The founder campaign offers two outside nominees, a public digital services
+director and the founder of a worker-owned hosting cooperative. The successor
+picker shows their eligibility, background, preparation cost, salary and
+audience reactions. The board vote uses the charter in force on the decision
+date. The appointment transfers the executive seat and changes audience
+confidence when the handover completes. The outsider can lead resignation
+coverage alongside fact checks on the founder's statement.
+
 Career re-entry remains required. Early company closure currently records its
 chapter at the existing company boundary. The guaranteed funded route back,
-other public controversies, and surprising human successor
-appointments remain selected work. Nonprofit reaction expansion and native
-rival training also remain unfinished.
+other public controversies, and surprising internal successor appointments
+remain selected work. Nonprofit reaction expansion and native rival training
+also remain unfinished.
 
 The Release development edition has two main menu entries. Content Studio
 launches the repository editor and remembers the selected checkout. Playtest

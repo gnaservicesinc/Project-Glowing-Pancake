@@ -2,6 +2,12 @@
 #include <charconv>
 
 namespace pgp::core {
+namespace {
+bool eligible_human_age(const SuccessionCatalog& c,int birth_year,int handover_year) {
+    const auto age=handover_year-birth_year;
+    return age>=static_cast<int>(c.minimum_candidate_age) && age<=static_cast<int>(c.maximum_candidate_age);
+}
+}
 namespace succession_detail {
 OrdinalDay term_due(const SuccessionCatalog& c,int birth,OrdinalDay start,bool caretaker,bool asi) {
     if(asi) {
@@ -26,6 +32,7 @@ std::vector<BoardBallot> succession_ballots(const SimulationState& s,const Succe
     if(s.management->governance) {
         BoardMotion motion;motion.kind=BoardMotionKind::acquisition;motion.cash=fee;
         motion.posting_cursor=p.posting_cursor;motion.leadership_cursor=p.control_cursor;
+        motion.charter_cursor=p.charter_cursor.value_or(0);motion.resolved_on=p.decided_on;
         return governance_detail::ballots_for(s,motion,support,p.reviewed_cash);
     }
     return {{"charter.trustees",1,checked_unit_subtract(p.reviewed_cash,fee)>=succession_catalog(s).cash_floor}};
@@ -38,8 +45,7 @@ void check_proposal(const SimulationState& s,const ProposeSuccession& p,OrdinalD
         advance_days(proposed,c.vote_window)>=p.handover_on)
         invalid("Allow the disclosed transition work and board window before the incumbent's retirement deadline.");
     const auto candidate=leadership_candidate(s,p.candidate,proposed);
-    const auto age=from_ordinal(p.handover_on).year-candidate.birth_year;
-    if((!candidate.asi && (age<static_cast<int>(c.minimum_candidate_age) || age>static_cast<int>(c.maximum_candidate_age))) || candidate.id==prior.person)
+    if((!candidate.asi && !eligible_human_age(c,candidate.birth_year,from_ordinal(p.handover_on).year)) || candidate.id==prior.person)
         invalid("Choose a different eligible successor for the actual handover date.");
     if(p.retain_chair && (prior.person!="founder" ||
         p.handover_on>=year_day(c.founder_birth_year+static_cast<int>(c.chair_retirement_age))))
@@ -101,6 +107,12 @@ const SuccessionCatalog& succession_catalog(const SimulationState& s) {
     if(!s.management || !s.management->catalog.succession) succession_detail::invalid("This scenario has no leadership succession charter.");
     return *s.management->catalog.succession;
 }
+const OutsideLeadershipCandidate* outside_leadership_candidate(const SuccessionCatalog& c,std::string_view id) {
+    if(!c.outside_candidates || !id.starts_with("outside.")) return nullptr;
+    const auto& candidates=*c.outside_candidates;
+    const auto it=std::ranges::find(candidates,id,&OutsideLeadershipCandidate::id);
+    return it==candidates.end()?nullptr:&*it;
+}
 LeadershipCandidate leadership_candidate(const SuccessionCatalog& c,std::string_view id) {
     using namespace succession_detail;
     const auto dot=id.rfind('.');
@@ -124,6 +136,8 @@ std::vector<LeadershipCandidate> leadership_candidates(const SuccessionCatalog& 
 }
 LeadershipCandidate leadership_candidate(const SimulationState& s,std::string_view id,std::optional<OrdinalDay> as_of) {
     const auto& catalog=succession_catalog(s);
+    if(const auto* outside=outside_leadership_candidate(catalog,id))
+        return {outside->id,outside->name,outside->priorities,outside->birth_year,outside->signing_cost,outside->monthly_salary};
     if(!id.starts_with("asi.")) return leadership_candidate(catalog,id);
     if(!catalog.asi || !s.frontier) succession_detail::invalid("This charter has no established ASI leadership route.");
     std::uint64_t system=0;const auto token=id.substr(4);const auto parsed=std::from_chars(token.data(),token.data()+token.size(),system);
@@ -139,6 +153,11 @@ LeadershipCandidate leadership_candidate(const SimulationState& s,std::string_vi
 }
 std::vector<LeadershipCandidate> leadership_candidates(const SimulationState& s,OrdinalDay day) {
     const auto& catalog=succession_catalog(s);auto result=leadership_candidates(catalog,day);
+    const auto year=from_ordinal(day).year;
+    if(catalog.outside_candidates) for(const auto& outside:*catalog.outside_candidates) {
+        if(eligible_human_age(catalog,outside.birth_year,year))
+            result.push_back(leadership_candidate(s,outside.id,day));
+    }
     if(catalog.asi && s.frontier) for(const auto& system:s.frontier->systems) {
         const auto evidence=frontier_qualification(*s.frontier,system.id,std::min(s.date,day));
         if(evidence.asi_on) result.push_back(leadership_candidate(s,"asi."+std::to_string(system.id),day));
@@ -219,6 +238,7 @@ void vote_succession(SimulationState& s,const VoteSuccession& request,Cents prot
     if(checked_unit_add(person.signing_cost,c.cash_floor)>checked_unit_subtract(s.cash,protected_cash))
         invalid("The transition fee would breach available cash or its disclosed floor.");
     p.reviewed_cash=s.cash;p.posting_cursor=s.accounts->postings.size();p.control_cursor=s.succession->controls.size();
+    if(s.management->governance) p.charter_cursor=s.management->governance->charters.size();
     p.player_vote=request.support;p.decided_on=s.date;p.ballots=succession_ballots(s,p,request.support,person.signing_cost);
     std::uint32_t yes=0,total=0;for(const auto& vote:p.ballots) {total+=vote.seats;if(vote.support) yes+=vote.seats;}
     if(yes<=total/2) {p.status=SuccessionStatus::rejected;p.finished_on=s.date;return;}
@@ -268,8 +288,11 @@ void prepare_succession(SimulationState& s) {
             stop_plan(s,p,SuccessionStatus::obsolete);notice(s,"transition_stopped",actor.terms.back().id,p.id,actor.terms.back().due_on);continue;
         }
         if(s.date<p.handover_on) continue;
+        const auto person=leadership_candidate(s,p.candidate,p.proposed_on);
+        if(!person.asi && !eligible_human_age(c,person.birth_year,from_ordinal(s.date).year)) {
+            stop_plan(s,p,SuccessionStatus::obsolete);notice(s,"transition_stopped",actor.terms.back().id,p.id,actor.terms.back().due_on);continue;
+        }
         if(named(s.capacity->projects,p.project).status==ProjectStatus::completed && s.date<=actor.terms.back().due_on) {
-            const auto person=leadership_candidate(s,p.candidate,p.proposed_on);
             auto role=founder_role(actor);
             if(role==FounderRole::executive) role=p.retain_chair?FounderRole::chair:FounderRole::trust;
             appoint(s,person,false,p.id,role);p.status=SuccessionStatus::activated;p.finished_on=s.date;

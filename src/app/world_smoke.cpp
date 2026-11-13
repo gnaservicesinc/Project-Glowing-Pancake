@@ -434,11 +434,15 @@ void schedule_departure_smoke(QQuickWindow& window,pgp::bridge::CampaignControll
         case 100: if(click("devicesButton")) check->phase=101;return;
         case 101: if(click("leadershipApp")) check->phase=2;return;
         case 2:
-            if(desk->candidatesAt(desk->recommendedDate()).isEmpty()) {fail("No opening senior candidate");return;}
+            if(auto* candidate=find(window.contentItem(),"leadershipCandidate")) {
+                candidate->forceActiveFocus();QTest::keyClick(&window,Qt::Key_End);
+                if(candidate->property("currentValue").toString()!="outside.kiran-desai") {fail("Outside candidate keyboard selection");return;}
+            } else {fail("Successor picker");return;}
             if(auto* source=find(window.contentItem(),"leadershipSource")) {source->forceActiveFocus();QTest::keyClick(&window,Qt::Key_End);}else {fail("Transition compute picker");return;}
             check->cash=s.cash;if(click("reviewLeadershipNomination")) ++check->phase;return;
         case 3:
-            if(desk->reviewText().isEmpty() || s.cash!=check->cash) {fail("Nomination preview mutated cash");return;}
+            if(!desk->reviewText().contains("Kiran Desai") || !desk->reviewText().contains("one board seat") || s.cash!=check->cash) {
+                fail("Nomination preview lost the outside candidate, authority or unchanged cash");return;}
             capture("-nomination");if(click("confirmLeadershipAction")) ++check->phase;return;
         case 4: if(click("reviewLeadershipSupport")) ++check->phase;return;
         case 5: capture("-vote");if(click("confirmLeadershipAction")) ++check->phase;return;
@@ -450,7 +454,9 @@ void schedule_departure_smoke(QQuickWindow& window,pgp::bridge::CampaignControll
             check->frames=0;check->phase=61;return;
         case 61:
             if(++check->frames<4)return;
-            if(!desk->announcementPreview("profitable_exit","responsibility").value("assessment").toString().contains("challenged")) {fail("Actual opening accounts must challenge profit claim");return;}
+            {const auto preview=desk->announcementPreview("profitable_exit","responsibility");
+            if(preview.value("assessment")!="challenged" || preview.value("focus")!="outside_successor" || !preview.value("headline").toString().contains("Kiran Desai")) {
+                fail("The outside successor must lead coverage while actual accounts still challenge the profit claim");return;}}
             if(desk->announcementPreview("delivery_record","responsibility").value("assessment")!="unsubstantiated" ||
                 desk->announcementPreview("publication_record","responsibility").value("assessment")!="supported") {
                 fail("Preview must distinguish an empty contract register from the absence of a public dispute");return;
@@ -462,8 +468,8 @@ void schedule_departure_smoke(QQuickWindow& window,pgp::bridge::CampaignControll
             } else {fail("Delivery press angle picker");return;}
             check->phase=611;return;
         case 611: {
-            const auto* coverage=find(window.contentItem(),"departureCoveragePreview");
-            if(!coverage || !coverage->property("text").toString().contains("awaits a completed contract")) {
+            const auto* coverage=find(window.contentItem(),"departureCoverageResponse");
+            if(!coverage || !coverage->property("text").toString().contains("zero contracts that reached the end")) {
                 fail("The delivery angle must explain insufficient evidence in the rendered preview");return;
             }
             auto* angle=find(window.contentItem(),"departureMessage");
@@ -500,7 +506,8 @@ void schedule_departure_smoke(QQuickWindow& window,pgp::bridge::CampaignControll
         case 9:
             if(!campaign.paused()) return;
             if(s.date<check->handover) {if(campaign.requiredKind()=="leadership") campaign.leadership()->acknowledge();else (void)click("advanceLeadership");return;}
-            if(s.succession->plans.front().status!=core::SuccessionStatus::activated || !desk->canFinish() || !campaign.paused()) {fail("Paid work did not produce the announced handover");return;}
+            if(s.succession->plans.front().status!=core::SuccessionStatus::activated || s.succession->terms.back().person!="outside.kiran-desai" ||
+                !desk->canFinish() || !campaign.paused()) {fail("Paid work did not produce the announced outside handover");return;}
             if(campaign.requiredKind()=="leadership") {campaign.leadership()->acknowledge();return;}
             reveal("continueFounderLife");check->frames=0;check->phase=90;return;
         case 90:

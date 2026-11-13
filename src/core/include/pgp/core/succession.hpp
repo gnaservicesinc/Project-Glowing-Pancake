@@ -55,6 +55,13 @@ struct LeadershipTrack {
     Cents signing_cost{0},monthly_salary{0};
     auto operator<=>(const LeadershipTrack&) const = default;
 };
+struct OutsideLeadershipCandidate {
+    std::string id,name,background,priorities;
+    int birth_year=0;
+    Cents signing_cost{0},monthly_salary{0};
+    std::array<std::int32_t,6> appointment_effect{};
+    auto operator<=>(const OutsideLeadershipCandidate&) const = default;
+};
 struct AsiLeadershipRules {
     std::string priorities;
     Cents signing_cost{0},monthly_operations{0};
@@ -82,6 +89,7 @@ struct SuccessionCatalog {
     std::optional<DepartureRules> departure;
     std::optional<PersonalLifeCatalog> personal_life{};
     std::optional<AsiLeadershipRules> asi{};
+    std::optional<std::vector<OutsideLeadershipCandidate>> outside_candidates{};
     auto operator<=>(const SuccessionCatalog&) const = default;
 };
 struct LeadershipCandidate {
@@ -119,6 +127,7 @@ struct SuccessionPlan {
     std::optional<bool> player_vote;
     Cents reviewed_cash{0};
     std::uint64_t posting_cursor=0,control_cursor=0;
+    std::optional<std::uint64_t> charter_cursor{};
     std::vector<BoardBallot> ballots;
     std::optional<AsiLeadershipEvidence> asi{};
     auto operator<=>(const SuccessionPlan&) const = default;
@@ -156,6 +165,7 @@ void initialize_succession(SimulationState&, std::optional<std::string> founder_
 void prepare_succession(SimulationState&);
 void validate_succession(const SimulationState&,bool deep=true);
 [[nodiscard]] const SuccessionCatalog& succession_catalog(const SimulationState&);
+[[nodiscard]] const OutsideLeadershipCandidate* outside_leadership_candidate(const SuccessionCatalog&,std::string_view);
 [[nodiscard]] std::vector<LeadershipCandidate> leadership_candidates(const SuccessionCatalog&,OrdinalDay);
 [[nodiscard]] LeadershipCandidate leadership_candidate(const SuccessionCatalog&,std::string_view);
 [[nodiscard]] std::vector<LeadershipCandidate> leadership_candidates(const SimulationState&,OrdinalDay);

@@ -138,14 +138,27 @@ QString SuccessionController::noticeText() const {
 QVariantList SuccessionController::candidatesAt(QString day) const {
     QVariantList result;if(!available()) return result;
     try {
+        const auto& catalog=succession_catalog(company());
         for(const auto& person:leadership_candidates(company(),parse_iso_date(day.toStdString()))) {
             if(person.id==actor().terms.back().person) continue;
+            const auto* outside=outside_leadership_candidate(catalog,person.id);
             auto detail=tr("%1\nPreparation fee %2. %3 %4/month.").arg(text(person.priorities),money(person.signing_cost),
                 person.asi?tr("Hosted operation and human oversight"):tr("Executive salary"),money(person.monthly_salary));
+            auto label=tr("%1 · born %2").arg(text(person.name)).arg(person.birth_year);
+            if(outside) {
+                label=tr("%1 · Outside candidate").arg(text(person.name));
+                QStringList reactions;
+                for(std::size_t i=0;i<outside->appointment_effect.size();++i) {
+                    const auto effect=outside->appointment_effect[i];
+                    if(effect) reactions<<tr("%1 %2%3").arg(text(society_audience_name(i)),effect>0?QStringLiteral("+"):QString{},
+                        QString::number(effect/100.0,'f',2));
+                }
+                detail=tr("Born %1. %2\n%3").arg(QString::number(person.birth_year),text(outside->background),detail);
+                if(!reactions.isEmpty()) detail+=tr("\nReputation change on appointment (points out of 100)\n%1").arg(reactions.join(QStringLiteral(" · ")));
+            }
             if(person.asi) detail+=tr("\nASI established %1. Independent control bound %2/100. Mandate %3 years.")
-                .arg(date(person.asi->qualified_on),QString::number(person.asi->control/100.0,'f',2)).arg(succession_catalog(company()).asi->maximum_term_years);
-            result.push_back(QVariantMap{{"id",text(person.id)},{"label",person.asi?tr("%1 · ASI").arg(text(person.name)):
-                tr("%1 · born %2").arg(text(person.name)).arg(person.birth_year)},{"detail",detail}});
+                .arg(date(person.asi->qualified_on),QString::number(person.asi->control/100.0,'f',2)).arg(catalog.asi->maximum_term_years);
+            result.push_back(QVariantMap{{"id",text(person.id)},{"label",person.asi?tr("%1 · ASI").arg(text(person.name)):label},{"detail",detail}});
         }
     }catch(const std::exception&) {}
     return result;
@@ -162,6 +175,7 @@ void SuccessionController::update(CampaignSnapshotPtr snapshot,bool replace) {
                     readable(p.allocation.source_id),money(person.signing_cost),money(person.monthly_salary),p.retain_chair?QStringLiteral("Founder moves to chair."):QStringLiteral("Founder trust retains its institutional rights."));
             if(p.asi) detail+=tr("\nASI established %1 · control bound %2/100 at nomination. Hosted operation and human oversight begin at appointment.")
                 .arg(date(p.asi->qualified_on),QString::number(p.asi->control/100.0,'f',2));
+            if(const auto* outside=outside_leadership_candidate(c,person.id)) detail+=QStringLiteral("\n")+text(outside->background);
             for(const auto& vote:p.ballots) detail+=QStringLiteral("\n%1 · %2 seats · %3").arg(readable(vote.member),QString::number(vote.seats),vote.support?QStringLiteral("support"):QStringLiteral("decline"));
             if(!p.project.empty()) {
                 const auto& rows=company().capacity->projects;const auto work=std::ranges::find(rows,p.project,&CapacityProject::id);
@@ -191,13 +205,22 @@ void SuccessionController::reviewNomination(QString person,QString day,bool chai
         ProposeSuccession action{person.toStdString(),parse_iso_date(day.toStdString()),chair,lab_inputs::allocation(source,rate,staff)};
         auto candidate=company();propose_succession(candidate,action);
         const auto successor=leadership_candidate(company(),action.candidate);
+        const auto& catalog=succession_catalog(company());
         auto copy=tr("Nominate %1 for %2.\n%3\nPreparation fee %4. Executive cost %5/month. The approved transition uses %6 staff and %7 CU/day.")
             .arg(text(successor.name),date(action.handover_on),text(successor.priorities),money(successor.signing_cost),money(successor.monthly_salary),QString::number(action.allocation.staff),cu(action.allocation.daily_compute.value()));
         if(successor.asi) {
-            copy+=tr("\nASI established %1. Independent control bound %2/100. Hosted operation and human oversight are company expenses.\nThis nominates the system for the chief executive office; the board must approve it.")
+            copy+=tr("\nASI established %1. Independent control bound %2/100. Hosted operation and human oversight are company expenses.")
                 .arg(date(successor.asi->qualified_on),QString::number(successor.asi->control/100.0,'f',2));
-            if(company().management->governance) copy+=tr(" On appointment it receives the chief executive's one board seat. Your %1 keeps %2 seats.")
-                .arg(chair?tr("chair role"):tr("trust representation")).arg(chair?succession_catalog(company()).chair_seats:succession_catalog(company()).trust_seats);
+        }
+        if(const auto* outside=outside_leadership_candidate(catalog,successor.id)) copy+=QStringLiteral("\n")+text(outside->background);
+        copy+=tr("\nThe board must approve the plan. The successor takes executive authority after the funded handover.");
+        if(company().management->governance) {
+            const bool chair_at_handover=(chair || founder_role(actor())==FounderRole::chair) &&
+                from_ordinal(action.handover_on).year<catalog.founder_birth_year+static_cast<int>(catalog.chair_retirement_age);
+            const auto seats=chair_at_handover?catalog.chair_seats:catalog.trust_seats;
+            const auto holder=chair_at_handover?tr("The founder as chair"):tr("The founder trust");
+            copy+=tr(" The new chief executive receives one board seat.");
+            copy+=seats==1?tr(" %1 keeps one board seat.").arg(holder):tr(" %1 keeps %2 board seats.").arg(holder).arg(seats);
         }
         stage(action,copy);
     }catch(const std::exception& e){emit noticeRaised(text(e.what()));}
@@ -209,8 +232,11 @@ void SuccessionController::reviewVote(bool support) {
         for(const auto& row:company().reservations) reserved=checked_unit_add(reserved,row.reserved);
         vote_succession(candidate,action,reserved);const auto& p=candidate.succession->plans.at(action.id-1);
         QStringList votes;for(const auto& vote:p.ballots) votes<<QStringLiteral("%1 · %2 seats · %3").arg(readable(vote.member),QString::number(vote.seats),vote.support?QStringLiteral("support"):QStringLiteral("decline"));
-        stage(action,QStringLiteral("%1\n%2\nPay %3 for the approved finite preparation. The reviewed handover date is %4. Executive costs begin when the successor takes office.")
-            .arg(status(p.status),votes.join(u'\n'),money(checked_unit_subtract(company().cash,candidate.cash)),date(p.handover_on)));
+        const auto outcome=p.status==SuccessionStatus::approved?
+            tr("The company pays %1 for preparation. The planned handover is %2. Executive costs begin when the successor takes office.")
+                .arg(money(checked_unit_subtract(company().cash,candidate.cash)),date(p.handover_on)):
+            tr("The plan closes and the current executive stays in office. The company pays no preparation fee.");
+        stage(action,QStringLiteral("%1\n%2\n%3").arg(status(p.status),votes.join(u'\n'),outcome));
     }catch(const std::exception& e){emit noticeRaised(text(e.what()));}
 }
 void SuccessionController::reviewCancellation() {

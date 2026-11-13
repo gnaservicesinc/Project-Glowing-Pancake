@@ -205,6 +205,14 @@ std::vector<PublicIdentityEvent> public_identity_events(const WorldState& w,Ordi
     if(w.simulation.management && w.simulation.management->governance) for(const auto& c:w.simulation.management->governance->disputes)
         if(c.kind=="publication" && c.status==CorporateDisputeStatus::departed && c.resolved_on) add(3,*c.resolved_on,c.subject,"An executive departed after an unfulfilled publication commitment and failed response path");
     for(const auto& m:a.mandates) if(authority_offer(a.catalog,m.offer).kind==AuthorityKind::coercive) add(4,m.applied_on,m.region,"Funded an abstract coercive institution");
+    if(w.simulation.succession) {
+        const auto& catalog=succession_catalog(w.simulation);
+        for(const auto& term:w.simulation.succession->terms) {
+            if(term.starts_on>day) continue;
+            if(const auto* outside=outside_leadership_candidate(catalog,term.person))
+                result.push_back({7,term.starts_on,term.name,"Appointed an outside chief executive",outside->appointment_effect});
+        }
+    }
     if(w.simulation.succession && w.simulation.succession->releases) {
         const auto& actor=*w.simulation.succession;const auto& rules=*succession_catalog(w.simulation).departure;
         for(const auto& release:*actor.releases) {

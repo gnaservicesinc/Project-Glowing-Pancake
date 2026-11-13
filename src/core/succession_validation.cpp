@@ -58,11 +58,25 @@ void validate_succession_catalog(const SuccessionCatalog& c) {
     std::set<std::string> ids;
     for(const auto& track:c.tracks) {
         label(track.id,48);label(track.priorities,512);
-        if(track.id=="asi" || track.id.starts_with("asi.") || !ids.insert(track.id).second || track.first_birth_year<1800 || track.first_birth_year>9000 || track.names.empty() || track.names.size()>8 ||
+        if(track.id=="asi" || track.id.starts_with("asi.") || track.id=="outside" || track.id.starts_with("outside.") ||
+            !ids.insert(track.id).second || track.first_birth_year<1800 || track.first_birth_year>9000 || track.names.empty() || track.names.size()>8 ||
             track.cohort_years<10 || track.cohort_years>c.maximum_candidate_age-c.minimum_candidate_age+1 ||
             track.signing_cost.value()<0 || track.signing_cost.value()>100000000 || track.monthly_salary.value()<=0 || track.monthly_salary.value()>10000000)
             invalid("Leadership tracks need distinct identities, recurring cohorts and explicit paid terms.");
         for(const auto& name:track.names) label(name);
+    }
+    if(c.outside_candidates) {
+        if(c.outside_candidates->empty() || c.outside_candidates->size()>4)
+            invalid("Choose one to four named outside leadership candidates.");
+        for(const auto& candidate:*c.outside_candidates) {
+            label(candidate.id,48);label(candidate.name);label(candidate.background,512);label(candidate.priorities,512);
+            if(!candidate.id.starts_with("outside.") || candidate.id.size()==8 || !ids.insert(candidate.id).second ||
+                candidate.birth_year<1800 || candidate.birth_year>9000 || candidate.signing_cost.value()<0 ||
+                candidate.signing_cost.value()>100000000 || candidate.monthly_salary.value()<=0 || candidate.monthly_salary.value()>10000000)
+                invalid("Outside leadership candidates need distinct identities, birth years and explicit paid terms.");
+            for(const auto effect:candidate.appointment_effect)
+                if(effect < -1000 || effect > 1000) invalid("Outside appointment reactions must be bounded.");
+        }
     }
 }
 void validate_succession_opening(const SuccessionCatalog& c,OrdinalDay start,OrdinalDay end) {
@@ -188,6 +202,16 @@ void validate_succession(const SimulationState& s,bool deep) {
         const auto person=leadership_candidate(s,p.candidate,p.proposed_on);
         if(p.asi!=person.asi) invalid("The ASI nomination differs from its dated independent qualification and control evidence.");
         if(p.decided_on) {
+            if(p.charter_cursor.has_value()!=s.management->governance.has_value())
+                invalid("Leadership approval needs its actual corporate charter history.");
+            if(p.charter_cursor) {
+                const auto& charters=s.management->governance->charters;
+                const auto cursor=*p.charter_cursor;
+                if(cursor>charters.size() || (cursor && charters[cursor-1].day>*p.decided_on) ||
+                    (cursor<charters.size() && charters[cursor].day<*p.decided_on) ||
+                    (cursor==0 && !charters.empty() && charters.front().motion.empty()))
+                    invalid("Leadership approval used charter terms from a different date.");
+            }
             if(!p.player_vote || !in_time(*p.decided_on) || *p.decided_on<p.proposed_on || *p.decided_on>=p.vote_before || p.posting_cursor>s.accounts->postings.size() ||
                 p.control_cursor==0 || p.control_cursor>actor.controls.size() || actor.controls[p.control_cursor-1].day>*p.decided_on ||
                 (p.control_cursor<actor.controls.size() && actor.controls[p.control_cursor].day<*p.decided_on) ||
@@ -196,7 +220,7 @@ void validate_succession(const SimulationState& s,bool deep) {
             std::uint32_t yes=0,total=0;for(const auto& vote:p.ballots) {total+=vote.seats;if(vote.support) yes+=vote.seats;}
             const bool approved=yes>total/2;
             if((p.status==SuccessionStatus::rejected)==approved || (approved && p.project.empty())) invalid("The succession outcome bypassed its board majority.");
-        } else if(p.player_vote || !p.ballots.empty() || p.posting_cursor || p.control_cursor || p.reviewed_cash.value()!=0 || !p.project.empty() ||
+        } else if(p.player_vote || !p.ballots.empty() || p.posting_cursor || p.control_cursor || p.charter_cursor || p.reviewed_cash.value()!=0 || !p.project.empty() ||
             p.status==SuccessionStatus::approved || p.status==SuccessionStatus::activated || p.status==SuccessionStatus::rejected)
             invalid("An unvoted successor contains fabricated approval or work.");
         if(p.status==SuccessionStatus::expired && p.finished_on!=p.vote_before) invalid("The unvoted successor expired on the wrong day.");

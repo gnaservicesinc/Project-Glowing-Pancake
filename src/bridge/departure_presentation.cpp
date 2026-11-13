@@ -42,10 +42,16 @@ QVariantMap departureArticle(const core::SimulationState& state,const core::Depa
     } else if(assessment=="unsubstantiated" && claim=="delivery") {
         focus=QStringLiteral("claim");
         headline=QObject::tr("Delivery claim awaits a completed contract");
-        response=QObject::tr("The register shows no missed start, but it also shows no customer contract that reached the end of its term.");
+        response=QObject::tr("The register shows zero missed starts and zero contracts that reached the end of their term.");
     } else {
         headline=QObject::tr("%1 named as founder prepares to step down").arg(text(person.name));
         response=QObject::tr("Coverage follows the funded handover and the commitments made to the incoming leader.");
+    }
+    if(const auto* outside=core::outside_leadership_candidate(catalog,person.id)) {
+        headline=QObject::tr("Board turns to %1 for founder succession").arg(text(person.name));
+        response=QObject::tr("%1 comes from outside the company. %2 The board approved the handover to the chief executive office.")
+            .arg(text(person.name),text(outside->background))+QStringLiteral("\n\n")+response;
+        focus=QStringLiteral("outside_successor");
     }
     if(release.evidence && release.evidence->public_dispute && state.management && state.management->governance) {
         const auto& governance=*state.management->governance;

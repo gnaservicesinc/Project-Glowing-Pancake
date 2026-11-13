@@ -109058,6 +109058,45 @@
         "prepared_headquarters": 24,
         "scenarios": 8
       }
+    },
+    {
+      "changed_definitions": [
+        {
+          "after_hash": "5df22b7bac9d6dd3ae30f3e8e4cf7be90689a5eb9e53e1dd0dec24ac90cf51bb",
+          "before_hash": "9ec6ea5e4c3a7ae14bdbeaa77deb7fd7959d41a7ab5eadee0d0379d2c303ddc3",
+          "change": "changed",
+          "id": "scenario.founder_campaign",
+          "kind": "scenario",
+          "old_revision": 48,
+          "revision": 49
+        }
+      ],
+      "changed_text_keys": [],
+      "collection_hash": "78b6d841deb076fecddc454658191cd74318a1656a417b8ca0024c5e497bdfbb",
+      "compatibility": {
+        "content_schema": 1,
+        "save_format": 1,
+        "simulation_rules": 1
+      },
+      "content_version": "0.77.0-dev.1",
+      "game_version_at_finalization": "0.0.0-dev",
+      "generation": 81,
+      "minimum_game_change": "minor",
+      "previous_content_version": "0.76.0-dev.1",
+      "previous_snapshot": "authoring/snapshots/000080.collection.json",
+      "purpose": "internal-playtest",
+      "required_game_version": "0.1.0-dev.1",
+      "save_policy": "reject-prior-content",
+      "snapshot": "authoring/snapshots/000081.collection.json",
+      "summary": "Add two outside founder successors with distinct appointment reactions.",
+      "target": "data/runtime/first-playable.json",
+      "validation": {
+        "compiler": "shared-game-runtime",
+        "exact_prepared_save_roundtrips": 24,
+        "lints": [],
+        "prepared_headquarters": 24,
+        "scenarios": 8
+      }
     }
   ],
   "format": 1
