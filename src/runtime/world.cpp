@@ -476,7 +476,7 @@ void validate_checkpoint_with_simulation(const CompiledProgram& program, const C
                 if(management.people->community_prestige!=(recognized?scenario->founding->queer_community_prestige:0) ||
                     management.people->community_buzz!=(recognized?scenario->founding->queer_community_buzz:0))
                     invalid("Community recognition must match the saved identity and authored audience response.");
-                if(management.catalog.people && management.catalog.people->mood && management.people->founding_prestige!=std::min(10U,terms.prestige))
+                if(management.catalog.people && management.catalog.people->mood && management.people->founding_prestige!=std::min(100U,terms.prestige))
                     invalid("The founder's reputation differs from the saved biography.");
                 for(const auto& employee:management.people->employees) if(employee.terms.profile.role=="Founder / researcher") {
                     const auto& p=employee.terms.profile;
@@ -576,6 +576,20 @@ void validate_checkpoint_with_simulation(const CompiledProgram& program, const C
                            draw->debit!=core::Account::cash || draw->credit!=core::Account::debt || draw->document_id!=expected.id)
                             invalid("The startup loan must keep its original principal, interest and maturity.");
                     }
+                    const auto student=std::ranges::find(accounts.debts,content::student_debt_id,&core::Debt::id);
+                    if((student!=accounts.debts.end())!=opening.student_debt.has_value())
+                        invalid("Student debt must match the chosen university funding.");
+                    if(opening.student_debt) {
+                        const auto& expected=*opening.student_debt;
+                        const auto draw=std::ranges::find(accounts.postings,"debt/"+expected.id,&core::Posting::key);
+                        const auto tuition=std::ranges::find(accounts.postings,"founding/student_tuition",&core::Posting::key);
+                        if(student->drawn_on!=expected.drawn_on || student->due!=expected.due || student->monthly_interest!=expected.monthly_interest ||
+                           draw==accounts.postings.end() || draw->amount!=expected.principal || draw->day!=expected.drawn_on ||
+                           draw->debit!=core::Account::cash || draw->credit!=core::Account::debt || draw->document_id!=expected.id ||
+                           tuition==accounts.postings.end() || tuition->amount!=expected.principal || tuition->day!=expected.drawn_on ||
+                           tuition->debit!=core::Account::expenses || tuition->credit!=core::Account::cash)
+                            invalid("University student loans must remain separate from company operating cash.");
+                    }
                 }
                 if(world.founding || !world.background.empty() || !world.difficulty.empty()) {
                     const auto& accounts=*world.simulation.accounts;
@@ -583,13 +597,13 @@ void validate_checkpoint_with_simulation(const CompiledProgram& program, const C
                         invalid("Founder opening capital differs from its actual contribution");
                     if(opening.setup_cost.value()>0) {
                         const auto expense=std::find_if(accounts.postings.begin(),accounts.postings.end(),[](const auto& p){return p.key=="founding/setup";});
-                        if(expense==accounts.postings.end() || expense->amount!=opening.setup_cost || expense->day!=scenario->starts_on ||
+                        if(expense==accounts.postings.end() || expense->amount!=opening.setup_cost || expense->day!=opening.launch_day ||
                             expense->debit!=core::Account::expenses || expense->credit!=core::Account::cash)
                             invalid("Founding expenses differ from the signed office and researcher terms.");
                     }
                     for(const auto& [id,monthly]:opening.monthly_commitments) if(monthly.value()>0) {
                         const auto it=std::find_if(accounts.recurring.begin(),accounts.recurring.end(),[&](const auto& r){return r.id==id;});
-                        if(it==accounts.recurring.end() || it->monthly_amount!=monthly || it->starts_on!=scenario->starts_on) invalid("Founder opening commitments differ from their authored package");
+                        if(it==accounts.recurring.end() || it->monthly_amount!=monthly || it->starts_on!=opening.launch_day) invalid("Founder opening commitments differ from their authored package");
                     }
                 }
                 const auto founder_source=std::find_if(world.simulation.capacity->sources.begin(),world.simulation.capacity->sources.end(),[](const auto& r){return r.id=="lease.founder";});
@@ -912,7 +926,7 @@ void validate_checkpoint_with_simulation(const CompiledProgram& program, const C
                 invalid("A seeded incident sample must belong to a single eligible opening boundary");
         }
         std::uint64_t total = 0;
-        for (const auto& branch : owner.branches) total += branch.weight;
+        for (const auto& branch : owner.branches) total += effective_branch_weight(checkpoint.world.simulation, branch);
         core::SplitMix64 copied{resolution.stream_before};
         const auto sample = copied.bounded(total);
         if (sample != resolution.sample || copied.state() != resolution.stream_after)
@@ -920,8 +934,9 @@ void validate_checkpoint_with_simulation(const CompiledProgram& program, const C
         auto remaining = sample;
         const content::WeightedBranch* selected = nullptr;
         for (const auto& branch : owner.branches) {
-            if (remaining < branch.weight) { selected = &branch; break; }
-            remaining -= branch.weight;
+            const auto weight = effective_branch_weight(checkpoint.world.simulation, branch);
+            if (remaining < weight) { selected = &branch; break; }
+            remaining -= weight;
         }
         if (!selected || selected->id != resolution.branch_id)
             invalid("Random resolution differs from its authored weighted outcome");

@@ -108709,6 +108709,123 @@
         "prepared_headquarters": 24,
         "scenarios": 8
       }
+    },
+    {
+      "changed_definitions": [
+        {
+          "after_hash": "16b458e94630a3a5bc8f03a86d8791401f2fd4eec91559fb27dd8d547645b035",
+          "before_hash": "061c48eb5b05d72273de125ae9ab0a6c795671039f42a0efb4c75274ca7ab89c",
+          "change": "changed",
+          "id": "scenario.founder_campaign",
+          "kind": "scenario",
+          "old_revision": 44,
+          "revision": 45
+        }
+      ],
+      "changed_text_keys": [],
+      "collection_hash": "c99b6e61fb4972b0b11958cd8b1f831902ab4da262b926a760a48af74cc73736",
+      "compatibility": {
+        "content_schema": 1,
+        "save_format": 1,
+        "simulation_rules": 1
+      },
+      "content_version": "0.74.0-dev.1",
+      "game_version_at_finalization": "0.0.0-dev",
+      "generation": 76,
+      "minimum_game_change": "minor",
+      "previous_content_version": "0.73.1-dev.1",
+      "previous_snapshot": "authoring/snapshots/000075.collection.json",
+      "purpose": "internal-playtest",
+      "required_game_version": "0.1.0-dev.1",
+      "save_policy": "reject-prior-content",
+      "snapshot": "authoring/snapshots/000076.collection.json",
+      "summary": "Coherent school chains, delayed entry, life stages, and layered reactive visuals",
+      "target": "data/runtime/first-playable.json",
+      "validation": {
+        "compiler": "shared-game-runtime",
+        "exact_prepared_save_roundtrips": 24,
+        "lints": [],
+        "prepared_headquarters": 24,
+        "scenarios": 8
+      }
+    },
+    {
+      "changed_definitions": [
+        {
+          "after_hash": "d91ef97017b846582ec67d949ce8d9a7e8924589b4214a667ded45fb26f1a88d",
+          "before_hash": "16b458e94630a3a5bc8f03a86d8791401f2fd4eec91559fb27dd8d547645b035",
+          "change": "changed",
+          "id": "scenario.founder_campaign",
+          "kind": "scenario",
+          "old_revision": 45,
+          "revision": 46
+        }
+      ],
+      "changed_text_keys": [],
+      "collection_hash": "ab0441cee01e03f614d11a0aef45e4175f8d748fda822e4a207e40dd55e07224",
+      "compatibility": {
+        "content_schema": 1,
+        "save_format": 1,
+        "simulation_rules": 1
+      },
+      "content_version": "0.74.0-dev.2",
+      "game_version_at_finalization": "0.0.0-dev",
+      "generation": 77,
+      "minimum_game_change": "minor",
+      "previous_content_version": "0.74.0-dev.1",
+      "previous_snapshot": "authoring/snapshots/000076.collection.json",
+      "purpose": "internal-playtest",
+      "required_game_version": "0.1.0-dev.1",
+      "save_policy": "reject-prior-content",
+      "snapshot": "authoring/snapshots/000077.collection.json",
+      "summary": "Recalibrate early creative research prerequisite bypass thresholds for expanded school trait count.",
+      "target": "data/runtime/first-playable.json",
+      "validation": {
+        "compiler": "shared-game-runtime",
+        "exact_prepared_save_roundtrips": 24,
+        "lints": [],
+        "prepared_headquarters": 24,
+        "scenarios": 8
+      }
+    },
+    {
+      "changed_definitions": [
+        {
+          "after_hash": "55e8548e9d3e559dfe6101b535d848bc78d010ba07146652d2e716ec7551bb2f",
+          "before_hash": "d91ef97017b846582ec67d949ce8d9a7e8924589b4214a667ded45fb26f1a88d",
+          "change": "changed",
+          "id": "scenario.founder_campaign",
+          "kind": "scenario",
+          "old_revision": 46,
+          "revision": 47
+        }
+      ],
+      "changed_text_keys": [],
+      "collection_hash": "eaf8130dd6258827d0f5c961578b9e277f2e12415091208f89a88fb508d6090e",
+      "compatibility": {
+        "content_schema": 1,
+        "save_format": 1,
+        "simulation_rules": 1
+      },
+      "content_version": "0.74.0-dev.3",
+      "game_version_at_finalization": "0.0.0-dev",
+      "generation": 78,
+      "minimum_game_change": "minor",
+      "previous_content_version": "0.74.0-dev.2",
+      "previous_snapshot": "authoring/snapshots/000077.collection.json",
+      "purpose": "internal-playtest",
+      "required_game_version": "0.1.0-dev.1",
+      "save_policy": "reject-prior-content",
+      "snapshot": "authoring/snapshots/000078.collection.json",
+      "summary": "Raise early creative research prerequisite thresholds above solo expanded-school founder trait count.",
+      "target": "data/runtime/first-playable.json",
+      "validation": {
+        "compiler": "shared-game-runtime",
+        "exact_prepared_save_roundtrips": 24,
+        "lints": [],
+        "prepared_headquarters": 24,
+        "scenarios": 8
+      }
     }
   ],
   "format": 1

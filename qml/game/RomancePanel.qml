@@ -84,11 +84,11 @@ ColumnLayout {
         function toggle(id,on){genders=on?genders.concat([id]):genders.filter(g=>g!==id)}
         contentItem:ScrollView {id:prefsScroll;contentWidth:availableWidth;clip:true;ColumnLayout {width:prefsScroll.availableWidth;spacing:12
             Label {Layout.fillWidth:true;text:qsTr("Romantic attraction is separate from sexual orientation.");wrapMode:Text.Wrap;font.pixelSize:romance.textSize}
-            CheckBox {objectName:"romanceInterested";Layout.fillWidth:true;text:qsTr("I'm open to romance");checked:preferences.interested;onToggled:preferences.interested=checked;font.pixelSize:romance.textSize}
+            GameCheck {objectName:"romanceInterested";Layout.fillWidth:true;text:qsTr("I'm open to romance");checked:preferences.interested;onToggled:preferences.interested=checked;textSize:romance.textSize}
             Label {Layout.fillWidth:true;text:qsTr("I'm romantically interested in:");wrapMode:Text.Wrap;font.pixelSize:romance.textSize}
             Flow {Layout.fillWidth:true;spacing:8
             Repeater {model:[{id:"woman",name:qsTr("Women")},{id:"man",name:qsTr("Men")},{id:"nonbinary",name:qsTr("Nonbinary people")}]
-                CheckBox {required property var modelData;objectName:"romancePreference_"+modelData.id;text:modelData.name;checked:preferences.genders.includes(modelData.id);onToggled:preferences.toggle(modelData.id,checked);font.pixelSize:romance.textSize}
+                GameCheck {required property var modelData;objectName:"romancePreference_"+modelData.id;text:modelData.name;checked:preferences.genders.includes(modelData.id);onToggled:preferences.toggle(modelData.id,checked);textSize:romance.textSize}
             }
             }
             Label {visible:preferences.genders.length===0;Layout.fillWidth:true;text:qsTr("Keep at least one attraction preference saved. You can turn off seeking romance.");wrapMode:Text.Wrap;font.pixelSize:romance.textSize}

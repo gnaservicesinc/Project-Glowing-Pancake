@@ -35,12 +35,13 @@ ColumnLayout {
                     reducedMotion: strip.reducedMotion
                     onClicked: entry.inspect()
                 }
-                Button {
+                AbstractButton {
                     id: monogram
                     objectName: "decisionParticipant_" + entry.modelData.id
                     x: strip.compact ? 0 : (parent.width - width) / 2
                     width: strip.portraitEdge
                     height: width
+                    hoverEnabled: true
                     visible: !entry.modelData.portrait
                     Accessible.name: qsTr("View %1").arg(entry.modelData.name)
                     contentItem: Label {

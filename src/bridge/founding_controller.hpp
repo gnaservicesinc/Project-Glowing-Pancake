@@ -62,6 +62,8 @@ public:
     Q_INVOKABLE QString closeHomeOffer();
     Q_INVOKABLE void cycleAppearance(int part,int direction);
     Q_INVOKABLE void setAppearance(int part,int value);
+    Q_INVOKABLE QString portraitForStage(QString stage) const;
+    Q_INVOKABLE QString portraitForAge(int age) const;
     QString portrait() const;
     QVariantList appearanceParts() const;
     QStringList pronounOptions() const;
@@ -79,6 +81,7 @@ private:
     QString commitHomeDraft(QVariantMap next);
     void saveDraft();
     void deriveOpening();
+    void pruneChoices();
     std::optional<content::FoundingCatalog> catalog_;
     std::vector<std::string> headquarters_;
     std::optional<core::HeadquartersRules> premises_rules_;

@@ -212,20 +212,30 @@ void schedule_founding_smoke(QQuickWindow& window, pgp::bridge::CampaignControll
                 fail("Edited name was lost after resizing"); return;
             }
             if (id.startsWith("chapter-") && !id.endsWith("-after")) {
-                if (id == "chapter-curiosity" && !capture(".childhood")) { fail("Childhood screenshot"); return; }
+                if (id == "chapter-elem_classroom" && !capture(".childhood")) { fail("Childhood screenshot"); return; }
                 for (const auto& row : story->chapters()) {
                     const auto chapter = row.toMap();
-                    if ("chapter-" + chapter.value("id").toString() != id) continue;
-                    const auto choice = chapter.value("choices").toList().front().toMap().value("id").toString();
-                    if (!click("foundingChoice_" + choice)) fail("Childhood choice is unavailable");
+                    const auto chapterId = chapter.value("id").toString();
+                    if ("chapter-" + chapterId != id) continue;
+                    const auto maxSel = chapter.value("maxSelections").toInt();
+                    const auto selected = story->form().value("choices").toMap().value(chapterId).toString();
+                    if (maxSel > 1 && !selected.isEmpty()) {
+                        if (!advance()) fail("Multi-select continue is unavailable");
+                        return;
+                    }
+                    QString choice;
+                    for (const auto& optRow : chapter.value("choices").toList()) {
+                        const auto opt = optRow.toMap();
+                        if (opt.value("available", true).toBool()) { choice = opt.value("id").toString(); break; }
+                    }
+                    if (choice.isEmpty() || !click("foundingChoice_" + choice)) fail("Childhood choice is unavailable");
                     return;
                 }
                 fail("Unknown childhood beat");
                 return;
             }
             static const QHash<QString, QString> answers{
-                {"family","poor"},{"leg","charisma"},{"sociability","outgoing"},{"activity","athletic"},
-                {"disposition","deliberate"},{"legal_form","nonprofit"},{"route","mission_director"},
+                {"family","poor"},{"leg","charisma"},{"legal_form","nonprofit"},{"route","mission_director"},
                 {"mission","survival"},{"offer-safety","accept"},{"offer-open_science","decline"},
                 {"headquarters","US-CA"},{"birth_sex","male"},{"gender","woman"},{"pronouns","she/her"}
             };
@@ -408,7 +418,7 @@ void schedule_founding_smoke(QQuickWindow& window, pgp::bridge::CampaignControll
                 world.simulation.succession->personal_cash==pgp::core::Cents{1500000} && employees.empty() &&
                 world.simulation.capacity->sources.empty() &&
                 pgp::core::active_charter(world.simulation) && pgp::core::active_charter(world.simulation)->id=="charter.shared_research");
-            if (campaign.welcome() || story->hasDraft() || !world.founding || !world.identity || (world.founding->choices.size() < 8 || world.founding->choices.size() > 10) ||
+            if (campaign.welcome() || story->hasDraft() || !world.founding || !world.identity || world.founding->choices.size() < 12 ||
                 world.founding->legal_form != "corporation" || !expected_entry || !world.founding->backers.empty() ||
                 world.identity->founder_name != "Mira Vale" || world.root_seed != 718 ||
                 world.founding->gender!="woman" || world.founding->birth_sex!="male" || world.founding->orientation!="bisexual" ||

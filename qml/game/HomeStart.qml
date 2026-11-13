@@ -10,6 +10,10 @@ Rectangle {
     required property real textScale
     readonly property int typeSize:Math.round(16*textScale)
     readonly property bool rich:story.form.family==="rich" || story.form.leg==="political"
+    readonly property string previewText: story.preview || ""
+    readonly property bool hasDr: previewText.indexOf("Title: Dr.") >= 0
+    readonly property bool delayedLaunch: previewText.indexOf("Delayed start:") >= 0
+    readonly property bool hasStudentDebt: previewText.indexOf("Student debt") >= 0
     readonly property var offers: story.homeOffers
     readonly property var partners: offers.filter(offer => offer.kind === "partner")
     readonly property int waitingOffers: offers.filter(offer => offer.status === "offered").length
@@ -98,16 +102,24 @@ Rectangle {
         id:homeScroll;anchors.fill:parent;anchors.margins:Math.min(28,home.width/30);contentWidth:availableWidth;clip:true
         ScrollBar.vertical.policy:ScrollBar.AlwaysOn
     ColumnLayout {
-        width:homeScroll.availableWidth;spacing:12
-        RowLayout {
-            Image {source:home.story.portrait;Layout.preferredWidth:72;Layout.preferredHeight:72;sourceSize:Qt.size(144*Screen.devicePixelRatio,144*Screen.devicePixelRatio)}
+        width:homeScroll.availableWidth;spacing:14
+        Rectangle {
+            Layout.fillWidth:true;implicitHeight:founderBar.implicitHeight+24;radius:14;color:"#1b2e41";border.color:"#4a657a"
+            Rectangle { width:4; height:parent.height-20; radius:2; anchors.left:parent.left; anchors.leftMargin:8; anchors.verticalCenter:parent.verticalCenter; color:"#efc389" }
             ColumnLayout {
-                Layout.fillWidth:true
-                Heading {text:home.story.form.first_name+" "+home.story.form.last_name}
-                Copy {text:qsTr("January 2015 · Age 18 · Unemployed · No company");font.pixelSize:home.typeSize*0.8}
+                id:founderBar;anchors.left:parent.left;anchors.right:parent.right;anchors.top:parent.top;anchors.margins:12;anchors.leftMargin:20;spacing:8
+                RowLayout {
+                    spacing:12
+                    Image {source:home.story.portrait;Layout.preferredWidth:72;Layout.preferredHeight:72;sourceSize:Qt.size(144*Screen.devicePixelRatio,144*Screen.devicePixelRatio)}
+                    ColumnLayout {
+                        Layout.fillWidth:true;spacing:4
+                        Heading {text:(home.hasDr?qsTr("Dr. "):"")+home.story.form.first_name+" "+home.story.form.last_name}
+                        Copy {text:home.delayedLaunch?qsTr("Graduated & Launch Ready · Silicon Valley"):qsTr("January 2015 · Age 18 · Pre-Founding");font.pixelSize:home.typeSize*0.85;color:"#c9d6d0"}
+                    }
+                }
+                Copy {text:qsTr("Personal savings %1 · Company funds $0 · Silicon Valley%2").arg(home.story.personalFunds.total).arg(home.hasStudentDebt?qsTr(" · Student loan active"):"");color:"#b9dba7";font.pixelSize:home.typeSize*0.92}
             }
         }
-        Copy {text:qsTr("Personal savings %1 · Company funds $0 · Silicon Valley").arg(home.story.personalFunds.total);color:"#b9dba7"}
         Flow {
             Layout.fillWidth:true;spacing:8
             Repeater {model:[{id:"room",name:qsTr("⌂ Home")},{id:"browser",name:qsTr("◉ Browser")},{id:"messages",name:home.waitingOffers?qsTr("✉ Messages (%1)").arg(home.waitingOffers):qsTr("✉ Messages")},{id:"bank",name:qsTr("▤ Personal accounts")}]
@@ -182,7 +194,7 @@ Rectangle {
                 ColumnLayout {
                     visible:home.app==="bank";Layout.fillWidth:true
                     Heading {text:qsTr("Redwood Mutual · Your money")}
-                    Copy {text:qsTr("Cash savings: %1\nStocks: $0 · Bonds: $0 · Personal debt: $0\nNo company has been formed. Money stays yours until you explicitly invest it. Company expenses and salaries will use the company's separate accounts.").arg(home.story.personalFunds.total)}
+                    Copy {text:qsTr("Cash savings: %1\nStocks: $0 · Bonds: $0 · %2\nNo company has been formed. Money stays yours until you explicitly invest it. Company expenses and salaries will use the company's separate accounts.").arg(home.story.personalFunds.total).arg(home.hasStudentDebt ? qsTr("Student loan obligation carries to launch (zero extra cash)") : qsTr("Personal debt: $0"))}
                     Rectangle {
                         visible:!!home.story.startupLoan.lender
                         Layout.fillWidth:true

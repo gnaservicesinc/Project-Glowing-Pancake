@@ -1,4 +1,5 @@
 #include "world_controller.hpp"
+#include "portrait_url.hpp"
 #include <algorithm>
 #include <pgp/runtime/romance.hpp>
 #include <map>
@@ -38,13 +39,21 @@ QVariantMap WorldController::relationships() const {
         people.push_back(card);
     }
     for(const auto& [id,peer]:s.management->people->industry) {
-        const auto& p=peer.profile;QString portrait=QStringLiteral("image://portraits/%1").arg(p.portrait.kit);
-        for(const auto part:p.portrait.parts)portrait+='/'+QString::number(part);for(const auto part:p.portrait.style)portrait+='/'+QString::number(part);
+        const auto& p=peer.profile;const QString portrait=portrait_url(p,s.date);
         QStringList skills;if(const auto* talents=core::talent_rules(s))for(const auto& skill:talents->skills)if(core::has_skill(p,skill.id))skills.push_back(q(skill.name));
         auto card=QVariantMap{{"id",q(id)},{"name",q(p.name)},{"portrait",portrait},{"role",q(p.role)},{"detail",q(p.pronouns)+" · "+q(p.education)+"\n"+skills.join(" · ")}};
         identities.emplace(id,card);
         const auto* bond=core::social_link(s,"founder",id);
-        if(!bond)continue;
+        const bool hostile=core::is_personal_rival(s,"founder",id);
+        if(!bond && !hostile)continue;
+        if(!bond) {
+            QStringList known;for(const auto& trait:core::visible_traits(s,p,id))known.push_back(q(trait));
+            card["rival"]=true;card["relationship"]=tr("Rivals");card["coworker"]=false;card["external"]=true;card["affinity"]=0;card["next"]=0;
+            card["organization"]=q(peer.organization)+" · "+q(peer.city);card["distance"]=q(core::social_distance(s,"founder",id));
+            card["traits"]=known.join(" · ");card["memory"]=tr("Targeted you in school; kept their distance.");
+            card["blocker"]=q(core::social_blocker(s,id));card["moodBonus"]=0;people.push_back(card);
+            continue;
+        }
         QStringList known;for(const auto& trait:core::visible_traits(s,p,id))known.push_back(q(trait));
         int next=0;for(const auto threshold:rules->thresholds)if(threshold>bond->affinity){next=threshold;break;}
         card["relationship"]=q(core::friendship_name(s,bond->affinity,false));card["coworker"]=false;card["external"]=true;card["affinity"]=bond->affinity;card["next"]=next;
@@ -105,6 +114,19 @@ QVariantMap WorldController::relationships() const {
             }
             visible.insert(id);
         }
+    }
+    for(const auto& id:social.hostile_peers) {
+        if(!identities.contains(id))continue;
+        const auto existing=std::find_if(edges.begin(),edges.end(),[&](const auto& value){
+            const auto edge=value.toMap();
+            return (edge.value("first")==q(id) && edge.value("second")=="founder") ||
+                   (edge.value("second")==q(id) && edge.value("first")=="founder");
+        });
+        if(existing==edges.end()) {
+            edges.push_back(QVariantMap{{"first","founder"},{"second",q(id)},{"label",tr("School bully · Rivals")},
+                {"names",me.value("name").toString()+" ↔ "+identities.at(id).value("name").toString()},{"strength",0}});
+        }
+        visible.insert(id);
     }
     for(const auto& id:visible){auto row=identities.at(id);row["id"]=q(id);nodes.push_back(row);}
     return {{"people",people},{"nodes",nodes},{"edges",edges},{"mission",social.mission_conflict?q(social.mission_conflict->mission):QString{}},{"mediators",mediators},{"moodCap",rules->mood_cap},{"interval",rules->interval_days},{"revision",reviewToken()}};

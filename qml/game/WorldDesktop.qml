@@ -126,15 +126,28 @@ Item {
                     Label {Layout.fillWidth:true;text:campaign.companyName;font.family:"Georgia";font.pixelSize:desktop.textSize*1.4;font.bold:true;color:"#f0ecdd";elide:Text.ElideRight;textFormat:Text.PlainText}
                     Label {Layout.fillWidth:true;text:campaign.world.location;font.pixelSize:desktop.textSize*0.85;color:"#a7c1bb";elide:Text.ElideRight;textFormat:Text.PlainText}
                 }
-                ColumnLayout {
-                    visible: !desktop.compact;spacing:3
-                    Label {text:qsTr("AVAILABLE %1").arg(campaign.availableText);font.pixelSize:desktop.textSize;color:"#b7dfc7"}
-                    Label {text:qsTr("Cash %1").arg(campaign.cashText);font.pixelSize:desktop.textSize*0.85;color:"#adbfbd"}
+                Rectangle {
+                    visible: !desktop.compact
+                    implicitWidth: financeHud.implicitWidth + 24; implicitHeight: financeHud.implicitHeight + 14
+                    radius: 9; color: "#172738"; border.color: "#435d70"
+                    ColumnLayout {
+                        id: financeHud; anchors.centerIn: parent; spacing: 2
+                        Label {text:qsTr("AVAILABLE %1").arg(campaign.availableText);font.pixelSize:desktop.textSize;font.bold:true;color:"#b7dfc7"}
+                        Label {text:qsTr("Cash %1").arg(campaign.cashText);font.pixelSize:desktop.textSize*0.82;color:"#b3c5c3"}
+                    }
                 }
             }
             Flow {
                 Layout.fillWidth:true;spacing:8
-                Label {height:desktop.shortLayout?desktop.textSize*2.2:42*desktop.uiScale;text:campaign.date;font.pixelSize:desktop.textSize;color:"#f0ecdd";verticalAlignment:Text.AlignVCenter;rightPadding:8}
+                Rectangle {
+                    implicitWidth: dateBadge.implicitWidth + 18; implicitHeight: desktop.shortLayout ? desktop.textSize*2.2 : 42*desktop.uiScale
+                    radius: 8; color: "#182838"; border.color: campaign.paused ? "#7d6b4e" : "#4f7c6c"
+                    Row {
+                        id: dateBadge; anchors.centerIn: parent; spacing: 8
+                        Rectangle { width: 8; height: 8; radius: 4; anchors.verticalCenter: parent.verticalCenter; color: campaign.paused ? "#efc389" : "#7ee0b8" }
+                        Label {text:campaign.date;font.pixelSize:desktop.textSize;font.bold:true;color:"#f0ecdd";anchors.verticalCenter:parent.verticalCenter}
+                    }
+                }
                 WorldButton {objectName:"pauseButton";text:campaign.paused?qsTr("▶ Resume"):qsTr("Ⅱ Pause");textSize:desktop.textSize;primary:campaign.paused;enabled:!campaign.busy && !campaign.storageBlocked && (!campaign.paused || campaign.canPlay);onClicked:campaign.togglePaused()}
                 WorldButton {objectName:"stepButton";visible:!desktop.shortLayout;text:qsTr("Next day");textSize:desktop.textSize;enabled:campaign.paused && campaign.canAdvance && !campaign.storageBlocked;onClicked:campaign.step()}
                 GameSelect {textSize:desktop.textSize;objectName:"speedControl";visible:!desktop.shortLayout;model:[1,10,30,60];currentIndex:model.indexOf(campaign.daysPerSecond);displayText:qsTr("%1 days/s").arg(campaign.daysPerSecond);Accessible.name:qsTr("Days per second");font.pixelSize:desktop.textSize;implicitWidth:desktop.textSize*9;onActivated:campaign.daysPerSecond=model[currentIndex]}
@@ -307,11 +320,12 @@ Item {
         id: agenda
         objectName:"worldAgenda"
         anchors.top:places.bottom;anchors.bottom:dock.top;anchors.right:parent.right
-        anchors.margins:16*desktop.uiScale;width:244*desktop.uiScale;color:"#1b2d40";radius:12;border.color:"#4e6175"
+        anchors.margins:16*desktop.uiScale;width:244*desktop.uiScale;color:"#17283a";radius:14;border.color:"#4f687c"
         visible:!desktop.compact && desktop.place!=="map" && !desktop.physicalHQ
+        Rectangle { width:parent.width-24; height:3; radius:1.5; anchors.top:parent.top; anchors.topMargin:8; anchors.horizontalCenter:parent.horizontalCenter; color:campaign.requiredKind!=="none"?"#efc389":"#5e888a" }
         ScrollView {
             id: agendaScroll
-            anchors.fill:parent;anchors.margins:16*desktop.uiScale;contentWidth:availableWidth;clip:true
+            anchors.fill:parent;anchors.margins:16*desktop.uiScale;anchors.topMargin:20*desktop.uiScale;contentWidth:availableWidth;clip:true
             ColumnLayout {
                 width:agendaScroll.availableWidth;spacing:14
                 Label {text:qsTr("TODAY");font.pixelSize:desktop.textSize*0.85;font.letterSpacing:2;color:"#e5bc7e"}

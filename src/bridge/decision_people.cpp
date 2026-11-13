@@ -1,4 +1,5 @@
 #include "world_controller.hpp"
+#include "portrait_url.hpp"
 #include <QDate>
 #include <QLocale>
 #include <algorithm>
@@ -6,14 +7,8 @@
 namespace pgp::bridge {
 namespace {
 QString text(std::string_view value) {return QString::fromUtf8(value.data(),static_cast<qsizetype>(value.size()));}
-QString portrait(const core::PortraitRecipe& recipe) {
-    QString result=QStringLiteral("image://portraits/%1").arg(recipe.kit);
-    for(auto part:recipe.parts) result+='/'+QString::number(part);
-    for(auto part:recipe.style) result+='/'+QString::number(part);
-    return result;
-}
 QVariantMap profile(const core::PersonProfile& p,core::OrdinalDay day,QString status) {
-    return {{"id",text(p.id)},{"name",text(p.name)},{"role",text(p.role)},{"portrait",portrait(p.portrait)},{"bio",text(p.bio)},
+    return {{"id",text(p.id)},{"name",text(p.name)},{"role",text(p.role)},{"portrait",portrait_url(p,day)},{"bio",text(p.bio)},
         {"detail",QObject::tr("%1 · %2 · Age %3\n%4\nResearch %5 · Engineering %6 · Evaluation %7\n%8")
             .arg(text(p.gender),text(p.pronouns)).arg(core::from_ordinal(day).year-p.birth_year).arg(text(p.education))
             .arg(p.research).arg(p.engineering).arg(p.evaluation).arg(status)}};
@@ -33,7 +28,7 @@ QVariantMap WorldController::person(QString id,core::OrdinalDay day) const {
         if(found==terms.end()) return {};
         if(found->person=="founder") return founder();
         return {{"id",QStringLiteral("leadership/%1").arg(found->id)},{"name",text(found->name)},{"role",found->asi?tr("AI chief executive"):tr("Chief executive")},
-            {"portrait",found->portrait?portrait(*found->portrait):QString{}},
+            {"portrait",found->portrait?(found->asi?portrait_url(*found->portrait):portrait_url(*found->portrait,std::max(0,core::from_ordinal(day).year-found->birth_year))):QString{}},
             {"detail",tr("%1 · appointed %2\nExecutive term through %3\n%4")
                 .arg(found->asi?tr("ASI"):tr("Born %1").arg(found->birth_year),text(core::iso_date(found->starts_on)),text(core::iso_date(found->ended_on.value_or(found->due_on))),
                     text(core::leadership_candidate(s,found->person,found->plan?s.succession->plans.at(found->plan-1).proposed_on:found->starts_on).priorities))}};
@@ -79,7 +74,7 @@ QVariantList WorldController::decisionParticipants(QString kind,std::uint64_t pr
             else {
                 row={{"id",text(ref.id)},{"name",message(program_->collection,ref.name_key)},
                     {"kind",ref.kind==content::ParticipantKind::organization?"organization":"contact"}};
-                if(ref.portrait) row["portrait"]=portrait(*ref.portrait);
+                if(ref.portrait) row["portrait"]=portrait_url(*ref.portrait);
             }
             if(!row.isEmpty() && !ref.role_key.empty()) row["role"]=message(program_->collection,ref.role_key);
             add(std::move(row));

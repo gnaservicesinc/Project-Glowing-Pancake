@@ -42,8 +42,8 @@ ColumnLayout {
                     WorldButton {required property var modelData;objectName:"familyAge_"+modelData.id;text:modelData.name;textSize:album.textSize;checked:album.band===modelData.id;onClicked:{album.band=modelData.id;campaign.world.setDraft("family/age",album.band)}}
                 }
             }
-            CheckBox {objectName:"familyWithPartner";Layout.fillWidth:true;visible:!!album.family.married && album.action!=="birth";text:qsTr("Plan together with my spouse");font.pixelSize:album.textSize;checked:album.withPartner;onToggled:album.withPartner=checked}
-            TextField {objectName:"familyBabyName";visible:album.action==="birth";Layout.fillWidth:true;font.pixelSize:album.textSize;maximumLength:128;text:album.babyName;placeholderText:qsTr("Baby's name · leave blank for a surprise");onTextEdited:{album.babyName=text;campaign.world.setDraft("family/name",text)} Accessible.name:qsTr("Baby's name")}
+            GameCheck {objectName:"familyWithPartner";Layout.fillWidth:true;visible:!!album.family.married && album.action!=="birth";text:qsTr("Plan together with my spouse");textSize:album.textSize;checked:album.withPartner;onToggled:album.withPartner=checked}
+            GameField {objectName:"familyBabyName";visible:album.action==="birth";Layout.fillWidth:true;textSize:album.textSize;maximumLength:128;text:album.babyName;placeholderText:qsTr("Baby's name · leave blank for a surprise");onTextEdited:{album.babyName=text;campaign.world.setDraft("family/name",text)} Accessible.name:qsTr("Baby's name")}
             Copy {text:album.preview.blocker || album.preview.explanation || "";color:album.preview.valid?"#dce1b8":"#e7c38f"}
             Copy {objectName:"familyPlanDate";visible:!!album.preview.valid && !!album.preview.due;text:qsTr("Review or arrival if agreed: %1").arg(album.preview.due || "")}
             WorldButton {objectName:"familyPlanReview";text:qsTr("Talk through this plan");textSize:album.textSize;enabled:album.editable && !!album.preview.valid;onClicked:album.review(album.draft,qsTr("Begin this family chapter?"),album.preview)}

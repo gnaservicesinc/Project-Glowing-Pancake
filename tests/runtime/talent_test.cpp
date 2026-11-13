@@ -15,22 +15,30 @@ int main(){using namespace pgp;try{
     for(std::uint64_t seed=0;seed<64;++seed) {
         content::FoundingSelection selection;selection.story_seed=seed;
         const auto roots=content::formative_scenes(catalog,selection);
-        check(roots.size()==8,"Only six base scenes and one activity and one camp appear");
+        check(roots.size()>=12,"School sections include static and seeded random scenes");
         for(const auto* root:roots) {
             selection.choices[root->id]=root->choices.front().id;
             if(!root->pool.empty())seen.insert(root->id);
         }
-        const auto active=content::formative_scenes(catalog,selection);check(active.size()==10,"Joining both activities opens their follow-ups");
+        const auto before_cond=content::formative_scenes(catalog,selection).size();
+        selection.choices["grad_choice"]="college";
+        const auto with_college=content::formative_scenes(catalog,selection);
+        check(with_college.size()>before_cond,"Choosing college opens undergrad and grad chains");
         check(content::load_founding_selection(content::canonical_founding_selection(selection))==selection,"Story seed and path reload exactly");
-        for(const auto* root:roots)if(!root->pool.empty())selection.choices[root->id]=root->choices.back().id;
-        check(content::formative_scenes(catalog,selection).size()==8,"Changing parent choice hides its follow-up");
+        selection.choices["grad_choice"]="workforce";
+        check(content::formative_scenes(catalog,selection).size()==before_cond,"Changing parent choice hides its follow-up");
         const auto before=content::formative_skills(catalog,selection);
-        for(const auto& scene:catalog.scenes)if(!scene.requires_choice.empty())selection.choices[scene.id]=scene.choices.front().id;
+        const auto active_after=content::formative_scenes(catalog,selection);
+        for(const auto& scene:catalog.scenes)
+            if(std::ranges::none_of(active_after,[&](const auto* s){return s->id==scene.id;}))
+                selection.choices[scene.id]=scene.choices.front().id;
         check(content::formative_skills(catalog,selection)==before,"Inactive follow-ups cannot grant rewards");
     }
-    check(seen.size()==16,"Seeded setups reach every activity and camp");
+    check(seen.size()>=15,"Seeded setups reach random events and summer camps across sections");
     content::FoundingSelection f;f.family="rich";f.route="bootstrap";f.office="home";f.personal_investment_cents=10000000;
     for(const auto& scene:scenario.founding->scenes)f.choices.emplace(scene.id,scene.choices.front().id);
+    f.choices["elem_playground"]="sedentary";
+    f.choices["hs_exclude"]="cut_out";
     runtime::ScenarioOptions options;options.founding=f;options.identity=runtime::CampaignIdentity{"Talent Works","Alex Vale","they/them"};
     auto checkpoint=runtime::begin_scenario(program,"scenario.founder_campaign","US-CA",core::ObjectiveSelection{core::ObjectiveKind::survival,{}},options);
     checkpoint.world.enabled_flows=std::vector<std::string>{};runtime::Runtime game{program,checkpoint};
@@ -88,7 +96,7 @@ int main(){using namespace pgp;try{
     check(core::software_ai_level(ai)==2,"Independent high software capability covers both technical roles");
     const auto ai_quote=core::software_quote(ai,assisted);check(ai_quote.blocker.empty() && ai_quote.ai_level==2 && ai_quote.staff_days<120,"AI qualification reduces work only with allocated compute");
     ai.market->products.back().available=false;check(core::software_ai_level(ai)==0,"Unavailable deployment removes AI staffing waiver");
-    auto all_in=f;all_in.personal_investment_cents=-1;all_in.choices["curiosity"]="library";
+    auto all_in=f;all_in.personal_investment_cents=-1;all_in.choices["elem_playground"]="athletic";all_in.choices["ms_clubs"]="debate";all_in.choices["hs_identity"]="organize";all_in.choices["code_camp"]="design";all_in.choices["hs_exclude"]="make_room";
     for(const auto& scene:catalog.scenes)if(!scene.pool.empty()) {
         for(const auto& choice:scene.choices) {
             const auto rewards=catalog.skill_rewards.find(scene.id+"/"+choice.id);

@@ -1,4 +1,5 @@
 #include <pgp/core/lab.hpp>
+#include <pgp/core/people.hpp>
 
 #include <algorithm>
 #include <functional>
@@ -11,6 +12,11 @@
 namespace pgp::core {
 namespace {
 [[noreturn]] void invalid(const char* message) { throw std::invalid_argument(message); }
+MilliCU scaled_research_work(const LabState& state, MilliCU base_work) noexcept {
+    if (state.research_work_scale_bp.value() > 0 && state.research_work_scale_bp.value() < 10000 && base_work.value() > 0)
+        return MilliCU{std::max<std::int64_t>(1, base_work.value() * state.research_work_scale_bp.value() / 10000)};
+    return base_work;
+}
 void label(std::string_view value) {
     if (value.empty() || value.size() > 256 ||
         std::any_of(value.begin(), value.end(), [](unsigned char c) { return c < 32 || c == 127; }))
@@ -467,7 +473,7 @@ bool experiment_failed(const LabState& state, const CapacityState& capacity, con
     std::uint64_t key = 14695981039346656037ULL;
     for (const char byte : node.id) key = (key ^ static_cast<unsigned char>(byte)) * 1099511628211ULL;
     SplitMix64 draw{state.research_stream_origin ^ key};
-    return draw.bounded(10'000) < static_cast<std::uint64_t>(node.setback->failure_chance.value());
+    return draw.bounded(10'000) < static_cast<std::uint64_t>(scale_risk_bp(node.setback->failure_chance, state.setback_risk_scale_bp).value());
 }
 }
 ResearchPacing research_pacing(const LabState& state,const CapacityState& capacity,std::string_view id,OrdinalDay day) {
@@ -553,8 +559,8 @@ void start_research(LabState& state, AccountsState& accounts, CapacityState& cap
     if(grounded && allocation.researchers.size()!=allocation.staff) invalid("Choose the people who will do the research");
     const auto cooperative=cooperation?cooperation->credit:BasisPoints{0};
     if(cooperation && (!grounded || cooperative.value()<=0 || cooperative.value()>2500 || cooperation->agreement.empty() || cooperation->agreement.size()>64 || cooperation->partner==state.owner || cooperation->partner.empty()))invalid("Research cooperation needs a named partner and bounded agreement credit.");
-    const auto work = grounded?insight_work(node.experiment_work,std::max({credit,retry_credit,cooperative})):
-        research_work(node, allocation.daily_compute, allocation.staff, credit, retry_credit);
+    const auto work = scaled_research_work(state, grounded?insight_work(node.experiment_work,std::max({credit,retry_credit,cooperative})):
+        research_work(node, allocation.daily_compute, allocation.staff, credit, retry_credit));
     auto row = project("lab/research/" + node.id + "/" + std::to_string(attempt), ProjectKind::research, day, allocation, work);
     if(grounded) row.required_staff_days=coordinated_staff_days(state.catalog,node,compatibility_bp,cooperative);
     reserve_project(capacity, day, row);
@@ -710,8 +716,8 @@ void validate_lab(const LabState& state, const CapacityState& capacity, const Ac
         const bool grounded=state.catalog.research_workplaces.has_value();
         const auto cooperative=run.cooperation?run.cooperation->credit:BasisPoints{0};
         if(run.cooperation && (!grounded || cooperative.value()<=0 || cooperative.value()>2500 || run.cooperation->agreement.empty() || run.cooperation->agreement.size()>64 || run.cooperation->partner.empty() || run.cooperation->partner==state.owner))invalid("Research cooperation lost its bounded partner agreement.");
-        const auto minimum = grounded?insight_work(node.experiment_work,std::max({credit,retry,cooperative})):
-            research_work(node, work.requested, std::max(work.staff, 1U), credit, retry);
+        const auto minimum = scaled_research_work(state, grounded?insight_work(node.experiment_work,std::max({credit,retry,cooperative})):
+            research_work(node, work.requested, std::max(work.staff, 1U), credit, retry));
         if(work.required_staff_days!=(grounded?coordinated_staff_days(state.catalog,node,run.compatibility_bp,cooperative):0) ||
             (grounded && (run.researchers.size()!=work.staff || run.researchers.size()>32 ||
                 std::set<std::string_view>(run.researchers.begin(),run.researchers.end()).size()!=run.researchers.size())) ||

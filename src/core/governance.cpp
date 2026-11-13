@@ -244,7 +244,10 @@ const OrganizationalCharter* active_charter(const SimulationState& s) {
 }
 void initialize_charter(SimulationState& s,std::string_view id) {
     const auto& g=governance(s);
-    if(s.date!=s.accounts->starts_on || !g.charters.empty() || !g.motions.empty()) invalid("Starting charter can only be selected at company formation");
+    const auto formation_day=(s.infrastructure && s.infrastructure->workplace)
+        ? s.infrastructure->workplace->starts_on
+        : s.accounts->starts_on;
+    if(s.date!=formation_day || !g.charters.empty() || !g.motions.empty()) invalid("Starting charter can only be selected at company formation");
     apply_charter(s,id,{});
 }
 void propose_charter(SimulationState& s,std::string_view id) {

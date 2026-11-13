@@ -39,18 +39,19 @@ Popup {
         ColumnLayout {
             anchors.fill:parent;spacing:0
             Rectangle {
-                Layout.fillWidth:true;implicitHeight:deviceRow.implicitHeight+8;color:"#172638"
+                Layout.fillWidth:true;implicitHeight:deviceRow.implicitHeight+10;color:"#142232"
+                Rectangle { anchors.bottom: parent.bottom; width: parent.width; height: 1; color: "#364b5c" }
                 Flow {
-                    id:deviceRow;anchors.left:parent.left;anchors.right:parent.right;anchors.top:parent.top;anchors.margins:4;spacing:6
+                    id:deviceRow;anchors.left:parent.left;anchors.right:parent.right;anchors.top:parent.top;anchors.margins:5;spacing:6
                     Repeater {model:campaign.world.devices
-                        WorldButton {required property var modelData;objectName:"launcherDevice_"+modelData.id;text:modelData.name;textSize:desktop.textSize*0.8;padding:6;checked:desktop.selectedDevice===modelData.id;onClicked:desktop.selectedDevice=modelData.id}
+                        WorldButton {required property var modelData;objectName:"launcherDevice_"+modelData.id;text:modelData.name;textSize:desktop.textSize*0.8;padding:6;accent:"#efc389";checked:desktop.selectedDevice===modelData.id;onClicked:desktop.selectedDevice=modelData.id}
                     }
                 }
             }
         DesktopSurface {
             Layout.fillWidth:true;Layout.fillHeight:true;textSize:desktop.textSize
             owner: campaign.companyName; date: campaign.date
-            status: desktop.device.name || qsTr("Your workspace")
+            status: (desktop.device.name || qsTr("Your workspace")) + " · " + campaign.availableText
             applications: desktop.applications.map(row=>Object.assign({},row,{available: row.id==="devices" || campaign.world.appAvailableOn(row.id,desktop.selectedDevice)}))
             onCloseRequested: desktop.close()
             onLaunched: (app,section)=>{desktop.close();desktop.appRequested(app,section,app==="devices"?"":desktop.selectedDevice)}

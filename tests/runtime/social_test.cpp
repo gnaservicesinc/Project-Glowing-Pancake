@@ -1,3 +1,4 @@
+#include <pgp/core/mission_conflict.hpp>
 #include <pgp/persistence/save.hpp>
 #include <pgp/runtime/scenario.hpp>
 #include <algorithm>
@@ -56,5 +57,26 @@ int main(){using namespace pgp;try {
     const auto before_chat=core::social_link(social,"founder",ids[0])->affinity;core::socialize(social,{ids[0],"chat"});
     check(core::social_link(social,"founder",ids[0])->affinity>before_chat,"An established former coworker tie can be maintained online");
     auto forged=social;forged.management->people->social->links.front().second="missing";bool invalid=false;try{core::validate_social(forged);}catch(const std::invalid_argument&){invalid=true;}check(invalid,"Unknown relationship endpoint refused");
+    {
+        auto risk_cp=game.current_state();
+        check(core::founder_risk_scale_bp(risk_cp.world.simulation).value()==10000,
+              "Default founder risk scale is 10000 bp.");
+        check(runtime::effective_branch_weight(risk_cp.world.simulation,content::WeightedBranch{"incident",100,"end"})==100,
+              "Default random branch weight is unchanged.");
+        risk_cp.world.simulation.management->people->social->founder_traits.push_back("Calculated Risk Taker");
+        check(core::founder_risk_scale_bp(risk_cp.world.simulation).value()==9000,
+              "Calculated Risk Taker sets founder risk scale to 9000 bp (-10%).");
+        check(runtime::effective_branch_weight(risk_cp.world.simulation,content::WeightedBranch{"incident",100,"end"})==900000,
+              "Negative random branch weight is scaled to 9000.");
+        check(runtime::effective_branch_weight(risk_cp.world.simulation,content::WeightedBranch{"rise",100,"end"})==1000000,
+              "Non-negative random branch weight retains 10000 scale.");
+        check(!core::is_personal_rival(risk_cp.world.simulation,"founder","peer.bully"),
+              "Peer without hostility is not a personal rival.");
+        risk_cp.world.simulation.management->people->social->hostile_peers.push_back("peer.bully");
+        check(core::is_personal_rival(risk_cp.world.simulation,"founder","peer.bully"),
+              "Hostile peer from bullying triggers is_personal_rival.");
+        check(persistence::decode_save(program,persistence::encode_save(program,risk_cp)).checkpoint==risk_cp,
+              "Calculated Risk Taker and hostile_peers roundtrip cleanly.");
+    }
     std::cout<<"Social: private/public knowledge, interaction limits, opposing traits, multiple best friends, morale, loss of contact and exact continuation passed.\n";
 }catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}}

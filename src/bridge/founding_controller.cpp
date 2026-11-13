@@ -1,4 +1,5 @@
 #include "founding_controller.hpp"
+#include "portrait_url.hpp"
 #include <QFile>
 #include <QJsonDocument>
 #include <QJsonObject>
@@ -162,7 +163,19 @@ QVariantList FoundingController::families() const {
     }
     return rows;
 }
-QVariantList FoundingController::legs() const { return catalog_ ? options(catalog_->legs) : QVariantList{}; }
+QVariantList FoundingController::legs() const {
+    if (!catalog_) return {};
+    auto rows = options(catalog_->legs);
+    const bool rich = form_.value("family") == "rich";
+    for (auto& val : rows) {
+        auto row = val.toMap();
+        const bool avail = row.value("id").toString() != "wealthy" || rich;
+        row["available"] = avail;
+        row["reason"] = avail ? QString{} : tr("Requires rich parents.");
+        val = row;
+    }
+    return rows;
+}
 QVariantList FoundingController::routes() const {
     return catalog_?options(catalog_->routes):QVariantList{};
 }
@@ -219,10 +232,7 @@ QVariantMap FoundingController::presentOffer(const content::FoundingCatalog& cat
                 money(partner->cash_floor_cents),percent(partner->maximum_dilution_bp));
         if(!reason.empty()) row["terms"]=text(reason)+"\n"+row["terms"].toString();
         const auto recipe=core::make_portrait(19972015,"cofounder/"+partner->id);
-        auto portrait=QStringLiteral("image://portraits/1");
-        for(auto part:recipe.parts) portrait+='/'+QString::number(part);
-        for(auto style:recipe.style) portrait+='/'+QString::number(style);
-        row["portrait"]=portrait;
+        row["portrait"]=portrait_url(recipe);
     } else {
         const auto backer=std::ranges::find(catalog.backers,id.toStdString(),&content::FoundingOption::id);
         if (backer==catalog.backers.end()) return {};
@@ -377,17 +387,37 @@ QString FoundingController::respondHomeOffer(QString id, QString response) {
 QVariantList FoundingController::chapters() const {
     QVariantList result;
     if (catalog_) {
-        for (const auto* active : content::formative_scenes(*catalog_,selection())) {
+        const auto current=selection();
+        for (const auto* active : content::formative_scenes(*catalog_,current)) {
             const auto& scene=*active;
+            const auto traits_before=content::formative_traits_before(*catalog_,current,scene.id);
+            const auto max_sel=content::scene_max_selections(scene,current);
+            const auto& eff_date=(current.leg=="genius" && !scene.genius_date.empty())?scene.genius_date:scene.date;
             auto rows=options(scene.choices);
-            for(auto& row:rows) {
-                auto value=row.toMap();const auto key=scene.id+"/"+value.value("id").toString().toStdString();
+            for(std::size_t i=0;i<static_cast<std::size_t>(rows.size()) && i<scene.choices.size();++i) {
+                const auto& opt=scene.choices[i];
+                auto value=rows[static_cast<qsizetype>(i)].toMap();
+                const auto reason=content::option_ineligibility(opt,current,traits_before);
+                value["available"]=reason.empty();
+                value["reason"]=text(reason);
+                auto detail=value.value("detail").toString();
+                if(!opt.combo_leg.empty() && current.leg==opt.combo_leg) detail+=tr(" · Special combo bonus");
+                if(opt.grants_doctorate) detail+=tr(" · Grants Dr. title");
+                const auto delay_years=(current.leg=="genius"?opt.genius_delay_days:opt.delay_days)/365U;
+                if(delay_years>0) detail+=tr(" · +%1 yr(s)").arg(delay_years);
+                if(opt.student_loan_cents>0) detail+=tr(" · %1 student debt").arg(money(opt.student_loan_cents));
+                if(opt.best_friends_delta>0) detail+=tr(" · +%1 friend(s)").arg(opt.best_friends_delta);
+                const auto key=scene.id+"/"+opt.id;
                 if(const auto traits=catalog_->trait_rewards.find(key);traits!=catalog_->trait_rewards.end()) {
-                    auto detail=value.value("detail").toString();for(const auto& trait:traits->second)detail+=" · "+text(trait);value["detail"]=detail;row=value;
+                    for(const auto& trait:traits->second)detail+=" · "+text(trait);
                 }
+                value["detail"]=detail;
+                rows[static_cast<qsizetype>(i)]=value;
             }
             result.push_back(QVariantMap{{"id",text(scene.id)},{"title",text(scene.title)},
-                {"date",text(scene.date)},{"text",text(scene.text)},{"requiresChoice",text(scene.requires_choice)},{"choices",rows}});
+                {"date",text(eff_date)},{"nominalDate",text(scene.date)},{"text",text(scene.text)},
+                {"section",text(scene.section)},{"eventKind",text(scene.event_kind)},{"prompt",text(scene.prompt)},
+                {"maxSelections",static_cast<int>(max_sel)},{"requiresChoice",text(scene.requires_choice)},{"choices",rows}});
         }
     }
     return result;
@@ -506,6 +536,12 @@ QString FoundingController::preview() const {
                 const auto& offer=content::founding_option(catalog_->backers,id);
                 sources<<tr("%1: %2").arg(text(offer.name),money(backer_amount(*catalog_,terms,offer)));
             }
+            if(!terms.education_label.empty()) sources<<tr("Credentials: %1").arg(text(terms.education_label));
+            if(terms.doctorate_count>0) sources<<tr("Title: Dr. (%1 doctorate(s)) · %2% research effort needed").arg(terms.doctorate_count).arg(terms.research_work_scale_bp/100);
+            if(terms.student_loan_cents>0) sources<<tr("Student debt at entry: %1 (no added cash)").arg(money(terms.student_loan_cents));
+            if(terms.entry_delay_days>0) sources<<tr("Delayed start: +%1 year(s) in school/service").arg(terms.entry_delay_days/365U);
+            if(terms.best_friends>0) sources<<tr("Childhood best friends in industry: %1").arg(terms.best_friends);
+            if(terms.bully_count>0) sources<<tr("Unresolved hostility: %1 same-age peers").arg(terms.bully_count);
             const auto desks=selected.office=="home"?0U:terms.opening_staff+(terms.founder_researcher?0U:1U);
             std::int64_t compute=0;
             if(premises_rules_) for(const auto& offer:premises_rules_->equipment) if(offer.id=="desktop") compute=offer.compute.value()*desks;
@@ -554,7 +590,7 @@ void FoundingController::setBeat(QString id) {
 
 void FoundingController::setField(QString key, QVariant value) {
     const auto answer = value.toString();
-    if (!form_.contains(key) || key == "choices" || key == "story_seed" || key == "backers" || key=="partner" || key=="mission_draft" || key=="home_replies" || key=="home_offer" || key=="company_draft" ||
+    if (!form_.contains(key) || key == "choices" || key == "backers" || key=="partner" || key=="mission_draft" || key=="home_replies" || key=="home_offer" || key=="company_draft" ||
         key=="appearance" || key=="style" || answer.size() > 128 ||
         form_.value(key).toString() == answer) return;
     if (key=="route" && answer=="hired_ceo" && beat_=="home") return;
@@ -564,6 +600,7 @@ void FoundingController::setField(QString key, QVariant value) {
     if(key=="orientation" && std::ranges::find(content::founder_orientations,answer.toStdString())==content::founder_orientations.end()) return;
     if(key=="pronouns" && !pronounOptions().contains(answer)) return;
     if(key=="investment") {bool ok=false;const auto dollars=answer.toLongLong(&ok);if(!ok || dollars < -1 || dollars>10000000000)return;}
+    if(key=="story_seed") {bool ok=false;(void)answer.toULongLong(&ok);if(!ok)return;}
     const bool was_ceo=form_.value("route")=="hired_ceo";
     form_[key] = answer;
     if(key=="gender" || key=="birth_sex") {
@@ -582,6 +619,7 @@ void FoundingController::setField(QString key, QVariant value) {
     }
     if (was_ceo && form_.value("route")!="hired_ceo") form_["company"]=form_.value("company_draft");
     if (key == "leg" && answer != "genius") form_["researcher"] = "first_hire";
+    if (key == "story_seed" || key == "leg" || key == "family" || key == "legal_form") pruneChoices();
     deriveOpening();
     saveDraft();
     emit changed();
@@ -616,7 +654,11 @@ void FoundingController::deriveOpening() {
     auto route=form_.value("route").toString();
     if(route=="bootstrap" && content::founding_option(catalog_->routes,"bootstrap").family=="rich" && form_.value("family")!="rich" && form_.value("leg")!="political") route=form_.value("legal_form")=="nonprofit"?"mission_director":"investment";
     form_["route"]=route;
-    form_["researcher"]=form_.value("leg")=="genius"?"founder":"none";
+    bool can_research=(form_.value("leg")=="genius");
+    if(!can_research) {
+        try { can_research=content::founding_terms(*catalog_,selection(),false).doctorate_count>0; } catch(...) {}
+    }
+    form_["researcher"]=can_research?"founder":"none";
     form_["office"]=(route=="hired_ceo" || route=="partnership")?"shared":"home";
     form_["difficulty"]="";
     if(route!="investment" && route!="mission_director") form_["backers"]=QStringList{};
@@ -647,6 +689,14 @@ QString FoundingController::portrait() const {
     for(const auto& part:form_.value("style").toList()) url+='/'+QString::number(part.toInt());
     return url;
 }
+QString FoundingController::portraitForStage(QString stage) const {
+    core::LifeStage parsed=core::LifeStage::adult;
+    if(!core::try_parse_life_stage(stage.toStdString(),parsed)) parsed=core::LifeStage::adult;
+    return portrait_url(selection().appearance,parsed);
+}
+QString FoundingController::portraitForAge(int age) const {
+    return portrait_url(selection().appearance,std::max(0,age));
+}
 QVariantList FoundingController::appearanceParts() const {
     QVariantList rows;
     const QStringList labels{tr("Head"),tr("Hair style"),tr("Nose"),tr("Ears"),tr("Mouth"),tr("Chin"),tr("Neck"),tr("Eyes"),tr("Brows"),tr("Facial hair"),tr("Glasses"),tr("Skin tone"),tr("Hair color"),tr("Clothing"),tr("Background")};
@@ -676,17 +726,78 @@ void FoundingController::cycleAppearance(int part,int direction) {
     saveDraft();emit changed();
 }
 
+void FoundingController::pruneChoices() {
+    if (!catalog_) return;
+    auto choices = form_.value("choices").toMap();
+    if (choices.isEmpty()) return;
+    for (;;) {
+        bool pruned = false;
+        form_["choices"] = choices;
+        const auto updated = selection();
+        const auto active_scenes = content::formative_scenes(*catalog_, updated);
+        std::map<QString, const content::FormativeScene*> active_map;
+        for (const auto* ch : active_scenes) active_map.emplace(text(ch->id), ch);
+        for (auto it = choices.begin(); it != choices.end();) {
+            if (!active_map.contains(it.key())) {
+                it = choices.erase(it);
+                pruned = true;
+                continue;
+            }
+            const auto* sc = active_map.at(it.key());
+            const auto sc_cap = content::scene_max_selections(*sc, updated);
+            const auto sc_traits = content::formative_traits_before(*catalog_, updated, sc->id);
+            const auto stored_val = it.value().toString().toStdString();
+            const auto tokens = content::parse_formative_choices(stored_val);
+            QStringList kept;
+            for (const auto tok : tokens) {
+                if (kept.size() >= static_cast<qsizetype>(sc_cap)) break;
+                const auto ch_it = std::ranges::find(sc->choices, tok, &content::FoundingOption::id);
+                if (ch_it != sc->choices.end() && content::option_ineligibility(*ch_it, updated, sc_traits).empty())
+                    kept.push_back(text(std::string{tok}));
+            }
+            const QString next_val = kept.join(',');
+            if (next_val.isEmpty()) { it = choices.erase(it); pruned = true; }
+            else {
+                if (next_val != it.value().toString()) { *it = next_val; pruned = true; }
+                ++it;
+            }
+        }
+        if (!pruned) break;
+    }
+    form_["choices"] = choices;
+}
+
 void FoundingController::choose(QString scene, QString id) {
     if (!catalog_) return;
     const auto found = std::ranges::find(catalog_->scenes, scene.toStdString(), &content::FormativeScene::id);
-    if (found == catalog_->scenes.end() ||
-        std::ranges::find(found->choices, id.toStdString(), &content::FoundingOption::id) == found->choices.end()) return;
+    if (found == catalog_->scenes.end()) return;
+    const auto opt = std::ranges::find(found->choices, id.toStdString(), &content::FoundingOption::id);
+    if (opt == found->choices.end()) return;
+    const auto current_sel = selection();
+    const auto cap = content::scene_max_selections(*found, current_sel);
+    const auto traits_before = content::formative_traits_before(*catalog_, current_sel, found->id);
+    const bool allowed = content::option_ineligibility(*opt, current_sel, traits_before).empty();
     auto choices = form_.value("choices").toMap();
-    choices[scene] = id;
+    if (cap > 1) {
+        QStringList existing;
+        const auto current_choices_str = choices.value(scene).toString().toStdString();
+        for (const auto tok : content::parse_formative_choices(current_choices_str))
+            existing.push_back(text(std::string{tok}));
+        if (existing.contains(id)) existing.removeAll(id);
+        else if (allowed && existing.size() < static_cast<qsizetype>(cap)) existing.push_back(id);
+        else return;
+        if (existing.isEmpty()) choices.remove(scene);
+        else choices[scene] = existing.join(',');
+    } else {
+        if (!allowed) return;
+        choices[scene] = id;
+    }
+    if (scene == "elem_classroom") form_["sociability"] = (id == "outgoing") ? QStringLiteral("outgoing") : QStringLiteral("introverted");
+    else if (scene == "elem_playground") form_["activity"] = (id == "athletic") ? QStringLiteral("athletic") : QStringLiteral("sedentary");
+    else if (scene == "elem_project") form_["disposition"] = (id == "impulsive") ? QStringLiteral("impulsive") : QStringLiteral("deliberate");
     form_["choices"] = choices;
-    std::set<QString> active;for(const auto* chapter:content::formative_scenes(*catalog_,selection()))active.insert(text(chapter->id));
-    for(auto it=choices.begin();it!=choices.end();)if(!active.contains(it.key()))it=choices.erase(it);else ++it;
-    form_["choices"] = choices;
+    pruneChoices();
+    deriveOpening();
     saveDraft();
     emit changed();
 }

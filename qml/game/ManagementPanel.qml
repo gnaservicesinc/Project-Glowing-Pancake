@@ -122,7 +122,17 @@ ColumnLayout {
         Copy { objectName: selection.objectName.length > 0 ? selection.objectName + "Detail" : ""; text: selection.rows.selectedRow.detail || ""; visible: text.length > 0 }
     }
 
-    Copy { visible: !campaign.paused; text: qsTr("Time is running. Pause to change projects, purchases and customer promises."); color: "#ffd897" }
+    Rectangle {
+        visible: !campaign.paused
+        Layout.fillWidth: true
+        implicitHeight: pauseBanner.implicitHeight + 16
+        radius: 9; color: "#2c241f"; border.color: "#cfa063"
+        RowLayout {
+            id: pauseBanner; anchors.fill: parent; anchors.margins: 8; spacing: 8
+            Rectangle { width: 8; height: 8; radius: 4; color: "#efc389" }
+            Copy { text: qsTr("Time is running — pause to change projects, purchases and customer promises."); color: "#ffd897" }
+        }
+    }
     Flow {
         Layout.fillWidth: true
         spacing: 6

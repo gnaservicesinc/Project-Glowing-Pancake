@@ -45,7 +45,7 @@ void schedule_world_smoke(QQuickWindow& window,pgp::bridge::CampaignController& 
             if(devices && state->resumed && (campaign.world()->navigation().value("app")!="lab" || window.property("room").toString()!="lab" || window.property("activeDevice").toString()!="tablet" || !window.property("deviceOpen").toBool())) {fail("Tablet application navigation did not restore automatically");return;}
             if(state->resumed && window.property("menuVisible").toBool()) {fail("Launch did not resume automatically");return;}
             if(!state->resumed) {
-                auto* founding=campaign.founding();founding->reset();founding->setField("family","rich");
+                auto* founding=campaign.founding();founding->reset();founding->setField("family","rich");founding->setField("route","bootstrap");
                 if(workplaces) founding->setField("office","home");
                 pgp::bridge::complete_formative_fixture(*founding);
                 campaign.startFounderCampaign();
@@ -532,7 +532,7 @@ void schedule_decision_smoke(QQuickWindow& window,pgp::bridge::CampaignControlle
         case 0:
             state->resumed=campaign.currentCampaign();
             if(!state->resumed) {
-                auto* founder=campaign.founding();founder->reset();founder->setField("family","rich");founder->setField("office","leased");
+                auto* founder=campaign.founding();founder->reset();founder->setField("family","rich");founder->setField("route","bootstrap");founder->setField("office","leased");
                 pgp::bridge::complete_formative_fixture(*founder);
                 campaign.startFounderCampaign();
             }

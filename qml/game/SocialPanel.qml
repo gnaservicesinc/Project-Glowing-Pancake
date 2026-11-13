@@ -62,6 +62,14 @@ ColumnLayout {
                 }
                 ColumnLayout {
                     Layout.fillWidth: true
+                    visible: !!panel.person.rival && !panel.person.concern
+                    spacing: 8
+                    Copy {visible:!!panel.person.organization;text:panel.person.organization || "";color:"#c0d8d2"}
+                    Copy {visible:!!panel.person.memory;text:panel.person.memory || "";font.italic:true;color:"#e2c7bd"}
+                    Copy {visible:!!panel.person.blocker;text:panel.person.blocker || "";color:"#d7b2a6"}
+                }
+                ColumnLayout {
+                    Layout.fillWidth: true
                     visible: !panel.person.rival
                     spacing: 12
                     Copy {visible:!!panel.person.organization;text:panel.person.organization || "";color:"#c0d8d2"}

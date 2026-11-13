@@ -13,7 +13,6 @@ Usage: ./make.sh [options]
   --package        Build and stage the Mac game app with Qt, icon and resources
   --enable-debugging  Build Debug with developer diagnostics (--debugging/--debug aliases)
   --enable-distribution   Release game without development tools
-  --disable-distribution  Keep development tools (default); both flags accept =true or =false
   --enable-tests   Enable test targets and GUI checks, without running tests
   --portable       Disable native-CPU tuning for a portable build
   --test           Build, then run CTest; failures return a nonzero exit code

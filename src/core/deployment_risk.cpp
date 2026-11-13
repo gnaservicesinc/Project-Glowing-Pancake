@@ -72,8 +72,9 @@ DeploymentRiskSample draw_sample(const SimulationState& s,const Release& release
     const auto draw=stream.bounded(10000);
     const auto now=from_ordinal(day);
     const auto offset=stream.bounded(days_in_month(now.year,now.month));
+    const auto probability=scale_risk_bp(r.lookup[cell].probability,founder_risk_scale_bp(s));
     return {release.record->project_id,day,advance_days(day,Days{offset}),attempts,before,stream.state(),
-        static_cast<std::uint32_t>(cell),draw<static_cast<std::uint64_t>(r.lookup[cell].probability.value())};
+        static_cast<std::uint32_t>(cell),draw<static_cast<std::uint64_t>(probability.value())};
 }
 std::string claim_id(std::string_view id) {return "deployment.claim/"+std::string(id);}
 DeploymentResponsePreview response_terms(const SimulationState& s,const DeploymentIncident& incident,MilliCUPerDay rate,std::uint32_t staff) {

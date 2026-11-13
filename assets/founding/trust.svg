@@ -22,16 +22,19 @@
   <path fill="#203437" d="M791 454h583v15H791z"/>
   <path fill="#a4b284" opacity=".18" d="M853 469h468l119 341H621z"/>
 
+  <!-- Chairs behind table, grounded pedestal base, curved table and flush report folder. -->
   <path fill="#293e41" d="M892 574v-56q0-30 32-36h78q36 0 36 33v50zm181-11v-65q0-28 28-33h72q31 0 31 30v60zm158-6v-62q0-22 26-27h68q33 0 33 28v83z"/>
   <path d="M907 531v-11q0-17 20-23h70m89 20v-17q0-17 16-21h67m73 39v-20q0-15 16-17h59" stroke="#5e7c71" stroke-width="3" fill="none"/>
+  <path fill="#1f3134" opacity=".4" d="M905 786l110-14 26 18-120 12zm272-50l110-14 28 18-122 12z"/>
+  <path fill="#25393d" d="M945 678h46v112h-46zm272-46h46v112h-46z"/>
   <path fill="#283b3e" d="M779 693q-3-44 98-82 129-48 329-70l234 60v113l-661 90z"/>
   <path fill="#668276" d="M777 670q-8-45 100-84 126-45 334-66l229 60v50l-663 122z"/>
   <path fill="#81947c" d="M777 670q-8-45 100-84 126-45 334-66l229 60-663 122z"/>
   <path d="M777 702l663-122" stroke="#aaba93" stroke-width="3" opacity=".74"/>
 
-  <path fill="#415d58" d="M1058 600l86-24 144 23-77 34-148-12z"/>
-  <path fill="#e0cda4" d="M1061 589l89-21 58 30-6 32-139-24z"/>
-  <path fill="#c7bd9e" d="M1208 598l70-26 7 26-83 32z"/>
-  <path d="M1084 592l79 14m-65-20l75 13m-66-18l58 10m56 18l52-22m-52 13l50-21" stroke="#8f8c74" stroke-width="2"/>
+  <path fill="#384f4c" opacity=".28" d="M1052 590l88-24 146 22-78 33-150-11z"/>
+  <path fill="#e0cda4" d="M1050 581l89-21 58 29-6 31-139-24z"/>
+  <path fill="#c7bd9e" d="M1197 589l70-25 7 25-83 31z"/>
+  <path d="M1073 583l79 14m-65-20l75 13m-66-18l58 10m56 18l52-22m-52 13l50-21" stroke="#8f8c74" stroke-width="2"/>
   <path fill="#283d3f" d="M0 752l523-74 254 36-32 96H0zm1322 58 118-69v69z"/>
 </svg>

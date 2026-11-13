@@ -33,8 +33,9 @@ SiteHazardSample draw_sample(const SimulationState& s,std::string_view site_id,O
     const auto offset=stream.bounded(days);
     std::uint64_t cumulative=0;
     std::uint32_t outcome=0;
+    const auto risk_scale=founder_risk_scale_bp(s);
     for (std::size_t h=0;h<site_hazard_count;++h) {
-        auto chance=static_cast<std::uint64_t>(exposure->monthly_probability[h][month.month-1]);
+        auto chance=static_cast<std::uint64_t>(scale_risk_bp(BasisPoints{static_cast<std::int64_t>(exposure->monthly_probability[h][month.month-1])},risk_scale).value());
         if (h==static_cast<std::size_t>(SiteHazard::fire)) if (const auto* maintenance=protection(s,site_id,SiteProtectionKind::maintenance,day))
             chance=mul_div_floor(chance,static_cast<std::uint64_t>(maintenance->factor.value()),10000).quotient;
         cumulative+=chance;

@@ -26,15 +26,19 @@ TeamDynamics team_dynamics(std::span<const PersonProfile* const> people) {
     TeamDynamics result;
     std::map<std::string,std::uint64_t> frequency;
     std::set<std::string> identities;
+    bool tolerant=false;
     for(const auto* p:people) {
         if(!p || !identities.insert(p->id).second) throw std::invalid_argument("A team must contain distinct people.");
         // Each trait counts once per person; identity/education/mission contribute
         // perspectives without changing a person's underlying ability scores.
-        for(const auto& trait:distinct_person_traits(*p)) ++frequency[trait];
+        for(const auto& trait:distinct_person_traits(*p)) {
+            if(trait_matches(trait,"tolerant")) tolerant=true;
+            ++frequency[trait];
+        }
     }
     std::uint64_t shared=0;
     for(const auto& [trait,count]:frequency) {result.traits.push_back(trait);shared+=count*(count-1);}
-    result.creativity=static_cast<std::uint32_t>(frequency.size());
+    result.creativity=static_cast<std::uint32_t>(frequency.size())*(tolerant?2U:1U);
     if(people.size()>1) result.compatibility_bp=shared_trait_compatibility(shared,people.size()*(people.size()-1));
     return result;
 }

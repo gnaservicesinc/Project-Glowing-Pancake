@@ -1,5 +1,6 @@
 #include "world_controller.hpp"
 #include "founding_controller.hpp"
+#include "portrait_url.hpp"
 #include <pgp/persistence/sha256.hpp>
 #include <QFile>
 #include <QResource>
@@ -16,7 +17,6 @@ static void initialize_world_baseline() {
 }
 namespace pgp::bridge {
 namespace {
-int person_age(const core::PersonProfile& profile,core::OrdinalDay now) {return profile.romantic?runtime::family_age(profile.romantic->born_on,now):core::from_ordinal(now).year-profile.birth_year;}
 QString q(const std::string& s) {return QString::fromStdString(s);}
 QVariantMap moodRow(const core::EmployeeMood& mood) {
     QVariantList factors;
@@ -38,12 +38,6 @@ QVariantMap moodRow(const core::EmployeeMood& mood) {
         mood.score>=45?QObject::tr("Steady"):mood.score>=30?QObject::tr("Frustrated"):QObject::tr("Strained")},
         {"temperament",q(mood.temperament)},{"factors",factors},{"amenities",amenities.join(QStringLiteral(", "))}};
 }
-QString portraitUrl(const core::PortraitRecipe& recipe) {
-    QString url=QStringLiteral("image://portraits/%1").arg(recipe.kit);
-    for(auto part:recipe.parts) url+='/'+QString::number(part);
-    for(auto part:recipe.style) url+='/'+QString::number(part);
-    return url;
-}
 QString skillNames(const core::SimulationState& s,const core::PersonProfile& p) {
     QStringList names;
     if(const auto* rules=core::talent_rules(s))for(const auto& id:p.skills) {
@@ -53,9 +47,9 @@ QString skillNames(const core::SimulationState& s,const core::PersonProfile& p) 
     return names.isEmpty()?QString{}:QObject::tr("\nSkills · %1").arg(names.join(" · "));
 }
 QVariantMap profileRow(const core::PersonProfile& p,core::OrdinalDay now,QString status) {
-    return {{"id",q(p.id)},{"portrait",portraitUrl(p.portrait)},{"name",q(p.name)},{"initials",q(p.name).section(' ',0,0).left(1)+q(p.name).section(' ',-1).left(1)}, {"role",q(p.role)},
+    return {{"id",q(p.id)},{"portrait",portrait_url(p,now)},{"name",q(p.name)},{"initials",q(p.name).section(' ',0,0).left(1)+q(p.name).section(' ',-1).left(1)}, {"role",q(p.role)},
         {"detail",QObject::tr("%1 · %2 · Age %3 · %4 years of experience\n%5\nResearch %6 · Engineering %7 · Evaluation %8\n%9")
-            .arg(q(p.gender),q(p.pronouns)).arg(person_age(p,now))
+            .arg(q(p.gender),q(p.pronouns)).arg(portrait_person_age(p,now))
             .arg(p.experience+static_cast<unsigned>(std::max(0,core::from_ordinal(now).year-core::from_ordinal(p.applied_on).year)))
             .arg(q(p.education)).arg(p.research).arg(p.engineering).arg(p.evaluation).arg(status)}, {"bio",q(p.bio)}};
 }
@@ -216,10 +210,12 @@ QString WorldController::setting() const {
 QVariantMap WorldController::founder() const {
     if(!snapshot_) return {};
     const auto& w=snapshot_->checkpoint.world;
-    const auto name=w.identity?q(w.identity->founder_name):tr("Founder");
+    const auto raw_name=w.identity?q(w.identity->founder_name):tr("Founder");
+    const bool has_doctorate=core::founder_has_trait(w.simulation,"Title: Dr.");
+    const auto name=has_doctorate?QStringLiteral("Dr. ")+raw_name:raw_name;
     QString detail=w.identity?q(w.identity->founder_pronouns):QString{};
     if(w.founding) detail+=tr(" · %1 · Age %2").arg(q(w.founding->gender)).arg(core::from_ordinal(w.simulation.date).year-1997);
-    auto portrait=core::make_portrait(w.root_seed,"founder/"+name.toStdString());bool managing=false;
+    auto portrait=core::make_portrait(w.root_seed,"founder/"+raw_name.toStdString());bool managing=false;
     if(w.founding) portrait=w.founding->appearance;
     const auto* manager=core::operations_manager_on(w.simulation,w.simulation.date);
     if(w.simulation.management && w.simulation.management->people) for(const auto& employee:w.simulation.management->people->employees)
@@ -262,7 +258,10 @@ QVariantMap WorldController::founder() const {
                 bio+=tr("\nQueer community recognition: +%1 company prestige · +%2 public interest. Company mood and funding conversations use these values.").arg(people.community_prestige).arg(people.community_buzz);
         }
     }
-    return {{"id","founder"},{"portrait",portraitUrl(portrait)},{"name",name},{"initials",name.section(' ',0,0).left(1)+name.section(' ',-1).left(1)},
+    const int founder_age=w.romance
+        ? runtime::family_age(w.romance->founder.born_on,w.simulation.date)
+        : std::max(0,core::from_ordinal(w.simulation.date).year-1997);
+    return {{"id","founder"},{"portrait",portrait_url(portrait,founder_age)},{"name",name},{"initials",raw_name.section(' ',0,0).left(1)+raw_name.section(' ',-1).left(1)},
         {"detail",detail},{"role",managing?tr("Founder / operations manager"):w.founding && w.founding->route=="hired_ceo"?tr("Chief executive"):tr("Founder")},
         {"bio",bio},{"transgender",w.founding && content::transgender_founder(*w.founding)}};
 }
@@ -287,9 +286,9 @@ QVariantList WorldController::people() const {
             else if(s.management->catalog.people->dismissal) workplace+=tr("\nInherited salary %1/month")
                 .arg(QLocale{QLocale::English,QLocale::UnitedStates}.toCurrencyString(static_cast<double>(core::employee_monthly_salary(s,employee).value())/100));
             const auto years=std::max(0,core::from_ordinal(s.date).year-core::from_ordinal(p.applied_on).year);
-            auto row=QVariantMap{{"id",q(p.id)},{"portrait",portraitUrl(p.portrait)},{"name",q(p.name)},{"initials",q(p.name).section(' ',0,0).left(1)+q(p.name).section(' ',-1).left(1)}, {"role",managing?tr("HQ operations manager"):q(p.role)},
+            auto row=QVariantMap{{"id",q(p.id)},{"portrait",portrait_url(p,s.date)},{"name",q(p.name)},{"initials",q(p.name).section(' ',0,0).left(1)+q(p.name).section(' ',-1).left(1)}, {"role",managing?tr("HQ operations manager"):q(p.role)},
                 {"detail",tr("%1 · %2 · Age %3 · %4 years of experience\n%5\nResearch %6 · Engineering %7 · Evaluation %8\n%9")
-                    .arg(q(p.gender),q(p.pronouns)).arg(person_age(p,s.date)).arg(p.experience+static_cast<unsigned>(years))
+                    .arg(q(p.gender),q(p.pronouns)).arg(portrait_person_age(p,s.date)).arg(p.experience+static_cast<unsigned>(years))
                     .arg(q(p.education)).arg(p.research).arg(p.engineering).arg(p.evaluation)
                     .arg(s.date<employee.ready_on?tr("Onboarding until %1").arg(q(core::iso_date(employee.ready_on))):managing?tr("Dedicated to branch coordination; one staff allocation is reserved"):tr("Onboarding complete"))+workplace+([&]{QStringList traits;for(const auto& t:core::visible_traits(s,p))traits.push_back(q(t));return QStringLiteral("\n")+traits.join(" · ")+skillNames(s,p);})()}, {"bio",q(p.bio)}};
             if(const auto mood=moods.find(p.id);mood!=moods.end()) {
@@ -348,7 +347,7 @@ QVariantList WorldController::contacts() const {
         const auto found=std::ranges::find_if(roster.employees,[&](const auto& row){return row.terms.profile.id==contact.person;});
         if(found==roster.employees.end()) continue;
         const auto& person=found->terms.profile;
-        rows.push_back(QVariantMap{{"id",q(person.id)},{"name",q(person.name)},{"portrait",portraitUrl(person.portrait)},
+        rows.push_back(QVariantMap{{"id",q(person.id)},{"name",q(person.name)},{"portrait",portrait_url(person,world.simulation.date)},
             {"role",found->departed_on?tr("Former employee"):q(person.role)}});
     }
     return rows;
@@ -361,7 +360,7 @@ QVariantList WorldController::roomContacts(int room) const {
     for(const auto& employee:state.management->people->employees) {
         const auto& person=employee.terms.profile;
         if(core::employee_contact_room(state,person.id)!=static_cast<std::uint32_t>(room)) continue;
-        rows.push_back(QVariantMap{{"id",q(person.id)},{"name",q(person.name)},{"portrait",portraitUrl(person.portrait)},{"role",q(person.role)}});
+        rows.push_back(QVariantMap{{"id",q(person.id)},{"name",q(person.name)},{"portrait",portrait_url(person,state.date)},{"role",q(person.role)}});
     }
     return rows;
 }
@@ -440,7 +439,7 @@ QVariantMap WorldController::contactThread(QString person) const {
         employee->departed_on?tr("Former employee"):tr("Current employee");
     const QVariantList topics{topic("check_in","contactCheckIn",tr("How's work going?"),checked_in),
         topic("workstation","contactWorkstation",tr("Ask about their computer"),checked_workstation)};
-    return {{"id",person},{"name",q(profile.name)},{"portrait",portraitUrl(profile.portrait)},{"role",q(profile.role)},
+    return {{"id",person},{"name",q(profile.name)},{"portrait",portrait_url(profile,state.date)},{"role",q(profile.role)},
         {"exchanged",contact!=roster.contacts.end()},{"current",!employee->departed_on},{"topics",topics},{"messages",messages},
         {"status",employment_status},{"canDismiss",!employee->departed_on && state.management->catalog.people->dismissal.has_value()},
         {"room",core::employee_contact_room(state,id)}};
@@ -483,7 +482,7 @@ QVariantMap WorldController::dismissalQuote(QString person,int room) const {
         if(quote.operations_manager) detail+=tr("\n\nTheir operations manager appointment will end.");
         detail+=tr("\n\nTheir conversation remains available in Messages.");
         if(!result.accepted()) detail+="\n\n"+q(result.explanation);
-        return {{"allowed",result.accepted()},{"detail",detail},{"portrait",portraitUrl(employee->terms.profile.portrait)},
+        return {{"allowed",result.accepted()},{"detail",detail},{"portrait",portrait_url(employee->terms.profile,state.date)},
             {"name",q(employee->terms.profile.name)},{"severance",money(quote.severance)},{"payroll",money(quote.monthly_salary)}};
     } catch(const std::exception& error) {return {{"allowed",false},{"detail",q(error.what())}};}
 }
@@ -505,9 +504,9 @@ QVariantList WorldController::applicants() const {
     for(const auto& a:s.management->people->queued_applicants)candidates.emplace_back(&a,true);
     for(const auto& [candidate,queued]:candidates) {
         const auto& applicant=*candidate;const auto& p=applicant.profile;
-        auto row=QVariantMap{{"id",q(p.id)},{"portrait",portraitUrl(p.portrait)},{"name",q(p.name)},{"role",q(p.role)},{"initials",q(p.name).left(1)},
+        auto row=QVariantMap{{"id",q(p.id)},{"portrait",portrait_url(p,s.date)},{"name",q(p.name)},{"role",q(p.role)},{"initials",q(p.name).left(1)},
             {"detail",tr("%1 · %2 · Age %3 · %4 years of experience\n%5\nResearch %6 · Engineering %7 · Evaluation %8 · Mission fit %9/100\n%10/month · %11 signing · %12 days onboarding\nEvaluation work credit: %13%")
-                .arg(q(p.gender),q(p.pronouns)).arg(person_age(p,s.date)).arg(p.experience).arg(q(p.education))
+                .arg(q(p.gender),q(p.pronouns)).arg(portrait_person_age(p,s.date)).arg(p.experience).arg(q(p.education))
                 .arg(p.research).arg(p.engineering).arg(p.evaluation).arg(p.mission_fit).arg(money(applicant.salary),money(applicant.signing))
                 .arg(s.management->catalog.people->onboarding.value()).arg(static_cast<double>(applicant.evaluation_credit.value())/100)}, {"bio",q(p.bio)}};
         std::vector<const core::PersonProfile*> team;

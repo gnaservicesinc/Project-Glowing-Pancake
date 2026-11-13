@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="810" viewBox="0 0 1440 810">
+  <title>Elementary classroom, morning sunlight across wooden desks</title>
+  <defs>
+    <linearGradient id="wall" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#22323a"/><stop offset="1" stop-color="#606d62"/>
+    </linearGradient>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop stop-color="#7fa2aa"/><stop offset="1" stop-color="#ebd5a7"/>
+    </linearGradient>
+    <linearGradient id="board" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#27473e"/><stop offset="1" stop-color="#395c4e"/>
+    </linearGradient>
+  </defs>
+  <path fill="url(#wall)" d="M0 0h1440v810H0z"/>
+  <path fill="#2d3e44" d="M0 60l740-26v584L0 735z"/>
+  <path fill="#384947" d="M740 34h700v584H740z"/>
+  <path fill="#243137" d="M0 735l740-117h700v192H0z"/>
+  <path fill="#5d6356" d="M680 618h760v192H440z"/>
+  <!-- Chalkboard on classroom wall -->
+  <rect x="760" y="96" width="590" height="252" rx="4" fill="#6f533c"/>
+  <rect x="774" y="110" width="562" height="224" fill="url(#board)"/>
+  <path d="M808 164h140m-140 28h196m26-26l44-22 36 22m-36-22v42m124-22h112" stroke="#dce5cd" stroke-width="4" stroke-linecap="round" opacity=".52"/>
+  <path d="M1200 220c28-20 68-18 88 10s-4 58-42 60c-30 2-62-22-46-70z" fill="none" stroke="#e9c88c" stroke-width="3" opacity=".48"/>
+  <path fill="#6d543e" d="M750 346h610v16H750z"/>
+  <rect x="860" y="338" width="38" height="8" rx="2" fill="#e8e2d0"/>
+  <rect x="1080" y="336" width="52" height="10" rx="2" fill="#8b6d55"/>
+  <!-- Tall classroom side window and sunbeam -->
+  <rect x="30" y="88" width="290" height="390" fill="#25363b"/>
+  <rect x="44" y="102" width="262" height="362" fill="url(#sky)"/>
+  <path fill="#627b69" d="M44 370l94-44 82 26 86-38v150H44z"/>
+  <path d="M175 102v362M44 282h262" stroke="#2d4142" stroke-width="9"/>
+  <path fill="#f2d59b" opacity=".13" d="M306 102l480 708H410L44 464z"/>
+  <!-- Student chair & desk: legs behind apron before top surface -->
+  <path fill="#202a2e" opacity=".36" d="M848 776l78-10 14 14-84 10zm422-18l72-8 14 14-78 8z"/>
+  <path fill="#3b545a" d="M976 544q2-40 38-46h96q36 4 36 44v100H976z"/>
+  <path fill="#2e3f45" d="M876 626h22v152h-22zm412-16h22v154h-22z"/>
+  <path fill="#52463a" d="M852 572l474-20v68l-474 20z"/>
+  <path fill="#9d7850" d="M840 548l496-24 68 38-498 28z"/>
+  <path fill="#c49a68" d="M840 548l496-24 68 38-498 28z"/>
+  <path d="M840 590l498-28" stroke="#e4be8b" stroke-width="3" opacity=".55"/>
+  <!-- Grounded backpack beside desk legs -->
+  <path fill="#1e292b" opacity=".34" d="M774 756l102-12 20 20-108 12z"/>
+  <path fill="#b86b4b" d="M786 648q4-36 46-40t50 36l8 106-108 10z"/>
+  <path fill="#8e4e35" d="M798 686h76v54h-76z"/>
+  <!-- Workbook, crayons, paper plane on desk with shadows -->
+  <path fill="#5a4530" opacity=".28" d="M968 566l158-16 42 22-156 18zm222-18l84-10 20 14-82 11z"/>
+  <path fill="#f0e4c8" d="M962 558l158-16 42 20-156 18z"/>
+  <path d="M982 558l132-13m-118 20l132-13" stroke="#9b8a72" stroke-width="2"/>
+  <path fill="#e7efe9" d="M1196 534l84-14-44 26-24-4z"/>
+  <path fill="#b6c6bf" d="M1196 534l84-14-56 18z"/>
+  <circle cx="1298" cy="542" r="14" fill="#c95b49"/>
+  <path fill="#6d8d59" d="M1298 528c4-10 14-10 16-4s-8 8-16 4z"/>
+</svg>

@@ -88,7 +88,10 @@ void validate_succession(const SimulationState& s,bool deep) {
     if(!deep) return;
     validate_founder_departure(s);
     validate_succession_catalog(c);
-    validate_succession_opening(c,s.accounts->starts_on,s.end_date);
+    const auto formation_day=(s.infrastructure && s.infrastructure->workplace)
+        ? s.infrastructure->workplace->starts_on
+        : s.accounts->starts_on;
+    validate_succession_opening(c,formation_day,s.end_date);
     Cents paid=c.personal_cash;std::vector<Cents> cash_prefix{Cents{0}};cash_prefix.reserve(s.accounts->postings.size()+1);
     for(const auto& posting:s.accounts->postings) {
         if(founder_payment(posting)) paid=checked_unit_add(paid,posting.amount);
@@ -105,7 +108,7 @@ void validate_succession(const SimulationState& s,bool deep) {
         const auto& term=actor.terms[i];
         if(term.portrait) validate_portrait(*term.portrait);
         if(term.id!=i+1 || !in_time(term.starts_on) || term.due_on!=term_due(c,term.birth_year,term.starts_on,term.caretaker,term.asi.has_value()) || term.due_on<=term.starts_on ||
-            (i==0?term.starts_on!=s.accounts->starts_on:term.starts_on<=actor.terms[i-1].starts_on || actor.terms[i-1].ended_on!=term.starts_on) ||
+            (i==0?term.starts_on!=formation_day:term.starts_on<=actor.terms[i-1].starts_on || actor.terms[i-1].ended_on!=term.starts_on) ||
             (i+1==actor.terms.size()?term.ended_on.has_value():!term.ended_on || *term.ended_on>term.due_on))
             invalid("An executive term bypassed its actual handover or finite retirement boundary.");
         Cents salary{0};

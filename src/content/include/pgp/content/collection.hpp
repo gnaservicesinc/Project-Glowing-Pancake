@@ -209,6 +209,8 @@ struct ScenarioOpening {
     std::vector<core::CapacitySource> capacity_sources;
     core::Cents setup_cost{0};
     std::optional<core::Debt> startup_debt{};
+    core::OrdinalDay launch_day{0};
+    std::optional<core::Debt> student_debt{};
 };
 [[nodiscard]] ScenarioOpening scenario_opening(const ScenarioDefinition&, std::string_view background={},
                                                std::string_view owner="company.player",std::string_view difficulty={},const FoundingSelection* founding=nullptr);

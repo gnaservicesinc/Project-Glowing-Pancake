@@ -98,6 +98,12 @@ struct TeamDynamics {
     std::uint32_t creativity=0,compatibility_bp=0;
     std::vector<std::string> traits;
 };
+inline constexpr std::size_t person_trait_limit = 32;
+[[nodiscard]] bool trait_matches(std::string_view actual, std::string_view target) noexcept;
+[[nodiscard]] bool person_has_trait(const PersonProfile&, std::string_view target) noexcept;
+[[nodiscard]] bool founder_has_trait(const SimulationState&, std::string_view target) noexcept;
+[[nodiscard]] BasisPoints founder_risk_scale_bp(const SimulationState&) noexcept;
+[[nodiscard]] BasisPoints scale_risk_bp(BasisPoints chance, BasisPoints scale_bp) noexcept;
 [[nodiscard]] TeamDynamics team_dynamics(std::span<const PersonProfile* const>);
 [[nodiscard]] TeamDynamics research_team(const SimulationState&,std::span<const std::string>,
     const std::map<std::string,std::vector<std::string>,std::less<>>& original_traits={});

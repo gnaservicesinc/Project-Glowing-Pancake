@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="810" viewBox="0 0 1440 810">
+  <title>University sandstone arcade and quad lawn</title>
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop stop-color="#35586d"/><stop offset="1" stop-color="#d9cba1"/>
+    </linearGradient>
+    <linearGradient id="stone" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#9e8768"/><stop offset="1" stop-color="#6b5c4a"/>
+    </linearGradient>
+  </defs>
+  <path fill="url(#sky)" d="M0 0h1440v810H0z"/>
+  <path fill="#5d776c" d="M0 440l260-58 340 34 320-46 520 50v390H0z"/>
+  <!-- Campus bell tower and dome silhouette -->
+  <path fill="#6d645c" d="M980 140h90v260h-90z"/>
+  <path fill="#a35b43" d="M968 140l57-56 57 56z"/>
+  <circle cx="1025" cy="186" r="14" fill="#ecd5a4"/>
+  <!-- Quad colonnade arcade on the right -->
+  <path fill="url(#stone)" d="M740 190h700v390H740z"/>
+  <path fill="#8e4e3a" d="M720 190l40-54h680v54z"/>
+  <path fill="#27343c" d="M800 580V340q0-66 64-66t64 66v240zm196 0V340q0-66 64-66t64 66v240zm196 0V340q0-66 64-66t64 66v240z"/>
+  <path fill="#53493e" d="M740 572h700v32H740z"/>
+  <!-- Stone courtyard walkway and grass -->
+  <path fill="#38544b" d="M0 572h1440v238H0z"/>
+  <path fill="#7c7366" d="M580 572h860v238H340z"/>
+  <!-- Reading terrace bench & open notebook/laptop -->
+  <path fill="#232c2d" opacity=".38" d="M844 762l480-22 22 18-496 22z"/>
+  <path fill="#394345" d="M892 642h28v126h-28zm356-16h28v126h-28z"/>
+  <path fill="#8f7051" d="M852 608l484-22 44 22-486 24z"/>
+  <path fill="#b89469" d="M852 608l484-22 44 22-486 24z"/>
+  <!-- Textbooks + closed laptop + coffee cup grounded on terrace table -->
+  <path fill="#4a3a2d" opacity=".28" d="M960 604l140-10 34 14-144 12zm186-16l106-8 24 12-108 10z"/>
+  <path fill="#3b5e66" d="M964 592l132-10 30 12-134 11z"/>
+  <path fill="#9d5846" d="M972 578l124-9 26 11-126 11z"/>
+  <path fill="#e3d3af" d="M982 566l112-8 24 10-114 9z"/>
+  <path fill="#293944" d="M1146 582l116-8 26 12-118 10z"/>
+  <path fill="#354e5d" d="M1148 510h114v70h-114z" transform="skewX(-4)"/>
+  <rect x="1310" y="556" width="26" height="30" rx="4" fill="#eae0ca"/>
+</svg>

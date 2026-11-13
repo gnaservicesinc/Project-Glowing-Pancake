@@ -597,7 +597,9 @@ void manage_headquarters(SimulationState& s,const HeadquartersAction& action,Cen
             h.land.push_back({id,a.market,a.plan,s.date,q.price});add_recurring(*s.accounts,{key("hq.land.tax/",id),q.monthly,s.date,std::nullopt,"Property tax on company-owned land"});
         } else if constexpr(std::is_same_v<A,BuildHQ>) {
             const auto q=preview_hq_build(s,a);affordable(s,q.maximum,protected_cash);const auto& c=find(r.contractors,a.contractor);
-            SplitMix64 rng{h.stream};const bool delayed=rng.bounded(10000)<c.delay_bp,overrun=rng.bounded(10000)<c.overrun_bp;
+            SplitMix64 rng{h.stream};const auto risk_scale=founder_risk_scale_bp(s);
+            const bool delayed=rng.bounded(10000)<static_cast<std::uint64_t>(scale_risk_bp(BasisPoints{static_cast<std::int64_t>(c.delay_bp)},risk_scale).value());
+            const bool overrun=rng.bounded(10000)<static_cast<std::uint64_t>(scale_risk_bp(BasisPoints{static_cast<std::int64_t>(c.overrun_bp)},risk_scale).value());
             const auto delay=delayed?1+rng.bounded(std::max(1U,c.maximum_delay_days)):0;
             const auto extra=overrun?fraction(q.price,1+rng.bounded(std::max(1U,c.maximum_overrun_bp)),10000):Cents{0};
             const auto finish=advance_days(q.ready_on,Days{static_cast<std::int64_t>(delay)});if(finish>=s.end_date) invalid("The contract could not finish within the campaign.");

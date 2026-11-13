@@ -9,7 +9,7 @@ class PortraitImages final : public QQuickImageProvider {
 public:
     PortraitImages();
     QImage requestImage(const QString&,QSize*,const QSize&) override;
-    QByteArray svg(const core::PortraitRecipe&) const;
+    QByteArray svg(const core::PortraitRecipe&, core::LifeStage = core::LifeStage::adult) const;
 private:
     QJsonObject kit_;
 };

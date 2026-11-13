@@ -168,12 +168,15 @@ void validate_governance(const SimulationState& s,bool deep) {
     std::map<std::string_view,const BoardMotion*> charter_votes;
     for(const auto& m:g.motions) if(m.kind==BoardMotionKind::charter) charter_votes.emplace(m.id,&m);
 
+    const auto formation_day=(s.infrastructure && s.infrastructure->workplace)
+        ? s.infrastructure->workplace->starts_on
+        : s.accounts->starts_on;
     for(std::size_t i=0;i<g.charters.size();++i) {
         const auto& change=g.charters[i];const auto& charter=find(c.charters,change.charter);
         if(change.day<s.accounts->starts_on || change.day>s.date || (i && (change.day<g.charters[i-1].day || change.charter==g.charters[i-1].charter)))
             invalid("Charter history is unordered or repeats an unchanged charter");
         if(change.motion.empty()) {
-            if(i!=0 || change.day!=s.accounts->starts_on) invalid("Only formation can select a charter without a board vote");
+            if(i!=0 || change.day!=formation_day) invalid("Only formation can select a charter without a board vote");
         } else {
             const auto it=charter_votes.find(change.motion);
             if(it==charter_votes.end()) invalid("Charter amendment has no board motion");

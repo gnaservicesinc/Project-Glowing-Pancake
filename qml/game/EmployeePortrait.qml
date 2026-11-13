@@ -2,7 +2,7 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Window
 
-Button {
+AbstractButton {
     id:portrait
     property url portraitSource
     property string personName:""
@@ -13,10 +13,10 @@ Button {
     ToolTip.visible:hovered
     ToolTip.text:Accessible.name
     background:Rectangle {
-        color:portrait.hovered || portrait.visualFocus?"#d9b776":"transparent"
+        color:portrait.hovered || portrait.visualFocus?"#33d9b776":"#162533"
         radius:Math.max(8,width*0.12)
-        border.color:portrait.visualFocus?"#fff5db":"#728e85"
-        border.width:portrait.visualFocus?2:1
+        border.color:portrait.visualFocus?"#fff5db":portrait.hovered?"#efc389":"#728e85"
+        border.width:portrait.visualFocus || portrait.hovered?2:1
     }
     contentItem:Image {
         objectName:portrait.objectName+"Image"

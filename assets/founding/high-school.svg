@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="810" viewBox="0 0 1440 810">
+  <title>High school robotics and computer lab at dusk</title>
+  <defs>
+    <linearGradient id="wall" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#192331"/><stop offset="1" stop-color="#3c4d63"/>
+    </linearGradient>
+    <linearGradient id="windowSky" x1="0" y1="0" x2="0" y2="1">
+      <stop stop-color="#44627f"/><stop offset="1" stop-color="#d69c74"/>
+    </linearGradient>
+  </defs>
+  <path fill="url(#wall)" d="M0 0h1440v810H0z"/>
+  <path fill="#202c3c" d="M0 64l740-44v594L0 732z"/>
+  <path fill="#273649" d="M740 20h700v594H740z"/>
+  <path fill="#18222e" d="M0 732l740-118h700v196H0z"/>
+  <path fill="#314155" d="M700 614h740v196H480z"/>
+  <!-- High bay industrial glass looking over sunset hills -->
+  <rect x="780" y="70" width="580" height="330" fill="#1b2634"/>
+  <rect x="794" y="84" width="552" height="302" fill="url(#windowSky)"/>
+  <path fill="#4f5f70" d="M794 312l128-46 130 34 114-54 180 42v98H794z"/>
+  <path fill="#2c3a4b" d="M794 344l168-30 174 16 210-36v92H794z"/>
+  <path d="M980 84v302m182-302v302M794 234h552" stroke="#1e2a38" stroke-width="8"/>
+  <path fill="#e8b27e" opacity=".14" d="M810 386h510l120 424H560z"/>
+  <!-- Glass diagram whiteboard -->
+  <rect x="40" y="130" width="560" height="290" rx="6" fill="#2e3f52" opacity=".68"/>
+  <path d="M90 210c60-20 120 60 190 40s120-70 210-60" fill="none" stroke="#8ad1c3" stroke-width="3" opacity=".55"/>
+  <g stroke="#d5dfec" stroke-width="2" opacity=".45">
+    <path d="M90 180v170h390"/><circle cx="150" cy="240" r="14" fill="none"/><circle cx="290" cy="220" r="14" fill="none"/><circle cx="420" cy="250" r="14" fill="none"/>
+    <path d="M164 238l112-16m-112 20l112 18m28-36l102 22"/>
+  </g>
+  <!-- Lab bench with steel legs underneath top -->
+  <path fill="#141c26" opacity=".4" d="M818 776l64-8 14 12-70 8zm538-18l64-8 14 12-70 8z"/>
+  <path fill="#2b3746" d="M838 614h24v166h-24zm522-18h24v166h-24z"/>
+  <path fill="#455466" d="M800 572l620-34v62l-620 34z"/>
+  <path fill="#7b8793" d="M784 548l656-36v32l-656 38z"/>
+  <path fill="#9ca6af" d="M784 548l560-32 96 32-656 34z"/>
+  <!-- Oscilloscope, workstation monitor & soldered rover chassis with contact shadows -->
+  <path fill="#26313d" opacity=".32" d="M930 538l190-10 26 14-196 12zm270-18l130-8 24 12-136 10z"/>
+  <rect x="944" y="388" width="184" height="134" rx="8" fill="#1e2a38"/>
+  <rect x="954" y="398" width="164" height="110" rx="4" fill="#2c5364"/>
+  <path d="M976 426h96m-96 16h122m-122 16h78m-78 16h104" stroke="#9be3d0" stroke-width="3" opacity=".82"/>
+  <rect x="1024" y="522" width="24" height="22" fill="#2a3542"/>
+  <path fill="#4c6473" d="M916 552l206-12 34 12-218 14z"/>
+  <!-- Small competition rover prototype -->
+  <path fill="#3a4c5e" d="M1210 478l118-8 18 32-122 8z"/>
+  <circle cx="1228" cy="522" r="16" fill="#202a36"/><circle cx="1322" cy="516" r="16" fill="#202a36"/>
+  <circle cx="1228" cy="522" r="6" fill="#d9a66c"/><circle cx="1322" cy="516" r="6" fill="#d9a66c"/>
+</svg>

@@ -278,10 +278,12 @@ void validate_social(const SimulationState& s) {
     if(!s.management || !s.management->people)return;const auto* r=social_rules(s);const auto& state=s.management->people->social;
     if(static_cast<bool>(r)!=state.has_value())invalid("Social state and rules disagree.");if(!r)return;const auto& p=*state;
     if(p.next_meeting<s.management->people->starts_on || p.next_meeting>advance_days(s.date,Days{r->interval_days}) ||
-       (p.last_outing && *p.last_outing>s.date) || p.links.size()>8192 || p.known_traits.size()>8192 || p.founder_traits.size()>16)invalid("Social dates or size exceed their bounds.");
+       (p.last_outing && *p.last_outing>s.date) || p.links.size()>8192 || p.known_traits.size()>8192 || p.founder_traits.size()>person_trait_limit)invalid("Social dates or size exceed their bounds.");
     if(p.next_industry_meeting<s.management->people->starts_on || p.next_industry_meeting>advance_days(s.date,Days{r->interval_days}) || p.referrals.size()>8192)invalid("Industry contact dates or referrals are invalid.");
     for(const auto& [id,day]:p.referrals)if(!exists(s,id) || day>s.date || day<s.management->people->starts_on)invalid("Invalid saved recruiting referral.");
     std::set<std::string> founder_traits;for(const auto& t:p.founder_traits)if(t.empty() || t.size()>80 || !founder_traits.insert(t).second)invalid("Invalid founder trait.");
+    std::set<std::string> hostile;if(p.hostile_peers.size()>64)invalid("Too many hostile peer entries.");
+    for(const auto& id:p.hostile_peers)if(id.empty() || id=="founder" || id.size()>160 || !hostile.insert(id).second)invalid("Invalid hostile peer.");
     std::set<std::pair<std::string,std::string>> pairs;
     for(const auto& bond:p.links) {
         if(bond.first>=bond.second || !exists(s,bond.first) || !exists(s,bond.second) || social_id(s,bond.first)!=bond.first || social_id(s,bond.second)!=bond.second ||
@@ -292,8 +294,21 @@ void validate_social(const SimulationState& s) {
     }
     validate_mission_conflicts(s);
     for(const auto& [id,known]:p.known_traits) {
-        if(id=="founder" || !exists(s,id) || known.size()>16)invalid("Unknown trait disclosure recipient.");
+        if(id=="founder" || !exists(s,id) || known.size()>person_trait_limit)invalid("Unknown trait disclosure recipient.");
         const auto& all=traits(s,id);std::set<std::string> unique;for(const auto& t:known)if(std::ranges::find(all,t)==all.end() || !unique.insert(t).second)invalid("Disclosed traits must belong to this person.");
     }
+}
+bool founder_has_trait(const SimulationState& state, std::string_view target) noexcept {
+    if(!state.management || !state.management->people) return false;
+    const auto& people=*state.management->people;
+    if(people.social && std::ranges::any_of(people.social->founder_traits,[target](const auto& t){return trait_matches(t,target);}))
+        return true;
+    for(const auto& employee:people.employees)
+        if(employee.terms.profile.role=="Founder / researcher" && person_has_trait(employee.terms.profile,target))
+            return true;
+    return false;
+}
+BasisPoints founder_risk_scale_bp(const SimulationState& state) noexcept {
+    return founder_has_trait(state,"calculated risk taker")?BasisPoints{9000}:BasisPoints{10000};
 }
 }

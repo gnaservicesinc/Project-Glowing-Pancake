@@ -217,6 +217,8 @@ struct LabState {
     std::vector<ResearchInsight> insights{};
     std::vector<GeneratedDataset> generated{};
     std::vector<DataAcquisition> acquisitions{};
+    BasisPoints setback_risk_scale_bp{10000};
+    BasisPoints research_work_scale_bp{10000};
     auto operator<=>(const LabState&) const = default;
 };
 struct TrainingRequest {

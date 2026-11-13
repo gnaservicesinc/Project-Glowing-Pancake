@@ -9,6 +9,7 @@ Item {
     required property real textScale
     readonly property int typeSize: Math.round(15*textScale)
     readonly property bool narrow: width < 800
+    property string previewStage: "adult"
     Connections {
         target: editor.Window.window
         function onActiveFocusItemChanged() {
@@ -28,14 +29,65 @@ Item {
         RowLayout {
             Layout.fillWidth: true; Layout.fillHeight: true; spacing: editor.narrow ? 12 : 28
             Rectangle {
-                Layout.fillHeight: true; Layout.preferredWidth: editor.width*(editor.narrow ? 0.23 : 0.29)
-                color: "#253b48"; radius: 8; border.color: "#6e7e83"
-                Image {
-                    id: preview; objectName: "foundingPortraitPreview"
-                    anchors.centerIn: parent; width: parent.width-12; height: Math.min(width,parent.height-12)
-                    source: editor.story.portrait; fillMode: Image.PreserveAspectFit
-                    sourceSize: Qt.size(Math.ceil(width*Screen.devicePixelRatio),Math.ceil(height*Screen.devicePixelRatio))
-                    Accessible.name: qsTr("Your customized portrait"); Accessible.role: Accessible.Graphic
+                Layout.fillHeight: true; Layout.preferredWidth: editor.width*(editor.narrow ? 0.25 : 0.30)
+                color: "#253b48"; radius: 10; border.color: "#6e7e83"
+                ColumnLayout {
+                    anchors.fill: parent; anchors.margins: 8; spacing: 8
+                    Item {
+                        Layout.fillWidth: true; Layout.fillHeight: true
+                        Image {
+                            id: preview; objectName: "foundingPortraitPreview"
+                            anchors.centerIn: parent
+                            width: Math.min(parent.width, parent.height)
+                            height: width
+                            source: editor.story.portrait && editor.previewStage
+                                ? editor.story.portraitForStage(editor.previewStage) : editor.story.portrait
+                            fillMode: Image.PreserveAspectFit
+                            sourceSize: Qt.size(Math.ceil(width*Screen.devicePixelRatio),Math.ceil(height*Screen.devicePixelRatio))
+                            Accessible.name: qsTr("Your customized portrait"); Accessible.role: Accessible.Graphic
+                        }
+                    }
+                    Flow {
+                        Layout.fillWidth: true; spacing: 4
+                        Repeater {
+                            model: [
+                                {id: "baby", label: qsTr("Baby")},
+                                {id: "toddler", label: qsTr("Toddler")},
+                                {id: "kid", label: qsTr("Kid")},
+                                {id: "teen", label: qsTr("Teen")},
+                                {id: "adult", label: qsTr("Adult")},
+                                {id: "mature", label: qsTr("Midlife")},
+                                {id: "senior", label: qsTr("Senior")},
+                                {id: "elder", label: qsTr("Elder")}
+                            ]
+                            AbstractButton {
+                                required property var modelData
+                                objectName: "appearanceStage_" + modelData.id
+                                implicitWidth: stageLbl.implicitWidth + 12
+                                implicitHeight: Math.max(24, editor.typeSize * 1.45)
+                                hoverEnabled: true
+                                activeFocusOnTab: true
+                                Accessible.role: Accessible.Button
+                                Accessible.name: qsTr("Preview %1 life stage").arg(modelData.label)
+                                onClicked: editor.previewStage = modelData.id
+                                contentItem: Text {
+                                    id: stageLbl
+                                    text: parent.modelData.label
+                                    textFormat: Text.PlainText
+                                    font.pixelSize: Math.max(10, editor.typeSize * 0.72)
+                                    font.weight: editor.previewStage === parent.modelData.id ? Font.DemiBold : Font.Normal
+                                    color: editor.previewStage === parent.modelData.id ? "#18242e" : "#d8e3e6"
+                                    horizontalAlignment: Text.AlignHCenter
+                                    verticalAlignment: Text.AlignVCenter
+                                }
+                                background: Rectangle {
+                                    radius: 5
+                                    color: editor.previewStage === parent.modelData.id ? "#ffda91" : (parent.hovered ? "#355365" : "#1c2d37")
+                                    border.color: parent.activeFocus ? "#ffda91" : (editor.previewStage === parent.modelData.id ? "#ffda91" : "#556a73")
+                                }
+                            }
+                        }
+                    }
                 }
             }
             ScrollView {
@@ -66,12 +118,16 @@ Item {
                                     Layout.fillWidth: true; spacing: 4
                                     Repeater {
                                         model: modelData.palette || []
-                                        Button {
+                                        AbstractButton {
                                             required property string modelData
                                             required property int index
                                             width: Math.max(20,editor.typeSize); height: width
+                                            hoverEnabled: true
+                                            activeFocusOnTab: true
+                                            Accessible.role: Accessible.Button
                                             Accessible.name: qsTr("%1, color %2").arg(contents.parent.modelData.name).arg(index+1)
-                                            background: Rectangle { radius: width/2; color: parent.modelData; border.width: contents.parent.value === parent.index || parent.activeFocus ? 3 : 1; border.color: contents.parent.value === parent.index || parent.activeFocus ? "#ffda91" : "#82919b" }
+                                            contentItem: Item {}
+                                            background: Rectangle { radius: width/2; color: parent.modelData; border.width: contents.parent.value === parent.index || parent.activeFocus || parent.hovered ? 3 : 1; border.color: contents.parent.value === parent.index || parent.activeFocus ? "#ffda91" : parent.hovered ? "#d8e3e6" : "#82919b" }
                                             onClicked: editor.story.setAppearance(contents.parent.index,index)
                                         }
                                     }

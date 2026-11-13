@@ -20,7 +20,7 @@ ColumnLayout {
     readonly property var agreements:(catalogue.agreements || []).filter(a=>a.contact===jam.contact.id)
     readonly property bool editable:campaign.paused && campaign.companyEditable && !campaign.busy && !campaign.storageBlocked
     spacing:12
-    visible:!!contact.external && topics.length>0
+    visible:!contact.rival && !!contact.external && topics.length>0
     component Copy:Label {Layout.fillWidth:true;wrapMode:Text.Wrap;textFormat:Text.PlainText;font.pixelSize:jam.textSize;color:"#dbe4e3"}
     WorldButton {objectName:"researchJamToggle";text:jam.expanded?qsTr("Pack up the planning board"):qsTr("✦ Plan a research jam");textSize:jam.textSize;onClicked:jam.expanded=!jam.expanded}
     ColumnLayout {
@@ -63,7 +63,7 @@ ColumnLayout {
             ColumnLayout {
                 Layout.fillWidth:true
                 Copy {text:qsTr("Compute per lab · CU/day")}
-                TextField {objectName:"researchJamRate";Layout.fillWidth:true;text:jam.rate;font.pixelSize:jam.textSize;onTextEdited:{jam.rate=text;campaign.world.setDraft("social/jam/rate",text)} Accessible.name:qsTr("Joint research compute in CU per day")}
+                GameField {objectName:"researchJamRate";Layout.fillWidth:true;text:jam.rate;textSize:jam.textSize;onTextEdited:{jam.rate=text;campaign.world.setDraft("social/jam/rate",text)} Accessible.name:qsTr("Joint research compute in CU per day")}
             }
         }
         Copy {objectName:"researchJamQuote";text:jam.preview.valid?jam.preview.summary:(jam.preview.blocker || qsTr("Choose a topic and teammate."));color:jam.preview.valid?"#d6dcac":"#e2c78d"}

@@ -134,7 +134,7 @@ void validate_workplace(const SimulationState& s,bool deep) {
     validate_devices(s,deep);
     validate_access(s,deep);
     validate_departments(s,deep);
-    if(w.starts_on!=s.accounts->starts_on || (w.opening_office!="home" && w.opening_office!="shared" && w.opening_office!="leased") ||
+    if(w.starts_on<s.accounts->starts_on || w.starts_on>s.date || (w.opening_office!="home" && w.opening_office!="shared" && w.opening_office!="leased") ||
         w.rooms.size()>r.maximum_rooms || w.blueprints.size()>r.maximum_blueprints || w.builds.size()>i.catalog.maximum_sites)
         invalid("Headquarters history exceeds its opening or bounded plan limits.");
     if(headquarters_seats_used(s)>headquarters_seats(s)) invalid("HQ has no unreserved paid workstations. Complete a room expansion before hiring more people.");

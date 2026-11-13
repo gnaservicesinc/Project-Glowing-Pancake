@@ -36,6 +36,7 @@ struct SocialState {
     std::vector<std::string> founder_traits;
     std::vector<SocialLink> links;
     std::map<std::string,std::vector<std::string>> known_traits;
+    std::vector<std::string> hostile_peers{};
     std::optional<MissionConflictState> mission_conflict;
     auto operator<=>(const SocialState&) const=default;
 };

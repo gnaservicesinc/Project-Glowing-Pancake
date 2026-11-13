@@ -98,20 +98,29 @@ std::optional<CompetitionSetup> scenario_competition(const ScenarioDefinition& s
 ScenarioOpening scenario_opening(const ScenarioDefinition& s,std::string_view background,std::string_view owner,std::string_view difficulty,const FoundingSelection* founding) {
     const auto* d=scenario_difficulty(s,difficulty);
     ScenarioOpening result{s.cash,s.team_people,s.monthly_commitments,s.business_offers,{}};
+    result.launch_day=s.starts_on;
     if(s.leased_capacity.value()>0) result.capacity_sources.push_back({"lease.initial","cloud.pool.initial",std::string(owner),
         "supplier.compute.initial",core::CapacitySourceKind::leased,s.leased_capacity,s.leased_capacity,0,"general",s.lease_energy_included});
     if(founding) {
         if(!s.founding || !background.empty()) throw std::invalid_argument("Choose the new founding terms without an old background package.");
         const auto terms=founding_terms(*s.founding,*founding);
         if(!difficulty.empty()) throw std::invalid_argument("Campaign conditions follow the founding choices, without a difficulty setting.");
+        result.launch_day=terms.entry_delay_days==0?s.starts_on:core::advance_days(s.starts_on,core::Days{terms.entry_delay_days});
+        if(result.launch_day>=s.ends_before) throw std::invalid_argument("The delayed entry extends past the campaign window.");
         result.cash=core::Cents{terms.contributed_cents};
         result.setup_cost=core::Cents{terms.paid_setup_cents};
         if(terms.startup_loan) {
             const auto& loan=*terms.startup_loan;
-            const auto due=core::advance_days(s.starts_on,core::Days{loan.term_days});
+            const auto due=core::advance_days(result.launch_day,core::Days{loan.term_days});
             if(due>=s.ends_before) throw std::invalid_argument("The startup loan must mature within the campaign.");
             result.startup_debt=core::Debt{std::string{startup_debt_id},core::Cents{loan.principal_cents},
-                core::BasisPoints{loan.monthly_interest_bp},s.starts_on,due,0,{}};
+                core::BasisPoints{loan.monthly_interest_bp},result.launch_day,due,0,{}};
+        }
+        if(terms.student_loan_cents>0) {
+            const auto due=std::min(core::OrdinalDay{s.ends_before.value()-1},core::advance_days(result.launch_day,core::Days{3650}));
+            if(due<=result.launch_day) throw std::invalid_argument("The student loan must mature after university graduation.");
+            result.student_debt=core::Debt{std::string{student_debt_id},core::Cents{terms.student_loan_cents},
+                core::BasisPoints{45},result.launch_day,due,0,{}};
         }
         result.team_people=terms.opening_staff;
         result.capacity_sources.clear();

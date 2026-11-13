@@ -53,6 +53,8 @@ Json lab_json(const core::LabState& state) {
         {"research_stream_origin",state.research_stream_origin},{"catalog",Json::parse(content::canonical_lab_catalog(state.catalog))},
         {"licenses",std::move(licenses)},{"research",std::move(research)},{"models",std::move(models)},{"evaluations",std::move(evaluations)},
         {"publications",std::move(publications)},{"insights",std::move(insights)}};
+    if (state.setback_risk_scale_bp.value()!=10000) result["setback_risk_scale_bp"]=state.setback_risk_scale_bp.value();
+    if (state.research_work_scale_bp.value()!=10000) result["research_work_scale_bp"]=state.research_work_scale_bp.value();
     if (!state.generated.empty()) {
         auto& rows=result["generated"]=Json::array();
         for (const auto& row:state.generated) {
@@ -73,8 +75,10 @@ Json lab_json(const core::LabState& state) {
     return result;
 }
 core::LabState parse_lab(const Json& value) {
-    fields(value,"lab",{"owner","starts_on","closed_through","research_stream_origin","catalog","licenses","research","models","evaluations"},{"publications","insights","generated","acquisitions"});
+    fields(value,"lab",{"owner","starts_on","closed_through","research_stream_origin","catalog","licenses","research","models","evaluations"},{"publications","insights","generated","acquisitions","setback_risk_scale_bp","research_work_scale_bp"});
     core::LabState state;
+    if (value.contains("setback_risk_scale_bp")) state.setback_risk_scale_bp=core::BasisPoints{i64(value.at("setback_risk_scale_bp"),"lab/setback_risk_scale_bp")};
+    if (value.contains("research_work_scale_bp")) state.research_work_scale_bp=core::BasisPoints{i64(value.at("research_work_scale_bp"),"lab/research_work_scale_bp")};
     state.owner=label(value.at("owner")); state.starts_on=core::OrdinalDay{i64(value.at("starts_on"),"lab/starts_on")};
     if (!value.at("closed_through").is_null()) state.closed_through=core::OrdinalDay{i64(value.at("closed_through"),"lab/closed_through")};
     state.research_stream_origin=u64(value.at("research_stream_origin"),"lab/research_stream_origin");
@@ -121,7 +125,7 @@ core::LabState parse_lab(const Json& value) {
             const auto& original=row.at("original_traits");
             if(!original.is_object() || original.size()>32) invalid("original_traits","Expected a bounded team trait record");
             for(const auto& [id,traits]:original.items())
-                state.research.back().original_traits.emplace(id,strings(traits,16,80));
+                state.research.back().original_traits.emplace(id,strings(traits,32,80));
         }
     }
     for (const auto& row : value.at("models")) {

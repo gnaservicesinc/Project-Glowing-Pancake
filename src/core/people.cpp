@@ -70,7 +70,7 @@ void recruit(SimulationState& s) {
 }
 void profile_valid(const PersonProfile& p,OrdinalDay now) {
     validate_portrait(p.portrait);
-    if(p.traits.size()>16) invalid("Too many personal traits.");
+    if(p.traits.size()>person_trait_limit) invalid("Too many personal traits.");
     std::set<std::string> unique;
     for(const auto& trait:p.traits) if(trait.empty() || trait.size()>80 || trait.find('\0')!=trait.npos || !unique.insert(trait).second) invalid("Traits must have unique bounded names.");
     const std::array orientations{"unrecorded","straight","gay_or_lesbian","bisexual","pansexual","asexual","queer","questioning","demisexual"};
@@ -154,7 +154,7 @@ void initialize_people(SimulationState& s,std::uint64_t seed,std::string founder
         invalid("Opening HQ staff exceed the detailed roster capacity.");
     PeopleState state;SplitMix64 derivation{seed ^ UINT64_C(0x50454f504c455631)};
     if(s.management->catalog.people->talent)state.talent=TalentState{};
-    state.stream=derivation.next();state.starts_on=s.date;state.founding_prestige=std::min(10U,prestige);
+    state.stream=derivation.next();state.starts_on=s.date;state.founding_prestige=std::min(100U,prestige);
     state.mission=std::move(mission);
     s.management->people=std::move(state);
     for(std::uint32_t i=0;i<s.capacity->available_staff;++i) {
@@ -260,7 +260,7 @@ void validate_people(const SimulationState& s,bool deep) {
     const auto& r=rules(s);const auto& p=*m.people;
     if(p.employees.size()>r.maximum_hq || p.applicants.size()>r.candidates || p.queued_applicants.size()>12 || p.next_id==0 || p.next_id>1000000 ||
         p.offered_pay<SalaryRate{7500} || p.offered_pay>SalaryRate{15000} || p.starts_on>s.date || p.next_recruitment<p.starts_on ||
-        p.next_recruitment>advance_days(s.date,r.recruitment_interval) || p.founding_prestige>10 || p.community_prestige>10 || p.community_buzz>20 ||
+        p.next_recruitment>advance_days(s.date,r.recruitment_interval) || p.founding_prestige>100 || p.community_prestige>100 || p.community_buzz>200 ||
         (!p.founder_gender.empty() && p.founder_gender!="woman" && p.founder_gender!="man" && p.founder_gender!="nonbinary" && p.founder_gender!="unspecified") ||
         (p.mission!="research" && p.mission!="public benefit" && p.mission!="commercial")) invalid("HQ roster or recruitment state is outside its bounds.");
     if(p.industry.size()>8192)invalid("The industry people register is full.");
@@ -311,5 +311,23 @@ void validate_people(const SimulationState& s,bool deep) {
     validate_talent(s,deep);
     validate_social(s);
     if(deep) {validate_employee_departures(s);validate_contact_funding(s);}
+}
+bool trait_matches(std::string_view actual, std::string_view target) noexcept {
+    constexpr auto eq=[](std::string_view a,std::string_view b) noexcept {
+        if(a.size()!=b.size()) return false;
+        const auto lower=[](char c) noexcept -> char {return (c>='A' && c<='Z')?static_cast<char>(c-'A'+'a'):c;};
+        for(std::size_t i=0;i<a.size();++i) if(lower(a[i])!=lower(b[i])) return false;
+        return true;
+    };
+    if(eq(actual,target)) return true;
+    if(const auto colon=actual.rfind(": ");colon!=std::string_view::npos) return eq(actual.substr(colon+2),target);
+    return false;
+}
+bool person_has_trait(const PersonProfile& person, std::string_view target) noexcept {
+    return std::ranges::any_of(person.traits,[target](const auto& trait){return trait_matches(trait,target);});
+}
+BasisPoints scale_risk_bp(BasisPoints chance, BasisPoints scale_bp) noexcept {
+    if(chance.value()<=0 || scale_bp.value()<=0) return BasisPoints{0};
+    return BasisPoints{chance.value()*scale_bp.value()/10000};
 }
 }

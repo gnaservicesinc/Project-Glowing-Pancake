@@ -10,6 +10,7 @@
 
 namespace pgp::content {
 inline constexpr std::string_view startup_debt_id="founding/startup_loan";
+inline constexpr std::string_view student_debt_id="founding/student_loan";
 // Authored setup fields, not executable scripts or another event language.
 // All resource values are converted to strong units by scenario initialization.
 struct FoundingOption {
@@ -17,12 +18,24 @@ struct FoundingOption {
     std::int64_t capital_cents=0, monthly_cents=0, fee_cents=0;
     std::uint32_t shares_bp=0, prestige=0, buzz=0;
     std::string family, leg, legal_form;
+    std::string requires_leg, requires_trait, excludes_trait, combo_leg;
+    std::int32_t prestige_delta=0, buzz_delta=0, combo_prestige_delta=0, combo_buzz_delta=0;
+    std::uint32_t best_friends_delta=0, min_bullies=0, max_bullies=0;
+    std::uint32_t delay_days=0, genius_delay_days=0;
+    std::int64_t student_loan_cents=0;
+    std::uint32_t research_bonus=0, research_speed_bp=0;
+    bool grants_doctorate=false;
+    std::string education_label;
     auto operator<=>(const FoundingOption&) const = default;
 };
 struct FormativeScene {
     std::string id, title, date, text;
     std::vector<FoundingOption> choices;
     std::string pool,requires_choice;
+    std::string section, event_kind, genius_date, prompt;
+    std::string requires_leg, requires_trait, excludes_trait, excludes_choice;
+    std::uint32_t max_selections=1;
+    std::string cap_reduced_when_not;
     auto operator<=>(const FormativeScene&) const = default;
 };
 struct FoundingOpeningRules {
@@ -83,8 +96,16 @@ struct FoundingTerms {
     bool nonprofit=false, founder_researcher=false;
     std::uint32_t opening_staff=0;
     std::optional<FoundingLoan> startup_loan;
+    std::uint32_t best_friends=0, bully_count=0, entry_delay_days=0;
+    std::int64_t student_loan_cents=0;
+    std::uint32_t doctorate_count=0, research_bonus=0, research_work_scale_bp=10000;
+    std::string education_label;
     auto operator<=>(const FoundingTerms&) const = default;
 };
+[[nodiscard]] std::vector<std::string_view> parse_formative_choices(std::string_view value);
+[[nodiscard]] std::uint32_t scene_max_selections(const FormativeScene&, const FoundingSelection&);
+[[nodiscard]] std::string option_ineligibility(const FoundingOption&, const FoundingSelection&, const std::vector<std::string>& traits_so_far);
+[[nodiscard]] std::vector<std::string> formative_traits_before(const FoundingCatalog&, const FoundingSelection&, std::string_view scene_id);
 [[nodiscard]] FoundingCatalog load_founding_catalog(std::string_view);
 [[nodiscard]] std::string canonical_founding_catalog(const FoundingCatalog&);
 [[nodiscard]] FoundingSelection load_founding_selection(std::string_view);

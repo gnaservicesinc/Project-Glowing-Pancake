@@ -22,17 +22,21 @@
   <path fill="#232632" d="M805 427h559v15H805z"/>
   <path d="M864 76h479m-473 17h460m-452 17h452m-439 17h439" stroke="#303345" stroke-width="3" opacity=".58"/>
 
+  <!-- Workbench legs behind apron, tabletop, grounded terminal and notebook. -->
+  <path fill="#1c1f2c" opacity=".4" d="M782 772l52-6 10 12-56 7zm540-26l54-4 10 11-60 4z"/>
+  <path fill="#2b303f" d="M806 604l29-4-14 172-29 9zm498-40l29-3 28 187-30-3z"/>
   <path fill="#242735" d="M800 586l526-48 114 50v47l-640 30z"/>
   <path fill="#605265" d="M774 564l552-52 114 56v32l-666 37z"/>
   <path fill="#846e78" d="M774 564l552-52 114 56-666 51z"/>
-  <path fill="#2b303f" d="M806 630l29-4-14 141-29 9zm498-43l29-3 28 164-30-3z"/>
+  <path d="M774 600l666-51" stroke="#a68a93" stroke-width="2" opacity=".45"/>
+  <path fill="#24222f" opacity=".28" d="M1146 544l148-12 36 14-150 15zm-214 35l72-14 52 13-74 15z"/>
   <path fill="#282c3a" d="M1111 385l168-12q12 0 12 12v136l-174 16z"/>
   <path fill="#3f5b67" d="M1124 395l156-12v124l-155 12z"/>
   <path d="M1145 421l112-8m-112 17l67-5m-66 14l89-7m-89 16l42-4" stroke="#9bb4ab" stroke-width="3" opacity=".62"/>
   <path fill="#ada2a1" d="M1119 534l175-13 60 22-191 20z"/>
   <path fill="#646275" d="M1143 536l142-11 26 10-145 13z"/>
-  <path fill="#d2ba9b" d="M932 573l69-13 48 12-71 14z"/>
-  <path d="M946 573l58-11m-47 14l57-11m-45 13l55-9" stroke="#9f8277" stroke-width="2"/>
+  <path fill="#d2ba9b" d="M932 572l69-13 48 12-71 14z"/>
+  <path d="M946 572l58-11m-47 14l57-11m-45 13l55-9" stroke="#9f8277" stroke-width="2"/>
 
   <path d="M980 565l-40-130 42-28" stroke="#343243" stroke-width="7" fill="none"/>
   <circle cx="940" cy="435" r="7" fill="#746170"/>

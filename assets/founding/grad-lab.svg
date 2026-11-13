@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="810" viewBox="0 0 1440 810">
+  <title>Graduate AI research lab at twilight</title>
+  <defs>
+    <linearGradient id="wall" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#141d29"/><stop offset="1" stop-color="#2c3e4c"/>
+    </linearGradient>
+    <linearGradient id="glow" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#376e76"/><stop offset="1" stop-color="#1c3947"/>
+    </linearGradient>
+  </defs>
+  <path fill="url(#wall)" d="M0 0h1440v810H0z"/>
+  <path fill="#1b2634" d="M0 50l690-24v588L0 740z"/>
+  <path fill="#1f2e3b" d="M690 26h750v588H690z"/>
+  <path fill="#131c26" d="M0 740l690-126h750v196H0z"/>
+  <path fill="#263744" d="M640 614h800v196H410z"/>
+  <!-- Compute GPU rack in background corner -->
+  <rect x="1220" y="86" width="170" height="528" rx="6" fill="#18222c"/>
+  <g fill="#22303c">
+    <rect x="1234" y="106" width="142" height="58" rx="3"/><rect x="1234" y="176" width="142" height="58" rx="3"/>
+    <rect x="1234" y="246" width="142" height="58" rx="3"/><rect x="1234" y="316" width="142" height="58" rx="3"/>
+    <rect x="1234" y="386" width="142" height="58" rx="3"/>
+  </g>
+  <g fill="#7bd8bc">
+    <circle cx="1252" cy="126" r="4"/><circle cx="1268" cy="126" r="4"/><circle cx="1252" cy="196" r="4"/>
+    <circle cx="1268" cy="196" r="4"/><circle cx="1252" cy="266" r="4"/><circle cx="1252" cy="336" r="4"/>
+    <circle cx="1268" cy="406" r="4"/>
+  </g>
+  <g fill="#efc389">
+    <circle cx="1284" cy="126" r="4"/><circle cx="1284" cy="266" r="4"/><circle cx="1284" cy="336" r="4"/>
+  </g>
+  <!-- Illuminated glass theorem whiteboard -->
+  <rect x="740" y="96" width="440" height="240" rx="6" fill="#233745"/>
+  <path d="M780 286q80-150 180-128t166-26" fill="none" stroke="#9ad6bc" stroke-width="4" opacity=".78"/>
+  <path d="M780 286h340M780 130v156" stroke="#859ba8" stroke-width="2" opacity=".5"/>
+  <path d="M810 156h86m124 22h110m-110 20h74" stroke="#dfcfad" stroke-width="3" opacity=".52"/>
+  <!-- Workstation desk with legs behind apron -->
+  <path fill="#0e161f" opacity=".42" d="M792 778l60-8 14 14-64 8zm382-20l60-8 14 14-64 8z"/>
+  <path fill="#1f2c37" d="M808 618h24v162h-24zm380-20h24v164h-24z"/>
+  <path fill="#313f4b" d="M776 574l486-28v56l-486 28z"/>
+  <path fill="#6d7c86" d="M760 550l520-30 58 28-518 32z"/>
+  <!-- Dual doctoral workstation monitors & dissertation binder with contact shadows -->
+  <path fill="#202b36" opacity=".32" d="M830 552l140-8 26 12-144 10zm184-10l140-8 26 12-144 10zm150 2l94-6 22 10-96 8z"/>
+  <rect x="822" y="388" width="154" height="122" rx="6" fill="#18222d"/>
+  <rect x="830" y="396" width="138" height="102" rx="3" fill="url(#glow)"/>
+  <path d="M846 420h92m-92 16h106m-106 16h68m-68 16h86" stroke="#b9ede0" stroke-width="3" opacity=".76"/>
+  <rect x="992" y="380" width="154" height="122" rx="6" fill="#18222d"/>
+  <rect x="1000" y="388" width="138" height="102" rx="3" fill="url(#glow)"/>
+  <path d="M1018 468l30-32 28 14 44-38" fill="none" stroke="#f0c88c" stroke-width="4"/>
+  <rect x="890" y="510" width="20" height="38" fill="#2a3744"/>
+  <rect x="1060" y="502" width="20" height="38" fill="#2a3744"/>
+  <!-- Dissertation binder & espresso -->
+  <path fill="#a34e48" d="M1162 536l90-6 24 12-90 8z"/>
+  <path fill="#f0e3c7" d="M1168 532l78-6 18 8-78 6z"/>
+  <rect x="1120" y="528" width="22" height="26" rx="3" fill="#e8dcc0"/>
+</svg>

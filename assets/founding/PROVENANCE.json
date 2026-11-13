@@ -54,7 +54,7 @@
       "created_on": "2026-11-07",
       "license_id": "GPL-3.0-only",
       "references": [],
-      "sha256": "2057f46b00cb2d72abf048fd547043f7588fc473bd45e3e8135645f7485d0114"
+      "sha256": "4bc76eb9f8c1132f79780e3ce2ad462894fd780df79c04f70aeb5d88683f4228"
     },
     {
       "path": "assets/founding/workshop.svg",
@@ -62,7 +62,7 @@
       "created_on": "2026-11-07",
       "license_id": "GPL-3.0-only",
       "references": [],
-      "sha256": "4d8d4a857a077b83d456877a3466e83f8ab9b30d4aed5546c404bcc44251ffbf"
+      "sha256": "001f684a6c7109f55bcabeaaf92dee11c87bb59d7537fee34cb80fdc93d4f463"
     },
     {
       "path": "assets/founding/company.svg",
@@ -70,7 +70,7 @@
       "created_on": "2026-11-07",
       "license_id": "GPL-3.0-only",
       "references": [],
-      "sha256": "67891a8e37904001fd6d6b7680c658b4e19b1711984f8dd35c6251cfe950f759"
+      "sha256": "5458b324c93bdf3c57a45e6896f533fbed17706862f52c31ffb7c6ebb30052ac"
     },
     {
       "path": "assets/founding/trust.svg",
@@ -78,7 +78,63 @@
       "created_on": "2026-11-07",
       "license_id": "GPL-3.0-only",
       "references": [],
-      "sha256": "39a486df39341848fce2411d18c0a408db48ea05669b1a738ed23e9c9259287a"
+      "sha256": "0d953e486e8ec76e4feade0a50581ea9e68c88abc29fe72d46d806dbe3dca155"
+    },
+    {
+      "path": "assets/founding/elementary.svg",
+      "creation": "Original layered SVG geometry authored for school chapters",
+      "created_on": "2026-11-12",
+      "license_id": "GPL-3.0-only",
+      "references": [],
+      "sha256": "bdcf0050fe94e2a2a123f2ec09f059d017f1d8c70069d66f6a9982d6efaf3aef"
+    },
+    {
+      "path": "assets/founding/middle-school.svg",
+      "creation": "Original layered SVG geometry authored for school chapters",
+      "created_on": "2026-11-12",
+      "license_id": "GPL-3.0-only",
+      "references": [],
+      "sha256": "1dc16b088e56861dde4f58a37056af6bcff1904b99d022210660210cc57c2119"
+    },
+    {
+      "path": "assets/founding/high-school.svg",
+      "creation": "Original layered SVG geometry authored for school chapters",
+      "created_on": "2026-11-12",
+      "license_id": "GPL-3.0-only",
+      "references": [],
+      "sha256": "5f70b935cc9ed6a235b2572b04a9775087c61ffe84f79a45d46aca935e4f817b"
+    },
+    {
+      "path": "assets/founding/graduation.svg",
+      "creation": "Original layered SVG geometry authored for school chapters",
+      "created_on": "2026-11-12",
+      "license_id": "GPL-3.0-only",
+      "references": [],
+      "sha256": "adf42d7b06b5423cf737afcec8ec8340214a0119255a559a08e18c7a8e153632"
+    },
+    {
+      "path": "assets/founding/university.svg",
+      "creation": "Original layered SVG geometry authored for school chapters",
+      "created_on": "2026-11-12",
+      "license_id": "GPL-3.0-only",
+      "references": [],
+      "sha256": "6735e47e010b77891bf2e86ee8cc64f6e687cbbe37356e5345b78106218ba7da"
+    },
+    {
+      "path": "assets/founding/grad-lab.svg",
+      "creation": "Original layered SVG geometry authored for school chapters",
+      "created_on": "2026-11-12",
+      "license_id": "GPL-3.0-only",
+      "references": [],
+      "sha256": "b6d15be23d1259b8ff4b5a0cf61624f803286940276dc97fcea4dcb913d99f89"
+    },
+    {
+      "path": "assets/founding/military.svg",
+      "creation": "Original layered SVG geometry authored for school chapters",
+      "created_on": "2026-11-12",
+      "license_id": "GPL-3.0-only",
+      "references": [],
+      "sha256": "089609f63482c1aa1ce747aa86fb29f001cb28f60da9aebbf80a3d96c50493ee"
     }
   ]
 }

@@ -335,8 +335,13 @@ public:
             choice.id = "continue";
             choice.name = "Continue";
             choice.detail = "The experience stays with you.";
-            scenario.founding->scenes.push_back({key, title.trimmed().toStdString(), "2014-06-01",
-                body.simplified().toStdString(), {std::move(choice)}, {}, {}});
+            content::FormativeScene created{};
+            created.id = key;
+            created.title = title.trimmed().toStdString();
+            created.date = "2014-06-01";
+            created.text = body.simplified().toStdString();
+            created.choices = {std::move(choice)};
+            scenario.founding->scenes.push_back(std::move(created));
             if (draft_->replace(candidate)) {
                 chapter_owner_ = owner.toStdString();
                 chapter_id_ = key;

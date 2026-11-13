@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="810" viewBox="0 0 1440 810">
+  <title>Graduation stage across golden California afternoon</title>
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop stop-color="#2c445c"/><stop offset=".6" stop-color="#8b746a"/><stop offset="1" stop-color="#e4be83"/>
+    </linearGradient>
+    <linearGradient id="lawn" x1="0" y1="0" x2="0" y2="1">
+      <stop stop-color="#4b644e"/><stop offset="1" stop-color="#24352e"/>
+    </linearGradient>
+  </defs>
+  <path fill="url(#sky)" d="M0 0h1440v810H0z"/>
+  <circle cx="1110" cy="270" r="120" fill="#f7d598" opacity=".55"/>
+  <!-- California foothills & cypress silhouette -->
+  <path fill="#5d6864" d="M0 440l280-76 310 56 320-84 530 68v406H0z"/>
+  <path fill="#3d4f49" d="M0 495l340-44 290 42 400-52 410 48v321H0z"/>
+  <path fill="#2d3e3a" d="M1260 220c14 70 30 140 28 240h-56c0-100 14-170 28-240zm84 44c12 60 24 120 22 200h-44c0-80 10-140 22-200z"/>
+  <path fill="url(#lawn)" d="M0 535h1440v275H0z"/>
+  <!-- Outdoor stage riser and columns -->
+  <path fill="#453d38" d="M760 540h680v40H760z"/>
+  <path fill="#7c6853" d="M740 520h700v24H740z"/>
+  <path fill="#34464e" d="M840 160h32v362h-32zm450 0h32v362h-32z"/>
+  <path fill="#263741" d="M820 146h512v34H820z"/>
+  <path fill="#c89a5b" d="M860 180h432v36q-216 26-432 0z" opacity=".88"/>
+  <!-- Podium resting flush on stage (column under top, no overlap) -->
+  <path fill="#202a2e" opacity=".32" d="M1006 534l120-8 16 12-128 8z"/>
+  <path fill="#5a4332" d="M1026 392h80v132h-80z"/>
+  <path fill="#846247" d="M1004 374h124l-10 22h-104z"/>
+  <!-- Foreground table in lower-right with grounded diploma & mortarboard -->
+  <path fill="#1b2625" opacity=".38" d="M908 784l440-18 14 14-448 20z"/>
+  <path fill="#2e3b3c" d="M956 648h24v138h-24zm330-16h24v140h-24z"/>
+  <path fill="#5d4839" d="M892 612l498-24 50 28-498 28z"/>
+  <path fill="#9d7b58" d="M892 612l498-24 50 28-498 28z"/>
+  <!-- Diploma scroll with ribbon & mortarboard resting on tabletop -->
+  <path fill="#4a382c" opacity=".3" d="M982 614l148-12 18 12-150 12zm182-18l136-12 30 14-142 14z"/>
+  <rect x="984" y="592" width="146" height="18" rx="9" transform="rotate(-4 1057 601)" fill="#f3e6ca"/>
+  <rect x="1046" y="590" width="16" height="22" transform="rotate(-4 1054 601)" fill="#a8433b"/>
+  <!-- Mortarboard -->
+  <path fill="#24313b" d="M1194 568h98v32h-98z"/>
+  <path fill="#1b262f" d="M1158 564l86-20 88 18-86 20z"/>
+  <path d="M1244 562l54 22v26" stroke="#dfc17a" stroke-width="4" fill="none" stroke-linecap="round"/>
+  <circle cx="1298" cy="614" r="5" fill="#dfc17a"/>
+</svg>

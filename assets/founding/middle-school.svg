@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="810" viewBox="0 0 1440 810">
+  <title>Middle school hallway, lockers and courtyard light</title>
+  <defs>
+    <linearGradient id="hall" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#1d2b2b"/><stop offset="1" stop-color="#4e6157"/>
+    </linearGradient>
+    <linearGradient id="courtyard" x1="0" y1="0" x2="0" y2="1">
+      <stop stop-color="#7fa194"/><stop offset="1" stop-color="#d8ca9c"/>
+    </linearGradient>
+  </defs>
+  <path fill="url(#hall)" d="M0 0h1440v810H0z"/>
+  <path fill="#293937" d="M0 0h780v640L0 740z"/>
+  <path fill="#202e2e" d="M0 740l780-100h660v170H0z"/>
+  <path fill="#475b51" d="M620 640h540l280 170H260z"/>
+  <!-- Open courtyard doors at corridor end -->
+  <rect x="780" y="130" width="210" height="510" fill="#233333"/>
+  <rect x="794" y="144" width="182" height="496" fill="url(#courtyard)"/>
+  <path fill="#5d7964" d="M794 520l68-42 54 18 60-34v178H794z"/>
+  <path fill="#c8d6a9" opacity=".16" d="M794 144h182l194 666H520z"/>
+  <!-- Bank of riveted steel lockers on the right wall -->
+  <g fill="#466064" stroke="#26383b" stroke-width="4">
+    <path d="M1020 112l132-24v570l-132 14z"/>
+    <path d="M1152 88l138-26v584l-138 12z"/>
+    <path d="M1290 62l150-28v600l-150 12z"/>
+  </g>
+  <g stroke="#2a3e42" stroke-width="3" opacity=".75">
+    <path d="M1046 150l76-12m-76 16l76-12m-76 16l76-12"/>
+    <path d="M1182 128l80-14m-80 16l80-14m-80 16l80-14"/>
+    <path d="M1324 104l86-14m-86 16l86-14m-86 16l86-14"/>
+  </g>
+  <g fill="#c7b589">
+    <rect x="1126" y="388" width="10" height="28" rx="2"/>
+    <rect x="1264" y="376" width="10" height="28" rx="2"/>
+    <rect x="1406" y="362" width="10" height="28" rx="2"/>
+  </g>
+  <!-- Cork club bulletin board beside lockers -->
+  <path fill="#5d4835" d="M510 150l230-16v214l-230 22z"/>
+  <path fill="#a38259" d="M522 162l206-14v190l-206 20z"/>
+  <path fill="#e8dcc0" d="M542 184l74-5v82l-74 6zm92-8l72-6v74l-72 6z"/>
+  <path fill="#c8d6bd" d="M558 278l96-8v52l-96 8z"/>
+  <path stroke="#53686b" stroke-width="3" d="M554 202h46m-46 16h38m54-22h42m-42 16h34m-82 82h66"/>
+  <!-- Corridor bench (legs beneath plank) with basketball & binder -->
+  <path fill="#1d2a2a" opacity=".38" d="M880 742l440-48 24 16-452 50z"/>
+  <path fill="#2d3b3f" d="M936 656h26v92h-26zm318-32h26v88h-26z"/>
+  <path fill="#8e6d4b" d="M892 642l408-42 42 14-410 44z"/>
+  <path fill="#b68e61" d="M892 642l408-42 42 14-410 44z"/>
+  <path fill="#38494c" opacity=".32" d="M960 644l106-12 28 12-104 12z"/>
+  <path fill="#527488" d="M962 630l102-12 26 12-102 14z"/>
+  <path fill="#e7d9b8" d="M976 626l78-9 18 8-78 10z"/>
+  <circle cx="1220" cy="592" r="34" fill="#c87243"/>
+  <path d="M1187 592h66M1220 558v68" stroke="#62351f" stroke-width="3" fill="none"/>
+</svg>

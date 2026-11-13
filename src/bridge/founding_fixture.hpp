@@ -10,10 +10,23 @@ inline void complete_formative_fixture(FoundingController& story) {
         for(const auto& value:story.chapters()) {
             const auto chapter=value.toMap();const auto id=chapter.value("id").toString();
             if(story.form().value("choices").toMap().contains(id))continue;
-            story.choose(id,chapter.value("choices").toList().front().toMap().value("id").toString());changed=true;
+            const auto choices=chapter.value("choices").toList();
+            if(choices.isEmpty())continue;
+            QString pick;
+            for(const auto& optVal:choices) {
+                const auto opt=optVal.toMap();
+                if(opt.value("available",true).toBool()){pick=opt.value("id").toString();break;}
+            }
+            if(pick.isEmpty()) pick=choices.front().toMap().value("id").toString();
+            story.choose(id,pick);changed=true;
         }
         if(!changed)return;
     }
-    throw std::runtime_error("Formative fixture exceeded the authored chapter bound.");
+    QStringList unresolved;
+    for(const auto& value:story.chapters()) {
+        const auto id=value.toMap().value("id").toString();
+        if(!story.form().value("choices").toMap().contains(id)) unresolved.push_back(id);
+    }
+    throw std::runtime_error("Formative fixture exceeded the authored chapter bound: "+unresolved.join(',').toStdString()+" (choices="+QString::number(story.form().value("choices").toMap().size()).toStdString()+")");
 }
 }

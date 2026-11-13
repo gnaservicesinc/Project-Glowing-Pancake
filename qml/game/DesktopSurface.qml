@@ -19,14 +19,23 @@ Rectangle {
     ColumnLayout {
         anchors.fill: parent; spacing: 0
         Rectangle {
-            Layout.fillWidth: true; implicitHeight: bar.implicitHeight+14
-            color: "#ec182738"
+            Layout.fillWidth: true; implicitHeight: bar.implicitHeight + 14
+            color: "#f0162434"
+            Rectangle { anchors.bottom: parent.bottom; width: parent.width; height: 1; color: "#3d5366" }
             RowLayout {
                 id: bar; anchors.fill: parent; anchors.leftMargin: 16; anchors.rightMargin: 12; anchors.topMargin: 7; anchors.bottomMargin: 7
-                Label { text: "✦"; color: "#f4cc8d"; font.pixelSize: desktop.textSize*1.2; Accessible.ignored: true }
-                Label { Layout.fillWidth: true; text: qsTr("Pancake Desktop"); font.pixelSize: desktop.textSize; font.bold: true; color: "#f5e9d5"; elide: Text.ElideRight }
-                Label { visible: !desktop.compact; text: desktop.date; color: "#ccd4dc"; font.pixelSize: desktop.textSize*0.8 }
-                Label { text: "▰"; color: "#bdd2ba"; font.pixelSize: desktop.textSize; Accessible.name: qsTr("Battery charged") }
+                spacing: 8
+                Row {
+                    visible: !desktop.compact
+                    spacing: 5
+                    Rectangle { width: 8; height: 8; radius: 4; color: "#c96e62" }
+                    Rectangle { width: 8; height: 8; radius: 4; color: "#d9b066" }
+                    Rectangle { width: 8; height: 8; radius: 4; color: "#72b093" }
+                }
+                Label { text: "✦"; color: "#efc389"; font.pixelSize: desktop.textSize*1.2; Accessible.ignored: true }
+                Label { Layout.fillWidth: true; text: qsTr("Pancake OS"); font.pixelSize: desktop.textSize; font.bold: true; color: "#f5ead8"; elide: Text.ElideRight }
+                Label { visible: !desktop.compact && desktop.date.length > 0; text: desktop.date; color: "#cdd7de"; font.pixelSize: desktop.textSize*0.82 }
+                Label { text: "▰"; color: "#a4d4bc"; font.pixelSize: desktop.textSize; Accessible.name: qsTr("Battery charged") }
                 WorldButton { objectName: "desktopClose"; visible: desktop.showClose; text: qsTr("Close"); textSize: desktop.textSize*0.8; padding: 6; onClicked: desktop.closeRequested() }
             }
         }
@@ -55,17 +64,25 @@ Rectangle {
                     columnSpacing: desktop.compact ? 5 : 16; rowSpacing: desktop.compact ? 4 : 14
                 Repeater {
                     model: desktop.applications
-                    Button {
+                    AbstractButton {
                         id: icon
                         required property var modelData
                         objectName: modelData.objectName || modelData.id+"App"
                         Layout.fillWidth: true; Layout.fillHeight: true; Layout.preferredWidth: 1; Layout.preferredHeight: 1
                         Layout.minimumWidth: 0; Layout.minimumHeight: 0
+                        hoverEnabled: true
                         enabled: modelData.available !== false
                         padding: desktop.compact ? 5 : 10
                         Accessible.name: modelData.name
                         ToolTip.visible: hovered; ToolTip.text: modelData.detail || modelData.name
-                        background: Rectangle { radius: 8; color: icon.hovered || icon.activeFocus ? "#70445d72" : "transparent"; border.color: icon.activeFocus ? "#f8d299" : "transparent"; border.width: 2 }
+                        scale: icon.down ? 0.96 : icon.hovered && icon.enabled ? 1.03 : 1.0
+                        Behavior on scale { NumberAnimation { duration: typeof campaign !== "undefined" && campaign && campaign.reducedMotion ? 0 : 100 } }
+                        background: Rectangle {
+                            radius: 10
+                            color: icon.down ? "#85445d72" : icon.hovered || icon.activeFocus ? "#683c5468" : "transparent"
+                            border.color: icon.activeFocus ? "#f5ead8" : icon.hovered ? "#80efc389" : "transparent"
+                            border.width: icon.activeFocus ? 2 : 1
+                        }
                         contentItem: Item {
                             Rectangle {
                                 id: symbol
@@ -73,9 +90,10 @@ Rectangle {
                                 anchors.horizontalCenter: parent.horizontalCenter
                                 y: Math.max(0,(parent.height-height-title.implicitHeight-7)/2)
                                 width: Math.max(38,Math.min(desktop.compact ? 45 : 70,parent.height-title.implicitHeight-8,parent.width*0.65)); height: width
-                                radius: width*0.22; color: icon.modelData.tint || "#5d8497"
-                                border.color: "#a3b4b9"; border.width: 1
-                                gradient: Gradient { GradientStop { position: 0; color: Qt.lighter(icon.modelData.tint || "#5d8497",1.25) } GradientStop { position: 1; color: icon.modelData.tint || "#5d8497" } }
+                                radius: width*0.24; color: icon.modelData.tint || "#5d8497"
+                                border.color: icon.hovered && icon.enabled ? "#f5ead8" : "#a3b4b9"; border.width: 1
+                                gradient: Gradient { GradientStop { position: 0; color: Qt.lighter(icon.modelData.tint || "#5d8497",1.28) } GradientStop { position: 1; color: icon.modelData.tint || "#5d8497" } }
+                                Rectangle { anchors.fill: parent; anchors.margins: 1; radius: parent.radius - 1; color: "transparent"; border.color: "#33ffffff" }
                                 DeviceGlyph { anchors.fill: parent; anchors.margins: parent.width*0.22; app: icon.modelData.glyph || icon.modelData.id }
                             }
                             Text {

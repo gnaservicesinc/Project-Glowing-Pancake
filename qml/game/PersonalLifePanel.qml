@@ -182,8 +182,8 @@ ColumnLayout {
             visible:panel.placing;Layout.fillWidth:true;spacing:8
             WorldButton {objectName:"personalRotate";text:qsTr("Rotate");textSize:panel.textSize;onClicked:panel.rotated=!panel.rotated}
             WorldButton {text:qsTr("Cancel placement");textSize:panel.textSize;onClicked:panel.placing=false}
-            SpinBox {objectName:"personalX";from:0;to:31;value:Math.max(0,panel.px);editable:true;font.pixelSize:panel.textSize;Accessible.name:qsTr("Personal furnishing X coordinate");onValueModified:panel.px=value}
-            SpinBox {objectName:"personalY";from:0;to:31;value:Math.max(0,panel.py);editable:true;font.pixelSize:panel.textSize;Accessible.name:qsTr("Personal furnishing Y coordinate");onValueModified:panel.py=value}
+            GameSpinBox {objectName:"personalX";from:0;to:31;value:Math.max(0,panel.px);textSize:panel.textSize;Accessible.name:qsTr("Personal furnishing X coordinate");onValueModified:panel.px=value}
+            GameSpinBox {objectName:"personalY";from:0;to:31;value:Math.max(0,panel.py);textSize:panel.textSize;Accessible.name:qsTr("Personal furnishing Y coordinate");onValueModified:panel.py=value}
             WorldButton {objectName:"personalPlace";text:qsTr("Place at coordinates");textSize:panel.textSize;enabled:panel.editable && !!panel.preview.valid;onClicked:panel.place()}
             WorldButton {text:qsTr("Return to storage");textSize:panel.textSize;enabled:panel.editable;onClicked:{campaign.world.storePersonalDecor(panel.selectedItem,campaign.world.reviewToken);panel.placing=false}}
         }

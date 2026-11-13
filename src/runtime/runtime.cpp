@@ -308,9 +308,10 @@ void execute(Checkpoint& checkpoint, Activation& activation, const CompiledProgr
             std::string weights;
             for (const auto& branch : entry.branches) {
                 // Compiler bounds 32 positive weights to one million each.
-                total += branch.weight;
+                const auto weight = effective_branch_weight(checkpoint.world.simulation, branch);
+                total += weight;
                 if (!weights.empty()) weights += ",";
-                weights += branch.id + "=" + std::to_string(branch.weight);
+                weights += branch.id + "=" + std::to_string(weight);
             }
             const auto domain = content::random_branch_stream(entry.random_stream);
             if (!domain) fail(RuntimeReason::invalid_state, "The random node has no owning stream.");
@@ -324,8 +325,9 @@ void execute(Checkpoint& checkpoint, Activation& activation, const CompiledProgr
             auto remaining = sample;
             const content::WeightedBranch* selected = nullptr;
             for (const auto& branch : entry.branches) {
-                if (remaining < branch.weight) { selected = &branch; break; }
-                remaining -= branch.weight;
+                const auto weight = effective_branch_weight(checkpoint.world.simulation, branch);
+                if (remaining < weight) { selected = &branch; break; }
+                remaining -= weight;
             }
             if (!selected) fail(RuntimeReason::invalid_state, "The weighted branch has no selected outcome.");
             saved = stream.state();
@@ -1043,10 +1045,10 @@ RuntimeResult Runtime::transferSubsidiaryFunds(std::uint64_t expected_revision,s
 RuntimeResult Runtime::editPlaytestFounder(std::uint64_t expected_revision,
                                          std::vector<std::string> traits, bool genius) {
     const auto revision=checkpoint_.world.simulation.revision;
-    if(traits.size()>16 || std::ranges::any_of(traits,[](const auto& trait) {
+    if(traits.size()>32 || std::ranges::any_of(traits,[](const auto& trait) {
         return trait.empty() || trait.size()>80 || trait.find_first_of("\r\n\t")!=trait.npos ||
             trait.find('\0')!=trait.npos;
-    })) return {RuntimeReason::effect_rejected,revision,"Enter up to 16 traits of up to 80 bytes each.",{},{}};
+    })) return {RuntimeReason::effect_rejected,revision,"Enter up to 32 traits of up to 80 bytes each.",{},{}};
     if(std::set<std::string_view>{traits.begin(),traits.end()}.size()!=traits.size())
         return {RuntimeReason::effect_rejected,revision,"Use each trait once.",{},{}};
     return transaction(program_,checkpoint_,expected_revision,[&](auto& next,auto& result,auto&,auto&) {

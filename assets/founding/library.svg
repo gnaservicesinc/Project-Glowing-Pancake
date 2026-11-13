@@ -26,12 +26,14 @@
   <path fill="#192f2e" d="M795 460h568v17H795z"/>
   <path fill="#b5aa7b" d="M904 477h201l-291 333H602z" opacity=".12"/>
 
-  <!-- Desk, CRT, keyboard and a stack of circulating books. -->
+  <!-- Desk legs behind apron, desktop, CRT, keyboard and grounded circulating books. -->
+  <path fill="#142324" opacity=".4" d="M800 778l60-8 10 14-64 8zm534-5l56-6 14 14-66 6z"/>
+  <path fill="#16292a" d="M816 616l28-2-6 163-28 4zm532-28h26l18 186-29-4z"/>
   <path fill="#223535" d="M807 576l519-31 114 48v77l-633 14z"/>
   <path fill="#776b57" d="M792 570l536-40 112 45v33l-648 26z"/>
   <path fill="#b0976d" d="M792 571l536-41 112 43-650 42z"/>
   <path d="M793 615l647-42" stroke="#ded0a0" stroke-width="3" opacity=".5"/>
-  <path fill="#16292a" d="M816 637l28-2-6 142-28 4zm532-32h26l18 169-29-4z"/>
+  <path fill="#453c30" opacity=".28" d="M976 558l220-12 36 16-226 16zm-12 24l186-10 68 12-204 18zm292-48l116-8 34 11-114 9z"/>
   <path fill="#4c6159" d="M970 548l219-12 30 16-221 15z"/>
   <path fill="#b5aa86" d="M971 381q0-19 19-20l159-11q18-1 24 19l29 128-20 48-192 10q-20 0-20-20z"/>
   <path fill="#8e8f73" d="M1167 366l40 11 44 108-48 37z"/>
@@ -39,10 +41,10 @@
   <path fill="#638982" d="M1002 395q0-9 11-10l125-8q11-1 13 9l16 95q1 10-9 11l-145 9q-10 0-10-10z"/>
   <path d="M1021 410l86-6m-85 17l38-3m-37 14l66-4" stroke="#afc6ad" stroke-width="3" opacity=".68"/>
   <circle cx="1167" cy="518" r="4" fill="#b8d7a1"/>
-  <path fill="#dfcf9e" d="M967 575l186-10 63 11-204 17z"/>
-  <path d="M992 577l158-9m-140 14l168-10m-152 14l170-11" stroke="#8e8b70" stroke-width="2"/>
-  <path fill="#464c45" d="M1264 520l112-8 28 12-108 9zm-5 11l113-7 32 8-111 8z"/>
-  <path fill="#cbab78" d="M1262 516l114-9 28 12-109 9z"/>
-  <path fill="#536f64" d="M1285 503l87-6 26 11-91 7z"/>
+  <path fill="#dfcf9e" d="M967 572l186-10 63 11-204 17z"/>
+  <path d="M992 574l158-9m-140 14l168-10m-152 14l170-11" stroke="#8e8b70" stroke-width="2"/>
+  <path fill="#464c45" d="M1264 522l112-8 28 12-108 9zm-5 10l113-7 32 8-111 8z"/>
+  <path fill="#cbab78" d="M1262 517l114-9 28 12-109 9z"/>
+  <path fill="#536f64" d="M1285 504l87-6 26 11-91 7z"/>
   <path fill="#162729" d="M0 744q291-36 627-28l-39 94H0zm1221 66 130-75 89-3v78z"/>
 </svg>

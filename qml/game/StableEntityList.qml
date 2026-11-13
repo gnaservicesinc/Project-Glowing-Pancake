@@ -56,23 +56,27 @@ ListView {
     }
     Keys.onSpacePressed: revealFocus()
 
-    delegate: Button {
+    delegate: AbstractButton {
         id: entry
         required property string entityId
         required property string title
         required property string subtitle
         required property string status
+        readonly property bool current: entry.entityId === list.rows.selectedId
         width: list.width - 14
         padding: 10
         hoverEnabled: true
         focusPolicy: Qt.ClickFocus
         Accessible.name: title + ", " + subtitle + ", " + status
         onClicked: list.selected(entityId)
+        implicitHeight: rowBody.implicitHeight + topPadding + bottomPadding
         contentItem: ColumnLayout {
+            id: rowBody
             spacing: 4
             Label {
                 Layout.fillWidth: true
                 text: entry.title + " · " + entry.status
+                color: entry.current ? "#f7dfb3" : "#eff4ed"
                 wrapMode: Text.Wrap
                 font.pixelSize: list.textSize
                 font.bold: true
@@ -80,15 +84,22 @@ ListView {
             Label {
                 Layout.fillWidth: true
                 text: entry.subtitle
+                color: "#c2ced3"
                 wrapMode: Text.Wrap
                 font.pixelSize: list.textSize
             }
         }
         background: Rectangle {
-            radius: 5
-            color: entry.entityId === list.rows.selectedId ? "#25445a" : entry.hovered ? "#263442" : "#1c2835"
-            border.width: entry.activeFocus ? 2 : 1
-            border.color: entry.activeFocus ? "#ffd897" : "#3a4b5c"
+            radius: 7
+            color: entry.current ? "#25445a" : entry.hovered ? "#283948" : "#1c2835"
+            border.width: entry.activeFocus || entry.current ? 2 : 1
+            border.color: entry.activeFocus ? "#ffd897" : entry.current ? "#efc389" : "#3a4b5c"
+            Rectangle {
+                visible: entry.current
+                width: 4; height: parent.height * 0.55; radius: 2
+                anchors.left: parent.left; anchors.leftMargin: 3; anchors.verticalCenter: parent.verticalCenter
+                color: "#efc389"
+            }
         }
     }
 

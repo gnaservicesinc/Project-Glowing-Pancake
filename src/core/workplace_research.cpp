@@ -178,7 +178,7 @@ void validate_workplace_research(const SimulationState &state) {
         }
         if(state.lab->catalog.creative_research.contains(run.research_id)) {
             for(const auto& [id,traits]:run.original_traits) {
-                if(std::ranges::find(run.researchers,id)==run.researchers.end() || traits.size()>16 ||
+                if(std::ranges::find(run.researchers,id)==run.researchers.end() || traits.size()>person_trait_limit ||
                    std::set<std::string_view>{traits.begin(),traits.end()}.size()!=traits.size() ||
                    std::ranges::any_of(traits,[](const auto& value) {
                        return value.empty() || value.size()>80 || value.find('\0')!=value.npos;

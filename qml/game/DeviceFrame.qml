@@ -16,24 +16,33 @@ Item {
         anchors.bottomMargin: frame.laptop ? frame.deck / 2 : 0
         anchors.leftMargin: frame.laptop ? frame.rim : 0
         anchors.rightMargin: anchors.leftMargin
-        radius: frame.handheld ? 20 : 15
+        radius: frame.handheld ? 22 : 16
         gradient: Gradient {
-            GradientStop {position:0;color:"#55696c"}
-            GradientStop {position:0.09;color:"#253438"}
-            GradientStop {position:0.91;color:"#19282c"}
-            GradientStop {position:1;color:"#45595b"}
+            GradientStop { position: 0; color: "#5e7377" }
+            GradientStop { position: 0.08; color: "#233339" }
+            GradientStop { position: 0.92; color: "#17252a" }
+            GradientStop { position: 1; color: "#4a5f62" }
         }
-        border.color: "#799087"
+        border.color: "#839a91"
+        border.width: 1
+        Rectangle {
+            anchors.fill: parent; anchors.margins: 1; radius: parent.radius - 1
+            color: "transparent"; border.color: "#22ffffff"
+        }
     }
     Rectangle {
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.top: parent.top
         anchors.topMargin: Math.max(3, (frame.topRim - height)/2)
-        width: frame.handheld ? 32 : 6
-        height: frame.handheld ? 5 : 6
+        width: frame.handheld ? 36 : 7
+        height: frame.handheld ? 5 : 7
         radius: height/2
-        color: "#0c181d"
-        border.color: "#657d78"
+        color: "#091317"
+        border.color: "#6b847e"
+        Rectangle {
+            visible: !frame.handheld
+            anchors.centerIn: parent; width: 3; height: 3; radius: 1.5; color: "#58969e"
+        }
     }
     Rectangle {
         id: screen
@@ -42,9 +51,10 @@ Item {
         anchors.rightMargin: anchors.leftMargin
         anchors.topMargin: frame.topRim
         anchors.bottomMargin: frame.deck
-        radius: 7
-        color: "#162638"
-        border.color: "#0c1a1f"
+        radius: 8
+        color: "#152536"
+        border.color: "#0b171d"
+        border.width: 1
         clip: true
     }
     Rectangle {

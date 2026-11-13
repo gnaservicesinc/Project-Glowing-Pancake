@@ -1,14 +1,43 @@
 #include "portrait_images.hpp"
+#include <QColor>
 #include <QFile>
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QPainter>
 #include <QSvgRenderer>
 #include <algorithm>
+#include <cmath>
 #include <stdexcept>
 
 static void initialize_portrait_resources() {Q_INIT_RESOURCE(portrait_kit);}
 namespace pgp::app {
+namespace {
+QString grayed_hex(const QString& hex, int gray_bp, const QColor& target) {
+    if (gray_bp <= 0) return hex;
+    const QColor base{hex};
+    if (!base.isValid()) return hex;
+    const double t = std::clamp(gray_bp, 0, 10000) / 10000.0;
+    const int r = static_cast<int>(std::lround(base.red() + (target.red() - base.red()) * t));
+    const int g = static_cast<int>(std::lround(base.green() + (target.green() - base.green()) * t));
+    const int b = static_cast<int>(std::lround(base.blue() + (target.blue() - base.blue()) * t));
+    return QColor{r, g, b}.name(QColor::HexRgb);
+}
+
+int stage_gray_bp(core::LifeStage stage) noexcept {
+    switch (stage) {
+        case core::LifeStage::mature: return 3500;
+        case core::LifeStage::senior: return 7200;
+        case core::LifeStage::elder: return 9400;
+        default: return 0;
+    }
+}
+
+QColor stage_gray_target(core::LifeStage stage) noexcept {
+    return stage == core::LifeStage::elder ? QColor{"#e4e8ec"}
+         : stage == core::LifeStage::senior ? QColor{"#d6dce2"}
+         : QColor{"#c5cbd1"};
+}
+} // namespace
 PortraitImages::PortraitImages():QQuickImageProvider(QQuickImageProvider::Image) {
     initialize_portrait_resources();
     QFile source{QStringLiteral(":/pgp/assets/portraits/kit-v1.json")};
@@ -20,15 +49,47 @@ PortraitImages::PortraitImages():QQuickImageProvider(QQuickImageProvider::Image)
         throw std::runtime_error("Bundled portrait layer IDs do not match their saved contract.");
     if(kit_.value("hairFront").toArray().size()!=core::portrait_part_counts[1]) throw std::runtime_error("Portrait hair pairs do not match.");
 }
-QByteArray PortraitImages::svg(const core::PortraitRecipe& recipe) const {
+QByteArray PortraitImages::svg(const core::PortraitRecipe& recipe, core::LifeStage stage) const {
     core::validate_portrait(recipe);
     const auto layer=[&](const char* name,std::size_t part){return kit_.value(name).toArray()[recipe.parts[part]].toString();};
+    const int gray_bp = stage_gray_bp(stage);
+    const QColor gray_target = stage_gray_target(stage);
+    const auto tone_hair=[&](const QString& hex){return grayed_hex(hex, gray_bp, gray_target);};
     QString result=QStringLiteral("<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 240 240\"><rect width=\"240\" height=\"240\" rx=\"28\" fill=\"@background\"/><circle cx=\"120\" cy=\"108\" r=\"92\" fill=\"#fff9e9\" opacity=\".18\"/>");
+    if (stage == core::LifeStage::baby) {
+        // Keep structural features uniform across recipes so infants look nearly alike while keeping family skin/eye tones.
+        result += "<g>"
+                  "<path d=\"M46 240 Q52 178 90 164 Q120 176 150 164 Q188 178 194 240Z\" fill=\"@shirt\" stroke=\"@ink\" stroke-opacity=\".22\" stroke-width=\"2\"/>"
+                  "<path d=\"M80 171 Q120 212 160 171 Q151 215 120 220 Q89 215 80 171Z\" fill=\"@paper\" opacity=\".92\" stroke=\"@ink\" stroke-opacity=\".2\" stroke-width=\"1.5\"/>"
+                  "<ellipse cx=\"79\" cy=\"113\" rx=\"6\" ry=\"9\" fill=\"@skin\" stroke=\"@ink\" stroke-width=\"2\"/>"
+                  "<ellipse cx=\"161\" cy=\"113\" rx=\"6\" ry=\"9\" fill=\"@skin\" stroke=\"@ink\" stroke-width=\"2\"/>"
+                  "<ellipse cx=\"120\" cy=\"112\" rx=\"41\" ry=\"40\" fill=\"@skin\" stroke=\"@ink\" stroke-width=\"2\"/>"
+                  "<ellipse cx=\"96\" cy=\"121\" rx=\"7\" ry=\"4\" fill=\"#e89a90\" opacity=\".34\"/>"
+                  "<ellipse cx=\"144\" cy=\"121\" rx=\"7\" ry=\"4\" fill=\"#e89a90\" opacity=\".34\"/>"
+                  "<path d=\"M111 72 Q121 57 132 70 Q124 76 114 75\" fill=\"none\" stroke=\"@hair\" stroke-width=\"3\" stroke-linecap=\"round\"/>"
+                  "<circle cx=\"104\" cy=\"106\" r=\"5\" fill=\"@ink\"/><circle cx=\"136\" cy=\"106\" r=\"5\" fill=\"@ink\"/>"
+                  "<circle cx=\"102.5\" cy=\"104.5\" r=\"1.7\" fill=\"#ffffff\"/><circle cx=\"134.5\" cy=\"104.5\" r=\"1.7\" fill=\"#ffffff\"/>"
+                  "<path d=\"M118 117 Q120 120 123 117\" fill=\"none\" stroke=\"@ink\" stroke-width=\"1.8\" stroke-linecap=\"round\"/>"
+                  "<path d=\"M112 128 Q120 135 128 128\" fill=\"none\" stroke=\"@lip\" stroke-width=\"2.2\" stroke-linecap=\"round\"/>"
+                  "</g></svg>";
+        result.replace("@skin",layer("skin",11)).replace("@hair",tone_hair(layer("hairColor",12))).replace("@shirt",layer("shirtColor",13)).replace("@background",layer("background",14));
+        result.replace("@ink","#293e40").replace("@lip",QStringList{"#804d4b","#a86e65","#be8a7a","#804c68","#604848","#c18d89"}[recipe.style[5]]).replace("@paper","#fff7e5");
+        return result.toUtf8();
+    }
     const int build=recipe.style[0]%5;const bool shaped=recipe.style[0]>=5;
-    const double sx=build==1?0.88:build==2?1.12:build==3?1.04:build==4?0.96:1.0;
-    const double sy=recipe.style[1]==1?0.93:recipe.style[1]==2?1.07:1.0;
+    double sx=build==1?0.88:build==2?1.12:build==3?1.04:build==4?0.96:1.0;
+    double sy=recipe.style[1]==1?0.93:recipe.style[1]==2?1.07:1.0;
+    if (stage == core::LifeStage::toddler) { sx *= 0.86; sy *= 0.86; }
+    else if (stage == core::LifeStage::kid) { sx *= 0.91; sy *= 0.92; }
+    else if (stage == core::LifeStage::teen) { sx *= 0.96; sy *= 0.97; }
+    else if (stage == core::LifeStage::elder) { sx *= 0.97; sy *= 0.95; }
     result+=QStringLiteral("<g transform=\"translate(120 240) scale(%1 %2) translate(-120 -240)\">").arg(sx).arg(sy);
-    result+=layer("hairBack",1)+layer("neck",6);
+    const bool child_stage = stage == core::LifeStage::toddler || stage == core::LifeStage::kid;
+    const bool minor_stage = child_stage || stage == core::LifeStage::teen;
+    const auto hair_back = layer("hairBack", 1);
+    if (!child_stage) result += hair_back;
+    else result += QStringLiteral("<g transform=\"translate(120 136) scale(1.03 0.96) translate(-120 -136)\">") + hair_back + QStringLiteral("</g>");
+    result+=layer("neck",6);
     result+=QStringLiteral("<path d=\"M26 240 Q27 197 65 191 L99 177 Q120 195 141 177 L175 191 Q213 197 214 240Z\" fill=\"@shirt\"/><path d=\"M99 177 L120 194 L107 209 L85 185 M141 177 L120 194 L133 209 L155 185\" fill=\"none\" stroke=\"#fff9e9\" stroke-opacity=\".4\" stroke-width=\"2\"/>");
     const QStringList palette{"#ead4ae","#374f67","#bd8581","#80ac91","#b8a2ca","#e4dfd3"};
     const auto accent=palette[recipe.style[7]];
@@ -44,35 +105,75 @@ QByteArray PortraitImages::svg(const core::PortraitRecipe& recipe) const {
         if(recipe.style[3]==3) for(int x=52;x<=188;x+=17) result+=QStringLiteral("<path d=\"M%1 202 V239\"/>").arg(x);
         result+="</g>";
     }
-    if(shaped) result+="<path d=\"M57 210 Q78 218 70 240 M183 210 Q162 218 170 240\" stroke=\"@ink\" stroke-opacity=\".25\" fill=\"none\"/>";
-    if(recipe.style[2]==1) result+="<path d=\"M92 182 L120 220 L148 182\" fill=\"none\" stroke=\"@paper\" stroke-width=\"4\"/>";
-    if(recipe.style[2]==2) result+="<path d=\"M80 184 L104 240 H45 M160 184 L136 240 H195\" fill=\"@jacket\"/><path d=\"M116 197 L124 197 L129 234 L120 240 L111 234Z\" fill=\"@tie\"/>";
-    if(recipe.style[2]==3) result+="<path d=\"M79 186 Q120 226 161 186 M100 206 V230 M140 206 V230\" stroke=\"@paper\" stroke-width=\"3\" fill=\"none\"/>";
+    if(shaped && !child_stage) result+="<path d=\"M57 210 Q78 218 70 240 M183 210 Q162 218 170 240\" stroke=\"@ink\" stroke-opacity=\".25\" fill=\"none\"/>";
+    if(stage == core::LifeStage::toddler) {
+        result += "<path d=\"M86 186 V240 M154 186 V240\" stroke=\"@jacket\" stroke-opacity=\".55\" stroke-width=\"9\" fill=\"none\"/>";
+    } else {
+        if(recipe.style[2]==1) result+="<path d=\"M92 182 L120 220 L148 182\" fill=\"none\" stroke=\"@paper\" stroke-width=\"4\"/>";
+        if(recipe.style[2]==2 && !child_stage) result+="<path d=\"M80 184 L104 240 H45 M160 184 L136 240 H195\" fill=\"@jacket\"/><path d=\"M116 197 L124 197 L129 234 L120 240 L111 234Z\" fill=\"@tie\"/>";
+        if(recipe.style[2]==2 && child_stage) result+="<path d=\"M94 180 L120 202 L146 180\" fill=\"none\" stroke=\"@paper\" stroke-width=\"3\"/>";
+        if(recipe.style[2]==3) result+="<path d=\"M79 186 Q120 226 161 186 M100 206 V230 M140 206 V230\" stroke=\"@paper\" stroke-width=\"3\" fill=\"none\"/>";
+    }
+    const QString brow_color = tone_hair(kit_.value("hairColor").toArray()[recipe.style[8]].toString());
+    const QString facial_hair_color = tone_hair(kit_.value("hairColor").toArray()[recipe.style[9]].toString());
+    if (child_stage) {
+        result += QStringLiteral("<g transform=\"translate(120 136) scale(1.03 0.96) translate(-120 -136)\">");
+    }
     result+=layer("ears",3)+layer("head",0);
     result+=QStringLiteral("<path d=\"M81 120 Q82 153 112 164 Q84 156 78 136Z\" fill=\"@shade\" opacity=\".14\"/>");
-    result+=layer("eyes",7)+layer("brows",8).replace("@hair",kit_.value("hairColor").toArray()[recipe.style[8]].toString())+layer("nose",2)+layer("mouth",4)+layer("chin",5)+layer("facialHair",9).replace("@hair",kit_.value("hairColor").toArray()[recipe.style[9]].toString())+layer("hairFront",1)+layer("glasses",10).replace("@ink",palette[recipe.style[6]]);
+    if (stage == core::LifeStage::toddler) {
+        result += "<ellipse cx=\"94\" cy=\"125\" rx=\"7\" ry=\"4\" fill=\"#e89a90\" opacity=\".28\"/><ellipse cx=\"146\" cy=\"125\" rx=\"7\" ry=\"4\" fill=\"#e89a90\" opacity=\".28\"/>";
+    }
+    result+=layer("eyes",7)+layer("brows",8).replace("@hair",brow_color)+layer("nose",2)+layer("mouth",4);
+    if (!child_stage) result += layer("chin",5);
+    if (!minor_stage) result += layer("facialHair",9).replace("@hair",facial_hair_color);
+    if (gray_bp > 0) {
+        const double line_opacity = stage == core::LifeStage::elder ? 0.46 : stage == core::LifeStage::senior ? 0.34 : 0.22;
+        result += QStringLiteral("<g stroke=\"@shade\" stroke-opacity=\"%1\" stroke-width=\"1.4\" fill=\"none\" stroke-linecap=\"round\">"
+                                 "<path d=\"M91 128 Q89 141 96 149 M149 128 Q151 141 144 149\"/>").arg(line_opacity);
+        if (stage == core::LifeStage::senior || stage == core::LifeStage::elder) {
+            result += "<path d=\"M101 74 Q120 71 139 74 M83 102 L78 100 M83 107 L78 108 M157 102 L162 100 M157 107 L162 108\"/>";
+        }
+        if (stage == core::LifeStage::elder) {
+            result += "<path d=\"M105 80 Q120 77 135 80 M92 114 Q98 117 104 114 M136 114 Q142 117 148 114\"/>";
+        }
+        result += "</g>";
+    }
+    result+=layer("hairFront",1);
+    if (stage != core::LifeStage::toddler) result += layer("glasses",10).replace("@ink",palette[recipe.style[6]]);
+    if (child_stage) result += QStringLiteral("</g>");
     result+=QStringLiteral("</g></svg>");
-    result.replace("@skin",layer("skin",11)).replace("@hair",layer("hairColor",12)).replace("@shirt",layer("shirtColor",13)).replace("@background",layer("background",14));
+    result.replace("@skin",layer("skin",11)).replace("@hair",tone_hair(layer("hairColor",12))).replace("@shirt",layer("shirtColor",13)).replace("@background",layer("background",14));
     result.replace("@jacket",kit_.value("hairColor").toArray()[recipe.style[10]].toString()).replace("@tie",kit_.value("hairColor").toArray()[recipe.style[11]].toString());
     result.replace("@ink","#293e40").replace("@shade","#804d3d").replace("@lip",QStringList{"#804d4b","#a86e65","#be8a7a","#804c68","#604848","#c18d89"}[recipe.style[5]]).replace("@paper","#fff7e5").replace("@eye",QStringList{"#64766a","#527c9c","#714e38","#443c38","#a4a177","#888e92","#548a78","#7b6590"}[recipe.style[4]]);
     return result.toUtf8();
 }
 QImage PortraitImages::requestImage(const QString& id,QSize* size,const QSize& requested) {
     auto recipe=core::PortraitRecipe{};
+    auto stage=core::LifeStage::adult;
     const auto tokens=id.split('/');
     try {
-        if(tokens.size()!=16 && tokens.size()!=28) throw std::invalid_argument("Portrait URL layer count");
+        if(tokens.size()!=16 && tokens.size()!=17 && tokens.size()!=28 && tokens.size()!=29) throw std::invalid_argument("Portrait URL layer count");
         bool okay=false;const auto kit=tokens[0].toUInt(&okay);if(!okay || kit!=1) throw std::invalid_argument("Portrait kit");
         for(std::size_t i=0;i<recipe.parts.size();++i) {
             const auto part=tokens[static_cast<qsizetype>(i)+1].toUInt(&okay);
             if(!okay || part>=core::portrait_part_counts[i]) throw std::invalid_argument("Portrait part");
             recipe.parts[i]=static_cast<std::uint8_t>(part);
         }
-        if(tokens.size()==28) for(std::size_t i=0;i<recipe.style.size();++i) {const auto part=tokens[static_cast<qsizetype>(i)+16].toUInt(&okay);if(!okay || part>=core::portrait_style_counts[i]) throw std::invalid_argument("Portrait styling");recipe.style[i]=static_cast<std::uint8_t>(part);}
-    } catch(const std::invalid_argument&) {recipe={};}
+        if(tokens.size()>=28) for(std::size_t i=0;i<recipe.style.size();++i) {const auto part=tokens[static_cast<qsizetype>(i)+16].toUInt(&okay);if(!okay || part>=core::portrait_style_counts[i]) throw std::invalid_argument("Portrait styling");recipe.style[i]=static_cast<std::uint8_t>(part);}
+        if(tokens.size()==17 || tokens.size()==29) {
+            const auto& stage_token = tokens.back();
+            if(!core::try_parse_life_stage(stage_token.toStdString(), stage)) {
+                bool age_ok = false;
+                const int age = stage_token.toInt(&age_ok);
+                if(!age_ok || age < 0 || age > 200) throw std::invalid_argument("Portrait life stage");
+                stage = core::life_stage_for_age(age);
+            }
+        }
+    } catch(const std::invalid_argument&) {recipe={}; stage=core::LifeStage::adult;}
     const auto edge=std::clamp(requested.isValid()?std::max(requested.width(),requested.height()):480,32,2048);
     QImage result{edge,edge,QImage::Format_ARGB32_Premultiplied};result.fill(Qt::transparent);
-    QSvgRenderer renderer{svg(recipe)};
+    QSvgRenderer renderer{svg(recipe, stage)};
     QPainter painter{&result};painter.setRenderHint(QPainter::Antialiasing);renderer.render(&painter);painter.end();
     if(size) *size=QSize{240,240};
     return result;

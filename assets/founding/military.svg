@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="810" viewBox="0 0 1440 810">
+  <title>Dawn briefing room and desert foothills</title>
+  <defs>
+    <linearGradient id="wall" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#1e2924"/><stop offset="1" stop-color="#4e5947"/>
+    </linearGradient>
+    <linearGradient id="dawn" x1="0" y1="0" x2="0" y2="1">
+      <stop stop-color="#45616d"/><stop offset="1" stop-color="#dfb780"/>
+    </linearGradient>
+  </defs>
+  <path fill="url(#wall)" d="M0 0h1440v810H0z"/>
+  <path fill="#27342c" d="M0 54l710-26v584L0 732z"/>
+  <path fill="#313d34" d="M710 28h730v584H710z"/>
+  <path fill="#1b241f" d="M0 732l710-120h730v198H0z"/>
+  <path fill="#434c3e" d="M680 612h760v198H440z"/>
+  <!-- Dawn airfield window -->
+  <rect x="780" y="76" width="570" height="320" fill="#202a23"/>
+  <rect x="794" y="90" width="542" height="292" fill="url(#dawn)"/>
+  <path fill="#7c7361" d="M794 316l150-38 140 28 110-44 142 36v84H794z"/>
+  <path fill="#475142" d="M794 344l190-22 180 14 172-24v70H794z"/>
+  <path d="M1065 90v292M794 236h542" stroke="#263129" stroke-width="8"/>
+  <path fill="#edd09a" opacity=".14" d="M794 382h542l104 428H540z"/>
+  <!-- Wall map board -->
+  <rect x="780" y="424" width="240" height="130" rx="4" fill="#3a4538"/>
+  <path d="M808 486q44-28 96 8t90-18" fill="none" stroke="#c8b989" stroke-width="3" opacity=".6"/>
+  <!-- Steel briefing table with legs under apron -->
+  <path fill="#151b18" opacity=".4" d="M838 776l64-8 14 12-70 8zm502-18l64-8 14 12-70 8z"/>
+  <path fill="#2d3830" d="M854 614h24v166h-24zm494-18h24v166h-24z"/>
+  <path fill="#465246" d="M816 574l608-32v58l-608 32z"/>
+  <path fill="#6d7865" d="M800 550l640-34v28l-640 36z"/>
+  <path fill="#88937e" d="M800 550l548-30 92 30-640 32z"/>
+  <!-- Ruggedized field case, clipboard & service cap grounded on tabletop -->
+  <path fill="#2a3228" opacity=".32" d="M890 556l144-10 34 14-146 12zm196-14l106-8 26 12-108 10z"/>
+  <path fill="#384436" d="M892 508l138-10 32 40-136 12z"/>
+  <path fill="#52624d" d="M898 514l126-9 24 28-124 10z"/>
+  <path fill="#d6c59f" d="M1094 532l98-8 22 14-100 10z"/>
+  <path fill="#7c6348" d="M1120 524l36-3 4 10-36 3z"/>
+  <path d="M1110 540h68" stroke="#64685e" stroke-width="2"/>
+  <path fill="#5e6b54" d="M1260 512q42-28 96-4l12 20-118 8z"/>
+  <path fill="#c8a665" d="M1302 518l16-4v8l-16-2z"/>
+</svg>

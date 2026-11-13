@@ -1,4 +1,5 @@
 #include "world_controller.hpp"
+#include "portrait_url.hpp"
 #include <pgp/runtime/competition.hpp>
 namespace pgp::bridge {
 QVariantList WorldController::industryPeople() const {
@@ -16,9 +17,7 @@ QVariantList WorldController::industryPeople() const {
         QVariantList roster;
         for(const auto& employee:s.management->people->employees) {
             if(employee.departed_on)continue;const auto& p=employee.terms.profile;
-            QString portrait=QStringLiteral("image://portraits/%1").arg(p.portrait.kit);
-            for(const auto part:p.portrait.parts)portrait+='/'+QString::number(part);
-            for(const auto part:p.portrait.style)portrait+='/'+QString::number(part);
+            const QString portrait=portrait_url(p,s.date);
             QStringList skills;if(const auto* rules=core::talent_rules(s))for(const auto& skill:rules->skills)if(core::has_skill(p,skill.id))skills.push_back(text(skill.name));
             roster.push_back(QVariantMap{{"id",text(rival.definition_id)+"/"+text(p.id)},{"name",text(p.name)},{"portrait",portrait},{"role",text(p.role)},{"status",employee.ready_on>s.date?tr("Onboarding until %1").arg(text(core::iso_date(employee.ready_on))):QString{}},
                 {"socialBlocker",text(core::social_blocker(w.simulation,rival.definition_id+"/"+p.id))},{"detail",text(p.pronouns)+" · "+text(p.education)+"\n"+skills.join(" · ")}});

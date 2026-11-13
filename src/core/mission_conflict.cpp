@@ -60,7 +60,12 @@ const MissionConcern* mission_concern(const SimulationState& state,std::string_v
 
 bool is_personal_rival(const SimulationState& state,std::string_view first,std::string_view second) {
     if(first!="founder" && second!="founder")return false;
-    const auto* concern=mission_concern(state,first=="founder"?second:first);
+    const auto other=first=="founder"?second:first;
+    if(state.management && state.management->people && state.management->people->social) {
+        for(const auto& hostile:state.management->people->social->hostile_peers)
+            if(hostile==other) return true;
+    }
+    const auto* concern=mission_concern(state,other);
     return concern && concern->rivalry_on && !concern->settled_on;
 }
 

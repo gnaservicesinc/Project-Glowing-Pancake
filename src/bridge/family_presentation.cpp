@@ -1,12 +1,12 @@
 #include "world_controller.hpp"
 #include "flow_presentation.hpp"
+#include "portrait_url.hpp"
 #include <pgp/runtime/family.hpp>
 #include <algorithm>
 namespace pgp::bridge {
 namespace {
 QString q(std::string_view s){return QString::fromUtf8(s.data(),static_cast<qsizetype>(s.size()));}
 runtime::FamilyRequest request(const QVariantMap& row) {return {row.value("action").toString().toStdString(),row.value("band","baby").toString().toStdString(),row.value("name").toString().toStdString(),row.value("child").toString().toStdString(),row.value("track").toString().toStdString(),row.value("withPartner",false).toBool()};}
-QString portrait(const core::PersonProfile& p){QString path=QStringLiteral("image://portraits/%1").arg(p.portrait.kit);for(const auto part:p.portrait.parts)path+='/'+QString::number(part);for(const auto part:p.portrait.style)path+='/'+QString::number(part);return path;}
 QString kind(const std::string& id){return id=="biological"?QObject::tr("Birth family"):id=="adoptive"?QObject::tr("Adoptive family"):id=="foster"?QObject::tr("Foster family"):QObject::tr("Stepfamily");}
 }
 QVariantMap WorldController::familyAlbum() const {
@@ -14,7 +14,7 @@ QVariantMap WorldController::familyAlbum() const {
     QVariantList members,plans,tracks,edges;std::map<std::string,QVariantMap> identities;
     auto me=founder();me["id"]="founder";identities.emplace("founder",me);
     for(const auto& e:w.simulation.management->people->employees){const auto id=runtime::romance_person_id(w,e.terms.profile.id);if(id!="founder")identities.emplace(id,person(q(e.terms.profile.id),w.simulation.date));}
-    for(const auto& [id,p]:w.simulation.management->people->industry)identities.emplace(runtime::romance_person_id(w,id),QVariantMap{{"id",q(id)},{"name",q(p.profile.name)},{"portrait",portrait(p.profile)},{"role",q(p.profile.role)},{"detail",q(p.profile.pronouns)}});
+    for(const auto& [id,p]:w.simulation.management->people->industry)identities.emplace(runtime::romance_person_id(w,id),QVariantMap{{"id",q(id)},{"name",q(p.profile.name)},{"portrait",portrait_url(p.profile,day)},{"role",q(p.profile.role)},{"detail",q(p.profile.pronouns)}});
     for(const auto& track:rules.tracks)tracks.push_back(QVariantMap{{"id",q(track.skill)},{"name",q(track.name)}});
     for(const auto& member:state.members)if(member.known) {
         const auto& p=member.profile;const auto age=runtime::family_age(p.romantic->born_on,day);const auto& track=*std::ranges::find(rules.tracks,member.track,&core::FamilyLearningTrack::skill);
@@ -33,7 +33,7 @@ QVariantMap WorldController::familyAlbum() const {
                 else if(std::ranges::any_of(people.employees,[&](const auto& e){return e.terms.profile.id==a.person && !e.departed_on;}))application+=tr(" · hired");
             }
         }
-        auto row=QVariantMap{{"id",q(p.id)},{"name",q(p.name)},{"portrait",age<18?QStringLiteral("qrc:/pgp/assets/family/%1.svg").arg(age<6?"sprout":age<13?"sapling":"tree"):portrait(p)},{"role",age<18?tr("Growing up"):member.qualified_on?q(p.role):tr("Studying")},{"age",age},{"detail",q(p.pronouns)+" · "+q(core::iso_date(p.romantic->born_on))},{"parents",parents.join("\n")},{"care",care},{"foster",foster},{"track",q(member.track)},{"trackName",q(track.name)},{"qualified",member.qualified_on.has_value()},{"application",application},{"skills",member.qualified_on?q(p.education):tr("Little experiments, big discoveries. Curiosity grows with practice.")}};
+        auto row=QVariantMap{{"id",q(p.id)},{"name",q(p.name)},{"portrait",portrait_url(p.portrait,age)},{"role",age<18?tr("Growing up"):member.qualified_on?q(p.role):tr("Studying")},{"age",age},{"detail",q(p.pronouns)+" · "+q(core::iso_date(p.romantic->born_on))},{"parents",parents.join("\n")},{"care",care},{"foster",foster},{"track",q(member.track)},{"trackName",q(track.name)},{"qualified",member.qualified_on.has_value()},{"application",application},{"skills",member.qualified_on?q(p.education):tr("Little experiments, big discoveries. Curiosity grows with practice.")}};
         identities.insert_or_assign(p.id,row);members.push_back(row);
     }
     for(const auto& e:state.edges)if(e.known && identities.contains(e.parent) && identities.contains(e.child))edges.push_back(QVariantMap{{"first",q(e.parent)},{"second",q(e.child)},{"label",tr("Parent/Child · %1%2").arg(kind(e.kind),e.ended_on?tr(" · past care"):QString{})},{"names",identities.at(e.parent).value("name").toString()+" → "+identities.at(e.child).value("name").toString()},{"strength",500}});

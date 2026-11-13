@@ -1,3 +1,5 @@
+#include <pgp/core/lab.hpp>
+#include <pgp/core/mission_conflict.hpp>
 #include <pgp/core/people.hpp>
 #include <pgp/runtime/scenario.hpp>
 #include <pgp/persistence/save.hpp>
@@ -149,6 +151,37 @@ int main() {
         check(persistence::decode_save(program,persistence::encode_save(program,edited)).checkpoint==edited,
               "Existing projects retain their original research team evidence after an edit.");
 #endif
+        {
+            auto tol_sim=after;
+            auto it=std::ranges::find_if(tol_sim.management->people->employees,
+                [&](const auto& e){return e.terms.profile.id==plan.researchers.front();});
+            check(it!=tol_sim.management->people->employees.end(),"Expected researcher in team.");
+            it->terms.profile.traits.push_back("Playtest: tolerant baseline");
+            const auto baseline=core::research_team(tol_sim,plan.researchers).creativity;
+            it->terms.profile.traits.back()="tolerant";
+            check(core::research_team(tol_sim,plan.researchers).creativity==baseline*2,
+                  "Tolerant trait doubles team creativity.");
+        }
+        check(core::scale_risk_bp(core::BasisPoints{2000},core::BasisPoints{9000}).value()==1800,
+              "scale_risk_bp reduces risk probability by 10%.");
+        {
+            auto base_rt=runtime::Runtime{program,before};
+            const auto base_sub=base_rt.submit({before.world.simulation.revision,core::StartResearch{topic,plan}});
+            check(base_sub.accepted(),"Baseline research starts cleanly.");
+            const auto base_work=base_rt.current_state().world.simulation.capacity->projects.back().total_work;
+
+            auto dr_cp=before;
+            dr_cp.world.simulation.lab->research_work_scale_bp=core::BasisPoints{7500};
+            auto dr_rt=runtime::Runtime{program,dr_cp};
+            const auto dr_sub=dr_rt.submit({dr_cp.world.simulation.revision,core::StartResearch{topic,plan}});
+            check(dr_sub.accepted(),"Doctorate research speedup starts cleanly.");
+            const auto& dr_state=dr_rt.current_state();
+            const auto dr_work=dr_state.world.simulation.capacity->projects.back().total_work;
+            check(dr_work.value()==base_work.value()*7500/10000,
+                  "research_work_scale_bp scales required research compute work.");
+            check(persistence::decode_save(program,persistence::encode_save(program,dr_state)).checkpoint==dr_state,
+                  "research_work_scale_bp validates and roundtrips through save/load.");
+        }
         std::cout<<"Distinct-trait union, identical-team compatibility, early-year threshold, atomic refusal, prerequisite bypass and fresh reload passed\n";
     }catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}
 }

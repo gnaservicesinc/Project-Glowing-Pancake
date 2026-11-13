@@ -18,7 +18,7 @@ core::PersonProfile parse_profile(const Json& j) {
     if(!j.at("romantic").is_null())result.romantic=parse_romantic_profile(j.at("romantic"));
     result.orientation=text(j.at("orientation"),"orientation",32);
     array(j.at("skills"),"skills",96);for(const auto& id:j.at("skills"))result.skills.push_back(text(id,"skill",64));
-    array(j.at("traits"),"traits",16);
+    array(j.at("traits"),"traits",32);
     for(const auto& trait:j.at("traits")) result.traits.push_back(text(trait,"trait",80));
     if(j.contains("portrait")) {
         const auto& recipe=j.at("portrait");fields(recipe,"portrait",{"kit","parts","style"});
@@ -102,9 +102,9 @@ core::PeopleState parse_people(const Json& j) {
         p.industry.emplace(text(Json(id),"scoped person",160),core::IndustryPerson{parse_profile(row.at("profile")),text(row.at("company"),"company",64),text(row.at("organization"),"organization",128),text(row.at("state"),"state",64),text(row.at("city"),"city",128),boolean(row.at("active"),"active")});
     }
     p.starts_on=core::OrdinalDay{i64(j.at("starts_on"),"starts_on")};p.next_recruitment=core::OrdinalDay{i64(j.at("next_recruitment"),"next_recruitment")};
-    p.offered_pay=core::SalaryRate{i64(j.at("offered_pay"),"offered_pay")};p.mission=text(j.at("mission"),"mission",32);p.founding_prestige=static_cast<std::uint32_t>(u64(j.at("founding_prestige"),"prestige",10));
-    p.community_prestige=static_cast<std::uint32_t>(u64(j.at("community_prestige"),"community prestige",10));
-    p.community_buzz=static_cast<std::uint32_t>(u64(j.at("community_buzz"),"community buzz",20));
+    p.offered_pay=core::SalaryRate{i64(j.at("offered_pay"),"offered_pay")};p.mission=text(j.at("mission"),"mission",32);p.founding_prestige=static_cast<std::uint32_t>(u64(j.at("founding_prestige"),"prestige",100));
+    p.community_prestige=static_cast<std::uint32_t>(u64(j.at("community_prestige"),"community prestige",100));
+    p.community_buzz=static_cast<std::uint32_t>(u64(j.at("community_buzz"),"community buzz",200));
     if(j.contains("founder_gender")) p.founder_gender=text(j.at("founder_gender"),"founder_gender",32);
     array(j.at("applicants"),"applicants",12);for(const auto& a:j.at("applicants")) p.applicants.push_back(parse_applicant(a));
     array(j.at("queued_applicants"),"queued applicants",12);for(const auto& a:j.at("queued_applicants"))p.queued_applicants.push_back(parse_applicant(a));

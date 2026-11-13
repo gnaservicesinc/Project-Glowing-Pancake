@@ -86,7 +86,7 @@ int main(int argc,char** argv) {
         check(persistence::decode_save(program,persistence::encode_save(program,checkpoint)).checkpoint==checkpoint,"Personal savings and appearance styling must reload exactly.");
         bridge::WorldController world{std::filesystem::path{scratch.path().toStdString()}/"world"};
         world.update(std::make_shared<const bridge::CampaignSnapshot>(bridge::CampaignSnapshot{1,checkpoint,{},true,false}),program,true);
-        check(world.founder().value("portrait")==setup.portrait(),"The world profile must show the customized portrait.");
+        check(world.founder().value("portrait")==setup.portraitForAge(18),"The world profile must show the customized portrait.");
         check(world.founder().value("bio").toString().contains("Actual Genius"),"The founder's leg up must appear in the profile.");
         const auto workspaces=[](QVariantList rooms){
             rooms.erase(std::remove_if(rooms.begin(),rooms.end(),[](const auto& room){return room.toMap().value("passage").toBool();}),rooms.end());
@@ -183,6 +183,112 @@ int main(int argc,char** argv) {
             "Accepting Alder must preserve the signed appointment and the unsigned investor conversation.");
         check(setup.respondHomeOffer("alder","later").isEmpty() && setup.selection().route=="investment" &&
             setup.form().value("company")=="Daybreak Research" && offer(setup,"commercial").value("status")=="considering", "Setting a selected appointment aside must restore the player's own company draft and preserve conversations.");
+        {
+            const auto find_opt=[](const QVariantMap& chapter,const QString& id) {
+                for(const auto& v:chapter.value("choices").toList()) if(v.toMap().value("id")==id) return v.toMap();
+                return QVariantMap{};
+            };
+            const auto find_chapter=[](const bridge::FoundingController& ctrl,const QString& id) {
+                for(const auto& v:ctrl.chapters()) if(v.toMap().value("id")==id) return v.toMap();
+                return QVariantMap{};
+            };
+            const auto leg_avail=[](const bridge::FoundingController& ctrl,const QString& id) {
+                for(const auto& v:ctrl.legs()) if(v.toMap().value("id")==id) return v.toMap().value("available").toBool();
+                return false;
+            };
+            bridge::FoundingController school{program.collection,path.parent_path()/"school.json"};
+            school.setField("family","poor");
+            check(!leg_avail(school,"wealthy"),"Wealthy Elite leg must be unavailable when born poor.");
+            school.setField("family","rich");
+            check(leg_avail(school,"wealthy"),"Wealthy Elite leg must unlock when born rich.");
+            school.setField("leg","wealthy");
+            school.setField("family","poor");
+            check(school.form().value("leg")!="wealthy","Switching family back to poor must clear the Wealthy Elite leg.");
+
+            school.setField("family","rich");school.setField("leg","genius");
+            school.choose("ms_sport","no_sport");
+            school.choose("ms_clubs","robotics");school.choose("ms_clubs","coding");school.choose("ms_clubs","debate");
+            check(find_chapter(school,"ms_clubs").value("maxSelections").toInt()==3 &&
+                  school.form().value("choices").toMap().value("ms_clubs")=="robotics,coding,debate",
+                  "Middle school clubs must allow up to 3 multi-selections without a sport.");
+            school.choose("ms_clubs","drama");
+            check(school.form().value("choices").toMap().value("ms_clubs")=="robotics,coding,debate",
+                  "Middle school clubs must not exceed 3 selections.");
+            school.choose("ms_sport","basketball_thrive");
+            check(find_chapter(school,"ms_clubs").value("maxSelections").toInt()==2 &&
+                  school.form().value("choices").toMap().value("ms_clubs").toString().split(',',Qt::SkipEmptyParts).size()<=2,
+                  "Picking a middle school sport must reduce club cap to 2 and clamp existing selections.");
+
+            for(int seed=1;seed<4096;++seed) {
+                school.setField("story_seed",seed);
+                if(!find_chapter(school,"ms_bully").isEmpty()) break;
+            }
+            check(!find_chapter(school,"ms_bully").isEmpty(),"Must find a story_seed revealing ms_bully in bridge.");
+            school.setField("leg","genius");
+            check(!find_opt(find_chapter(school,"ms_bully"),"befriend").value("available").toBool(),
+                  "Befriend bullies option must be unavailable without Charisma leg.");
+            school.setField("leg","charisma");
+            check(find_opt(find_chapter(school,"ms_bully"),"befriend").value("available").toBool(),
+                  "Befriend bullies option must unlock with Charisma leg.");
+
+            for(int seed=1;seed<4096;++seed) {
+                school.setField("story_seed",seed);
+                if(!find_chapter(school,"hs_drugs").isEmpty()) break;
+            }
+            check(!find_chapter(school,"hs_drugs").isEmpty(),"Must find a story_seed revealing hs_drugs in bridge.");
+            school.choose("hs_drugs","liked_a_lot");
+            school.choose("hs_drugs_aftermath","did_not_stop");
+            const auto blocked_college=find_opt(find_chapter(school,"grad_choice"),"college");
+            check(!blocked_college.value("available").toBool() &&
+                  blocked_college.value("reason").toString().contains("Addict"),
+                  "Addict trait must close the university track with an explicit reason.");
+
+            school.choose("hs_drugs","pass");
+            school.setField("leg","political");school.setField("family","rich");school.setField("route","bootstrap");
+            school.setField("office","home");school.setField("researcher","founder");
+            school.choose("grad_choice","college");school.choose("ug_funding","loans");school.choose("grad_school","phd_ml");
+            pgp::bridge::complete_formative_fixture(school);
+            school.setField("investment",QString::number(catalog.formation_cents+500000));
+            const auto prev=school.preview();
+            check(prev.contains("Student debt at entry") && prev.contains("Delayed start") &&
+                  prev.contains("research effort needed") && !prev.contains("Research speed"),
+                  "Preview must disclose student debt, delayed launch years, and unambiguous research effort.");
+            runtime::ScenarioOptions dr_options;
+            dr_options.founding=school.selection();
+            dr_options.identity=runtime::CampaignIdentity{"Doctorate Labs","Alex Vale",school.form().value("pronouns").toString().toStdString()};
+            const auto dr_cp=runtime::begin_scenario(program,"scenario.founder_campaign","US-CA",core::ObjectiveSelection{core::ObjectiveKind::survival,{}},dr_options);
+            update(dr_cp);
+            check(world.founder().value("name").toString().startsWith("Dr. "),
+                  "Doctoral founders must display the Dr. title prefix in WorldController::founder().");
+
+            for(int seed=1;seed<4096;++seed) {
+                school.setField("story_seed",seed);
+                if(!find_chapter(school,"ms_bully").isEmpty()) break;
+            }
+            school.choose("ms_bully","ignore");
+            school.choose("ms_bully_aftermath","accept");
+            school.choose("hs_bully_continuation","endure_hs");
+            pgp::bridge::complete_formative_fixture(school);
+            runtime::ScenarioOptions bully_options;
+            bully_options.founding=school.selection();
+            bully_options.identity=runtime::CampaignIdentity{"Resilient Labs","Alex Vale",school.form().value("pronouns").toString().toStdString()};
+            const auto bully_cp=runtime::begin_scenario(program,"scenario.founder_campaign","US-CA",core::ObjectiveSelection{core::ObjectiveKind::survival,{}},bully_options);
+            update(bully_cp);
+            const auto rel=world.relationships();
+            int bully_cards=0,bully_edges=0;
+            for(const auto& row:rel.value("people").toList()) {
+                const auto m=row.toMap();
+                if(m.value("rival").toBool() && m.value("relationship")=="Rivals" &&
+                   m.value("memory").toString().contains("Targeted you in school")) {
+                    ++bully_cards;
+                }
+            }
+            for(const auto& row:rel.value("edges").toList()) {
+                if(row.toMap().value("label")=="School bully · Rivals") ++bully_edges;
+            }
+            check(bully_cards>=4 && bully_cards<=8 && bully_edges==bully_cards,
+                  "Unresolved school bullies must appear in both SocialPanel people cards and relationship graph edges.");
+        }
         std::cout<<"Structured identity, appearance editing, current drafts, founder profile and route dependencies passed\n";
     } catch(const std::exception& e) {std::cerr<<e.what()<<'\n';return 1;}
 }

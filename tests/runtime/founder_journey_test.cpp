@@ -185,6 +185,211 @@ int main() {
         require(donated.world.simulation.capacity->available_staff==0,"A negotiated donor does not hire a researcher.");
         selected.mode="sandbox";selected.choices.clear();
         refuses([&]{ (void)make(selected); });
+        {
+            const auto has_scene=[&](const content::FoundingSelection& s,std::string_view id) {
+                return std::ranges::any_of(content::formative_scenes(catalog,s),[&](const auto* sc){return sc->id==id;});
+            };
+            const auto school_defaults=[&](std::string leg,std::string family,std::uint64_t seed) {
+                content::FoundingSelection s;
+                s.leg=std::move(leg);s.family=std::move(family);s.route="bootstrap";s.office="home";s.researcher="founder";
+                s.personal_investment_cents=catalog.formation_cents+500000;
+                s.story_seed=seed;
+                for(const auto& sc:catalog.scenes) {
+                    if(sc.id=="ms_sport") s.choices[sc.id]="no_sport";
+                    else if(sc.id=="ms_clubs") s.choices[sc.id]="robotics";
+                    else if(sc.id=="ms_bully") s.choices[sc.id]="report";
+                    else if(sc.id=="ms_bully_aftermath") s.choices[sc.id]="report_later";
+                    else if(sc.id=="hs_bully_continuation") s.choices[sc.id]="report_hs";
+                    else if(sc.id=="hs_drugs") s.choices[sc.id]="pass";
+                    else if(sc.id=="hs_drugs_aftermath") s.choices[sc.id]="rehab";
+                    else if(sc.id=="grad_choice") s.choices[sc.id]="workforce";
+                    else if(sc.id=="ug_funding") s.choices[sc.id]=(s.family=="rich"?"family_paid":"loans");
+                    else if(sc.id=="grad_school") s.choices[sc.id]="enter_market";
+                    else if(sc.id=="genius_second_phd") s.choices[sc.id]="decline_second";
+                    else s.choices[sc.id]=sc.choices.front().id;
+                }
+                return s;
+            };
+            std::uint64_t seed_elem=0;
+            for(std::uint64_t seed=1;seed<4096;++seed) {
+                auto probe=school_defaults("genius","rich",seed);
+                if(has_scene(probe,"elem_best_friend") && has_scene(probe,"elem_sharing") && has_scene(probe,"elem_rule_blame")) {
+                    seed_elem=seed;break;
+                }
+            }
+            require(seed_elem!=0,"Must find a story_seed exercising all 3 friend-stacking elementary events.");
+            auto elem=school_defaults("genius","rich",seed_elem);
+            elem.choices["elem_best_friend"]="accept";
+            elem.choices["elem_sharing"]="share";
+            elem.choices["elem_rule_blame"]="truth";
+            const auto elem_terms=content::founding_terms(catalog,elem);
+            require(elem_terms.best_friends>=3,"Friend sources in elementary school must stack.");
+            const auto elem_cp=make(elem);
+            const auto childhood_friend_count=[&](const runtime::Checkpoint& cp) {
+                return std::ranges::count_if(cp.world.simulation.management->people->social->links,
+                    [](const auto& l){return l.memory=="Best friends since childhood";});
+            };
+            require(childhood_friend_count(elem_cp)>=3,"Stacked childhood best friends must become runtime SocialLinks.");
+            auto gen_lie=elem;gen_lie.choices["elem_rule_blame"]="lie";
+            auto gen_truth=elem;
+            auto char_lie=gen_lie;char_lie.leg="charisma";char_lie.researcher="none";
+            auto char_truth=gen_truth;char_truth.leg="charisma";char_truth.researcher="none";
+            const int gen_diff=static_cast<int>(content::founding_terms(catalog,gen_lie).prestige)-static_cast<int>(content::founding_terms(catalog,gen_truth).prestige);
+            const int char_diff=static_cast<int>(content::founding_terms(catalog,char_lie).prestige)-static_cast<int>(content::founding_terms(catalog,char_truth).prestige);
+            require(char_diff>gen_diff,"Charismatic founders must earn the special prestige combo when bluffing blame.");
+
+            auto clubs=school_defaults("genius","rich",seed_elem);
+            clubs.choices["ms_sport"]="no_sport";clubs.choices["ms_clubs"]="robotics,coding,debate";
+            (void)content::founding_terms(catalog,clubs);
+            clubs.choices["ms_sport"]="basketball_thrive";
+            refuses([&]{ (void)content::founding_terms(catalog,clubs); });
+            clubs.choices["ms_clubs"]="robotics,coding";
+            (void)content::founding_terms(catalog,clubs);
+
+            std::uint64_t seed_ms=0;
+            for(std::uint64_t seed=1;seed<4096;++seed) {
+                auto probe=school_defaults("genius","rich",seed);
+                if(has_scene(probe,"ms_bully")) {seed_ms=seed;break;}
+            }
+            require(seed_ms!=0,"Must find a story_seed activating ms_bully.");
+            auto bully_gen=school_defaults("genius","rich",seed_ms);
+            bully_gen.choices["ms_bully"]="befriend";
+            refuses([&]{ (void)content::founding_terms(catalog,bully_gen); });
+            auto bully_char=school_defaults("charisma","rich",seed_ms);
+            bully_char.researcher="none";
+            const auto base_friends=content::founding_terms(catalog,bully_char).best_friends;
+            bully_char.choices["ms_bully"]="befriend";
+            const auto befriend_terms=content::founding_terms(catalog,bully_char);
+            require(befriend_terms.best_friends==base_friends+6,"Befriending middle school bullies must add 6 childhood best friends.");
+            const auto befriend_cp=make(bully_char);
+            require(childhood_friend_count(befriend_cp)>=6,"Befriended middle school bullies must persist into runtime best friends.");
+
+            auto tol=school_defaults("genius","rich",seed_ms);
+            tol.choices["ms_bully"]="ignore";
+            tol.choices["ms_bully_aftermath"]="accept";
+            tol.choices["hs_bully_continuation"]="report_hs";
+            const auto tol_cp=make(tol);
+            require(core::founder_has_trait(tol_cp.world.simulation,"Tolerant") &&
+                    tol_cp.world.simulation.management->people->social->hostile_peers.empty(),
+                    "Reporting bullying in high school must resolve hostile peers while retaining Tolerant.");
+
+            auto endure=tol;
+            endure.choices["hs_bully_continuation"]="endure_hs";
+            const auto endure_cp=make(endure);
+            const auto& hostile=endure_cp.world.simulation.management->people->social->hostile_peers;
+            require(hostile.size()>=4 && hostile.size()<=8,"Unresolved bullying must create 4-8 hostile industry peers.");
+            require(persistence::decode_save(program,persistence::encode_save(program,endure_cp)).checkpoint==endure_cp,
+                    "Hostile peer assignments must survive save/reload.");
+
+            std::uint64_t seed_both=0;
+            for(std::uint64_t seed=1;seed<4096;++seed) {
+                auto probe=school_defaults("genius","rich",seed);
+                if(has_scene(probe,"elem_best_friend") && has_scene(probe,"ms_bully")) {seed_both=seed;break;}
+            }
+            require(seed_both!=0,"Must find a story_seed activating both elem_best_friend and ms_bully.");
+            auto both=school_defaults("genius","rich",seed_both);
+            both.choices["elem_best_friend"]="accept";
+            both.choices["ms_bully"]="ignore";
+            both.choices["ms_bully_aftermath"]="accept";
+            both.choices["hs_bully_continuation"]="endure_hs";
+            const auto both_cp=make(both);
+            const auto& both_social=*both_cp.world.simulation.management->people->social;
+            const auto& both_industry=both_cp.world.simulation.management->people->industry;
+            bool found_ceo_friend=false;
+            for(const auto& link:both_social.links) {
+                if(link.memory!="Best friends since childhood") continue;
+                const auto& peer_id=link.first=="founder"?link.second:link.first;
+                require(std::ranges::find(both_social.hostile_peers,peer_id)==both_social.hostile_peers.end(),
+                        "School bullies must never displace or overlap with childhood best friends.");
+                if(const auto it=both_industry.find(peer_id);it!=both_industry.end()) {
+                    if(peer_id.ends_with("/employee/1") || it->second.profile.role.find("CEO")!=std::string::npos ||
+                       it->second.profile.role.find("Founder")!=std::string::npos) {
+                        found_ceo_friend=true;
+                    }
+                }
+            }
+            require(found_ceo_friend && both_social.hostile_peers.size()>=4 && both_social.hostile_peers.size()<=8,
+                    "Childhood CEO best friends and 4-8 same-age school bullies must coexist cleanly.");
+
+            std::uint64_t seed_hs=0;
+            for(std::uint64_t seed=1;seed<4096;++seed) {
+                auto probe=school_defaults("genius","rich",seed);
+                if(has_scene(probe,"hs_drugs")) {seed_hs=seed;break;}
+            }
+            require(seed_hs!=0,"Must find a story_seed activating hs_drugs.");
+            auto calc=school_defaults("genius","rich",seed_hs);
+            calc.choices["hs_drugs"]="calculated";
+            const auto calc_cp=make(calc);
+            require(core::founder_has_trait(calc_cp.world.simulation,"Calculated Risk Taker") &&
+                    core::founder_risk_scale_bp(calc_cp.world.simulation)==core::BasisPoints{9000} &&
+                    calc_cp.world.simulation.lab &&
+                    calc_cp.world.simulation.lab->setback_risk_scale_bp==core::BasisPoints{9000} &&
+                    core::scale_risk_bp(core::BasisPoints{2000},core::founder_risk_scale_bp(calc_cp.world.simulation))==core::BasisPoints{1800},
+                    "Calculated Risk Taker must scale negative event and lab setback risk down by 10%.");
+
+            auto addict=school_defaults("genius","rich",seed_hs);
+            addict.choices["hs_drugs"]="liked_a_lot";
+            addict.choices["hs_drugs_aftermath"]="did_not_stop";
+            addict.choices["grad_choice"]="college";
+            refuses([&]{ (void)content::founding_terms(catalog,addict); });
+            addict.choices["grad_choice"]="workforce";
+            const auto addict_cp=make(addict);
+            require(core::founder_has_trait(addict_cp.world.simulation,"Addict"),"Dropping out must grant Addict on the workforce track.");
+
+            auto paid=school_defaults("charisma","rich",seed_elem);
+            paid.researcher="none";paid.choices["grad_choice"]="college";paid.choices["ug_funding"]="family_paid";paid.choices["grad_school"]="enter_market";
+            auto loan_s=paid;loan_s.choices["ug_funding"]="loans";
+            const auto paid_cp=make(paid);
+            const auto loan_cp=make(loan_s);
+            require(loan_cp.world.simulation.accounts->debts.size()==1 &&
+                    loan_cp.world.simulation.accounts->debts.front().id==content::student_debt_id &&
+                    loan_cp.world.simulation.accounts->debts.front().principal==core::Cents{8'500'000} &&
+                    loan_cp.world.simulation.cash==paid_cp.world.simulation.cash,
+                    "Student loans must create $85,000 in debt with zero extra startup cash.");
+            require(persistence::decode_save(program,persistence::encode_save(program,loan_cp)).checkpoint==loan_cp,
+                    "Student debt checkpoint must reload identically.");
+
+            auto phd=school_defaults("political","rich",seed_elem);
+            phd.researcher="founder";phd.choices["grad_choice"]="college";phd.choices["ug_funding"]="family_paid";phd.choices["grad_school"]="phd_ml";
+            const auto phd_terms=content::founding_terms(catalog,phd);
+            require(phd_terms.doctorate_count==1 && phd_terms.entry_delay_days>=1460 && phd_terms.research_work_scale_bp<10000,
+                    "Non-genius Ph.D. must delay launch, confer a doctorate, and boost research speed.");
+            const auto phd_cp=make(phd);
+            require(phd_cp.world.campaign_start==scenario.starts_on &&
+                    phd_cp.world.scope_created>phd_cp.world.campaign_start &&
+                    phd_cp.world.simulation.date==phd_cp.world.scope_created &&
+                    phd_cp.world.simulation.accounts->invoices.size()==0 &&
+                    core::founder_has_trait(phd_cp.world.simulation,"Title: Dr.") &&
+                    phd_cp.world.simulation.lab->research_work_scale_bp==core::BasisPoints{phd_terms.research_work_scale_bp},
+                    "Delayed Ph.D. launch must preserve 2015 campaign_start, advance to launch date without pre-launch invoices, and grant Title: Dr.");
+            require(persistence::decode_save(program,persistence::encode_save(program,phd_cp)).checkpoint==phd_cp,
+                    "Delayed doctorate launch must reload cleanly.");
+            {
+                auto delayed_play=phd_cp;delayed_play.world.enabled_flows=std::vector<std::string>{};
+                runtime::Runtime delayed_rt{program,std::move(delayed_play)};
+                require(delayed_rt.prepare_opening(delayed_rt.current_state().world.simulation.revision).accepted(),
+                        "Delayed doctorate launch must prepare its opening morning.");
+                const auto first_day=delayed_rt.submit({delayed_rt.current_state().world.simulation.revision,core::AdvanceDay{}});
+                require(first_day.accepted(),first_day.explanation.c_str());
+            }
+
+            auto dual=school_defaults("genius","rich",seed_elem);
+            dual.choices["grad_choice"]="college";dual.choices["ug_funding"]="family_paid";
+            dual.choices["grad_school"]="phd_ml";dual.choices["genius_second_phd"]="phd2_math";
+            const auto dual_terms=content::founding_terms(catalog,dual);
+            require(dual_terms.doctorate_count==2 && dual_terms.entry_delay_days==0,
+                    "Actual Genius must compress dual Ph.D. study with zero launch delay unless serving in the army.");
+            const auto dual_cp=make(dual);
+            require(dual_cp.world.scope_created==dual_cp.world.campaign_start &&
+                    dual_cp.world.simulation.lab->research_work_scale_bp<phd_cp.world.simulation.lab->research_work_scale_bp,
+                    "Genius dual Ph.D. must open on campaign_start with compounded research speed.");
+
+            auto army=dual;army.choices["ug_funding"]="army";
+            const auto army_terms=content::founding_terms(catalog,army);
+            const auto army_cp=make(army);
+            require(army_terms.entry_delay_days>=1460 && army_cp.world.scope_created>army_cp.world.campaign_start,
+                    "Army service must still delay launch by 4 years even for an Actual Genius.");
+        }
         std::cout<<"Founder biography, calendar, costs, eligibility, nonprofit ownership and exact reload passed\n";
     } catch(const std::exception& e) {std::cerr<<e.what()<<'\n';return 1;}
 }

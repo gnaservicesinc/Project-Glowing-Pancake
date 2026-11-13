@@ -34,22 +34,25 @@
 <path d="M1040 170h440v14h-440z" fill="#705b47"/>
 <g stroke="#263c47" stroke-width="1"><path d="M1070 102h23v67h-23z" fill="#b48868"/><path d="M1097 86h27v83h-27z" fill="#546f79"/><path d="M1128 98h17v71h-17z" fill="#c3ae83"/><path d="M1149 92h26v77h-26z" fill="#8a737c"/><path d="M1180 115l22-5 13 57-22 5Z" fill="#6a8b81"/></g>
 <path d="M1370 153h55l-8 18h-39z" fill="#c1aa7f"/><g fill="#506e60"><path d="M1396 153Q1360 118 1377 99Q1402 114 1396 153Z"/><path d="M1396 153Q1432 111 1417 91Q1390 113 1396 153Z"/></g>
-<!-- Desk, laptop, lamp and notebooks. -->
-<ellipse cx="1190" cy="750" rx="330" ry="48" fill="#263b41" opacity=".22"/>
-<path d="M940 535H1470L1550 602H900Z" fill="#c19b6e"/><path d="M900 602h650v22H900Z" fill="#89694c"/>
-<path d="M925 623h25v185h-25zM1501 623h25v185h-25z" fill="#665c4d"/>
-<path d="M1260 625h200v128h-200z" fill="#9f7d59"/><path d="M1274 641h174v43h-174zM1274 695h174v43h-174z" fill="#ad8a64"/>
+<!-- Desk legs & drawers underneath top, laptop, lamp and grounded notebooks. -->
+<ellipse cx="1190" cy="756" rx="330" ry="48" fill="#263b41" opacity=".22"/>
+<path d="M925 620h25v188h-25zM1501 620h25v188h-25z" fill="#665c4d"/>
+<path d="M1260 622h200v131h-200z" fill="#9f7d59"/><path d="M1274 641h174v43h-174zM1274 695h174v43h-174z" fill="#ad8a64"/>
 <path d="M1350 662h32M1350 714h32" stroke="#5c5a4d" stroke-width="4" stroke-linecap="round"/>
+<path d="M940 535H1470L1550 602H900Z" fill="#c19b6e"/><path d="M900 602h650v22H900Z" fill="#89694c"/>
+<path d="M974 540l30-108 61-23" fill="none" stroke="#4a5e62" stroke-width="9" stroke-linecap="round"/><path d="M1028 395q33-26 60 6l-27 34Z" fill="#c5a465"/><ellipse cx="977" cy="546" rx="33" ry="7" fill="#4a5e62"/>
+<path d="M1050 436L950 541H1095Z" fill="#f9dda3" opacity=".14"/>
 <path d="M1063 410h198q10 0 10 10v122h-218V420q0-10 10-10Z" fill="#253d4b" stroke="#182a38" stroke-width="4"/>
 <path d="M1064 422h196v109h-196z" fill="url(#screen)"/>
 <path d="M1064 506l62-44 44 26 54-43 36 25v61h-196Z" fill="#829b9c" opacity=".5"/>
 <path d="M1053 542h218l36 38h-288Z" fill="#647783" stroke="#314957" stroke-width="3"/><path d="M1067 549h190l15 17h-220Z" fill="#324d5c"/><path d="M1134 569h57l6 8h-70Z" fill="#9ba8ab"/>
 <g stroke="#9aabb0" opacity=".7"><path d="M1072 553h180M1066 559h191"/></g>
+<ellipse cx="1424" cy="559" rx="40" ry="6" fill="#5e4b38" opacity=".32"/>
 <path d="M1390 548h68v8h-68zM1395 534h63v14h-63z" fill="#647e80"/><path d="M1390 526h69v9h-69z" fill="#d0ba8f"/>
-<path d="M974 540l30-108 61-23" fill="none" stroke="#4a5e62" stroke-width="9" stroke-linecap="round"/><path d="M1028 395q33-26 60 6l-27 34Z" fill="#c5a465"/><ellipse cx="977" cy="546" rx="33" ry="7" fill="#4a5e62"/>
-<path d="M1055 436L965 541H1125Z" fill="#f9dda3" opacity=".13"/>
-<!-- Chair, rug and indoor plant. -->
+<!-- Chair, rug and indoor plant with floor shadows. -->
 <path d="M1020 795Q1230 744 1430 795L1335 872H920Z" fill="#627b7c" opacity=".72"/><path d="M1000 813h350M985 827h347M972 842h343" stroke="#cbb993" stroke-width="2" opacity=".45"/>
+<ellipse cx="1186" cy="846" rx="84" ry="15" fill="#1e2d33" opacity=".32"/>
+<ellipse cx="1526" cy="838" rx="52" ry="10" fill="#1e2d33" opacity=".3"/>
 <path d="M1135 655q0-15 15-15h72q15 0 15 15v75h-102Z" fill="#3e5965" stroke="#304753" stroke-width="5"/><path d="M1120 732h133v25h-133z" fill="#344e5b"/>
 <path d="M1186 756v65M1186 818l-61 29M1186 818l62 29" fill="none" stroke="#344650" stroke-width="8"/>
 <path d="M1485 765h82l-14 72h-54Z" fill="#ac7f5b"/><path d="M1526 771V623" stroke="#4f6d5e" stroke-width="8"/>

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <pgp/runtime/compiler.hpp>
+#include <pgp/core/people.hpp>
 #include <pgp/core/simulation.hpp>
 #include <pgp/runtime/competition.hpp>
 #include <pgp/runtime/objectives.hpp>
@@ -8,9 +9,11 @@
 #include <pgp/runtime/romance.hpp>
 #include <pgp/runtime/family.hpp>
 
+#include <cstdint>
 #include <map>
 #include <optional>
 #include <string>
+#include <string_view>
 #include <vector>
 
 namespace pgp::runtime {
@@ -273,6 +276,41 @@ struct FlowInspection {
 // Strict reload validation, with no due work, RNG draws or state mutation.
 void validate_checkpoint(const CompiledProgram& program, const Checkpoint& checkpoint);
 [[nodiscard]] std::string_view to_string(RuntimeReason reason) noexcept;
+
+[[nodiscard]] inline bool contains_ascii_ci(std::string_view haystack,
+                                            std::string_view needle) noexcept {
+    if (needle.empty() || haystack.size() < needle.size()) return false;
+    const auto lower = [](char ch) noexcept {
+        return (ch >= 'A' && ch <= 'Z') ? static_cast<char>(ch - 'A' + 'a') : ch;
+    };
+    for (std::size_t i = 0; i + needle.size() <= haystack.size(); ++i) {
+        bool match = true;
+        for (std::size_t j = 0; j < needle.size(); ++j) {
+            if (lower(haystack[i + j]) != needle[j]) { match = false; break; }
+        }
+        if (match) return true;
+    }
+    return false;
+}
+
+[[nodiscard]] inline bool is_negative_branch_id(std::string_view id) noexcept {
+    for (std::string_view token : {"fall", "decrease", "incident", "setback", "delay",
+                                    "fail", "negative", "loss", "penalty", "decline",
+                                    "adverse", "overrun", "crisis", "crash", "hurt", "bad"}) {
+        if (contains_ascii_ci(id, token)) return true;
+    }
+    return false;
+}
+
+[[nodiscard]] inline std::uint64_t effective_branch_weight(
+    const core::SimulationState& sim, const content::WeightedBranch& branch) noexcept {
+    const auto scale = core::founder_risk_scale_bp(sim);
+    if (scale.value() >= 10000) return static_cast<std::uint64_t>(branch.weight);
+    const std::uint64_t multiplier = is_negative_branch_id(branch.id)
+        ? static_cast<std::uint64_t>(scale.value())
+        : std::uint64_t{10000};
+    return static_cast<std::uint64_t>(branch.weight) * multiplier;
+}
 
 class Runtime {
 public:
