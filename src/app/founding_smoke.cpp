@@ -72,9 +72,10 @@ void schedule_founding_smoke(QQuickWindow& window, pgp::bridge::CampaignControll
         int layout_phase=0, fit_retries=0;
         bool saw_opening_animation = false;
         bool retried_name = false;
-        bool edited_seed = false;
+        std::uint64_t world_seed = 0;
         bool saw_hillside = false;
         bool saw_company = false;
+        bool captured_childhood = false;
         bool customized = false;
         bool saw_founder_audience = false;
         bool saw_signature = false;
@@ -218,7 +219,10 @@ void schedule_founding_smoke(QQuickWindow& window, pgp::bridge::CampaignControll
                 fail("Edited name was lost after resizing"); return;
             }
             if (id.startsWith("chapter-") && !id.endsWith("-after")) {
-                if (id == "chapter-elem_classroom" && !capture(".childhood")) { fail("Childhood screenshot"); return; }
+                if (!state->captured_childhood) {
+                    if (!capture(".childhood")) { fail("Childhood screenshot"); return; }
+                    state->captured_childhood = true;
+                }
                 for (const auto& row : story->chapters()) {
                     const auto chapter = row.toMap();
                     const auto chapterId = chapter.value("id").toString();
@@ -229,9 +233,10 @@ void schedule_founding_smoke(QQuickWindow& window, pgp::bridge::CampaignControll
                         if (!advance()) fail("Multi-select continue is unavailable");
                         return;
                     }
-                    QString choice;
+                    QString choice = chapterId == "grad_choice" ? QStringLiteral("workforce") : QString{};
                     for (const auto& optRow : chapter.value("choices").toList()) {
                         const auto opt = optRow.toMap();
+                        if (!choice.isEmpty()) break;
                         if (opt.value("available", true).toBool()) { choice = opt.value("id").toString(); break; }
                     }
                     if (choice.isEmpty() || !click("foundingChoice_" + choice)) fail("Childhood choice is unavailable");
@@ -241,7 +246,7 @@ void schedule_founding_smoke(QQuickWindow& window, pgp::bridge::CampaignControll
                 return;
             }
             static const QHash<QString, QString> answers{
-                {"family","poor"},{"leg","charisma"},{"legal_form","nonprofit"},{"route","mission_director"},
+                {"family","poor"},{"legal_form","nonprofit"},{"route","mission_director"},
                 {"mission","survival"},{"offer-safety","accept"},{"offer-open_science","decline"},
                 {"headquarters","US-CA"},{"birth_sex","male"},{"gender","woman"},{"pronouns","she/her"}
             };
@@ -296,6 +301,27 @@ void schedule_founding_smoke(QQuickWindow& window, pgp::bridge::CampaignControll
                 if(!click("foundingChoice_rich") && !click("foundingMoreChoices"))fail("Choose a background with investor connections");
                 return;
             }
+            if(id=="advantages") {
+                const auto selected=story->selection();
+                if(find_visible(window.contentItem(),"foundingChoice_wealthy") ||
+                    bool(find_visible(window.contentItem(),"foundingChoice_political"))!=partner ||
+                    selected.has_advantage("wealthy")!=partner) {
+                    fail("Household must set Wealthy Elite and gate the political option");return;
+                }
+                if(!selected.has_advantage("charisma")) {
+                    if(!click("foundingChoice_charisma") || story->beat()!=id) fail("Choose Charisma and stay on the advantages page");
+                    return;
+                }
+                if(partner && !selected.has_advantage("political")) {
+                    if(!click("foundingChoice_political") || story->beat()!=id) fail("Keep Charisma and choose a political family");
+                    return;
+                }
+                if(!item("foundingChoice_charisma")->property("checked").toBool() ||
+                    (partner && !item("foundingChoice_political")->property("checked").toBool()) || !advance()) {
+                    fail("Selected advantages must stay marked until continuing");return;
+                }
+                return;
+            }
             if (const auto chosen = answers.find(id); chosen != answers.end()) {
                 if (!click("foundingChoice_" + *chosen)) fail("Expected response is unavailable");
             } else if (id == "home") {
@@ -313,7 +339,11 @@ void schedule_founding_smoke(QQuickWindow& window, pgp::bridge::CampaignControll
                         return;
                     }
                     if(!capture(".home") || !click("homeApp_browser")) {fail("Home desktop before company formation");return;}
-                    story->setField("seed","718");campaign.setTextScalePercent(200);++state->home_phase;return;
+                    if(partner) story->setField("seed","718");
+                    bool valid_seed=false;
+                    state->world_seed=story->form().value("seed").toString().toULongLong(&valid_seed);
+                    if(!valid_seed || (partner && state->world_seed!=718)) {fail("Record the seed selected for this campaign");return;}
+                    campaign.setTextScalePercent(200);++state->home_phase;return;
                 }
                 if(state->home_phase<=12 && (window.visibility()!=QWindow::Windowed || window.size()!=QSize{650,480})) {
                     window.showNormal();window.resize(650,480);return;
@@ -425,8 +455,9 @@ void schedule_founding_smoke(QQuickWindow& window, pgp::bridge::CampaignControll
                 world.simulation.capacity->sources.empty() &&
                 pgp::core::active_charter(world.simulation) && pgp::core::active_charter(world.simulation)->id=="charter.shared_research");
             if (campaign.welcome() || story->hasDraft() || !world.founding || !world.identity || world.founding->choices.size() < 12 ||
+                !world.founding->has_advantage("charisma") || world.founding->has_advantage("political")!=partner ||
                 world.founding->legal_form != "corporation" || !expected_entry || !world.founding->backers.empty() ||
-                world.identity->founder_name != "Mira Vale" || world.root_seed != 718 ||
+                world.identity->founder_name != "Mira Vale" || world.root_seed != state->world_seed ||
                 world.founding->gender!="woman" || world.founding->birth_sex!="male" || world.founding->orientation!="bisexual" ||
                 !pgp::content::transgender_founder(*world.founding) || world.identity->founder_pronouns!=(partner?"fae/faer":"she/her") ||
                 !state->customized || world.founding->appearance.parts[1]!=3 ||

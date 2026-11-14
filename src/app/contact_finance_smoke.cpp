@@ -36,7 +36,7 @@ void schedule_contact_finance_smoke(QQuickWindow& window,pgp::bridge::CampaignCo
         switch(run->phase) {
         case 0: {
             if(!press("menuNewGameButton")){fail("New Game");return;}
-            auto* story=campaign.founding();story->setField("family","rich");story->setField("leg","genius");story->setField("route","bootstrap");story->setField("office","home");
+            auto* story=campaign.founding();story->setField("family","rich");story->setAdvantage("genius",true);story->setField("route","bootstrap");story->setField("office","home");
             pgp::bridge::complete_formative_fixture(*story);
             story->setBeat("home");
             if(donor) {

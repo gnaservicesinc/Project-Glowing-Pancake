@@ -3,6 +3,7 @@
 #include <pgp/runtime/authority.hpp>
 #include <algorithm>
 #include <iostream>
+#include <map>
 #include <set>
 #include <stdexcept>
 namespace {void check(bool value,const char* why){if(!value)throw std::runtime_error(why);}}
@@ -11,20 +12,47 @@ int main(){using namespace pgp;try{
     const auto program=runtime::compile_collection(content::load_collection(persistence::read_bounded(PGP_TALENT_SOURCE,content::maximum_document_bytes),registry),registry);
     const auto& scenario=std::get<content::ScenarioDefinition>(program.collection.find("scenario.founder_campaign")->data);
     // Seeded roots, conditional follow-ups and rewards share one selection function.
-    const auto& catalog=*scenario.founding;std::set<std::string> seen;
+    const auto& catalog=*scenario.founding;
+    std::set<std::string> openings, seen;
+    std::set<std::vector<std::string>> elementary_paths, opening_choice_orders, university_paths;
     for(std::uint64_t seed=0;seed<64;++seed) {
         content::FoundingSelection selection;selection.story_seed=seed;
+        selection.family=seed%2?"rich":"poor";
+        if(seed%2) selection.advantages.clear();
         const auto roots=content::formative_scenes(catalog,selection);
-        check(roots.size()>=12,"School sections include static and seeded random scenes");
+        check(roots.size()>=12,"School sections include milestones and sampled events");
+        check(roots.front()->pool=="first_classroom","School starts with a sampled opening");
+        openings.insert(roots.front()->id);
+        std::vector<std::string> early_path, opening_choices;
+        for(const auto* option:content::formative_options(*roots.front(),selection)) opening_choices.push_back(option->id);
+        opening_choice_orders.insert(opening_choices);
+        check(std::set<std::string>(opening_choices.begin(),opening_choices.end()).size()==roots.front()->choices.size(),
+              "Shuffling displays every authored choice exactly once");
         for(const auto* root:roots) {
+            if(root->section=="elementary") early_path.push_back(root->id);
             selection.choices[root->id]=root->choices.front().id;
-            if(!root->pool.empty())seen.insert(root->id);
         }
+        elementary_paths.insert(early_path);
         const auto before_cond=content::formative_scenes(catalog,selection).size();
         selection.choices["grad_choice"]="college";
+        selection.choices["grad_school"]="phd_ml";
         const auto with_college=content::formative_scenes(catalog,selection);
         check(with_college.size()>before_cond,"Choosing college opens undergrad and grad chains");
-        check(content::load_founding_selection(content::canonical_founding_selection(selection))==selection,"Story seed and path reload exactly");
+        std::vector<std::string> university_path;
+        for(const auto* scene:with_college) {
+            if(!scene->pool.empty()) seen.insert(scene->id);
+            if(scene->section=="undergrad" || scene->section=="grad") university_path.push_back(scene->id);
+            const auto traits=content::formative_traits_before(catalog,selection,scene->id);
+            const auto eligible=std::ranges::count_if(scene->choices,[&](const auto& option) {
+                return content::option_ineligibility(option,selection,traits).empty();
+            });
+            check(eligible>=3,"Every shown school scene has at least three meaningful available choices");
+        }
+        university_paths.insert(university_path);
+        const auto reloaded=content::load_founding_selection(content::canonical_founding_selection(selection));
+        check(reloaded==selection && content::formative_scenes(catalog,reloaded)==with_college &&
+            content::formative_options(*roots.front(),reloaded)==content::formative_options(*roots.front(),selection),
+            "Story seed restores both event and option order exactly");
         selection.choices["grad_choice"]="workforce";
         check(content::formative_scenes(catalog,selection).size()==before_cond,"Changing parent choice hides its follow-up");
         const auto before=content::formative_skills(catalog,selection);
@@ -34,11 +62,16 @@ int main(){using namespace pgp;try{
                 selection.choices[scene.id]=scene.choices.front().id;
         check(content::formative_skills(catalog,selection)==before,"Inactive follow-ups cannot grant rewards");
     }
-    check(seen.size()>=15,"Seeded setups reach random events and summer camps across sections");
+    check(openings.size()==4 && elementary_paths.size()>32 && opening_choice_orders.size()>16 && university_paths.size()>8,
+          "Fresh seeds vary the opening, elementary sequence, option order and university sequence");
+    check(std::ranges::all_of(catalog.scenes,[&](const auto& scene){return scene.pool.empty() || seen.contains(scene.id);}),
+          "Seeded paths reach every sampled event and camp across all stages");
     content::FoundingSelection f;f.family="rich";f.route="bootstrap";f.office="home";f.personal_investment_cents=10000000;
     for(const auto& scene:scenario.founding->scenes)f.choices.emplace(scene.id,scene.choices.front().id);
     f.choices["elem_playground"]="sedentary";
+    f.choices["ms_bully"]="report";
     f.choices["hs_exclude"]="cut_out";
+    f.choices["grad_choice"]="workforce";
     runtime::ScenarioOptions options;options.founding=f;options.identity=runtime::CampaignIdentity{"Talent Works","Alex Vale","they/them"};
     auto checkpoint=runtime::begin_scenario(program,"scenario.founder_campaign","US-CA",core::ObjectiveSelection{core::ObjectiveKind::survival,{}},options);
     checkpoint.world.enabled_flows=std::vector<std::string>{};runtime::Runtime game{program,checkpoint};

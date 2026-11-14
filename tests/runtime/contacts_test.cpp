@@ -8,7 +8,7 @@ void check(bool yes,const char* why) {if(!yes)throw std::runtime_error(why);}
 template<class F> void refuses(F f) {try{f();}catch(const std::exception&){return;}throw std::runtime_error("Forged contact or office history accepted");}
 runtime::Runtime start(const runtime::CompiledProgram& program,bool connected) {
     const auto& d=std::get<content::ScenarioDefinition>(program.collection.find("scenario.founder_campaign")->data);
-    content::FoundingSelection selection;selection.family=connected?"rich":"middle";selection.leg="genius";selection.office="home";
+    content::FoundingSelection selection;selection.family=connected?"rich":"middle";selection.advantages={"genius"};selection.office="home";
     for(const auto& scene:d.founding->scenes) selection.choices.emplace(scene.id,scene.choices.front().id);
     runtime::ScenarioOptions options;options.founding=selection;options.identity=runtime::CampaignIdentity{"Contacts test","Alex Vale","they/them"};options.seed=19972015;
     runtime::Runtime live{program,runtime::begin_scenario(program,"scenario.founder_campaign","US-CA",core::ObjectiveSelection{core::ObjectiveKind::survival,{}},options)};

@@ -31,7 +31,7 @@ void schedule_romance_smoke(QQuickWindow& window,pgp::bridge::CampaignController
                 const auto* bond=runtime::romantic_partner(w,"founder");run->contact=bond->first=="founder"?bond->second:bond->first;run->began=bond->started_on;run->resumed=true;run->phase=12;return;
             }
             const auto& program=*campaign.snapshot()->content;const auto& definition=std::get<content::ScenarioDefinition>(program.collection.find("scenario.founder_campaign")->data);
-            content::FoundingSelection f;f.family="rich";f.leg="political";f.route="hired_ceo";f.office="shared";f.researcher="none";f.gender="woman";f.orientation="bisexual";
+            content::FoundingSelection f;f.family="rich";f.advantages={"political"};f.route="hired_ceo";f.office="shared";f.researcher="none";f.gender="woman";f.orientation="bisexual";
             for(const auto& scene:definition.founding->scenes)f.choices[scene.id]=scene.choices.front().id;
             runtime::ScenarioOptions options;options.founding=f;options.seed=719;options.identity=runtime::CampaignIdentity{"Personal Chapters","Alex Vale","she/her"};
             auto initial=runtime::begin_scenario(program,"scenario.founder_campaign","US-CA",core::ObjectiveSelection{core::ObjectiveKind::survival,{}},options);initial.world.enabled_flows=std::vector<std::string>{};

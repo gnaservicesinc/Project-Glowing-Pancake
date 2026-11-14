@@ -71,6 +71,7 @@ void schedule_device_interface_smoke(QQuickWindow &window, pgp::bridge::Campaign
             }
             auto *founding = campaign.founding();
             founding->setField("family", "rich");
+            founding->setAdvantage("genius",true);
             founding->setField("route", "bootstrap");
             pgp::bridge::complete_formative_fixture(*founding);
             campaign.startFounderCampaign();

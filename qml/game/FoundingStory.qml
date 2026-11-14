@@ -14,6 +14,10 @@ QtObject {
         const birth = qsTr("CALIFORNIA  /  JANUARY 1997")
         const form = story.form
         const choices = form.choices || {}
+        const advantages = Array.from(form.advantages || [])
+        const genius = advantages.includes("genius")
+        const charismatic = advantages.includes("charisma")
+        const political = advantages.includes("political")
         const previewText = story.preview || ""
         const homeArt = { poor: "street-apartments", middle: street, rich: "street-hillside" }[form.family] || street
         const foundingArt = form.legal_form === "nonprofit" ? "trust" : "company"
@@ -38,22 +42,21 @@ QtObject {
             let tone = sec.baseTone
             let mood = "calm"
             let tint = ""
-            const leg = form.leg
             if (scene.section === "elementary") {
                 if (scene.id === "elem_playground") art = homeArt
                 else if (scene.id === "elem_prodigy") { art = library; mood = "academic"; tint = "#7ebae8" }
                 else if (scene.id === "elem_campaign_trail") { art = form.family === "rich" ? "street-hillside" : "elementary"; mood = "civic"; tint = "#d8b878" }
-                if (leg === "genius") { tone = "slate"; mood = "academic"; tint = tint || "#7ebae8" }
-                else if (leg === "charisma") { tone = "jade"; mood = "social"; tint = tint || "#8ed8bc" }
-                else if (leg === "political") { tone = "plum"; mood = "civic"; tint = tint || "#d8a8dc" }
-                else if (leg === "wealthy") { tone = "olive"; tint = "#d8c47a" }
-                if (scene.id === "elem_classroom" && choices.elem_classroom) {
-                    tint = choices.elem_classroom === "outgoing" ? "#eac37a" : "#8abfe0"
-                } else if (scene.id === "elem_playground" && choices.elem_playground) {
-                    mood = choices.elem_playground === "athletic" ? "athletic" : "calm"
-                    tint = choices.elem_playground === "athletic" ? "#8fd6b4" : "#7dc2e8"
-                } else if (scene.id === "elem_project" && choices.elem_project) {
-                    tint = choices.elem_project === "impulsive" ? "#e5a66c" : "#96c9dc"
+                if (genius) { tone = "slate"; mood = "academic"; tint = tint || "#7ebae8" }
+                else if (charismatic) { tone = "jade"; mood = "social"; tint = tint || "#8ed8bc" }
+                else if (political) { tone = "plum"; mood = "civic"; tint = tint || "#d8a8dc" }
+                else if (form.family === "rich") { tone = "olive"; tint = "#d8c47a" }
+                if (scene.profileField === "sociability" && choices[scene.id]) {
+                    tint = form.sociability === "outgoing" ? "#eac37a" : "#8abfe0"
+                } else if (scene.profileField === "activity" && choices[scene.id]) {
+                    mood = form.activity === "athletic" ? "athletic" : "calm"
+                    tint = form.activity === "athletic" ? "#8fd6b4" : "#7dc2e8"
+                } else if (scene.profileField === "disposition" && choices[scene.id]) {
+                    tint = form.disposition === "impulsive" ? "#e5a66c" : "#96c9dc"
                 } else if (scene.id === "elem_respect_teacher" && choices.elem_respect_teacher) {
                     tint = choices.elem_respect_teacher === "respectful" ? "#a2d8b4" : "#e0a372"
                 }
@@ -62,8 +65,8 @@ QtObject {
                     else { tint = "#e5c87b" }
                 }
                 if (scene.id === "elem_rule_blame" && choices.elem_rule_blame === "lie") {
-                    tone = leg === "charisma" ? "jade" : "clay"; mood = leg === "charisma" ? "social" : "turbulent"
-                    tint = leg === "charisma" ? "#88d4ba" : "#de786b"
+                    tone = charismatic ? "jade" : "clay"; mood = charismatic ? "social" : "turbulent"
+                    tint = charismatic ? "#88d4ba" : "#de786b"
                 } else if (scene.id === "elem_rule_blame" && choices.elem_rule_blame === "truth") {
                     tint = "#9fd0e6"
                 }
@@ -174,18 +177,10 @@ QtObject {
                     row.id === "rich" ? qsTr("We were rich / wealthy") : row.name,
                 detail: row.detail
             })))
-        const advantages = {
-            genius: qsTr("Learn Programming (or earn a doctorate) and run the lab's first experiments yourself—even compressing school."),
-            charisma: qsTr("You can talk your way into rooms—and friendships—that would otherwise stay closed."),
-            wealthy: qsTr("Family wealth gives you an immediate personal capital cushion at launch (requires rich parents)."),
-            political: form.family === "rich"
-                ? qsTr("Your family is already wealthy. A parent enters politics, bringing public scrutiny and connections of your own.")
-                : qsTr("A parent builds a political career. By the time you turn eighteen, your family has money, connections and a life in the public eye.")
-        }
-        question("leg", homeArt, qsTr("GROWING UP"), qsTr("An early advantage"),
+        add("advantages", homeArt, qsTr("GROWING UP"), qsTr("An early advantage"),
             qsTr("Years from now, people will talk about how you got your start. Some of that story begins here."),
-            qsTr("What will give you a head start?"), story.legs.map(row =>
-                Object.assign({}, row, { detail: advantages[row.id] || row.detail })))
+            qsTr("Select any advantages that apply, then continue."), "advantages",
+            { choices: story.advantageOptions })
 
         const scenes = Array.from(story.chapters)
         for (const scene of scenes) {
@@ -194,7 +189,7 @@ QtObject {
             const year = (scene.date || "2002").slice(0, 4)
             const kindBadge = scene.eventKind === "conditional" ? qsTr("CHAIN EVENT")
                 : scene.eventKind === "random" ? qsTr("LIFE EVENT") : qsTr("MILESTONE")
-            const speedBadge = form.leg === "genius" && scene.date !== scene.nominalDate
+            const speedBadge = genius && scene.date !== scene.nominalDate
                 ? qsTr(" · ACCELERATED") : ""
             const eyebrow = qsTr("%1  /  %2  ·  %3%4")
                 .arg(sec.label.toUpperCase()).arg(year).arg(kindBadge).arg(speedBadge)
@@ -260,7 +255,7 @@ QtObject {
             return order.map(id => {
                 const meta = sectionsMeta[id]
                 const dropped = (id === "undergrad" || id === "grad") &&
-                    (choices.hs_drugs_aftermath === "did_not_stop" || choices.grad_choice === "workforce")
+                    (choices.hs_drugs_aftermath === "did_not_stop" || (!!choices.grad_choice && choices.grad_choice !== "college"))
                 return {
                     id,
                     label: meta.label,

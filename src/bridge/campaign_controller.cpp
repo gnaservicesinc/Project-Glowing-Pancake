@@ -434,7 +434,7 @@ QVariantMap CampaignController::generateCampaignNames() const {
     return {{QStringLiteral("company"),text(names.company_name)},{QStringLiteral("founder"),text(names.founder_name)}};
 }
 QString CampaignController::generateWorldSeed() const {
-    return integer(QRandomGenerator::global()->generate64());
+    return integer(QRandomGenerator::system()->generate64());
 }
 void CampaignController::setDaysPerSecond(int value) {
     if (value!=1 && value!=10 && value!=30 && value!=60) return;
@@ -469,6 +469,7 @@ void CampaignController::startCampaign(QString hq,bool stories,QString scenario,
         if(!primary.isEmpty()) selection=parseObjectiveSelection(primary,secondary);
     } catch(const std::exception& error) {setNotice(QString::fromUtf8(error.what()));return;}
     if (!beginOperation()) return;
+    if(!options.seed) options.seed=QRandomGenerator::system()->generate64();
     if(options.identity && options.identity->instance_id.empty())
         options.identity->instance_id=QUuid::createUuid().toString(QUuid::Id128).toStdString();
     starting_founder_ = options.founding.has_value();
@@ -748,9 +749,15 @@ void CampaignController::loadFrom(QUrl url) {
         QMetaObject::invokeMethod(worker_,[worker = worker_,token = token_,path] { worker->loadFrom(token,path); },Qt::QueuedConnection);
     } catch (const std::exception& error) { setNotice(QString::fromUtf8(error.what())); }
 }
-void CampaignController::changeSettings(persistence::Settings settings) {
-    if (settings == settings_ || !beginOperation(true)) return;
+bool CampaignController::changeSettings(persistence::Settings settings) {
+    if (settings == settings_ || !beginOperation(true)) return false;
     QMetaObject::invokeMethod(worker_,[worker = worker_,token = token_,settings] { worker->changeSettings(token,settings); },Qt::QueuedConnection);
+    return true;
+}
+bool CampaignController::setFullScreen(bool value) {
+    auto settings=settings_;
+    settings.full_screen=value;
+    return changeSettings(settings);
 }
 void CampaignController::setTextScalePercent(int value) {
     if (value < 100 || value > 200) { setNotice(QStringLiteral("Text scale must be between 100% and 200%.")); return; }

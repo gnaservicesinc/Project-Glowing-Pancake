@@ -182,6 +182,7 @@ public:
     void setMusicEnabled(bool value);
     void setMusicVolume(int value);
     bool fullScreen() const { return settings_.full_screen; }
+    Q_INVOKABLE bool setFullScreen(bool value);
     int windowWidth() const { return static_cast<int>(settings_.window_width); }
     int windowHeight() const { return static_cast<int>(settings_.window_height); }
     int effectsVolume() const { return static_cast<int>(settings_.effects_volume_percent); }
@@ -221,7 +222,7 @@ private:
         runtime::ScenarioOptions options);
     bool beginOperation(bool recovery = false);
     void submit(core::CommandAction action);
-    void changeSettings(persistence::Settings settings);
+    bool changeSettings(persistence::Settings settings);
     void acceptSnapshot(CampaignSnapshotPtr snapshot);
     void setNotice(QString explanation);
     [[nodiscard]] const runtime::Presentation* waitingPresentation() const;

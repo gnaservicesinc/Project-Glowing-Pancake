@@ -33,6 +33,7 @@ void to_json(Json& j,const FoundingOption& o) {
     if(o.research_speed_bp)j["research_speed_bp"]=o.research_speed_bp;
     if(o.grants_doctorate)j["grants_doctorate"]=o.grants_doctorate;
     if(!o.education_label.empty())j["education_label"]=o.education_label;
+    if(!o.profile_value.empty())j["profile_value"]=o.profile_value;
 }
 void from_json(const Json& j,FoundingOption& o) {
     j.at("id").get_to(o.id);j.at("name").get_to(o.name);j.at("detail").get_to(o.detail);
@@ -57,6 +58,7 @@ void from_json(const Json& j,FoundingOption& o) {
     if(j.contains("research_speed_bp"))j.at("research_speed_bp").get_to(o.research_speed_bp);
     if(j.contains("grants_doctorate"))j.at("grants_doctorate").get_to(o.grants_doctorate);
     if(j.contains("education_label"))j.at("education_label").get_to(o.education_label);
+    if(j.contains("profile_value"))j.at("profile_value").get_to(o.profile_value);
 }
 void to_json(Json& j,const FormativeScene& s) {
     j={{"id",s.id},{"title",s.title},{"date",s.date},{"text",s.text},{"choices",s.choices}};
@@ -71,6 +73,7 @@ void to_json(Json& j,const FormativeScene& s) {
     if(!s.excludes_choice.empty())j["excludes_choice"]=s.excludes_choice;
     if(s.max_selections!=1)j["max_selections"]=s.max_selections;
     if(!s.cap_reduced_when_not.empty())j["cap_reduced_when_not"]=s.cap_reduced_when_not;
+    if(!s.profile_field.empty())j["profile_field"]=s.profile_field;
 }
 void from_json(const Json& j,FormativeScene& s) {
     j.at("id").get_to(s.id);j.at("title").get_to(s.title);j.at("date").get_to(s.date);j.at("text").get_to(s.text);j.at("choices").get_to(s.choices);
@@ -85,7 +88,9 @@ void from_json(const Json& j,FormativeScene& s) {
     if(j.contains("excludes_choice"))j.at("excludes_choice").get_to(s.excludes_choice);
     if(j.contains("max_selections"))j.at("max_selections").get_to(s.max_selections);
     if(j.contains("cap_reduced_when_not"))j.at("cap_reduced_when_not").get_to(s.cap_reduced_when_not);
+    if(j.contains("profile_field"))j.at("profile_field").get_to(s.profile_field);
 }
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(FormativePool,minimum,maximum)
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(FoundingOpeningRules,inherited_staff,cofounder_staff,ceo_equity_bp)
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(FoundingLoan,lender,principal_cents,minimum_investment_cents,monthly_interest_bp,term_days)
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(FoundingPartner,id,name,pronouns,gender,letter,access,objective,traits,capital_cents,monthly_salary_cents,cash_floor_cents,shares_bp,seats,maximum_dilution_bp)
@@ -95,6 +100,7 @@ void to_json(Json& j,const FoundingCatalog& c) {
         {"prestige_finance_bp",c.prestige_finance_bp},{"buzz_finance_bp",c.buzz_finance_bp},{"maximum_finance_bonus_bp",c.maximum_finance_bonus_bp}};
     if(!c.trait_rewards.empty())j["trait_rewards"]=c.trait_rewards;
     if(!c.skill_rewards.empty())j["skill_rewards"]=c.skill_rewards;
+    if(!c.scene_pools.empty())j["scene_pools"]=c.scene_pools;
     if(c.opening) j["opening"]=*c.opening;
     if(c.startup_loan) j["startup_loan"]=*c.startup_loan;
     if(!c.partners.empty()) j["partners"]=c.partners;
@@ -108,6 +114,7 @@ void from_json(const Json& j,FoundingCatalog& c) {
     j.at("prestige_finance_bp").get_to(c.prestige_finance_bp);j.at("buzz_finance_bp").get_to(c.buzz_finance_bp);j.at("maximum_finance_bonus_bp").get_to(c.maximum_finance_bonus_bp);
     if(j.contains("trait_rewards"))j.at("trait_rewards").get_to(c.trait_rewards);
     if(j.contains("skill_rewards"))j.at("skill_rewards").get_to(c.skill_rewards);
+    if(j.contains("scene_pools"))j.at("scene_pools").get_to(c.scene_pools);
     if(j.contains("opening")) c.opening=j.at("opening").get<FoundingOpeningRules>();
     if(j.contains("startup_loan")) c.startup_loan=j.at("startup_loan").get<FoundingLoan>();
     if(j.contains("partners")) c.partners=j.at("partners").get<std::vector<FoundingPartner>>();
@@ -164,7 +171,15 @@ void shape(const FoundingSelection& s) {
     if(s.disposition!="deliberate" && s.disposition!="impulsive") invalid("Choose a decision-making tendency.");
     if(s.legal_form!="corporation" && s.legal_form!="nonprofit") invalid("Choose a corporation or nonprofit.");
     if(s.backers.size()>6 || s.choices.size()>128) invalid("Too many founding choices.");
-    for(const auto* id:{&s.family,&s.leg,&s.route,&s.office,&s.researcher}) text(*id,64);
+    for(const auto* id:{&s.family,&s.route,&s.office,&s.researcher}) text(*id,64);
+    if(s.advantages.size()>32) invalid("Too many early advantages.");
+    std::set<std::string> advantages;
+    for(const auto& id:s.advantages) {
+        text(id,64);
+        if(id=="wealthy") invalid("Wealthy Elite follows the family background.");
+        if(id=="political" && s.family!="rich") invalid("Child of Political Elite requires a wealthy family.");
+        if(!advantages.insert(id).second) invalid("Each early advantage can be selected only once.");
+    }
     text(s.partner,64,false);
     for(const auto& [scene,choice]:s.choices) {text(scene,64);text(choice,256);}
     std::set<std::string> backers;
@@ -172,6 +187,10 @@ void shape(const FoundingSelection& s) {
 
 }
 }
+bool FoundingSelection::has_advantage(std::string_view id) const {
+    return id=="wealthy"?family=="rich":std::ranges::find(advantages,id)!=advantages.end();
+}
+
 namespace {
 std::pair<std::string_view, std::string_view> split_condition(std::string_view cond) {
     const auto slash=cond.find('/');
@@ -193,6 +212,11 @@ std::uint64_t pool_salt(std::string_view pool) {
     for(char ch:pool){hash^=static_cast<unsigned char>(ch);hash*=UINT64_C(0x100000001b3);}
     return hash;
 }
+template<class T>
+void seeded_shuffle(std::vector<T>& rows, core::SplitMix64& rng) {
+    for (auto remaining=rows.size();remaining>1;--remaining)
+        std::swap(rows[remaining-1],rows[static_cast<std::size_t>(rng.bounded(remaining))]);
+}
 void append_scene_traits(const FoundingCatalog& c,const FormativeScene& scene,const FoundingSelection& s,std::vector<std::string>& traits_so_far) {
     const auto found=s.choices.find(scene.id);
     if(found==s.choices.end())return;
@@ -208,33 +232,38 @@ struct FormativePath {
     std::vector<std::string> traits_before_stop;
 };
 FormativePath resolve_formative_path(const FoundingCatalog& c,const FoundingSelection& s,std::string_view stop_before_scene={}) {
-    std::map<std::string,std::vector<const FormativeScene*>> legacy_pools;
-    std::map<std::string,std::vector<const FormativeScene*>> rand_pools;
-    for(const auto& scene:c.scenes) if(!scene.pool.empty()) {
-        if(scene.pool.starts_with("rand_")) rand_pools[scene.pool].push_back(&scene);
-        else legacy_pools[scene.pool].push_back(&scene);
-    }
+    std::map<std::string,std::vector<const FormativeScene*>> pools;
+    for(const auto& scene:c.scenes) if(!scene.pool.empty()) pools[scene.pool].push_back(&scene);
     std::set<std::string> selected;
-    core::SplitMix64 rng{s.story_seed};
-    for(const auto& [pool,rows]:legacy_pools){(void)pool;selected.insert(rows[static_cast<std::size_t>(rng.bounded(rows.size()))]->id);}
-    for(const auto& [pool,rows]:rand_pools) {
-        core::SplitMix64 prng{s.story_seed ^ pool_salt(pool)};
-        auto shuffled=rows;
-        for(std::size_t i=shuffled.size();i>1;--i)std::swap(shuffled[i-1],shuffled[static_cast<std::size_t>(prng.bounded(i))]);
-        const std::size_t min_pick=rows.size()>=4?2:1;
-        const std::size_t max_pick=std::min<std::size_t>(rows.size(),pool=="rand_elementary"||pool=="rand_middle"||pool=="rand_high"?3:2);
-        const std::size_t count=min_pick>=max_pick?max_pick:min_pick+static_cast<std::size_t>(prng.bounded(max_pick-min_pick+1));
-        for(std::size_t i=0;i<count;++i)selected.insert(shuffled[i]->id);
+    core::SplitMix64 legacy_rng{s.story_seed};
+    for(auto& [pool,rows]:pools) {
+        core::SplitMix64 rng{s.story_seed ^ pool_salt(pool)};
+        const auto rule=c.scene_pools.find(pool);
+        FormativePool limits;
+        if(rule!=c.scene_pools.end()) limits=rule->second;
+        else if(pool.starts_with("rand_")) {
+            // Earlier authored collections used named conventions for sample size.
+            limits.minimum=rows.size()>=4?2:1;
+            limits.maximum=std::min<std::size_t>(rows.size(),pool=="rand_elementary"||pool=="rand_middle"||pool=="rand_high"?3:2);
+        } else {
+            selected.insert(rows[static_cast<std::size_t>(legacy_rng.bounded(rows.size()))]->id);
+            continue;
+        }
+        seeded_shuffle(rows,rng);
+        const auto count=limits.minimum==limits.maximum?limits.minimum:
+            limits.minimum+static_cast<std::size_t>(rng.bounded(limits.maximum-limits.minimum+1));
+        for(std::size_t i=0;i<count;++i)selected.insert(rows[i]->id);
     }
     const auto effective_date=[&](const FormativeScene* scene)->const std::string& {
-        return (s.leg=="genius" && !scene->genius_date.empty())?scene->genius_date:scene->date;
+        return (s.has_advantage("genius") && !scene->genius_date.empty())?scene->genius_date:scene->date;
     };
     std::vector<const FormativeScene*> sorted;for(const auto& scene:c.scenes)sorted.push_back(&scene);
     std::ranges::sort(sorted,[&](const auto* a,const auto* b){return std::tie(effective_date(a),a->id)<std::tie(effective_date(b),b->id);});
-    FormativePath path;std::set<std::string> active;std::vector<std::string> traits_so_far;
+    FormativePath path;std::set<std::string> active;
+    std::vector<std::string> traits_so_far{"Upbringing: "+s.family};
     for(const auto* scene:sorted) {
         if(!scene->pool.empty() && !selected.contains(scene->id))continue;
-        if(!scene->requires_leg.empty() && s.leg!=scene->requires_leg)continue;
+        if(!scene->requires_leg.empty() && !s.has_advantage(scene->requires_leg))continue;
         if(!scene->requires_trait.empty() && !has_matching_trait(traits_so_far,scene->requires_trait))continue;
         if(!scene->excludes_trait.empty() && has_matching_trait(traits_so_far,scene->excludes_trait))continue;
         if(!scene->requires_choice.empty()) {
@@ -275,7 +304,7 @@ std::uint32_t scene_max_selections(const FormativeScene& scene,const FoundingSel
 }
 std::string option_ineligibility(const FoundingOption& option,const FoundingSelection& s,const std::vector<std::string>& traits_so_far) {
     if(const auto base=founding_ineligibility(option,s);!base.empty())return base;
-    if(!option.requires_leg.empty() && s.leg!=option.requires_leg)
+    if(!option.requires_leg.empty() && !s.has_advantage(option.requires_leg))
         return option.requires_leg=="charisma"?"Requires the Charisma advantage.":
                option.requires_leg=="genius"?"Requires the Actual Genius advantage.":
                "Requires the "+option.requires_leg+" advantage.";
@@ -331,6 +360,7 @@ FoundingCatalog load_founding_catalog(std::string_view bytes) {
     }
     if(c.scenes.size()<6 || c.scenes.size()>128) invalid("The introduction needs six to one hundred twenty-eight formative scenes.");
     std::set<std::string> ids;
+    std::map<std::string,std::size_t,std::less<>> pool_sizes;
     for(const auto& scene:c.scenes) {
         text(scene.id,64);text(scene.title);text(scene.date,10);text(scene.text,4096);options(scene.choices);
         text(scene.section,32,false);text(scene.event_kind,32,false);
@@ -344,6 +374,23 @@ FoundingCatalog load_founding_catalog(std::string_view bytes) {
         if(!scene.event_kind.empty() && scene.event_kind!="static" && scene.event_kind!="conditional" && scene.event_kind!="random")
             invalid("Unknown school event kind.");
         if(!ids.insert(scene.id).second) invalid("Duplicate formative scene.");
+        if(!scene.pool.empty()) ++pool_sizes[scene.pool];
+        if(!scene.profile_field.empty() && (scene.max_selections!=1 ||
+           (scene.profile_field!="sociability" && scene.profile_field!="activity" && scene.profile_field!="disposition")))
+            invalid("A formative profile field needs a supported tendency and a single choice.");
+        for(const auto& option:scene.choices) {
+            const auto& value=option.profile_value;
+            if(value.empty()) continue;
+            if((scene.profile_field=="sociability" && (value=="outgoing" || value=="introverted")) ||
+               (scene.profile_field=="activity" && (value=="athletic" || value=="sedentary")) ||
+               (scene.profile_field=="disposition" && (value=="deliberate" || value=="impulsive"))) continue;
+            invalid("A formative profile value must match its tendency.");
+        }
+    }
+    for(const auto& [id,limits]:c.scene_pools) {
+        text(id,48);
+        if(!pool_sizes.contains(id) || limits.minimum<1 || limits.minimum>limits.maximum || limits.maximum>pool_sizes.at(id))
+            invalid("A formative pool needs a valid draw range within its candidate count.");
     }
     const auto validate_ref=[&](const FormativeScene& scene, std::string_view cond, bool allow_wildcard) {
         const auto [parent_id,choice_id]=split_condition(cond);
@@ -354,12 +401,14 @@ FoundingCatalog load_founding_catalog(std::string_view bytes) {
         return parent;
     };
     for(const auto& scene:c.scenes) {
-        if(!scene.pool.empty() && scene.pool!="activity" && scene.pool!="camp" && !(scene.pool.starts_with("rand_") && scene.pool.size()<=48))
+        if(!scene.pool.empty() && !c.scene_pools.contains(scene.pool) && scene.pool!="activity" && scene.pool!="camp" &&
+           !(scene.pool.starts_with("rand_") && scene.pool.size()<=48))
             invalid("Unknown formative scene pool.");
         if(!scene.requires_choice.empty()) {
             const auto parent=validate_ref(scene,scene.requires_choice,true);
             (void)parent;
-            if(!scene.pool.empty() && !scene.pool.starts_with("rand_"))invalid("Follow-ups inherit selection from their parent chain.");
+            if(!scene.pool.empty() && !c.scene_pools.contains(scene.pool) && !scene.pool.starts_with("rand_"))
+                invalid("Follow-ups inherit selection from their parent chain.");
         }
         if(!scene.excludes_choice.empty()) (void)validate_ref(scene,scene.excludes_choice,false);
         if(!scene.cap_reduced_when_not.empty()) (void)validate_ref(scene,scene.cap_reduced_when_not,false);
@@ -378,6 +427,14 @@ FoundingCatalog load_founding_catalog(std::string_view bytes) {
 }
 std::vector<const FormativeScene*> formative_scenes(const FoundingCatalog& c,const FoundingSelection& s) {
     return resolve_formative_path(c,s).scenes;
+}
+std::vector<const FoundingOption*> formative_options(const FormativeScene& scene,const FoundingSelection& s) {
+    std::vector<const FoundingOption*> choices;
+    choices.reserve(scene.choices.size());
+    for(const auto& option:scene.choices) choices.push_back(&option);
+    core::SplitMix64 rng{s.story_seed ^ pool_salt(scene.id) ^ UINT64_C(0x43484f49434553)};
+    seeded_shuffle(choices,rng);
+    return choices;
 }
 std::vector<std::string> formative_skills(const FoundingCatalog& c,const FoundingSelection& s) {
     std::set<std::string> result;
@@ -401,8 +458,8 @@ const FoundingOption& founding_option(const std::vector<FoundingOption>& rows,st
     return *it;
 }
 std::string founding_ineligibility(const FoundingOption& option,const FoundingSelection& s) {
-    if(!option.family.empty() && s.family!=option.family && !(option.family=="rich" && s.leg=="political")) return "Requires a wealthy family at 18.";
-    if(!option.leg.empty() && s.leg!=option.leg) return "Requires the "+option.leg+" leg up.";
+    if(!option.family.empty() && s.family!=option.family) return option.family=="rich"?"Requires a wealthy family.":"Requires the "+option.family+" family background.";
+    if(!option.leg.empty() && !s.has_advantage(option.leg)) return "Requires the "+option.leg+" advantage.";
     if(!option.legal_form.empty() && s.legal_form!=option.legal_form) return "Available to a "+option.legal_form+" institution.";
     return {};
 }
@@ -411,10 +468,18 @@ const FoundingPartner* founding_partner(const FoundingCatalog& catalog,std::stri
     return found==catalog.partners.end()?nullptr:&*found;
 }
 std::string partner_ineligibility(const FoundingPartner& partner,const FoundingSelection& selection) {
-    if(partner.access=="technical" && selection.leg!="genius") return "Requires the Actual Genius leg up.";
-    if(partner.access=="connected" && selection.family!="rich" && selection.leg!="political")
-        return "Requires a wealthy family or political connections.";
+    if(partner.access=="technical" && !selection.has_advantage("genius")) return "Requires the Actual Genius advantage.";
+    if(partner.access=="connected" && !selection.has_advantage("wealthy")) return "Requires a wealthy family.";
     return {};
+}
+bool founding_ceo_eligible(const FoundingSelection& s) {
+    return s.has_advantage("wealthy") || s.has_advantage("genius");
+}
+std::int64_t founding_savings(const FoundingCatalog& c,const FoundingSelection& s) {
+    auto savings=founding_option(c.families,s.family).capital_cents;
+    for(const auto& option:c.legs) if(s.has_advantage(option.id))
+        savings=core::checked_add(savings,option.capital_cents);
+    return savings;
 }
 bool transgender_founder(const FoundingSelection& s) {
     return (s.birth_sex=="female" && s.gender!="woman") || (s.birth_sex=="male" && s.gender!="man");
@@ -425,16 +490,23 @@ bool queer_founder(const FoundingSelection& s) {
 }
 FoundingTerms founding_terms(const FoundingCatalog& c,const FoundingSelection& s,bool complete) {
     shape(s);FoundingTerms t;t.nonprofit=s.legal_form=="nonprofit";
-    const auto& family=founding_option(c.families,s.family);const auto& leg=founding_option(c.legs,s.leg);
-    if(leg.id=="wealthy" && s.family!="rich") invalid("Wealthy Elite requires rich parents.");
+    for(const auto& id:s.advantages) {
+        const auto& option=founding_option(c.legs,id);
+        if(const auto why=founding_ineligibility(option,s);!why.empty()) invalid(why);
+    }
     const auto& route=founding_option(c.routes,s.route);const auto& office=founding_option(c.offices,s.office);
     const auto& researcher=founding_option(c.researchers,s.researcher);
     for(const auto* option:{&route,&office}) if(const auto why=founding_ineligibility(*option,s);!why.empty()) invalid(why);
     if(researcher.id!="founder") if(const auto why=founding_ineligibility(researcher,s);!why.empty()) invalid(why);
-    std::int64_t prestige_signed=static_cast<std::int64_t>(leg.prestige)+(queer_founder(s)?static_cast<std::int64_t>(c.queer_community_prestige):0);
-    std::int64_t buzz_signed=static_cast<std::int64_t>(leg.buzz)+(queer_founder(s)?static_cast<std::int64_t>(c.queer_community_buzz):0);
+    const bool community=queer_founder(s);
+    std::int64_t prestige_signed=community?c.queer_community_prestige:0;
+    std::int64_t buzz_signed=community?c.queer_community_buzz:0;
+    for(const auto& option:c.legs) if(s.has_advantage(option.id)) {
+        prestige_signed+=option.prestige;
+        buzz_signed+=option.buzz;
+    }
     std::uint32_t research_speed_discount_bp=0;
-    std::vector<std::string> traits_so_far;
+    std::vector<std::string> traits_so_far{"Upbringing: "+s.family};
     std::vector<std::string> credentials;
     for(const auto* selected_scene:formative_scenes(c,s)) {
         const auto& scene=*selected_scene;
@@ -449,7 +521,7 @@ FoundingTerms founding_terms(const FoundingCatalog& c,const FoundingSelection& s
             if(!seen_tokens.insert(token).second) invalid("Duplicate selection in formative chapter.");
             const auto& r=founding_option(scene.choices,token);
             if(const auto why=option_ineligibility(r,s,traits_so_far);!why.empty()) invalid(why);
-            const bool combo=!r.combo_leg.empty() && s.leg==r.combo_leg;
+            const bool combo=!r.combo_leg.empty() && s.has_advantage(r.combo_leg);
             prestige_signed+=combo?r.combo_prestige_delta:(r.prestige_delta!=0?r.prestige_delta:static_cast<std::int32_t>(r.prestige));
             buzz_signed+=combo?r.combo_buzz_delta:(r.buzz_delta!=0?r.buzz_delta:static_cast<std::int32_t>(r.buzz));
             t.best_friends+=r.best_friends_delta;
@@ -458,7 +530,7 @@ FoundingTerms founding_terms(const FoundingCatalog& c,const FoundingSelection& s
                 const auto span=r.max_bullies-lo+1;
                 t.bully_count+=lo+(span>1?static_cast<std::uint32_t>(bully_rng.bounded(span)):0U);
             }
-            t.entry_delay_days+=(s.leg=="genius"?r.genius_delay_days:r.delay_days);
+            t.entry_delay_days+=(s.has_advantage("genius")?r.genius_delay_days:r.delay_days);
             t.student_loan_cents=core::checked_add(t.student_loan_cents,r.student_loan_cents);
             if(r.grants_doctorate) ++t.doctorate_count;
             t.research_bonus+=r.research_bonus;
@@ -481,7 +553,7 @@ FoundingTerms founding_terms(const FoundingCatalog& c,const FoundingSelection& s
             t.education_label+=cred;
         }
     }
-    const bool can_research=(s.leg=="genius") || (t.doctorate_count>0);
+    const bool can_research=s.has_advantage("genius") || t.doctorate_count>0;
     if(s.researcher=="founder" && !can_research) invalid("Only Actual Genius or a doctoral graduate can supply the first research assignment without hiring a researcher.");
     t.founder_researcher=s.researcher=="founder";
     const bool ceo=s.route=="hired_ceo";
@@ -490,7 +562,7 @@ FoundingTerms founding_terms(const FoundingCatalog& c,const FoundingSelection& s
     if(!s.partner.empty() && (s.route!="partnership" || !partner)) invalid("Choose a known cofounder for the partnership route.");
     if(complete && s.route=="partnership" && !c.partners.empty() && !partner) invalid("Agree terms with a cofounder before signing.");
     if(partner) if(const auto reason=partner_ineligibility(*partner,s);!reason.empty()) invalid(reason);
-    if(ceo && s.family!="rich" && s.leg!="genius" && s.leg!="political" && s.leg!="wealthy") invalid("This lab considers leadership applications from an Actual Genius or a political or wealthy elite background.");
+    if(ceo && !founding_ceo_eligible(s)) invalid("This lab considers leadership applications from an Actual Genius or a wealthy family.");
     {
         if(!c.opening) invalid("Complete your appearance and founding terms.");
         if(complete && s.researcher!=(can_research?"founder":"none")) invalid("Research ability follows the biography; hiring takes place during play.");
@@ -500,9 +572,7 @@ FoundingTerms founding_terms(const FoundingCatalog& c,const FoundingSelection& s
         if(complete && funded && s.backers.empty()) invalid("Secure an investor or donor before signing this route.");
         if(s.office!=((ceo || s.route=="partnership")?"shared":"home")) invalid("The starting premises follow your company entry route.");
     }
-    t.contributed_cents=core::checked_add(family.capital_cents,leg.capital_cents);
-    if(s.leg=="political" && s.family!="rich") t.contributed_cents=core::checked_add(founding_option(c.families,"rich").capital_cents,leg.capital_cents);
-    const auto personal=t.contributed_cents;
+    const auto personal=founding_savings(c,s);
     t.personal_contribution_cents=ceo?0:s.personal_investment_cents<0?personal:s.personal_investment_cents;
     if(t.personal_contribution_cents>personal) invalid("Your personal investment exceeds your available savings.");
     if(borrowing) {
@@ -550,7 +620,7 @@ std::string canonical_founding_selection(const FoundingSelection& s) {
     shape(s);
     Json j={{"mode",s.mode},{"first_name",s.first_name},{"last_name",s.last_name},{"gender",s.gender},
         {"sociability",s.sociability},{"activity",s.activity},{"disposition",s.disposition},
-        {"family",s.family},{"leg",s.leg},{"route",s.route},{"legal_form",s.legal_form},
+        {"family",s.family},{"advantages",s.advantages},{"route",s.route},{"legal_form",s.legal_form},
         {"personal_investment_cents",s.personal_investment_cents},{"office",s.office},{"researcher",s.researcher},{"choices",s.choices},{"backers",s.backers}};
     j["appearance"]={{"kit",s.appearance.kit},{"parts",s.appearance.parts},{"style",s.appearance.style}};
     if(!s.partner.empty()) j["partner"]=s.partner;
@@ -563,7 +633,7 @@ FoundingSelection load_founding_selection(std::string_view bytes) {
     const auto j=parse(bytes);FoundingSelection s;
     s.mode=j.at("mode");s.first_name=j.at("first_name");s.last_name=j.at("last_name");s.gender=j.at("gender");
     s.sociability=j.at("sociability");s.activity=j.at("activity");s.disposition=j.at("disposition");
-    s.family=j.at("family");s.leg=j.at("leg");s.route=j.at("route");s.legal_form=j.at("legal_form");
+    s.family=j.at("family");s.advantages=j.at("advantages").get<decltype(s.advantages)>();s.route=j.at("route");s.legal_form=j.at("legal_form");
     s.personal_investment_cents=j.at("personal_investment_cents").get<std::int64_t>();
     s.office=j.at("office");s.researcher=j.at("researcher");s.choices=j.at("choices").get<decltype(s.choices)>();s.backers=j.at("backers").get<decltype(s.backers)>();
     if(j.contains("partner")) s.partner=j.at("partner").get<std::string>();

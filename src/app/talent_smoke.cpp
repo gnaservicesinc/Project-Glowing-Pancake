@@ -22,7 +22,7 @@ void schedule_talent_smoke(QQuickWindow& window,pgp::bridge::CampaignController&
         if(++run->ticks>600){fail("Timeout");return;}if(!window.isSceneGraphInitialized() || !campaign.ready() || campaign.busy())return;
         auto* world=campaign.world();const auto& s=campaign.snapshot()->checkpoint.world.simulation;
         switch(run->phase){
-        case 0:{if(!press("menuNewGameButton")){fail("New Game");return;}auto* f=campaign.founding();f->setField("family","rich");f->setField("route","bootstrap");f->setField("investment","100000");pgp::bridge::complete_formative_fixture(*f);campaign.startFounderCampaign();break;}
+        case 0:{if(!press("menuNewGameButton")){fail("New Game");return;}auto* f=campaign.founding();f->setField("family","rich");f->setAdvantage("genius",true);f->setField("route","bootstrap");f->setField("investment","100000");pgp::bridge::complete_formative_fixture(*f);campaign.startFounderCampaign();break;}
         case 1:world->buyHQEquipment("desk",world->reviewToken());break;
         case 2:world->buyHQEquipment("desktop",world->reviewToken());break;
         case 3:if(run->days++<3){campaign.step();return;}world->placeHQEquipment(1,0,0,false,0,world->reviewToken());break;

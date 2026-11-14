@@ -46,6 +46,7 @@ void schedule_world_smoke(QQuickWindow& window,pgp::bridge::CampaignController& 
             if(state->resumed && window.property("menuVisible").toBool()) {fail("Launch did not resume automatically");return;}
             if(!state->resumed) {
                 auto* founding=campaign.founding();founding->reset();founding->setField("family","rich");founding->setField("route","bootstrap");
+                founding->setAdvantage("genius",true);
                 if(workplaces) founding->setField("office","home");
                 pgp::bridge::complete_formative_fixture(*founding);
                 campaign.startFounderCampaign();
@@ -414,6 +415,7 @@ void schedule_departure_smoke(QQuickWindow& window,pgp::bridge::CampaignControll
             check->resumed=campaign.currentCampaign();
             if(!check->resumed) {
                 auto* founder=campaign.founding();founder->reset();founder->setField("family","rich");founder->setField("route","hired_ceo");founder->setField("office","shared");
+                founder->setAdvantage("genius",true);
                 pgp::bridge::complete_formative_fixture(*founder);
                 campaign.startFounderCampaign();
             }
@@ -567,6 +569,7 @@ void schedule_decision_smoke(QQuickWindow& window,pgp::bridge::CampaignControlle
             state->resumed=campaign.currentCampaign();
             if(!state->resumed) {
                 auto* founder=campaign.founding();founder->reset();founder->setField("family","rich");founder->setField("route","bootstrap");founder->setField("office","leased");
+                founder->setAdvantage("genius",true);
                 pgp::bridge::complete_formative_fixture(*founder);
                 campaign.startFounderCampaign();
             }

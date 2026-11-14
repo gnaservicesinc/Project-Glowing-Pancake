@@ -9,8 +9,8 @@ Updated 2026-11-13
 The user accepted the current core as the starting point for the next phase
 and directed the initial implementation pass to wrap up. The gameplay
 checkpoint was `d1f2bd3`, with internal content 0.29.0-dev.1. The current
-immersive redesign, journal and press coverage advance content to
-**0.77.0-dev.1**, generation **81**.
+content, including the expanded school introduction, is
+**0.78.0-dev.1**, generation **82**.
 
 ## Campaign journal and founder walkthrough
 
@@ -43,15 +43,20 @@ is closed.
 
 ## Founding and event editor playtest fixes
 
-Escape opens the menu and returns to the paused campaign. The development menu
+Escape opens the pause menu during play. In the full-screen main menu, Escape
+opens exit confirmation with **Exit Full Screen**, which saves and applies
+windowed mode. The development menu
 offers a confirmed deletion of the continuing checkpoint and founder draft while
 preserving manual saves and settings. Distribution builds exclude the action.
 Founding decisions now size to their content, keep story context in the same
-scrollable scene and connect childhood activities to earlier decisions. Wealthy
-family savings start at $5 million.
+scrollable scene and connect childhood activities to earlier decisions.
+Choosing a wealthy family grants Wealthy Elite and unlocks the optional
+political advantage. Genius and charisma can be selected independently. New
+games draw from authored school event pools, shuffle the available choices
+within each school scene, and generate fresh story and world seeds.
 
-Content Studio opens on named company events and childhood scenes. An author
-can start from dialogue, news, hidden logic or a childhood scene, edit what
+The Release game menu opens Content Studio on named company events and
+childhood scenes. An author can start from dialogue, news, hidden logic or a childhood scene, edit what
 players read, add steps or choices and save directly to the reviewed project content. The graph uses the same
 forms and compiler as the ordered event outline. A first-time human author study
 remains open.

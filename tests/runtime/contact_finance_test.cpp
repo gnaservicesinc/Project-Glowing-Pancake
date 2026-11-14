@@ -28,7 +28,7 @@ int main() {
         const auto source=content::load_collection(persistence::read_bounded(PGP_CONTACT_FINANCE_SOURCE,content::maximum_document_bytes),registry);
         const auto program=runtime::compile_collection(source,registry);
         const auto& scenario=std::get<content::ScenarioDefinition>(program.collection.find("scenario.founder_campaign")->data);
-        content::FoundingSelection founder;founder.family="rich";founder.leg="genius";founder.route="bootstrap";founder.office="home";founder.researcher="founder";
+        content::FoundingSelection founder;founder.family="rich";founder.advantages={"genius"};founder.route="bootstrap";founder.office="home";founder.researcher="founder";
         for(const auto& scene:scenario.founding->scenes)founder.choices[scene.id]=scene.choices.front().id;
         runtime::ScenarioOptions options;options.founding=founder;options.seed=719;
         options.identity=runtime::CampaignIdentity{"Follow-up research","Alex Vale","they/them"};

@@ -28,25 +28,40 @@ int main() {
         revised.family="rich";revised.route="bootstrap";revised.office="home";
         revised.personal_investment_cents=1'000'000;
         auto solo=make(revised);
-        require(solo.world.simulation.succession->personal_cash==core::Cents{499'000'000} &&
+        require(solo.world.simulation.succession->personal_cash==core::Cents{699'000'000} &&
             content::founding_terms(catalog,revised).personal_contribution_cents==1'000'000,
-            "A wealthy founder starts with $5 million before the chosen personal investment.");
+            "A wealthy founder automatically receives $7 million before the chosen personal investment.");
         auto political=revised;
-        political.leg="political";political.researcher="none";
-        const auto already_wealthy=content::founding_terms(catalog,political).personal_remaining_cents;
+        political.advantages={"genius","charisma","political"};
+        political.choices["elem_campaign_trail"]="briefing";
+        const auto combined=content::founding_terms(catalog,political);
+        const auto ordinary_wealth=content::founding_terms(catalog,revised);
+        require(combined.personal_remaining_cents==709'000'000 &&
+            combined.buzz==ordinary_wealth.buzz+35 && combined.founder_researcher,
+            "Wealth, Genius, Charisma and political effects must combine.");
+        const auto combined_opening=make(political);
+        require(combined_opening.world.simulation.management->people->talent->founder_genius &&
+            persistence::decode_save(program,persistence::encode_save(program,combined_opening)).checkpoint==combined_opening,
+            "All chosen advantages and the derived wealthy background must survive a fresh save.");
         political.family="poor";
-        require(already_wealthy==509'000'000 &&
-            content::founding_terms(catalog,political).personal_remaining_cents==already_wealthy,
-            "Political families reach the wealthy tier once; existing wealth is preserved.");
+        refuses([&]{(void)make(political);});
+        political.family="rich";political.advantages.push_back("wealthy");
+        refuses([&]{(void)make(political);});
         revised.personal_investment_cents=-1;
         require(solo.world.difficulty.empty() && solo.world.simulation.capacity->sources.empty(),"New openings must not inherit difficulty or a compute lease.");
         require(solo.world.simulation.management->people->employees.size()==1,"A genius starts alone, without a forced first hire.");
         require(std::ranges::none_of(solo.world.simulation.accounts->recurring,[](const auto& r){return r.id=="office_and_admin" || r.id=="compute_lease" || r.id=="payroll_with_benefits";}),"The parents' house has no rent, employee payroll or compute subscription.");
         require(solo.world.simulation.management->people->employees.front().terms.profile.portrait==revised.appearance,"The research-capable founder must keep the customized portrait.");
         require(persistence::decode_save(program,persistence::encode_save(program,solo)).checkpoint==solo,"Revised biography and appearance must reload exactly.");
-        revised.leg="charisma";revised.researcher="none";
+        revised.advantages={"charisma"};revised.researcher="none";
         const auto nontechnical=make(revised);
         require(nontechnical.world.simulation.capacity->available_staff==0 && nontechnical.world.simulation.management->people->employees.empty(),"A nontechnical sole founder must not invent a researcher.");
+        auto no_optional_advantages=revised;
+        no_optional_advantages.family="poor";
+        no_optional_advantages.advantages.clear();
+        const auto ordinary_opening=make(no_optional_advantages);
+        require(ordinary_opening.world.founding->advantages.empty() && ordinary_opening.world.simulation.cash>core::Cents{0},
+            "A founder with a modest upbringing can launch without selecting any advantage.");
         runtime::Runtime quiet{program,nontechnical};
         require(quiet.prepare_opening(quiet.current_state().world.simulation.revision).accepted(),"A company without research staff must open normally.");
         const auto quiet_day=quiet.submit({quiet.current_state().world.simulation.revision,core::AdvanceDay{}});
@@ -118,7 +133,8 @@ int main() {
             "The intro must not ask an infant to move or choose a company mission.");
         revised.route="hired_ceo";revised.office="shared";revised.backers.clear();
         refuses([&]{(void)make(revised);});
-        revised.leg="political";
+        revised.advantages={"political"};
+        revised.family="rich";
         const auto employed=make(revised);
         const auto employment=content::founding_terms(catalog,revised);
         require(employed.world.simulation.management->people->employees.size()==catalog.opening->inherited_staff && employment.founder_bp==catalog.opening->ceo_equity_bp,"A hired CEO inherits a small roster and the disclosed minority grant.");
@@ -134,9 +150,10 @@ int main() {
         for(const auto& partner:catalog.partners) {
             auto agreement=revised;
             agreement.partner=partner.id;
-            agreement.family="poor";agreement.leg="charisma";
+            agreement.family="poor";agreement.advantages={"charisma"};
             refuses([&]{(void)make(agreement,std::nullopt);});
-            agreement.leg=partner.access=="technical"?"genius":"political";
+            agreement.advantages={partner.access=="technical"?"genius":"political"};
+            if(partner.access=="connected") agreement.family="rich";
             agreement.researcher=partner.access=="technical"?"founder":"none";
             agreement.personal_investment_cents=0;
             refuses([&]{(void)make(agreement);});
@@ -191,7 +208,7 @@ int main() {
             };
             const auto school_defaults=[&](std::string leg,std::string family,std::uint64_t seed) {
                 content::FoundingSelection s;
-                s.leg=std::move(leg);s.family=std::move(family);s.route="bootstrap";s.office="home";s.researcher="founder";
+                s.advantages={std::move(leg)};s.family=std::move(family);s.route="bootstrap";s.office="home";s.researcher="founder";
                 s.personal_investment_cents=catalog.formation_cents+500000;
                 s.story_seed=seed;
                 for(const auto& sc:catalog.scenes) {
@@ -232,8 +249,8 @@ int main() {
             require(childhood_friend_count(elem_cp)>=3,"Stacked childhood best friends must become runtime SocialLinks.");
             auto gen_lie=elem;gen_lie.choices["elem_rule_blame"]="lie";
             auto gen_truth=elem;
-            auto char_lie=gen_lie;char_lie.leg="charisma";char_lie.researcher="none";
-            auto char_truth=gen_truth;char_truth.leg="charisma";char_truth.researcher="none";
+            auto char_lie=gen_lie;char_lie.advantages={"charisma"};char_lie.researcher="none";
+            auto char_truth=gen_truth;char_truth.advantages={"charisma"};char_truth.researcher="none";
             const int gen_diff=static_cast<int>(content::founding_terms(catalog,gen_lie).prestige)-static_cast<int>(content::founding_terms(catalog,gen_truth).prestige);
             const int char_diff=static_cast<int>(content::founding_terms(catalog,char_lie).prestige)-static_cast<int>(content::founding_terms(catalog,char_truth).prestige);
             require(char_diff>gen_diff,"Charismatic founders must earn the special prestige combo when bluffing blame.");

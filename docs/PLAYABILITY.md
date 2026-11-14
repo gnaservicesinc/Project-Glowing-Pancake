@@ -72,8 +72,9 @@ Genius** to test its effects. Each window's **Reset local data** clears that
 mode's saves, autosaves, setup and navigation drafts, cached rules and settings.
 **Content Studio** opens the repository editor and remembers the chosen checkout.
 Both tools are available in ordinary Release playtest builds.
-Escape during play pauses into the menu; Escape there, Quit and window close
-open exit confirmation.
+Escape during play pauses into the menu. In the full-screen main menu, Escape
+opens the exit confirmation. **Exit Full Screen** returns to the menu in a
+window and saves that display mode. **Settings** can restore full screen.
 
 The workspace HUD and dock keep company tools, people, research, decisions,
 places and map scales reachable. Open **Devices & apps** to see the laptop
@@ -254,8 +255,13 @@ and employee mood. A difference between a recorded male or female sex and the
 chosen gender identity gives the founder a transgender flag and four founding
 buzz from queer community support. An indeterminate birth record or an
 undisclosed gender leaves the flag unset. Recruiting and employee profiles
-explain their applicable effects. Formative choices have narrated responses.
-After eight childhood chapters, customize the portrait’s features, colors,
+explain their applicable effects. Select **We were rich / wealthy** at the house
+to receive the family wealth advantage. On **An early advantage**, choose any
+combination of **Actual Genius** and **Extremely Charismatic**. Wealthy families
+can also choose **Child of Political Elite**. Continue with an empty selection
+to skip the optional advantages. Each new game draws a school itinerary and
+choice order and starts with a fresh world seed. A resumed introduction keeps
+its draws and decisions. After school, customize the portrait’s features, colors,
 clothing, patterns and build. The intro ends here, before company decisions.
 
 At eighteen, you wake in your parents’ Silicon Valley house, unemployed. Use the

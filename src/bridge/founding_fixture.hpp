@@ -1,6 +1,6 @@
 #pragma once
-// Developer walkthrough helper: follow the first available option through the
-// actual controller, including chapters revealed by a previous choice.
+// Developer walkthrough helper for the standard workforce start with Programming.
+// Choose remaining options by ID so presentation order cannot change the fixture.
 #include "founding_controller.hpp"
 #include <stdexcept>
 namespace pgp::bridge {
@@ -12,10 +12,14 @@ inline void complete_formative_fixture(FoundingController& story) {
             if(story.form().value("choices").toMap().contains(id))continue;
             const auto choices=chapter.value("choices").toList();
             if(choices.isEmpty())continue;
+            const QString preferred=id=="grad_choice"?"workforce":id=="ms_clubs"?"coding":"";
             QString pick;
             for(const auto& optVal:choices) {
                 const auto opt=optVal.toMap();
-                if(opt.value("available",true).toBool()){pick=opt.value("id").toString();break;}
+                if(!opt.value("available",true).toBool()) continue;
+                const auto option=opt.value("id").toString();
+                if(option==preferred) {pick=option;break;}
+                if(pick.isEmpty() || option<pick) pick=option;
             }
             if(pick.isEmpty()) pick=choices.front().toMap().value("id").toString();
             story.choose(id,pick);changed=true;

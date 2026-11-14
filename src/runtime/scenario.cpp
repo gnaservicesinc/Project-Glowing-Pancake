@@ -219,7 +219,7 @@ Checkpoint begin_scenario(const CompiledProgram& program, std::string_view scena
     if (world.simulation.lab && terms) {
         world.simulation.lab->research_work_scale_bp = core::BasisPoints{terms->research_work_scale_bp};
     }
-    std::uint32_t founding_prestige=world.founding && world.founding->leg=="genius"?3U:0U;
+    std::uint32_t founding_prestige=world.founding && world.founding->has_advantage("genius")?3U:0U;
     std::string recruiting_mission="research";
     if(world.founding && management && management->people && management->people->mood) {
         founding_prestige=std::min(100U, terms->prestige);
@@ -273,7 +273,7 @@ Checkpoint begin_scenario(const CompiledProgram& program, std::string_view scena
                 if(terms && terms->doctorate_count>0) {
                     if(!terms->education_label.empty()) p.education=terms->education_label;
                     if(terms->research_bonus>0) p.research=std::min<std::uint32_t>(100U,p.research+terms->research_bonus);
-                    p.bio=(world.founding->leg=="genius"?"Actual Genius with doctoral mastery: ":"Doctoral researcher: ")+
+                    p.bio=(world.founding->has_advantage("genius")?"Actual Genius with doctoral mastery: ":"Doctoral researcher: ")+
                         (terms->education_label.empty()?std::string{"advanced AI research"}:terms->education_label)+".";
                 } else {
                     if(terms && !terms->education_label.empty()) p.education=terms->education_label;
@@ -294,7 +294,7 @@ Checkpoint begin_scenario(const CompiledProgram& program, std::string_view scena
     }
     if(world.founding && scenario->founding && core::talent_rules(world.simulation)) {
         auto& people=*world.simulation.management->people;auto& talent=*people.talent;
-        talent.founder_skills=content::formative_skills(*scenario->founding,*world.founding);talent.founder_genius=world.founding->leg=="genius";
+        talent.founder_skills=content::formative_skills(*scenario->founding,*world.founding);talent.founder_genius=world.founding->has_advantage("genius");
         if(terms && terms->doctorate_count>0) {
             const auto& catalog_skills=world.simulation.management->catalog.people->talent->skills;
             if(std::ranges::any_of(catalog_skills,[](const auto& sk){return sk.id=="ml_research";}) &&
@@ -313,9 +313,9 @@ Checkpoint begin_scenario(const CompiledProgram& program, std::string_view scena
     if(world.simulation.lab) {
         world.simulation.lab->setback_risk_scale_bp=core::founder_risk_scale_bp(world.simulation);
     }
-    core::initialize_headquarters(world.simulation,seed,world.founding?(world.founding->leg=="political"?"rich":world.founding->family):"");
+    core::initialize_headquarters(world.simulation,seed,world.founding?world.founding->family:"");
     core::initialize_departments(world.simulation);
-    core::initialize_access(world.simulation,world.founding && (world.founding->family=="rich" || world.founding->leg=="wealthy" || world.founding->leg=="political"));
+    core::initialize_access(world.simulation,world.founding && world.founding->has_advantage("wealthy"));
     synchronize_industry_people(world,program);
     if(terms && core::social_rules(world.simulation) && !world.simulation.management->people->industry.empty()) {
         auto& people=*world.simulation.management->people;

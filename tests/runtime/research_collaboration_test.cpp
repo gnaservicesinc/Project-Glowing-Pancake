@@ -11,7 +11,7 @@ int main(){using namespace pgp;try{
     for(auto& d:document["definitions"])if(d["id"]=="scenario.founder_campaign"){d["competition"]["domestic"]=2;d["competition"]["international"]=0;d["competition"]["heavyweights"]=0;}
     const auto registry=content::foundation_registry();const auto program=runtime::compile_collection(content::load_collection(document.dump(),registry),registry);
     const auto& scenario=std::get<content::ScenarioDefinition>(program.collection.find("scenario.founder_campaign")->data);
-    content::FoundingSelection founder;founder.family="rich";founder.leg="political";founder.route="hired_ceo";founder.office="shared";founder.researcher="none";
+    content::FoundingSelection founder;founder.family="rich";founder.advantages={"political"};founder.route="hired_ceo";founder.office="shared";founder.researcher="none";
     for(const auto& scene:scenario.founding->scenes)founder.choices[scene.id]=scene.choices.front().id;
     runtime::ScenarioOptions options;options.founding=founder;options.seed=719;options.identity=runtime::CampaignIdentity{"Research Jams","Alex Vale","they/them"};
     auto initial=runtime::begin_scenario(program,"scenario.founder_campaign","US-CA",core::ObjectiveSelection{core::ObjectiveKind::survival,{}},options);

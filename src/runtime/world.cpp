@@ -495,9 +495,9 @@ void validate_checkpoint_with_simulation(const CompiledProgram& program, const C
             if(workplace.opening_office!=(world.founding?world.founding->office:"leased") ||
                 workplace.nonresearch_founder!=(world.founding && world.founding->researcher!="founder"))
                 invalid("The headquarters plan differs from the saved founding office and staffing terms.");
-            if(workplace.access && workplace.access->connected_background!=(world.founding && (world.founding->family=="rich" || world.founding->leg=="wealthy" || world.founding->leg=="political")))
+            if(workplace.access && workplace.access->connected_background!=(world.founding && world.founding->has_advantage("wealthy")))
                 invalid("National contacts differ from the founder's saved family and early opportunities.");
-            if(workplace.headquarters && workplace.headquarters->home_family!=(world.founding?(world.founding->leg=="political"?"rich":world.founding->family):""))
+            if(workplace.headquarters && workplace.headquarters->home_family!=(world.founding?world.founding->family:""))
                 invalid("The family home's available rooms differ from the founder's background.");
         }
         (void)content::scenario_difficulty(*scenario,world.difficulty);

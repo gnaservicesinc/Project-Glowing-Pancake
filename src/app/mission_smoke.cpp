@@ -49,7 +49,7 @@ void schedule_mission_smoke(QQuickWindow& window,pgp::bridge::CampaignController
                 const auto& program=*campaign.snapshot()->content;
                 const auto& definition=std::get<content::ScenarioDefinition>(program.collection.find("scenario.founder_campaign")->data);
                 content::FoundingSelection founder;
-                founder.family="rich";founder.leg="political";founder.route="hired_ceo";founder.office="shared";founder.researcher="none";
+                founder.family="rich";founder.advantages={"political"};founder.route="hired_ceo";founder.office="shared";founder.researcher="none";
                 for(const auto& scene:definition.founding->scenes)founder.choices[scene.id]=scene.choices.front().id;
                 runtime::ScenarioOptions options;
                 options.founding=founder;options.seed=719;options.identity=runtime::CampaignIdentity{"Mission Review","Alex Vale","they/them"};

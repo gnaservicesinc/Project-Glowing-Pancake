@@ -10,9 +10,9 @@ class FoundingController final : public QObject {
     Q_OBJECT
     Q_PROPERTY(bool available READ available CONSTANT)
     Q_PROPERTY(QVariantMap form READ form NOTIFY changed)
-    Q_PROPERTY(QVariantList chapters READ chapters CONSTANT)
+    Q_PROPERTY(QVariantList chapters READ chapters NOTIFY changed)
     Q_PROPERTY(QVariantList families READ families NOTIFY changed)
-    Q_PROPERTY(QVariantList legs READ legs NOTIFY changed)
+    Q_PROPERTY(QVariantList advantageOptions READ advantageOptions NOTIFY changed)
     Q_PROPERTY(QVariantList routes READ routes NOTIFY changed)
     Q_PROPERTY(QVariantList backers READ backers NOTIFY changed)
     Q_PROPERTY(QVariantList homeOffers READ homeOffers NOTIFY changed)
@@ -34,7 +34,7 @@ public:
     QVariantMap form() const {return form_;}
     QVariantList chapters() const;
     QVariantList families() const;
-    QVariantList legs() const;
+    QVariantList advantageOptions() const;
     QVariantList routes() const;
     QVariantList backers() const;
     QVariantList homeOffers() const;
@@ -54,6 +54,7 @@ public:
     Q_INVOKABLE QString orientationAudience(QString orientation) const;
     Q_INVOKABLE QString recognitionTerms() const;
     Q_INVOKABLE void setField(QString,QVariant);
+    Q_INVOKABLE void setAdvantage(QString id,bool enabled);
     Q_INVOKABLE QString answerText(QString field, QString value);
     Q_INVOKABLE void choose(QString,QString);
     Q_INVOKABLE QString answerOffer(QString id, bool accept);
@@ -77,6 +78,7 @@ signals:
     void beatChanged();
 private:
     QVariantList options(const std::vector<content::FoundingOption>&) const;
+    bool selectableAdvantage(const content::FoundingOption&,const content::FoundingSelection&) const;
     QVariantMap homeOffer(const QString& id) const;
     QString commitHomeDraft(QVariantMap next);
     void saveDraft();

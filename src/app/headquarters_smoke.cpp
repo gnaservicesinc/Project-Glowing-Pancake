@@ -36,6 +36,7 @@ void schedule_headquarters_smoke(QQuickWindow& window,pgp::bridge::CampaignContr
         case 0: {
             if(!press("menuNewGameButton")) {fail("New Game");return;}
             auto* founding=campaign.founding();founding->setField("family","rich");founding->setField("route","bootstrap");
+            founding->setAdvantage("genius",true);
             pgp::bridge::complete_formative_fixture(*founding);
             campaign.startFounderCampaign();++state->phase;break;
         }

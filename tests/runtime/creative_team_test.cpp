@@ -26,7 +26,7 @@ int main() {
         const auto registry=content::foundation_registry();
         const auto program=runtime::compile_collection(content::load_collection(persistence::read_bounded(PGP_CREATIVE_SOURCE,content::maximum_document_bytes),registry),registry);
         const auto& scenario=std::get<content::ScenarioDefinition>(program.collection.find("scenario.founder_campaign")->data);
-        content::FoundingSelection f;f.family="rich";f.leg="political";f.route="hired_ceo";f.office="shared";f.researcher="none";
+        content::FoundingSelection f;f.family="rich";f.advantages={"political"};f.route="hired_ceo";f.office="shared";f.researcher="none";
         for(const auto& scene:scenario.founding->scenes)f.choices[scene.id]=scene.choices.front().id;
         runtime::ScenarioOptions options;options.founding=f;options.seed=719;options.identity=runtime::CampaignIdentity{"Creative lab","Alex Vale","they/them"};
         auto initial=runtime::begin_scenario(program,"scenario.founder_campaign","US-CA",core::ObjectiveSelection{core::ObjectiveKind::survival,{}},options);

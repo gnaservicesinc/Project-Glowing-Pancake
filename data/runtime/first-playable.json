@@ -10,7 +10,7 @@
     "music.weitblick": "9da14349e75eaa6e799a45522c2c8cb00046372efefd2a6121caf1959b10140b"
   },
   "content_schema": 1,
-  "content_version": "0.77.0-dev.1",
+  "content_version": "0.78.0-dev.1",
   "currency_basis": "constant_2014_cents",
   "definitions": [
     {
@@ -69829,7 +69829,7 @@
           {
             "buzz": 0,
             "capital_cents": 200000000,
-            "detail": "Rich parents required. Larger personal capital and elite commercial connections.",
+            "detail": "Inherited from a wealthy upbringing. Provides additional savings and elite commercial connections.",
             "family": "rich",
             "fee_cents": 0,
             "id": "wealthy",
@@ -69843,8 +69843,8 @@
           {
             "buzz": 10,
             "capital_cents": 10000000,
-            "detail": "A parent’s political career brings connections and public scrutiny. Families with modest means build wealth by age 18.",
-            "family": "",
+            "detail": "A parent’s political career brings connections, public scrutiny and expectations.",
+            "family": "rich",
             "fee_cents": 0,
             "id": "political",
             "leg": "",
@@ -70106,6 +70106,44 @@
             "shares_bp": 0
           }
         ],
+        "scene_pools": {
+          "camp": {
+            "maximum": 1,
+            "minimum": 1
+          },
+          "early_interests": {
+            "maximum": 1,
+            "minimum": 1
+          },
+          "early_pressure": {
+            "maximum": 1,
+            "minimum": 1
+          },
+          "first_classroom": {
+            "maximum": 1,
+            "minimum": 1
+          },
+          "rand_elementary": {
+            "maximum": 3,
+            "minimum": 2
+          },
+          "rand_grad": {
+            "maximum": 3,
+            "minimum": 2
+          },
+          "rand_high": {
+            "maximum": 3,
+            "minimum": 2
+          },
+          "rand_middle": {
+            "maximum": 3,
+            "minimum": 2
+          },
+          "rand_undergrad": {
+            "maximum": 3,
+            "minimum": 2
+          }
+        },
         "scenes": [
           {
             "choices": [
@@ -70123,6 +70161,7 @@
                 "name": "Pull chairs together and introduce yourself",
                 "prestige": 0,
                 "prestige_delta": 1,
+                "profile_value": "outgoing",
                 "shares_bp": 0
               },
               {
@@ -70138,13 +70177,48 @@
                 "name": "Claim the quiet corner with the wooden puzzles",
                 "prestige": 0,
                 "prestige_delta": 2,
+                "profile_value": "introverted",
+                "shares_bp": 0
+              },
+              {
+                "buzz": 0,
+                "capital_cents": 0,
+                "detail": "You listen first. By Friday you know who prefers the window and who can draw a perfect dragon.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "sketch_names",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Draw a map of the room and label everyone’s seat",
+                "prestige": 0,
+                "prestige_delta": 2,
+                "profile_value": "introverted",
+                "shares_bp": 0
+              },
+              {
+                "best_friends_delta": 1,
+                "buzz": 0,
+                "capital_cents": 0,
+                "detail": "One quiet introduction gives you both someone to look for at lunch.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "welcome_late",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Make a place for the late arrival",
+                "prestige": 0,
+                "profile_value": "introverted",
                 "shares_bp": 0
               }
             ],
             "date": "2002-09-01",
-            "event_kind": "static",
+            "event_kind": "random",
             "genius_date": "2002-03-01",
             "id": "elem_classroom",
+            "pool": "first_classroom",
+            "profile_field": "sociability",
             "prompt": "How did you greet your first classroom?",
             "section": "elementary",
             "text": "Your first week in elementary school smells like tempera paint, floor wax, and cardboard milk cartons. Twenty classmates hover around tiny tables before the morning bell.",
@@ -70165,6 +70239,7 @@
                 "monthly_cents": 0,
                 "name": "Call next-up on the kickball diamond",
                 "prestige": 0,
+                "profile_value": "athletic",
                 "shares_bp": 0
               },
               {
@@ -70180,13 +70255,48 @@
                 "name": "Grab the library terminal and adventure serials",
                 "prestige": 0,
                 "prestige_delta": 2,
+                "profile_value": "sedentary",
+                "shares_bp": 0
+              },
+              {
+                "buzz": 0,
+                "buzz_delta": 2,
+                "capital_cents": 0,
+                "detail": "You keep the queue moving and settle the first argument over a chalk line.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "referee",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Volunteer to keep the four-square score",
+                "prestige": 0,
+                "profile_value": "athletic",
+                "shares_bp": 0
+              },
+              {
+                "best_friends_delta": 1,
+                "buzz": 0,
+                "capital_cents": 0,
+                "detail": "A story on folded copy paper turns into a regular exchange by the cart.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "draw_serial",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Make the next page of a comic with two friends",
+                "prestige": 0,
+                "profile_value": "sedentary",
                 "shares_bp": 0
               }
             ],
             "date": "2003-09-01",
-            "event_kind": "static",
+            "event_kind": "random",
             "genius_date": "2002-11-01",
             "id": "elem_playground",
+            "pool": "early_interests",
+            "profile_field": "activity",
             "prompt": "Where did recess usually find you?",
             "section": "elementary",
             "text": "Rain stops by lunch. Out on the asphalt, kids line up for four-square and kickball while Mrs. Okafor rolls the computer cart and storybook bin beside the shade trees.",
@@ -70207,6 +70317,7 @@
                 "monthly_cents": 0,
                 "name": "Snap on extra braces right now and load the heaviest weight",
                 "prestige": 0,
+                "profile_value": "impulsive",
                 "shares_bp": 0
               },
               {
@@ -70222,13 +70333,50 @@
                 "name": "Measure the weak joint, reinforce the truss, and test smoothly",
                 "prestige": 0,
                 "prestige_delta": 2,
+                "profile_value": "deliberate",
+                "shares_bp": 0
+              },
+              {
+                "buzz": 0,
+                "buzz_delta": 2,
+                "capital_cents": 0,
+                "detail": "You make the trade-off part of the presentation and show exactly how much load it buys.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "reduce_span",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Move the supports in and present a shorter bridge",
+                "prestige": 0,
+                "prestige_delta": 1,
+                "profile_value": "deliberate",
+                "shares_bp": 0
+              },
+              {
+                "best_friends_delta": 1,
+                "buzz": 0,
+                "buzz_delta": 2,
+                "capital_cents": 0,
+                "detail": "Their spare sticks and your braces save the demonstration. You give them half the credit.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "call_team",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Call another table over and rebuild together",
+                "prestige": 0,
+                "profile_value": "impulsive",
                 "shares_bp": 0
               }
             ],
             "date": "2004-09-01",
-            "event_kind": "static",
+            "event_kind": "random",
             "genius_date": "2003-06-01",
             "id": "elem_project",
+            "pool": "early_pressure",
+            "profile_field": "disposition",
             "prompt": "How did you handle things breaking before a deadline?",
             "section": "elementary",
             "text": "Ten minutes before parents visit, your popsicle-stick bridge sags under the brass weights. You have a glue gun, spare tape, and one last test before grading.",
@@ -70265,6 +70413,22 @@
                 "name": "Keep your age cohort while tutoring older kids after lunch",
                 "prestige": 0,
                 "prestige_delta": 2,
+                "shares_bp": 0
+              },
+              {
+                "buzz": 0,
+                "buzz_delta": 1,
+                "capital_cents": 0,
+                "detail": "You practice moving between classrooms with very different expectations.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "mixed",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Take the advanced classes and keep your usual homeroom",
+                "prestige": 0,
+                "prestige_delta": 3,
                 "shares_bp": 0
               }
             ],
@@ -70308,6 +70472,22 @@
                 "name": "Slip back inside and study the precinct maps on the table",
                 "prestige": 0,
                 "prestige_delta": 3,
+                "shares_bp": 0
+              },
+              {
+                "buzz": 0,
+                "buzz_delta": 2,
+                "capital_cents": 0,
+                "detail": "You hear the questions residents want answered before they hang up.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "help_neighbors",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Ask the aide to take you to the neighborhood phone bank",
+                "prestige": 0,
+                "prestige_delta": 1,
                 "shares_bp": 0
               }
             ],
@@ -70354,6 +70534,22 @@
                 "prestige": 0,
                 "prestige_delta": 1,
                 "shares_bp": 0
+              },
+              {
+                "buzz": 0,
+                "buzz_delta": 1,
+                "capital_cents": 0,
+                "detail": "You begin with a shared project and learn what makes a reliable collaborator.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "start_project",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Suggest building something together before making a pact",
+                "prestige": 0,
+                "prestige_delta": 3,
+                "shares_bp": 0
               }
             ],
             "date": "2005-10-01",
@@ -70397,6 +70593,22 @@
                 "name": "Call out the mistake loudly for a class laugh",
                 "prestige": 0,
                 "prestige_delta": -2,
+                "shares_bp": 0
+              },
+              {
+                "buzz": 0,
+                "buzz_delta": 2,
+                "capital_cents": 0,
+                "detail": "The class compares both methods and you learn how to correct someone in front of a room.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "show_work",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Raise your hand and show a second way to reach the answer",
+                "prestige": 0,
+                "prestige_delta": 2,
                 "shares_bp": 0
               }
             ],
@@ -70443,6 +70655,22 @@
                 "name": "Keep the whole kit until the bell rings",
                 "prestige": 0,
                 "prestige_delta": -2,
+                "shares_bp": 0
+              },
+              {
+                "buzz": 0,
+                "buzz_delta": 2,
+                "capital_cents": 0,
+                "detail": "More children get a turn, and you find you like organizing a shared resource.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "make_timer",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Ask the teacher for a timer and run a fair queue",
+                "prestige": 0,
+                "prestige_delta": 2,
                 "shares_bp": 0
               }
             ],
@@ -70492,6 +70720,21 @@
                 "name": "Stay silent and let Jordan take the blame",
                 "prestige": 0,
                 "prestige_delta": -10,
+                "shares_bp": 0
+              },
+              {
+                "buzz": 0,
+                "capital_cents": 0,
+                "detail": "Rebuilding is harder than detention. You learn to repair what your mistake cost someone else.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "help_rebuild",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Tell the teacher what happened and volunteer to rebuild with Jordan",
+                "prestige": 0,
+                "prestige_delta": 3,
                 "shares_bp": 0
               }
             ],
@@ -71021,6 +71264,21 @@
                 "prestige": 0,
                 "prestige_delta": 1,
                 "shares_bp": 0
+              },
+              {
+                "best_friends_delta": 1,
+                "buzz": 0,
+                "capital_cents": 0,
+                "detail": "You keep a social life on terms you can enjoy.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "make_own_plan",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Decline the party and ask a classmate to skate the next afternoon",
+                "prestige": 0,
+                "shares_bp": 0
               }
             ],
             "date": "2010-03-01",
@@ -71186,6 +71444,22 @@
                 "prestige": 0,
                 "prestige_delta": -4,
                 "shares_bp": 0
+              },
+              {
+                "buzz": 0,
+                "buzz_delta": 1,
+                "capital_cents": 0,
+                "detail": "Being explicit about everyone’s part turns a tense start into steady work.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "share_jobs",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Invite the transfer student and split the project into clear jobs",
+                "prestige": 0,
+                "prestige_delta": 2,
+                "shares_bp": 0
               }
             ],
             "date": "2010-10-01",
@@ -71229,6 +71503,22 @@
                 "name": "Memorize the last two proof steps before anyone looks",
                 "prestige": 0,
                 "prestige_delta": -4,
+                "shares_bp": 0
+              },
+              {
+                "buzz": 0,
+                "buzz_delta": 1,
+                "capital_cents": 0,
+                "detail": "The substitute moves the test and asks you to help distribute a new one.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "flag_copy",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Give the folder back and explain where it was left",
+                "prestige": 0,
+                "prestige_delta": 3,
                 "shares_bp": 0
               }
             ],
@@ -71290,6 +71580,54 @@
                 "prestige": 0,
                 "prestige_delta": 2,
                 "shares_bp": 0
+              },
+              {
+                "buzz": 0,
+                "buzz_delta": 4,
+                "capital_cents": 0,
+                "detail": "You build a reputation for doing the interviews and showing people the final cut before release.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "documentary",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Produce a student documentary about the neighborhood",
+                "prestige": 0,
+                "prestige_delta": 3,
+                "shares_bp": 0
+              },
+              {
+                "buzz": 0,
+                "buzz_delta": 2,
+                "capital_cents": 0,
+                "detail": "Showing others how to fix equipment gives you a track record of making useful things last.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "lab_volunteer",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Volunteer to keep the school’s equipment lab open at lunch",
+                "prestige": 0,
+                "prestige_delta": 4,
+                "shares_bp": 0
+              },
+              {
+                "buzz": 0,
+                "buzz_delta": 4,
+                "capital_cents": 0,
+                "detail": "You learn to give people work that fits their strengths and keep them engaged when it gets hard.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "coach",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Coach the junior team and organize the end-of-season games",
+                "prestige": 0,
+                "prestige_delta": 3,
+                "shares_bp": 0
               }
             ],
             "date": "2011-09-01",
@@ -71334,6 +71672,22 @@
                 "name": "Stay silent again and carry that bitterness to graduation",
                 "prestige": 0,
                 "prestige_delta": -5,
+                "shares_bp": 0
+              },
+              {
+                "best_friends_delta": 1,
+                "buzz": 0,
+                "capital_cents": 0,
+                "detail": "You can describe what happened without facing the room alone. The dean separates your schedules.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "peer_advocate",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Ask a peer advocate to go with you to the dean",
+                "prestige": 0,
+                "prestige_delta": 2,
                 "shares_bp": 0
               }
             ],
@@ -71380,6 +71734,21 @@
                 "prestige": 0,
                 "prestige_delta": 2,
                 "shares_bp": 0
+              },
+              {
+                "buzz": 0,
+                "capital_cents": 0,
+                "detail": "Teams start checking in with you before releasing a build.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "test_release",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Build the test suite and triage bug reports",
+                "prestige": 0,
+                "prestige_delta": 3,
+                "shares_bp": 0
               }
             ],
             "date": "2012-06-01",
@@ -71422,6 +71791,22 @@
                 "legal_form": "",
                 "monthly_cents": 0,
                 "name": "Lay out the custom PCB",
+                "prestige": 0,
+                "prestige_delta": 2,
+                "shares_bp": 0
+              },
+              {
+                "buzz": 0,
+                "buzz_delta": 1,
+                "capital_cents": 0,
+                "detail": "You trade a few grams of material for something people can actually carry.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "make_enclosure",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Design the enclosure and test how it survives a drop",
                 "prestige": 0,
                 "prestige_delta": 2,
                 "shares_bp": 0
@@ -71470,6 +71855,21 @@
                 "prestige": 0,
                 "prestige_delta": 2,
                 "shares_bp": 0
+              },
+              {
+                "buzz": 0,
+                "capital_cents": 0,
+                "detail": "You make the failure drill boring enough for everyone to repeat.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "restore_service",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Rehearse restoring a service from its backup",
+                "prestige": 0,
+                "prestige_delta": 3,
+                "shares_bp": 0
               }
             ],
             "date": "2012-06-01",
@@ -71514,6 +71914,21 @@
                 "name": "Whip the coalition votes",
                 "prestige": 0,
                 "prestige_delta": 2,
+                "shares_bp": 0
+              },
+              {
+                "buzz": 0,
+                "capital_cents": 0,
+                "detail": "Delegates still disagree, but they stop arguing about whose numbers are real.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "write_brief",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Write the hearing brief so two sides can work from the same figures",
+                "prestige": 0,
+                "prestige_delta": 3,
                 "shares_bp": 0
               }
             ],
@@ -71680,6 +72095,22 @@
                 "prestige": 0,
                 "prestige_delta": -4,
                 "shares_bp": 0
+              },
+              {
+                "buzz": 0,
+                "buzz_delta": 2,
+                "capital_cents": 0,
+                "detail": "Your friend gets a public credit without displacing anyone from the scored team.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "split_tracks",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Keep the competition roster and enter a separate demo together",
+                "prestige": 0,
+                "prestige_delta": 2,
+                "shares_bp": 0
               }
             ],
             "date": "2013-06-01",
@@ -71723,6 +72154,22 @@
                 "name": "Memorize the toughest proofs before morning bell",
                 "prestige": 0,
                 "prestige_delta": -6,
+                "shares_bp": 0
+              },
+              {
+                "buzz": 0,
+                "buzz_delta": 1,
+                "capital_cents": 0,
+                "detail": "The teacher swaps the exam. You stay late helping classmates work through the material fairly.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "notify_teacher",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Tell the teacher a copy is circulating without opening it",
+                "prestige": 0,
+                "prestige_delta": 4,
                 "shares_bp": 0
               }
             ],
@@ -71844,6 +72291,22 @@
                 "prestige": 0,
                 "prestige_delta": -12,
                 "shares_bp": 0
+              },
+              {
+                "buzz": 0,
+                "buzz_delta": -1,
+                "capital_cents": 0,
+                "detail": "Treatment and a reduced load keep the diploma within reach. You ask for help before making any college plans.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "school_support",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Tell the school nurse and finish the year through supervised study",
+                "prestige": 0,
+                "prestige_delta": 1,
+                "shares_bp": 0
               }
             ],
             "date": "2014-09-01",
@@ -71876,7 +72339,7 @@
               {
                 "buzz": 0,
                 "capital_cents": 0,
-                "detail": "Unavailable if Addict. Actual Genius finishes university compressed by 2015.",
+                "detail": "An undergraduate degree takes four years. Actual Genius can complete it by 2015. Requires finishing school.",
                 "excludes_trait": "Addict",
                 "family": "",
                 "fee_cents": 0,
@@ -71888,16 +72351,50 @@
                 "prestige": 0,
                 "prestige_delta": 3,
                 "shares_bp": 0
+              },
+              {
+                "buzz": 0,
+                "capital_cents": 0,
+                "delay_days": 180,
+                "detail": "Build a useful trade and enter six months after the initial market opens.",
+                "family": "",
+                "fee_cents": 0,
+                "genius_delay_days": 180,
+                "id": "apprentice",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Work for a local computer repair shop first",
+                "prestige": 0,
+                "prestige_delta": 3,
+                "shares_bp": 0
+              },
+              {
+                "buzz": 0,
+                "buzz_delta": 3,
+                "capital_cents": 0,
+                "delay_days": 90,
+                "detail": "Gain software experience and a modest public reputation. Enter three months after the market opens.",
+                "family": "",
+                "fee_cents": 0,
+                "genius_delay_days": 90,
+                "id": "contract",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Take short software contracts before opening a firm",
+                "prestige": 0,
+                "shares_bp": 0
               }
             ],
             "date": "2015-01-01",
             "event_kind": "static",
             "genius_date": "2009-05-01",
             "id": "grad_choice",
-            "prompt": "Enter the market now or pursue University?",
+            "prompt": "How do you want to enter the AI industry?",
             "section": "graduation",
-            "text": "The global AI race kicks off on January 1, 2015. Rivals are raising capital right now. Do you jump straight in today, or invest years into a degree while the world moves ahead?",
-            "title": "Graduation Morning"
+            "text": "Your school years are ending. In January 2015 new AI firms begin raising capital. What will you do before you open a company of your own?",
+            "title": "The Road Out of School"
           },
           {
             "choices": [
@@ -72012,7 +72509,7 @@
               {
                 "buzz": 0,
                 "capital_cents": 0,
-                "detail": "Rich / Political family only. Zero debt and no added service delay.",
+                "detail": "Available to wealthy families. Finish without tuition debt or additional delay.",
                 "family": "rich",
                 "fee_cents": 0,
                 "id": "family_paid",
@@ -72057,6 +72554,37 @@
                 "prestige": 0,
                 "prestige_delta": 6,
                 "shares_bp": 0
+              },
+              {
+                "buzz": 0,
+                "capital_cents": 0,
+                "detail": "Campus support shifts cover part of the bill. Start with $32,000 in student debt.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "work_study",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Work part time and take a smaller loan",
+                "prestige": 0,
+                "prestige_delta": 2,
+                "shares_bp": 0,
+                "student_loan_cents": 3200000
+              },
+              {
+                "buzz": 0,
+                "capital_cents": 0,
+                "detail": "Tutoring and the award cover tuition. You leave without student debt.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "scholarship",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Compete for a tuition scholarship and tutor on campus",
+                "prestige": 0,
+                "prestige_delta": 3,
+                "shares_bp": 0
               }
             ],
             "date": "2015-10-01",
@@ -72100,6 +72628,22 @@
                 "name": "Ship a viral campus AI demo overnight",
                 "prestige": 0,
                 "prestige_delta": 1,
+                "shares_bp": 0
+              },
+              {
+                "best_friends_delta": 1,
+                "buzz": 0,
+                "capital_cents": 0,
+                "detail": "Peers can compare results and one becomes a regular collaborator.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "share_compute",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Open a shared test slot and track what each group runs",
+                "prestige": 0,
+                "prestige_delta": 2,
                 "shares_bp": 0
               }
             ],
@@ -72147,6 +72691,22 @@
                 "prestige": 0,
                 "prestige_delta": 4,
                 "shares_bp": 0
+              },
+              {
+                "buzz": 0,
+                "buzz_delta": 2,
+                "capital_cents": 0,
+                "detail": "The group lasts a semester and you learn to make a small commitment useful.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "working_group",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Offer one regular meeting and keep evenings free for coursework",
+                "prestige": 0,
+                "prestige_delta": 2,
+                "shares_bp": 0
               }
             ],
             "date": "2017-10-01",
@@ -72191,6 +72751,22 @@
                 "name": "Leave the chart untouched until peer review catches it",
                 "prestige": 0,
                 "prestige_delta": -5,
+                "shares_bp": 0
+              },
+              {
+                "buzz": 0,
+                "capital_cents": 0,
+                "detail": "The new result is more modest. The capstone keeps its original contribution.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "rerun_capstone",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Request a short extension and rerun against untouched data",
+                "prestige": 0,
+                "prestige_delta": 4,
+                "research_bonus": 2,
                 "shares_bp": 0
               }
             ],
@@ -72347,6 +72923,21 @@
                 "prestige": 0,
                 "prestige_delta": 2,
                 "shares_bp": 0
+              },
+              {
+                "buzz": 0,
+                "capital_cents": 0,
+                "detail": "You retain a publishable result and leave broader tests for follow-up work.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "narrow_claim",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Narrow the paper to the settings you can defend",
+                "prestige": 0,
+                "prestige_delta": 5,
+                "shares_bp": 0
               }
             ],
             "date": "2020-02-01",
@@ -72394,6 +72985,22 @@
                 "name": "Win a competitive industry visiting fellowship",
                 "prestige": 0,
                 "prestige_delta": 3,
+                "shares_bp": 0
+              },
+              {
+                "buzz": 0,
+                "capital_cents": 0,
+                "detail": "You bring the thesis back inside the budget and document what still needs testing.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "reduce_scope",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Finish a smaller experiment with locally available compute",
+                "prestige": 0,
+                "prestige_delta": 4,
+                "research_bonus": 2,
                 "shares_bp": 0
               }
             ],
@@ -72497,6 +73104,1312 @@
             "section": "grad",
             "text": "Because your compressed timeline finished your first Ph.D. years ahead of your peers, university regents offer you an unprecedented second funded doctorate before 2015 begins.",
             "title": "A Second Doctorate at Sixteen"
+          },
+          {
+            "choices": [
+              {
+                "buzz": 0,
+                "buzz_delta": 3,
+                "capital_cents": 0,
+                "detail": "By the time the driver turns back, you can match half the names to faces.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "ask_names",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Start a name game across the aisle",
+                "prestige": 0,
+                "profile_value": "outgoing",
+                "shares_bp": 0
+              },
+              {
+                "buzz": 0,
+                "capital_cents": 0,
+                "detail": "Your map makes the next morning’s ride feel like a route you already know.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "draw_route",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Sketch the turns in the back of your notebook",
+                "prestige": 0,
+                "prestige_delta": 2,
+                "profile_value": "introverted",
+                "shares_bp": 0
+              },
+              {
+                "best_friends_delta": 1,
+                "buzz": 0,
+                "capital_cents": 0,
+                "detail": "Two quiet minutes are enough for the panic to pass. You sit together the next day.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "steady_seatmate",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Offer your seatmate the window and stay with them",
+                "prestige": 0,
+                "profile_value": "introverted",
+                "shares_bp": 0
+              },
+              {
+                "buzz": 0,
+                "buzz_delta": 1,
+                "capital_cents": 0,
+                "detail": "You count riders by stop and learn to stay organized when a plan changes.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "take_roll",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Help the driver check the attendance list",
+                "prestige": 0,
+                "prestige_delta": 2,
+                "profile_value": "outgoing",
+                "shares_bp": 0
+              }
+            ],
+            "date": "2002-09-01",
+            "event_kind": "random",
+            "genius_date": "2002-03-01",
+            "id": "elem_bus_map",
+            "pool": "first_classroom",
+            "profile_field": "sociability",
+            "prompt": "What did you do while the bus found its route?",
+            "section": "elementary",
+            "text": "On the first school bus ride, a wrong turn sends everyone past an unfamiliar park. The driver asks the front seats to stay calm while she calls dispatch.",
+            "title": "Where the Bus Turns"
+          },
+          {
+            "choices": [
+              {
+                "buzz": 0,
+                "buzz_delta": 3,
+                "capital_cents": 0,
+                "detail": "The room starts with laughter, and your voice carries without shouting.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "call_roll",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Call out the names and hand each tag to its owner",
+                "prestige": 0,
+                "profile_value": "outgoing",
+                "shares_bp": 0
+              },
+              {
+                "buzz": 0,
+                "capital_cents": 0,
+                "detail": "You notice how the colors match the seating chart and quietly restore order.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "sort_tags",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Sort the tags by table color",
+                "prestige": 0,
+                "prestige_delta": 2,
+                "profile_value": "introverted",
+                "shares_bp": 0
+              },
+              {
+                "best_friends_delta": 1,
+                "buzz": 0,
+                "capital_cents": 0,
+                "detail": "You and your new partner spend recess making a replacement.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "pair_up",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Ask one classmate to help you find a missing tag",
+                "prestige": 0,
+                "profile_value": "introverted",
+                "shares_bp": 0
+              },
+              {
+                "buzz": 0,
+                "buzz_delta": 2,
+                "capital_cents": 0,
+                "detail": "You invite everyone to add a picture that tells the room something about them.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "make_new",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Turn the blanks into a name-tag drawing table",
+                "prestige": 0,
+                "prestige_delta": 1,
+                "profile_value": "outgoing",
+                "shares_bp": 0
+              }
+            ],
+            "date": "2002-09-01",
+            "event_kind": "random",
+            "genius_date": "2002-03-01",
+            "id": "elem_name_tags",
+            "pool": "first_classroom",
+            "profile_field": "sociability",
+            "prompt": "How did you make your first introductions?",
+            "section": "elementary",
+            "text": "A classroom helper tips over the welcome table. Everyone’s paper name tags scatter under chairs just as the first bell rings.",
+            "title": "The Box of Lost Name Tags"
+          },
+          {
+            "choices": [
+              {
+                "buzz": 0,
+                "buzz_delta": 2,
+                "capital_cents": 0,
+                "detail": "You get good at explaining the same directions several different ways.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "hand_out",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Hand out supplies and show everyone where things go",
+                "prestige": 0,
+                "prestige_delta": 1,
+                "profile_value": "outgoing",
+                "shares_bp": 0
+              },
+              {
+                "buzz": 0,
+                "capital_cents": 0,
+                "detail": "The teacher leaves your drawings on the cupboard all year.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "label_bins",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Draw labels so anyone can find the right bin",
+                "prestige": 0,
+                "prestige_delta": 2,
+                "profile_value": "introverted",
+                "shares_bp": 0
+              },
+              {
+                "best_friends_delta": 1,
+                "buzz": 0,
+                "capital_cents": 0,
+                "detail": "The two of you become the first to finish putting the supplies away.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "share_table",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Make sure the classmate with shaky hands has a partner",
+                "prestige": 0,
+                "profile_value": "introverted",
+                "shares_bp": 0
+              },
+              {
+                "buzz": 0,
+                "buzz_delta": 3,
+                "capital_cents": 0,
+                "detail": "You learn how to make room for ideas that look nothing like yours.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "class_mural",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Ask each table to contribute to one wall mural",
+                "prestige": 0,
+                "profile_value": "outgoing",
+                "shares_bp": 0
+              }
+            ],
+            "date": "2002-09-01",
+            "event_kind": "random",
+            "genius_date": "2002-03-01",
+            "id": "elem_first_job",
+            "pool": "first_classroom",
+            "profile_field": "sociability",
+            "prompt": "What job did you make your own?",
+            "section": "elementary",
+            "text": "A teacher lets the class choose how to set out the art supplies. Your group can greet classmates, arrange materials, or put its own idea on the wall.",
+            "title": "Keys to the Supply Cupboard"
+          },
+          {
+            "choices": [
+              {
+                "buzz": 0,
+                "buzz_delta": 2,
+                "capital_cents": 0,
+                "detail": "You practice timing the handoffs until everyone finishes without dropping the baton.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "gym_relays",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Join a relay team in the gym",
+                "prestige": 0,
+                "profile_value": "athletic",
+                "shares_bp": 0
+              },
+              {
+                "buzz": 0,
+                "capital_cents": 0,
+                "detail": "A librarian shows you how to change the maze and test each route.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "library_game",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Debug a library computer’s maze game",
+                "prestige": 0,
+                "prestige_delta": 2,
+                "profile_value": "sedentary",
+                "shares_bp": 0
+              },
+              {
+                "best_friends_delta": 1,
+                "buzz": 0,
+                "capital_cents": 0,
+                "detail": "A small group starts meeting whenever the playground closes.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "percussion",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Work out a rhythm with the spare percussion set",
+                "prestige": 0,
+                "profile_value": "sedentary",
+                "shares_bp": 0
+              },
+              {
+                "buzz": 0,
+                "capital_cents": 0,
+                "detail": "You make up a route everyone can finish at a different pace.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "movement_course",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Build a floor-marker course for the youngest class",
+                "prestige": 0,
+                "prestige_delta": 2,
+                "profile_value": "athletic",
+                "shares_bp": 0
+              }
+            ],
+            "date": "2003-09-01",
+            "event_kind": "random",
+            "genius_date": "2002-11-01",
+            "id": "elem_rainy_recess",
+            "pool": "early_interests",
+            "profile_field": "activity",
+            "prompt": "Where did you head when the bell rang?",
+            "section": "elementary",
+            "text": "The playground is flooded. The custodian opens the gym, the library puts out puzzles, and the music teacher rolls a cart of instruments into the hallway.",
+            "title": "Rainy-Day Recess"
+          },
+          {
+            "choices": [
+              {
+                "buzz": 0,
+                "buzz_delta": 2,
+                "capital_cents": 0,
+                "detail": "You learn to look two turns ahead and stay balanced through a wobble.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "bike_course",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Ride the slalom until you stop clipping the cones",
+                "prestige": 0,
+                "profile_value": "athletic",
+                "shares_bp": 0
+              },
+              {
+                "buzz": 0,
+                "capital_cents": 0,
+                "detail": "You learn to trace one loose connection at a time.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "electronics",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Help check whether the donated radios work",
+                "prestige": 0,
+                "prestige_delta": 2,
+                "profile_value": "sedentary",
+                "shares_bp": 0
+              },
+              {
+                "buzz": 0,
+                "buzz_delta": 2,
+                "capital_cents": 0,
+                "detail": "Kids start trading your drawings of the neighborhood dogs.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "illustrate",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Illustrate the fair’s one-page zine",
+                "prestige": 0,
+                "profile_value": "sedentary",
+                "shares_bp": 0
+              },
+              {
+                "best_friends_delta": 1,
+                "buzz": 0,
+                "capital_cents": 0,
+                "detail": "You end up setting fair rules and handing out the last two team ribbons.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "teach_game",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Run a ball game for younger kids",
+                "prestige": 0,
+                "profile_value": "athletic",
+                "shares_bp": 0
+              }
+            ],
+            "date": "2003-09-01",
+            "event_kind": "random",
+            "genius_date": "2002-11-01",
+            "id": "elem_weekend_fair",
+            "pool": "early_interests",
+            "profile_field": "activity",
+            "prompt": "Where did you spend the afternoon?",
+            "section": "elementary",
+            "text": "School families take over the block on Saturday. One end has a bike course. At the other end, teachers run a zine table and a box of donated electronics.",
+            "title": "Tables at the Street Fair"
+          },
+          {
+            "choices": [
+              {
+                "best_friends_delta": 1,
+                "buzz": 0,
+                "capital_cents": 0,
+                "detail": "A classmate who works the same drills becomes your usual partner.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "play_goal",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Practice shooting with the lunchtime soccer group",
+                "prestige": 0,
+                "profile_value": "athletic",
+                "shares_bp": 0
+              },
+              {
+                "buzz": 0,
+                "capital_cents": 0,
+                "detail": "You discover a talent for giving instructions that make sense in a hurry.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "map_reading",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Make a treasure map and run the route around the yard",
+                "prestige": 0,
+                "prestige_delta": 2,
+                "profile_value": "athletic",
+                "shares_bp": 0
+              },
+              {
+                "buzz": 0,
+                "capital_cents": 0,
+                "detail": "The endgame notebook keeps you company long after the club ends.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "puzzle_team",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Trade chess puzzles with the librarian",
+                "prestige": 0,
+                "prestige_delta": 2,
+                "profile_value": "sedentary",
+                "shares_bp": 0
+              },
+              {
+                "buzz": 0,
+                "buzz_delta": 3,
+                "capital_cents": 0,
+                "detail": "You teach yourself how to trim a recording down to the good parts.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "radio_club",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Record a short show for the classroom radio",
+                "prestige": 0,
+                "profile_value": "sedentary",
+                "shares_bp": 0
+              }
+            ],
+            "date": "2003-09-01",
+            "event_kind": "random",
+            "genius_date": "2002-11-01",
+            "id": "elem_yard_club",
+            "pool": "early_interests",
+            "profile_field": "activity",
+            "prompt": "What kept you coming back each lunch?",
+            "section": "elementary",
+            "text": "The school starts lunch clubs for one month. The only catch is that every club shares the same time slot.",
+            "title": "The Last Recess Sign-Up Sheet"
+          },
+          {
+            "choices": [
+              {
+                "buzz": 0,
+                "buzz_delta": 2,
+                "capital_cents": 0,
+                "detail": "The light returns just in time. Acting quickly becomes your first instinct.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "swap_power",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Swap in fresh cells and see what happens",
+                "prestige": 0,
+                "profile_value": "impulsive",
+                "shares_bp": 0
+              },
+              {
+                "buzz": 0,
+                "capital_cents": 0,
+                "detail": "You find a folded contact and can explain exactly what went wrong.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "check_connections",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Check one connection at a time",
+                "prestige": 0,
+                "prestige_delta": 3,
+                "profile_value": "deliberate",
+                "shares_bp": 0
+              },
+              {
+                "buzz": 0,
+                "buzz_delta": 3,
+                "capital_cents": 0,
+                "detail": "The design still gets seen, and you keep the parade moving.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "unlit_design",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Turn the paper lantern into a parade banner",
+                "prestige": 0,
+                "profile_value": "impulsive",
+                "shares_bp": 0
+              },
+              {
+                "best_friends_delta": 1,
+                "buzz": 0,
+                "capital_cents": 0,
+                "detail": "Sharing the test means you both get to march at the front.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "borrow_tools",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Ask a classmate to test the cells while you trace the wire",
+                "prestige": 0,
+                "profile_value": "deliberate",
+                "shares_bp": 0
+              }
+            ],
+            "date": "2004-09-01",
+            "event_kind": "random",
+            "genius_date": "2003-06-01",
+            "id": "elem_project_lantern",
+            "pool": "early_pressure",
+            "profile_field": "disposition",
+            "prompt": "How did you deal with the failure?",
+            "section": "elementary",
+            "text": "Ten minutes before a class parade, your paper lantern stops lighting up. There are spare cells, some foil, and three other lanterns already on the line.",
+            "title": "The Last Lantern"
+          },
+          {
+            "choices": [
+              {
+                "buzz": 0,
+                "buzz_delta": 3,
+                "capital_cents": 0,
+                "detail": "You buy the stage crew time without promising more than a minute.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "stall",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Step out front and tell a quick story",
+                "prestige": 0,
+                "profile_value": "impulsive",
+                "shares_bp": 0
+              },
+              {
+                "buzz": 0,
+                "capital_cents": 0,
+                "detail": "You tie the rope back where it can take the weight and write down the fix.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "trace_rig",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Follow the rig from the curtain to the broken knot",
+                "prestige": 0,
+                "prestige_delta": 3,
+                "profile_value": "deliberate",
+                "shares_bp": 0
+              },
+              {
+                "buzz": 0,
+                "buzz_delta": 2,
+                "capital_cents": 0,
+                "detail": "The surprise gets a laugh and turns a delay into an entrance.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "new_entrance",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Bring the first puppets through the audience",
+                "prestige": 0,
+                "profile_value": "impulsive",
+                "shares_bp": 0
+              },
+              {
+                "best_friends_delta": 1,
+                "buzz": 0,
+                "capital_cents": 0,
+                "detail": "The audience sees the play you rehearsed, and everyone gets their moment.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "assign_roles",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Ask two classmates to hold the curtain and brief the puppeteers",
+                "prestige": 0,
+                "profile_value": "deliberate",
+                "shares_bp": 0
+              }
+            ],
+            "date": "2004-09-01",
+            "event_kind": "random",
+            "genius_date": "2003-06-01",
+            "id": "elem_project_stage",
+            "pool": "early_pressure",
+            "profile_field": "disposition",
+            "prompt": "How did you keep the show moving?",
+            "section": "elementary",
+            "text": "The class puppet show starts in five minutes. The string that opens the curtain has snapped, and families are already sitting down.",
+            "title": "The Curtain Has Jammed"
+          },
+          {
+            "choices": [
+              {
+                "buzz": 0,
+                "buzz_delta": 3,
+                "capital_cents": 0,
+                "detail": "You trade a stack of copies for one page everyone can read.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "handcopy",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Make a giant handwritten edition for the hallway",
+                "prestige": 0,
+                "profile_value": "impulsive",
+                "shares_bp": 0
+              },
+              {
+                "buzz": 0,
+                "capital_cents": 0,
+                "detail": "You learn to isolate a problem before you spend the only spare supplies.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "find_jam",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Pause the line and inspect the paper path",
+                "prestige": 0,
+                "prestige_delta": 3,
+                "profile_value": "deliberate",
+                "shares_bp": 0
+              },
+              {
+                "buzz": 0,
+                "buzz_delta": 2,
+                "capital_cents": 0,
+                "detail": "Hearing the story turns a missed print deadline into a room full of listeners.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "read_it",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Read the lead story at the door as parents arrive",
+                "prestige": 0,
+                "profile_value": "impulsive",
+                "shares_bp": 0
+              },
+              {
+                "best_friends_delta": 1,
+                "buzz": 0,
+                "capital_cents": 0,
+                "detail": "Both stories fit when you cut the headlines down together.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "share_master",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Ask another table to share space on its master copy",
+                "prestige": 0,
+                "profile_value": "deliberate",
+                "shares_bp": 0
+              }
+            ],
+            "date": "2004-09-01",
+            "event_kind": "random",
+            "genius_date": "2003-06-01",
+            "id": "elem_project_print",
+            "pool": "early_pressure",
+            "profile_field": "disposition",
+            "prompt": "How did you get the story out?",
+            "section": "elementary",
+            "text": "The school printer jams on the last afternoon before the parent showcase. Your table has a draft newspaper, two working pencils, and a pile of empty paper.",
+            "title": "The Newspaper Is Blank"
+          },
+          {
+            "choices": [
+              {
+                "buzz": 0,
+                "capital_cents": 0,
+                "detail": "You recover the labels for most of the tray and write down how you checked.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "compare",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Compare the seedlings with last week’s drawings",
+                "prestige": 0,
+                "prestige_delta": 3,
+                "shares_bp": 0
+              },
+              {
+                "buzz": 0,
+                "buzz_delta": 1,
+                "capital_cents": 0,
+                "detail": "The buyer list makes the correction simple and you learn the value of following up.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "contact",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Ask the teacher to help tell the families who already bought one",
+                "prestige": 0,
+                "prestige_delta": 2,
+                "shares_bp": 0
+              },
+              {
+                "buzz": 0,
+                "buzz_delta": 3,
+                "capital_cents": 0,
+                "detail": "You keep the sale going by being honest about what the class can’t identify.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "mixed",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Offer the remaining plants as a mystery mix",
+                "prestige": 0,
+                "shares_bp": 0
+              }
+            ],
+            "date": "2006-10-01",
+            "event_kind": "random",
+            "genius_date": "2004-07-01",
+            "id": "elem_seed_swap",
+            "pool": "rand_elementary",
+            "prompt": "How did you handle the mix-up?",
+            "section": "elementary",
+            "text": "A gust of wind mixes up the labels for the class garden sale. Three seedlings have already gone home, and the remaining trays look almost identical.",
+            "title": "A Tray of Unlabeled Seedlings"
+          },
+          {
+            "choices": [
+              {
+                "best_friends_delta": 1,
+                "buzz": 0,
+                "capital_cents": 0,
+                "detail": "The swap becomes a regular chance to talk with someone outside class.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "meet",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Plan a weekly book swap on the library steps",
+                "prestige": 0,
+                "shares_bp": 0
+              },
+              {
+                "buzz": 0,
+                "capital_cents": 0,
+                "detail": "Other readers use the list and bring you recommendations of their own.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "catalog",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Draw up a list of sequels and where to find them",
+                "prestige": 0,
+                "prestige_delta": 2,
+                "shares_bp": 0
+              },
+              {
+                "buzz": 0,
+                "buzz_delta": 3,
+                "capital_cents": 0,
+                "detail": "The two readers disagree with your ending and offer versions of their own.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "write",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Write and copy your own ending for the other readers",
+                "prestige": 0,
+                "shares_bp": 0
+              }
+            ],
+            "date": "2007-06-01",
+            "event_kind": "random",
+            "genius_date": "2004-11-01",
+            "id": "elem_book_trade",
+            "pool": "rand_elementary",
+            "prompt": "What did you carry into the summer?",
+            "section": "elementary",
+            "text": "The traveling book cart has only one more visit before summer. You and two classmates have been passing the same adventure novel around for a month.",
+            "title": "The Book Cart’s Last Stop"
+          },
+          {
+            "choices": [
+              {
+                "buzz": 0,
+                "buzz_delta": 4,
+                "capital_cents": 0,
+                "detail": "You get a real conversation on the air and learn to listen past your prepared notes.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "interview",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Go live with a question for the guest",
+                "prestige": 0,
+                "shares_bp": 0
+              },
+              {
+                "buzz": 0,
+                "capital_cents": 0,
+                "detail": "You keep the station on air and restore the schedule within a minute.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "fallback",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Play a short rehearsal recording while you check the equipment",
+                "prestige": 0,
+                "prestige_delta": 3,
+                "shares_bp": 0
+              },
+              {
+                "buzz": 0,
+                "buzz_delta": 2,
+                "capital_cents": 0,
+                "detail": "Their account takes the show in a different direction and earns repeat listeners.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "credit",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Explain the delay and invite the guest to introduce their own story",
+                "prestige": 0,
+                "prestige_delta": 2,
+                "shares_bp": 0
+              }
+            ],
+            "date": "2010-11-01",
+            "event_kind": "random",
+            "genius_date": "2006-12-01",
+            "id": "ms_radio",
+            "pool": "rand_middle",
+            "prompt": "How did you start the broadcast?",
+            "section": "middle",
+            "text": "The student radio club loses its recorded introduction just as a live neighborhood interview is supposed to begin.",
+            "title": "A Minute of Dead Air"
+          },
+          {
+            "choices": [
+              {
+                "buzz": 0,
+                "capital_cents": 0,
+                "detail": "You learn to cut costs without leaving a classmate behind.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "scale_back",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Review the bill and agree on a cheaper trip everyone can attend",
+                "prestige": 0,
+                "prestige_delta": 3,
+                "shares_bp": 0
+              },
+              {
+                "buzz": 0,
+                "buzz_delta": 3,
+                "capital_cents": 0,
+                "detail": "You learn to propose a commitment someone else can judge.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "sponsor",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Ask the library for a small matching grant in exchange for a public demo",
+                "prestige": 0,
+                "prestige_delta": 1,
+                "shares_bp": 0
+              },
+              {
+                "best_friends_delta": 1,
+                "buzz": 0,
+                "capital_cents": 0,
+                "detail": "The work is slower. The group pays its own way and you earn a friend.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "help",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Offer to run one more group sale and split the last shift with a friend",
+                "prestige": 0,
+                "shares_bp": 0
+              }
+            ],
+            "date": "2011-03-01",
+            "event_kind": "random",
+            "genius_date": "2007-02-01",
+            "id": "ms_budget",
+            "pool": "rand_middle",
+            "prompt": "How did the group close the gap?",
+            "section": "middle",
+            "text": "Your club sells enough tickets to cover the end-of-year trip except for twelve dollars. Quietly asking one person to pay the difference would solve it fastest.",
+            "title": "Twelve Dollars Short"
+          },
+          {
+            "choices": [
+              {
+                "buzz": 0,
+                "capital_cents": 0,
+                "detail": "You leave with a reliable test and a short list of failures to fix.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "offline",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Demonstrate the part that works offline and record the missing features",
+                "prestige": 0,
+                "prestige_delta": 4,
+                "shares_bp": 0
+              },
+              {
+                "buzz": 0,
+                "buzz_delta": 2,
+                "capital_cents": 0,
+                "detail": "You spot a workflow your group had never considered.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "interview",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Ask the volunteer to talk through a normal day while you sketch the flow",
+                "prestige": 0,
+                "prestige_delta": 2,
+                "shares_bp": 0
+              },
+              {
+                "best_friends_delta": 1,
+                "buzz": 0,
+                "buzz_delta": 2,
+                "capital_cents": 0,
+                "detail": "You set a date, recruit a classmate to help, and come back ready for real conditions.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "retry",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Schedule a second demonstration at the volunteer’s workplace",
+                "prestige": 0,
+                "shares_bp": 0
+              }
+            ],
+            "date": "2013-08-01",
+            "event_kind": "random",
+            "genius_date": "2008-08-01",
+            "id": "hs_field_test",
+            "pool": "rand_high",
+            "prompt": "What did you show the first real user?",
+            "section": "high",
+            "text": "At a community design showcase, a volunteer asks you to test your student project outside on the spot. The Wi-Fi barely reaches the parking lot.",
+            "title": "A Demo in the Parking Lot"
+          },
+          {
+            "choices": [
+              {
+                "buzz": 0,
+                "capital_cents": 0,
+                "detail": "Most leave knowing whether a replacement part is worth buying.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "diagnose",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Document the common fault and teach visitors how to check for it",
+                "prestige": 0,
+                "prestige_delta": 4,
+                "shares_bp": 0
+              },
+              {
+                "buzz": 0,
+                "buzz_delta": 2,
+                "capital_cents": 0,
+                "detail": "You learn to ask what a repair is for before touching a machine.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "recover",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Help the two other visitors recover their schoolwork",
+                "prestige": 0,
+                "prestige_delta": 2,
+                "shares_bp": 0
+              },
+              {
+                "best_friends_delta": 1,
+                "buzz": 0,
+                "buzz_delta": 1,
+                "capital_cents": 0,
+                "detail": "Sharing stock solves a problem the single room could not.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "source",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Call another group to ask if they have matching parts",
+                "prestige": 0,
+                "shares_bp": 0
+              }
+            ],
+            "date": "2014-06-01",
+            "event_kind": "random",
+            "genius_date": "2008-12-01",
+            "id": "hs_open_lab",
+            "pool": "rand_high",
+            "prompt": "How did you spend the remaining bench time?",
+            "section": "high",
+            "text": "The library hosts a repair café. Three people bring the same kind of broken laptop, and there are enough donated parts to repair only one.",
+            "title": "A Saturday at the Repair Café"
+          },
+          {
+            "choices": [
+              {
+                "buzz": 0,
+                "capital_cents": 0,
+                "detail": "The assistant runs the second demo without help.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "keyboard",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Make the main path usable by keyboard and test it together",
+                "prestige": 0,
+                "prestige_delta": 4,
+                "shares_bp": 0
+              },
+              {
+                "buzz": 0,
+                "capital_cents": 0,
+                "detail": "The demo is shorter, and you learn to prioritize actual use.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "reduce",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Drop a decorative feature to clear time for screen-reader checks",
+                "prestige": 0,
+                "prestige_delta": 3,
+                "shares_bp": 0
+              },
+              {
+                "best_friends_delta": 1,
+                "buzz": 0,
+                "buzz_delta": 2,
+                "capital_cents": 0,
+                "detail": "You widen the evidence and leave behind a group of repeat testers.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "clinic",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Run an open test session with volunteers from other courses",
+                "prestige": 0,
+                "shares_bp": 0
+              }
+            ],
+            "date": "2018-06-01",
+            "event_kind": "random",
+            "genius_date": "2011-03-01",
+            "id": "ug_accessible_demo",
+            "pool": "rand_undergrad",
+            "prompt": "What do you change before showing it?",
+            "requires_choice": "grad_choice/college",
+            "section": "undergrad",
+            "text": "A teaching assistant tries your capstone on a keyboard and cannot get past the first screen. Public demos begin in a week.",
+            "title": "The Demo Without a Mouse"
+          },
+          {
+            "choices": [
+              {
+                "buzz": 0,
+                "buzz_delta": 2,
+                "capital_cents": 0,
+                "detail": "You deliver the part they actually need and record the cost.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "narrow",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Quote a smaller version with one clear delivery date",
+                "prestige": 0,
+                "prestige_delta": 3,
+                "shares_bp": 0
+              },
+              {
+                "best_friends_delta": 1,
+                "buzz": 0,
+                "capital_cents": 0,
+                "detail": "A student maintainer stays in touch when they move into industry.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "handover",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Offer training and a handover so the group can adapt it themselves",
+                "prestige": 0,
+                "prestige_delta": 2,
+                "shares_bp": 0
+              },
+              {
+                "buzz": 0,
+                "capital_cents": 0,
+                "detail": "You protect the semester deadline and give the group something usable.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "decline",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Decline the order and release the existing version with documentation",
+                "prestige": 0,
+                "prestige_delta": 4,
+                "shares_bp": 0
+              }
+            ],
+            "date": "2018-10-01",
+            "event_kind": "random",
+            "genius_date": "2011-05-01",
+            "id": "ug_small_order",
+            "pool": "rand_undergrad",
+            "prompt": "What terms did you offer?",
+            "requires_choice": "grad_choice/college",
+            "section": "undergrad",
+            "text": "A campus group offers to pay for a version of your project if you can adapt it before their annual meeting. Your lab partner has one free weekend left.",
+            "title": "The First Paid Order"
+          },
+          {
+            "choices": [
+              {
+                "buzz": 0,
+                "capital_cents": 0,
+                "detail": "You find a hardware dependency and document where the result holds.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "common",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Agree on one common test and publish the raw measurements",
+                "prestige": 0,
+                "prestige_delta": 5,
+                "research_bonus": 2,
+                "shares_bp": 0
+              },
+              {
+                "best_friends_delta": 1,
+                "buzz": 0,
+                "capital_cents": 0,
+                "detail": "A working relationship outlasts the paper and pays off when you start a company.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "methods",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Visit their lab and compare the two workflows step by step",
+                "prestige": 0,
+                "prestige_delta": 3,
+                "shares_bp": 0
+              },
+              {
+                "buzz": 0,
+                "buzz_delta": 1,
+                "capital_cents": 0,
+                "detail": "You get credit for setting a clear boundary around the finding.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "narrow",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Limit the claim to your verified configuration and publish their contrary result",
+                "prestige": 0,
+                "prestige_delta": 4,
+                "shares_bp": 0
+              }
+            ],
+            "date": "2021-01-01",
+            "event_kind": "random",
+            "excludes_choice": "grad_school/enter_market",
+            "genius_date": "2013-01-01",
+            "id": "grad_replicate",
+            "pool": "rand_grad",
+            "prompt": "How did you handle the mismatch?",
+            "requires_choice": "grad_choice/college",
+            "section": "grad",
+            "text": "A researcher at another university cannot reproduce your dissertation result. Their team can meet once a week but uses a different benchmark and hardware.",
+            "title": "A Replication Across Two Campuses"
+          },
+          {
+            "choices": [
+              {
+                "buzz": 0,
+                "capital_cents": 0,
+                "detail": "You deliver a smaller archive other labs can use with confidence.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "rights",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Trace who owns the inputs and release the materials with clear permissions",
+                "prestige": 0,
+                "prestige_delta": 5,
+                "shares_bp": 0
+              },
+              {
+                "buzz": 0,
+                "capital_cents": 0,
+                "detail": "The project keeps running after the team graduates.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "document",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Write setup instructions and ask a new student to try them cold",
+                "prestige": 0,
+                "prestige_delta": 4,
+                "research_bonus": 2,
+                "shares_bp": 0
+              },
+              {
+                "buzz": 0,
+                "buzz_delta": 5,
+                "capital_cents": 0,
+                "detail": "The team gains attention together and records questions for future users.",
+                "family": "",
+                "fee_cents": 0,
+                "id": "demo",
+                "leg": "",
+                "legal_form": "",
+                "monthly_cents": 0,
+                "name": "Run a public demonstration and invite the contributors to field questions",
+                "prestige": 0,
+                "prestige_delta": 2,
+                "shares_bp": 0
+              }
+            ],
+            "date": "2021-03-01",
+            "event_kind": "random",
+            "excludes_choice": "grad_school/enter_market",
+            "genius_date": "2013-03-01",
+            "id": "grad_transfer",
+            "pool": "rand_grad",
+            "prompt": "How did you prepare the handover?",
+            "requires_choice": "grad_choice/college",
+            "section": "grad",
+            "text": "Your dissertation team plans a public release. The sponsor wants a fast launch, but two contributors are unsure what the university can share.",
+            "title": "The Lab Notebook Leaves Campus"
           }
         ],
         "skill_rewards": {
@@ -72506,14 +74419,44 @@
           "civic_camp/policy": [
             "policy"
           ],
+          "civic_camp/write_brief": [
+            "public_relations"
+          ],
           "code_camp/build": [
             "programming"
           ],
           "code_camp/design": [
             "ui_design"
           ],
+          "code_camp/test_release": [
+            "software_security"
+          ],
           "elem_best_friend/accept": [
             "empathy"
+          ],
+          "elem_best_friend/start_project": [
+            "architecture"
+          ],
+          "elem_book_trade/catalog": [
+            "architecture"
+          ],
+          "elem_book_trade/meet": [
+            "empathy"
+          ],
+          "elem_book_trade/write": [
+            "drawing"
+          ],
+          "elem_bus_map/ask_names": [
+            "public_speaking"
+          ],
+          "elem_bus_map/draw_route": [
+            "drawing"
+          ],
+          "elem_bus_map/steady_seatmate": [
+            "empathy"
+          ],
+          "elem_bus_map/take_roll": [
+            "accounting"
           ],
           "elem_campaign_trail/briefing": [
             "policy"
@@ -72521,8 +74464,47 @@
           "elem_campaign_trail/camera": [
             "public_relations"
           ],
+          "elem_campaign_trail/help_neighbors": [
+            "government_affairs"
+          ],
+          "elem_classroom/sketch_names": [
+            "drawing"
+          ],
+          "elem_classroom/welcome_late": [
+            "empathy"
+          ],
+          "elem_first_job/class_mural": [
+            "drawing"
+          ],
+          "elem_first_job/hand_out": [
+            "public_speaking"
+          ],
+          "elem_first_job/label_bins": [
+            "ui_design"
+          ],
+          "elem_first_job/share_table": [
+            "empathy"
+          ],
+          "elem_name_tags/call_roll": [
+            "public_speaking"
+          ],
+          "elem_name_tags/make_new": [
+            "drawing"
+          ],
+          "elem_name_tags/pair_up": [
+            "empathy"
+          ],
+          "elem_name_tags/sort_tags": [
+            "architecture"
+          ],
           "elem_playground/athletic": [
             "soccer"
+          ],
+          "elem_playground/draw_serial": [
+            "drawing"
+          ],
+          "elem_playground/referee": [
+            "public_speaking"
           ],
           "elem_playground/sedentary": [
             "programming"
@@ -72533,8 +74515,65 @@
           "elem_prodigy/mentor": [
             "public_speaking"
           ],
+          "elem_prodigy/mixed": [
+            "empathy"
+          ],
+          "elem_project/call_team": [
+            "empathy"
+          ],
           "elem_project/deliberate": [
             "architecture"
+          ],
+          "elem_project/reduce_span": [
+            "architecture"
+          ],
+          "elem_project_lantern/borrow_tools": [
+            "empathy"
+          ],
+          "elem_project_lantern/check_connections": [
+            "soldering"
+          ],
+          "elem_project_lantern/swap_power": [
+            "soldering"
+          ],
+          "elem_project_lantern/unlit_design": [
+            "ui_design"
+          ],
+          "elem_project_print/find_jam": [
+            "architecture"
+          ],
+          "elem_project_print/handcopy": [
+            "drawing"
+          ],
+          "elem_project_print/read_it": [
+            "public_speaking"
+          ],
+          "elem_project_print/share_master": [
+            "public_relations"
+          ],
+          "elem_project_stage/assign_roles": [
+            "empathy"
+          ],
+          "elem_project_stage/new_entrance": [
+            "public_speaking"
+          ],
+          "elem_project_stage/stall": [
+            "comedy"
+          ],
+          "elem_project_stage/trace_rig": [
+            "architecture"
+          ],
+          "elem_rainy_recess/gym_relays": [
+            "soccer"
+          ],
+          "elem_rainy_recess/library_game": [
+            "programming"
+          ],
+          "elem_rainy_recess/movement_course": [
+            "architecture"
+          ],
+          "elem_rainy_recess/percussion": [
+            "music_playing"
           ],
           "elem_respect_teacher/respectful": [
             "ethics"
@@ -72542,14 +74581,56 @@
           "elem_respect_teacher/sassy": [
             "comedy"
           ],
+          "elem_respect_teacher/show_work": [
+            "public_speaking"
+          ],
+          "elem_rule_blame/help_rebuild": [
+            "soldering"
+          ],
           "elem_rule_blame/lie": [
             "public_relations"
           ],
           "elem_rule_blame/truth": [
             "ethics"
           ],
+          "elem_seed_swap/compare": [
+            "drawing"
+          ],
+          "elem_seed_swap/contact": [
+            "public_relations"
+          ],
+          "elem_seed_swap/mixed": [
+            "public_speaking"
+          ],
+          "elem_sharing/make_timer": [
+            "accounting"
+          ],
           "elem_sharing/share": [
             "empathy"
+          ],
+          "elem_weekend_fair/bike_course": [
+            "skateboarding"
+          ],
+          "elem_weekend_fair/electronics": [
+            "soldering"
+          ],
+          "elem_weekend_fair/illustrate": [
+            "drawing"
+          ],
+          "elem_weekend_fair/teach_game": [
+            "empathy"
+          ],
+          "elem_yard_club/map_reading": [
+            "architecture"
+          ],
+          "elem_yard_club/play_goal": [
+            "soccer"
+          ],
+          "elem_yard_club/puzzle_team": [
+            "architecture"
+          ],
+          "elem_yard_club/radio_club": [
+            "public_relations"
           ],
           "genius_second_phd/phd2_econ": [
             "accounting",
@@ -72562,17 +74643,38 @@
             "robotics",
             "pcb_design"
           ],
+          "grad_choice/apprentice": [
+            "soldering"
+          ],
+          "grad_choice/contract": [
+            "programming"
+          ],
           "grad_grant_crisis/coauthor_alliance": [
             "networking"
           ],
           "grad_grant_crisis/fellowship": [
             "public_relations"
           ],
+          "grad_grant_crisis/reduce_scope": [
+            "accounting"
+          ],
           "grad_paper_review/ablations": [
             "ml_research"
           ],
+          "grad_paper_review/narrow_claim": [
+            "ethics"
+          ],
           "grad_paper_review/rebut_bold": [
             "public_speaking"
+          ],
+          "grad_replicate/common": [
+            "ml_research"
+          ],
+          "grad_replicate/methods": [
+            "networking"
+          ],
+          "grad_replicate/narrow": [
+            "ethics"
           ],
           "grad_school/phd_compbio": [
             "medicine",
@@ -72590,8 +74692,20 @@
             "cpu_design",
             "gpu_design"
           ],
+          "grad_transfer/demo": [
+            "public_relations"
+          ],
+          "grad_transfer/document": [
+            "architecture"
+          ],
+          "grad_transfer/rights": [
+            "law"
+          ],
           "hs_bully_continuation/endure_hs": [
             "psychology"
+          ],
+          "hs_bully_continuation/peer_advocate": [
+            "empathy"
           ],
           "hs_bully_continuation/report_hs": [
             "policy"
@@ -72605,6 +74719,9 @@
           "hs_cheat/destroy": [
             "ethics"
           ],
+          "hs_cheat/notify_teacher": [
+            "law"
+          ],
           "hs_cheat/use": [
             "software_security"
           ],
@@ -72617,20 +74734,53 @@
           "hs_drugs_aftermath/rehab": [
             "empathy"
           ],
+          "hs_drugs_aftermath/school_support": [
+            "psychology"
+          ],
           "hs_exclude/cut_out": [
             "programming"
           ],
           "hs_exclude/make_room": [
             "architecture"
           ],
+          "hs_exclude/split_tracks": [
+            "ui_design"
+          ],
+          "hs_field_test/interview": [
+            "ui_design"
+          ],
+          "hs_field_test/offline": [
+            "software_security"
+          ],
+          "hs_field_test/retry": [
+            "networking"
+          ],
+          "hs_identity/coach": [
+            "empathy"
+          ],
+          "hs_identity/documentary": [
+            "film"
+          ],
           "hs_identity/freelance": [
             "software_security"
+          ],
+          "hs_identity/lab_volunteer": [
+            "soldering"
           ],
           "hs_identity/organize": [
             "public_speaking"
           ],
           "hs_identity/systems": [
             "programming"
+          ],
+          "hs_open_lab/diagnose": [
+            "soldering"
+          ],
+          "hs_open_lab/recover": [
+            "software_security"
+          ],
+          "hs_open_lab/source": [
+            "networking"
           ],
           "hs_sport_continuation/jv": [
             "empathy"
@@ -72647,6 +74797,9 @@
           "maker_camp/layout": [
             "pcb_design"
           ],
+          "maker_camp/make_enclosure": [
+            "architecture"
+          ],
           "ms_bday_chain/crowd": [
             "public_relations"
           ],
@@ -72658,6 +74811,18 @@
           ],
           "ms_bday_party/attend": [
             "sociology"
+          ],
+          "ms_bday_party/make_own_plan": [
+            "skateboarding"
+          ],
+          "ms_budget/help": [
+            "empathy"
+          ],
+          "ms_budget/scale_back": [
+            "accounting"
+          ],
+          "ms_budget/sponsor": [
+            "government_affairs"
           ],
           "ms_bully/befriend": [
             "public_speaking"
@@ -72682,6 +74847,9 @@
           ],
           "ms_bystander/intervene": [
             "empathy"
+          ],
+          "ms_cheat/flag_copy": [
+            "law"
           ],
           "ms_cheat/peek": [
             "red_team"
@@ -72728,6 +74896,18 @@
           "ms_exclude/include": [
             "sociology"
           ],
+          "ms_exclude/share_jobs": [
+            "architecture"
+          ],
+          "ms_radio/credit": [
+            "public_relations"
+          ],
+          "ms_radio/fallback": [
+            "soldering"
+          ],
+          "ms_radio/interview": [
+            "public_speaking"
+          ],
           "ms_sport/basketball_thrive": [
             "basketball"
           ],
@@ -72743,6 +74923,9 @@
           "network_camp/audit": [
             "red_team"
           ],
+          "network_camp/restore_service": [
+            "architecture"
+          ],
           "network_camp/secure": [
             "network_security"
           ],
@@ -72755,15 +74938,36 @@
           "setback/venture": [
             "accounting"
           ],
+          "ug_accessible_demo/clinic": [
+            "networking"
+          ],
+          "ug_accessible_demo/keyboard": [
+            "ui_design"
+          ],
+          "ug_accessible_demo/reduce": [
+            "architecture"
+          ],
           "ug_ethics_panel/correct_preprint": [
             "ethics"
+          ],
+          "ug_ethics_panel/rerun_capstone": [
+            "ml_research"
           ],
           "ug_funding/army": [
             "physical_security",
             "robotics"
           ],
+          "ug_funding/scholarship": [
+            "public_speaking"
+          ],
+          "ug_funding/work_study": [
+            "network_security"
+          ],
           "ug_lab_bench/dorm_app": [
             "ui_design"
+          ],
+          "ug_lab_bench/share_compute": [
+            "networking"
           ],
           "ug_lab_bench/train_baseline": [
             "ml_research"
@@ -72793,6 +74997,18 @@
           ],
           "ug_roommates/solo_grind": [
             "architecture"
+          ],
+          "ug_roommates/working_group": [
+            "public_speaking"
+          ],
+          "ug_small_order/decline": [
+            "architecture"
+          ],
+          "ug_small_order/handover": [
+            "public_speaking"
+          ],
+          "ug_small_order/narrow": [
+            "accounting"
           ]
         },
         "startup_loan": {
@@ -72809,11 +75025,17 @@
           "civic_camp/policy": [
             "Interest: policy"
           ],
+          "civic_camp/write_brief": [
+            "Interest: civic reporting"
+          ],
           "code_camp/build": [
             "Interest: coding"
           ],
           "code_camp/design": [
             "Interest: design"
+          ],
+          "code_camp/test_release": [
+            "Interest: quality"
           ],
           "elem_best_friend/accept": [
             "Childhood Pact"
@@ -72821,11 +75043,38 @@
           "elem_best_friend/decline": [
             "Lone Wolf"
           ],
+          "elem_best_friend/start_project": [
+            "Project First"
+          ],
+          "elem_book_trade/catalog": [
+            "Library Indexer"
+          ],
+          "elem_book_trade/meet": [
+            "Book Swap Host"
+          ],
+          "elem_book_trade/write": [
+            "Writes Alternate Endings"
+          ],
+          "elem_bus_map/ask_names": [
+            "Bus Connector"
+          ],
+          "elem_bus_map/draw_route": [
+            "Route Sketcher"
+          ],
+          "elem_bus_map/steady_seatmate": [
+            "Steady Seatmate"
+          ],
+          "elem_bus_map/take_roll": [
+            "Roll Keeper"
+          ],
           "elem_campaign_trail/briefing": [
             "Precinct Reader"
           ],
           "elem_campaign_trail/camera": [
             "Media Poise"
+          ],
+          "elem_campaign_trail/help_neighbors": [
+            "Constituent Listener"
           ],
           "elem_classroom/introverted": [
             "Quiet Tinkerer"
@@ -72833,8 +75082,44 @@
           "elem_classroom/outgoing": [
             "Class Connector"
           ],
+          "elem_classroom/sketch_names": [
+            "Patient Observer"
+          ],
+          "elem_classroom/welcome_late": [
+            "Quiet Welcomer"
+          ],
+          "elem_first_job/class_mural": [
+            "Mural Convener"
+          ],
+          "elem_first_job/hand_out": [
+            "Helpful Guide"
+          ],
+          "elem_first_job/label_bins": [
+            "Visual Organizer"
+          ],
+          "elem_first_job/share_table": [
+            "Attentive Partner"
+          ],
+          "elem_name_tags/call_roll": [
+            "Room Starter"
+          ],
+          "elem_name_tags/make_new": [
+            "Invites Stories"
+          ],
+          "elem_name_tags/pair_up": [
+            "First Partner"
+          ],
+          "elem_name_tags/sort_tags": [
+            "Pattern Finder"
+          ],
           "elem_playground/athletic": [
             "Recess Sprinter"
+          ],
+          "elem_playground/draw_serial": [
+            "Recess Cartoonist"
+          ],
+          "elem_playground/referee": [
+            "Playground Referee"
           ],
           "elem_playground/sedentary": [
             "Terminal Reader"
@@ -72845,11 +75130,68 @@
           "elem_prodigy/mentor": [
             "Young Translator"
           ],
+          "elem_prodigy/mixed": [
+            "Between Cohorts"
+          ],
+          "elem_project/call_team": [
+            "Shares Credit"
+          ],
           "elem_project/deliberate": [
             "Methodical Builder"
           ],
           "elem_project/impulsive": [
             "Quick Instincts"
+          ],
+          "elem_project/reduce_span": [
+            "Pragmatic Designer"
+          ],
+          "elem_project_lantern/borrow_tools": [
+            "Pairs on Problems"
+          ],
+          "elem_project_lantern/check_connections": [
+            "Circuit Detective"
+          ],
+          "elem_project_lantern/swap_power": [
+            "Fast Troubleshooter"
+          ],
+          "elem_project_lantern/unlit_design": [
+            "Quick Redesign"
+          ],
+          "elem_project_print/find_jam": [
+            "Checks the Path"
+          ],
+          "elem_project_print/handcopy": [
+            "Fast Publisher"
+          ],
+          "elem_project_print/read_it": [
+            "Doorway Reporter"
+          ],
+          "elem_project_print/share_master": [
+            "Shared Byline"
+          ],
+          "elem_project_stage/assign_roles": [
+            "Backstage Coordinator"
+          ],
+          "elem_project_stage/new_entrance": [
+            "Live Improviser"
+          ],
+          "elem_project_stage/stall": [
+            "Thinks on Their Feet"
+          ],
+          "elem_project_stage/trace_rig": [
+            "Stage Mechanic"
+          ],
+          "elem_rainy_recess/gym_relays": [
+            "Relay Regular"
+          ],
+          "elem_rainy_recess/library_game": [
+            "Maze Tinkerer"
+          ],
+          "elem_rainy_recess/movement_course": [
+            "Obstacle Designer"
+          ],
+          "elem_rainy_recess/percussion": [
+            "Rain Ensemble"
           ],
           "elem_respect_teacher/respectful": [
             "Respectful"
@@ -72857,17 +75199,59 @@
           "elem_respect_teacher/sassy": [
             "Classroom Heckler"
           ],
+          "elem_respect_teacher/show_work": [
+            "Constructive Questioner"
+          ],
+          "elem_rule_blame/help_rebuild": [
+            "Makes Amends"
+          ],
           "elem_rule_blame/lie": [
             "Dishonest"
           ],
           "elem_rule_blame/truth": [
             "Honest"
           ],
+          "elem_seed_swap/compare": [
+            "Observational Record"
+          ],
+          "elem_seed_swap/contact": [
+            "Early Correction"
+          ],
+          "elem_seed_swap/mixed": [
+            "Plain Dealing"
+          ],
           "elem_sharing/keep": [
             "Selfish"
           ],
+          "elem_sharing/make_timer": [
+            "Fair Queue Keeper"
+          ],
           "elem_sharing/share": [
             "Generous Partner"
+          ],
+          "elem_weekend_fair/bike_course": [
+            "Slalom Rider"
+          ],
+          "elem_weekend_fair/electronics": [
+            "Radio Bench Regular"
+          ],
+          "elem_weekend_fair/illustrate": [
+            "Street Fair Illustrator"
+          ],
+          "elem_weekend_fair/teach_game": [
+            "Fair Coach"
+          ],
+          "elem_yard_club/map_reading": [
+            "Yard Cartographer"
+          ],
+          "elem_yard_club/play_goal": [
+            "Lunch League Regular"
+          ],
+          "elem_yard_club/puzzle_team": [
+            "Chess Notebook"
+          ],
+          "elem_yard_club/radio_club": [
+            "School Radio Voice"
           ],
           "genius_second_phd/decline_second": [
             "Focused Specialist"
@@ -72881,8 +75265,14 @@
           "genius_second_phd/phd2_robotics": [
             "Dual-Ph.D.: Robotics"
           ],
+          "grad_choice/apprentice": [
+            "Repair Shop Apprentice"
+          ],
           "grad_choice/college": [
             "University Track"
+          ],
+          "grad_choice/contract": [
+            "Independent Contractor"
           ],
           "grad_choice/workforce": [
             "Day-One Entrant"
@@ -72893,11 +75283,26 @@
           "grad_grant_crisis/fellowship": [
             "Visiting Fellow"
           ],
+          "grad_grant_crisis/reduce_scope": [
+            "Compute Steward"
+          ],
           "grad_paper_review/ablations": [
             "Rigorous Empiricalist"
           ],
+          "grad_paper_review/narrow_claim": [
+            "Careful Claims"
+          ],
           "grad_paper_review/rebut_bold": [
             "Debate Wrangler"
+          ],
+          "grad_replicate/common": [
+            "Open Replication"
+          ],
+          "grad_replicate/methods": [
+            "Visiting Replicator"
+          ],
+          "grad_replicate/narrow": [
+            "Bounded Evidence"
           ],
           "grad_school/enter_market": [
             "Bachelor Alumnus"
@@ -72914,8 +75319,20 @@
           "grad_school/phd_systems": [
             "Ph.D.: Systems"
           ],
+          "grad_transfer/demo": [
+            "Shared Launch"
+          ],
+          "grad_transfer/document": [
+            "Reproducible Handover"
+          ],
+          "grad_transfer/rights": [
+            "Research Rights Steward"
+          ],
           "hs_bully_continuation/endure_hs": [
             "Unresolved Scars"
+          ],
+          "hs_bully_continuation/peer_advocate": [
+            "Accepts Backup"
           ],
           "hs_bully_continuation/report_hs": [
             "Deliberate"
@@ -72931,6 +75348,9 @@
           ],
           "hs_cheat/destroy": [
             "Honest Scholar"
+          ],
+          "hs_cheat/notify_teacher": [
+            "Exam Steward"
           ],
           "hs_cheat/use": [
             "Shortcut Strategist"
@@ -72953,20 +75373,53 @@
           "hs_drugs_aftermath/rehab": [
             "Recovered Survivor"
           ],
+          "hs_drugs_aftermath/school_support": [
+            "Accepts Treatment"
+          ],
           "hs_exclude/cut_out": [
             "Cutthroat Winner"
           ],
           "hs_exclude/make_room": [
             "Loyal Co-Builder"
           ],
+          "hs_exclude/split_tracks": [
+            "Parallel Builder"
+          ],
+          "hs_field_test/interview": [
+            "Listens in the Field"
+          ],
+          "hs_field_test/offline": [
+            "Field Tester"
+          ],
+          "hs_field_test/retry": [
+            "Keeps Demo Commitments"
+          ],
+          "hs_identity/coach": [
+            "Junior Coach"
+          ],
+          "hs_identity/documentary": [
+            "Youth Documentarian"
+          ],
           "hs_identity/freelance": [
             "Teen Contractor"
+          ],
+          "hs_identity/lab_volunteer": [
+            "Keeps the Lab Open"
           ],
           "hs_identity/organize": [
             "Demo Organizer"
           ],
           "hs_identity/systems": [
             "Lab Obsessive"
+          ],
+          "hs_open_lab/diagnose": [
+            "Repair Instructor"
+          ],
+          "hs_open_lab/recover": [
+            "Recovery First"
+          ],
+          "hs_open_lab/source": [
+            "Resource Exchange"
           ],
           "hs_sport_continuation/jv": [
             "Squad Regular"
@@ -72983,6 +75436,9 @@
           "maker_camp/layout": [
             "Interest: hardware"
           ],
+          "maker_camp/make_enclosure": [
+            "Interest: product design"
+          ],
           "ms_bday_chain/crowd": [
             "Crowd Chaser"
           ],
@@ -72995,8 +75451,20 @@
           "ms_bday_party/attend": [
             "Social Observer"
           ],
+          "ms_bday_party/make_own_plan": [
+            "Own Plans"
+          ],
           "ms_bday_party/skip": [
             "Boundary Setter"
+          ],
+          "ms_budget/help": [
+            "Shares the Late Shift"
+          ],
+          "ms_budget/scale_back": [
+            "Practical Budgeter"
+          ],
+          "ms_budget/sponsor": [
+            "Small Grant Writer"
           ],
           "ms_bully/befriend": [
             "Unlikely Peacemaker"
@@ -73028,6 +75496,9 @@
           ],
           "ms_bystander/walk_away": [
             "Bystander Hesitation"
+          ],
+          "ms_cheat/flag_copy": [
+            "Quietly Accountable"
           ],
           "ms_cheat/peek": [
             "Corner Cutter"
@@ -73077,6 +75548,18 @@
           "ms_exclude/include": [
             "Inclusive Teammate"
           ],
+          "ms_exclude/share_jobs": [
+            "Role Setter"
+          ],
+          "ms_radio/credit": [
+            "Guest-led Interview"
+          ],
+          "ms_radio/fallback": [
+            "Broadcast Fallback"
+          ],
+          "ms_radio/interview": [
+            "Live Interviewer"
+          ],
           "ms_sport/basketball_thrive": [
             "MS Athlete",
             "Court Tactician"
@@ -73102,6 +75585,9 @@
           "network_camp/audit": [
             "Interest: red_team"
           ],
+          "network_camp/restore_service": [
+            "Interest: reliability"
+          ],
           "network_camp/secure": [
             "Interest: security"
           ],
@@ -73114,11 +75600,23 @@
           "setback/venture": [
             "Side-Hustle Mechanic"
           ],
+          "ug_accessible_demo/clinic": [
+            "Usability Convener"
+          ],
+          "ug_accessible_demo/keyboard": [
+            "Keyboard Design"
+          ],
+          "ug_accessible_demo/reduce": [
+            "Accessible Prioritizer"
+          ],
           "ug_ethics_panel/correct_preprint": [
             "Clean Evaluation"
           ],
           "ug_ethics_panel/leave_it": [
             "P-Hacker"
+          ],
+          "ug_ethics_panel/rerun_capstone": [
+            "Careful Evaluator"
           ],
           "ug_funding/army": [
             "Army Veteran"
@@ -73129,8 +75627,17 @@
           "ug_funding/loans": [
             "Student Debt Holder"
           ],
+          "ug_funding/scholarship": [
+            "Scholarship Tutor"
+          ],
+          "ug_funding/work_study": [
+            "Campus Support Technician"
+          ],
           "ug_lab_bench/dorm_app": [
             "Campus Viral Builder"
+          ],
+          "ug_lab_bench/share_compute": [
+            "Cluster Steward"
           ],
           "ug_lab_bench/train_baseline": [
             "Replication Author"
@@ -73155,6 +75662,18 @@
           ],
           "ug_roommates/solo_grind": [
             "Deep Work Habit"
+          ],
+          "ug_roommates/working_group": [
+            "Working Group Host"
+          ],
+          "ug_small_order/decline": [
+            "Maintainer Boundaries"
+          ],
+          "ug_small_order/handover": [
+            "Handover Trainer"
+          ],
+          "ug_small_order/narrow": [
+            "Scopes Paid Work"
           ]
         }
       },
@@ -80667,7 +83186,7 @@
         "research.compute.batched_serving"
       ],
       "resilience": "resilience.domestic",
-      "revision": 49,
+      "revision": 50,
       "rivals": [
         {
           "capacity_milli_CU_per_day": 380000,

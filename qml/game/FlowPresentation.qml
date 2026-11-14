@@ -11,6 +11,7 @@ Rectangle {
     property alias participants: cast.participants
     readonly property bool profileOpen: cast.profileOpen
     required property int textSize
+    property bool reducedMotion: true
     function focusHeading() { title.forceActiveFocus(Qt.OtherFocusReason); return title }
     signal chosen(string choiceId)
     Layout.fillWidth: true
@@ -57,7 +58,7 @@ Rectangle {
             id: cast
             Layout.fillWidth: true
             textSize: frame.textSize
-            reducedMotion: campaign.reducedMotion
+            reducedMotion: frame.reducedMotion
         }
         ColumnLayout {
             Layout.fillWidth: true

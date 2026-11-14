@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import QtQuick.Dialogs
+import QtQuick.Window
 
 ApplicationWindow {
     id: window
@@ -179,6 +180,7 @@ ApplicationWindow {
         onActivated: {
             if (!window.menuVisible) window.openMainMenu()
             else if (frontMenu.page !== "home") frontMenu.home()
+            else if (window.visibility === Window.FullScreen) window.requestExit()
             else if (frontMenu.canResume) window.resumeGame()
             else window.requestExit()
         }
@@ -194,6 +196,11 @@ ApplicationWindow {
         }
         function onSettingsChanged() { window.applyDisplayPreferences() }
         function onCommandFinished(accepted, explanation) {
+            if (exitDialog.savingWindowedMode) {
+                exitDialog.savingWindowedMode = false
+                if (accepted) exitDialog.reject()
+                else exitDialog.windowedError = explanation
+            }
             if (!accepted && !window.menuVisible && requiredPanel.visible && operationNotice.visible)
                 Qt.callLater(() => scroll.reveal(operationNotice))
             if (window.pendingMenuSettings) {
@@ -291,7 +298,9 @@ ApplicationWindow {
         modal: true
         focus: true
         padding: 24
-        closePolicy: Popup.CloseOnEscape
+        property bool savingWindowedMode: false
+        property string windowedError: ""
+        closePolicy: savingWindowedMode ? Popup.NoAutoClose : Popup.CloseOnEscape
         background: Rectangle { color: "#101e29"; border.color: "#b18e5c"; radius: 8 }
         header: Label {
             text: exitDialog.title
@@ -313,6 +322,10 @@ ApplicationWindow {
                 color: "#e8e4dc"
                 font.pixelSize: window.textSize * 1.1
             }
+            Copy {
+                visible: text.length > 0
+                text: exitDialog.windowedError
+            }
             RowLayout {
                 Layout.fillWidth: true
                 spacing: 16
@@ -321,17 +334,41 @@ ApplicationWindow {
                     objectName: "exitCancelButton"
                     text: qsTr("Cancel")
                     Layout.fillWidth: true
+                    Layout.minimumWidth: 0
+                    enabled: !exitDialog.savingWindowedMode
                     onClicked: exitDialog.reject()
+                }
+                Action {
+                    objectName: "exitFullScreenButton"
+                    visible: window.menuVisible && window.visibility === Window.FullScreen
+                    enabled: campaign.ready && !campaign.busy && !exitDialog.savingWindowedMode
+                    text: qsTr("Exit Full Screen")
+                    Layout.fillWidth: true
+                    Layout.minimumWidth: 0
+                    onClicked: {
+                        exitDialog.windowedError = ""
+                        if (campaign.fullScreen)
+                            exitDialog.savingWindowedMode = campaign.setFullScreen(false)
+                        else {
+                            window.showNormal()
+                            exitDialog.reject()
+                        }
+                    }
                 }
                 Action {
                     objectName: "exitConfirmButton"
                     text: qsTr("Exit game")
                     Layout.fillWidth: true
+                    Layout.minimumWidth: 0
+                    enabled: !exitDialog.savingWindowedMode
                     onClicked: exitDialog.accept()
                 }
             }
         }
-        onOpened: cancelExitButton.forceActiveFocus()
+        onOpened: {
+            windowedError = ""
+            cancelExitButton.forceActiveFocus()
+        }
         onAccepted: { window.exitConfirmed = true; window.close(); Qt.quit() }
         onClosed: {
             window.exitCancelPending = window.resumeAfterExitCancel
@@ -600,6 +637,7 @@ ApplicationWindow {
                                 choices: campaign.requiredChoices
                                 participants: campaign.requiredParticipants
                                 textSize: window.textSize
+                                reducedMotion: campaign.reducedMotion
                                 enabled: !campaign.busy && !campaign.storageBlocked
                                 onChosen: choiceId => campaign.choose(choiceId)
                             }
@@ -772,12 +810,6 @@ ApplicationWindow {
                     Panel {
                         visible: campaign.welcome
                         contentItem: ColumnLayout {
-                            id: campaignSetupForm
-                            property bool customSeed: false
-                            function resetWorldSeed() {
-                                worldSeedInput.text = (campaign.scenarios[competitionChoice.currentIndex] || {}).seed || ""
-                                customSeed = false
-                            }
                             Heading { text: qsTr("Found your AI company") }
                             Copy { text: qsTr("Choose an introduction or a century campaign, name your institution and founder, then build it through research, products and partnerships.") }
                             Copy { text: qsTr("Company name") }
@@ -842,9 +874,6 @@ ApplicationWindow {
                                 valueRole: "id"
                                 font.pixelSize: window.textSize
                                 Accessible.name: qsTr("Competition and financing setup")
-                                onCurrentIndexChanged: Qt.callLater(function() {
-                                    if (!campaignSetupForm.customSeed) campaignSetupForm.resetWorldSeed()
-                                })
                                 Component.onCompleted: {
                                     for (let index = 0; index < campaign.scenarios.length; ++index)
                                         if (campaign.scenarios[index].id === "scenario.world_competition") currentIndex = index
@@ -903,6 +932,7 @@ ApplicationWindow {
                             GameField {
                                 id: worldSeedInput
                                 objectName: "worldSeedInput"
+                                text: campaign.generateWorldSeed()
                                 Layout.fillWidth: true
                                 maximumLength: 20
                                 font.pixelSize: window.textSize
@@ -910,10 +940,6 @@ ApplicationWindow {
                                 inputMethodHints: Qt.ImhDigitsOnly
                                 validator: RegularExpressionValidator { regularExpression: /[0-9]{1,20}/ }
                                 Accessible.name: qsTr("World seed")
-                                onTextEdited: campaignSetupForm.customSeed = true
-                                Component.onCompleted: Qt.callLater(function() {
-                                    if (!campaignSetupForm.customSeed) campaignSetupForm.resetWorldSeed()
-                                })
                             }
                             Copy { text: qsTr("The same seed and setup choices start the same world. Names are generated locally.") }
                             Flow {
@@ -922,12 +948,12 @@ ApplicationWindow {
                                 Action {
                                     objectName: "generateWorldSeed"
                                     text: qsTr("New random seed")
-                                    onClicked: {
-                                        campaignSetupForm.customSeed = true
-                                        worldSeedInput.text = campaign.generateWorldSeed()
-                                    }
+                                    onClicked: worldSeedInput.text = campaign.generateWorldSeed()
                                 }
-                                Action { text: qsTr("Use scenario seed"); onClicked: campaignSetupForm.resetWorldSeed() }
+                                Action {
+                                    text: qsTr("Use scenario seed")
+                                    onClicked: worldSeedInput.text = (campaign.scenarios[competitionChoice.currentIndex] || {}).seed || ""
+                                }
                             }
                             ObjectivePicker {
                                 id: openingObjectives

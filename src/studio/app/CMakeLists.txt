@@ -28,6 +28,10 @@ qt_add_resources(pgp-editor studio_map PREFIX "/pgp/studio" BASE "${PROJECT_SOUR
 qt_add_resources(pgp-editor studio_presentations
     PREFIX "/pgp/studio" BASE "${PROJECT_SOURCE_DIR}/qml/game"
     FILES "${PROJECT_SOURCE_DIR}/qml/game/FlowPresentation.qml"
+          "${PROJECT_SOURCE_DIR}/qml/game/DecisionParticipants.qml"
+          "${PROJECT_SOURCE_DIR}/qml/game/EmployeePortrait.qml"
+          "${PROJECT_SOURCE_DIR}/qml/game/PersonProfileDialog.qml"
+          "${PROJECT_SOURCE_DIR}/qml/game/GameDialog.qml"
           "${PROJECT_SOURCE_DIR}/qml/game/WorldButton.qml"
           "${PROJECT_SOURCE_DIR}/qml/game/GameInk.qml"
           "${PROJECT_SOURCE_DIR}/qml/game/DeviceGlyph.qml")

@@ -34,7 +34,7 @@ void schedule_hosted_events_smoke(QQuickWindow& window,pgp::bridge::CampaignCont
         switch(run->phase) {
         case 0: {
             if(!press("menuNewGameButton")){fail("New Game");return;}
-            auto* story=campaign.founding();story->setField("family","rich");story->setField("leg","political");
+            auto* story=campaign.founding();story->setField("family","rich");story->setAdvantage("political",true);
             pgp::bridge::complete_formative_fixture(*story);
             story->setBeat("home");
             if(!story->contactHomeOffer("alder").isEmpty() || !story->respondHomeOffer("alder","accept").isEmpty()){fail("Accept an actual appointment");return;}

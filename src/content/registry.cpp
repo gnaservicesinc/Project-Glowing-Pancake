@@ -270,11 +270,14 @@ Registry foundation_registry() {
     number("company.completed_courses",Scope::company,Unit::count,0,2048,"Completed online courses with acquired skills.","campaign");
     number("company.released_software",Scope::company,Unit::count,0,256,"Completed and released software designs.","campaign");
     boolean("company.founder_genius","The founder selected Actual Genius in the saved introduction.",Scope::company,"campaign");
+    boolean("company.founder_charismatic","The founder selected Extremely Charismatic in the saved introduction.",Scope::company,"campaign");
+    boolean("company.founder_wealthy_elite","The founder grew up in a wealthy family.",Scope::company,"campaign");
+    boolean("company.founder_political_elite","The founder grew up in a wealthy family with a parent in politics.",Scope::company,"campaign");
     boolean("company.founder_outgoing","The founder's saved sociability tendency is outgoing.",Scope::company,"campaign");
     boolean("company.founder_athletic","The founder's saved activity tendency is athletic.",Scope::company,"campaign");
     boolean("company.is_nonprofit","The founding institution has no privately owned founder equity.",Scope::company,"campaign");
     number("company.founder_age",Scope::company,Unit::count,0,10000,"Founder age from the saved 1997 biography; campaign legacy ends at 118.","campaign");
-    for(const auto name:{"founder_gender","founder_leg_up","founder_family","childhood_arrival","childhood_curiosity",
+    for(const auto name:{"founder_gender","founder_family","childhood_arrival","childhood_curiosity",
         "childhood_setback","childhood_circle","childhood_promise","childhood_ownership","childhood_record","childhood_threshold"}) {
         result.register_fact({std::string("company.")+name,Scope::company,ValueType::text,Unit::none,0,0,
             "The player's own saved formative history. Unrecorded for older scenarios; not a source of private rival knowledge.",

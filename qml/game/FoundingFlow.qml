@@ -15,6 +15,7 @@ FocusScope {
     readonly property string sceneTone: beat.tone || "slate"
     readonly property bool narrative: beat.kind === "narration"
     readonly property bool birthPaper: beat.kind === "birth" || beat.kind === "certificate"
+    readonly property bool choosingAdvantages: beat.kind === "advantages"
     readonly property int maxSelections: beat.maxSelections || 1
     readonly property bool multiSelect: beat.kind === "chapter" && maxSelections > 1
     readonly property bool compact: width < 850 || height < 620
@@ -27,6 +28,7 @@ FocusScope {
     FoundingStory { id: script; story: opening.story }
 
     function selectedTokens() {
+        if (choosingAdvantages) return Array.from(story.form.advantages || [])
         if (beat.kind !== "chapter") return []
         const raw = (story.form.choices || {})[beat.chapter]
         return raw ? String(raw).split(",").filter(Boolean) : []
@@ -62,12 +64,12 @@ FocusScope {
     function answer(id) {
         if (beatId === "pronouns" && id === "other") { moveTo("other_pronouns"); return }
         if (beatId === "other_pronouns") { story.setField("pronouns",id); moveTo("other_pronouns-after"); return }
-        if (beat.kind === "chapter") story.choose(beat.chapter, id)
+        if (choosingAdvantages) story.setAdvantage(id, !selectedTokens().includes(id))
+        else if (beat.kind === "chapter") story.choose(beat.chapter, id)
         else story.setField(beatId, id)
-        if (opening.multiSelect) {
+        if (multiSelect || choosingAdvantages) {
             menuAudio.select()
-            // Choosing a club updates the available choices and can rebuild
-            // their delegates. Return keyboard focus to the toggled club.
+            // The updated choices can rebuild the delegates.
             Qt.callLater(() => {
                 const index = decisions.rows.findIndex(option => option.id === id)
                 const choice = choiceOptions.itemAt(index)
@@ -250,6 +252,8 @@ FocusScope {
                                         view.contentY = top + height - view.height
                                 }
                                 Accessible.name: modelData.name; Accessible.description: detail
+                                Accessible.checkable: opening.multiSelect || opening.choosingAdvantages
+                                Accessible.checked: choice.selected
                                 ToolTip.visible: hovered && !!detail; ToolTip.text: detail
                                 background: Rectangle {
                                     radius: 8
@@ -421,7 +425,7 @@ FocusScope {
             WorldButton {
                 id: continueAction; objectName: "foundingNextButton"
                 accent: ink.accent
-                visible: opening.narrative || opening.birthPaper || opening.beat.kind === "appearance" || opening.multiSelect
+                visible: opening.narrative || opening.birthPaper || opening.beat.kind === "appearance" || opening.multiSelect || opening.choosingAdvantages
                 text: opening.multiSelect
                     ? qsTr("Continue (%1/%2) →").arg(opening.selectedTokens().length).arg(opening.maxSelections)
                     : opening.beat.kind === "birth" ? qsTr("Sign birth record →")

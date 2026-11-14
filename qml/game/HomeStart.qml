@@ -9,7 +9,7 @@ Rectangle {
     required property var story
     required property real textScale
     readonly property int typeSize:Math.round(16*textScale)
-    readonly property bool rich:story.form.family==="rich" || story.form.leg==="political"
+    readonly property bool rich:story.form.family==="rich"
     readonly property string previewText: story.preview || ""
     readonly property bool hasDr: previewText.indexOf("Title: Dr.") >= 0
     readonly property bool delayedLaunch: previewText.indexOf("Delayed start:") >= 0

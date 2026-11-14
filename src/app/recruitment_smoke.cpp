@@ -98,7 +98,7 @@ void schedule_recruitment_smoke(QQuickWindow &window, pgp::bridge::CampaignContr
             auto *founding = campaign.founding();
             founding->setField("family", "rich");
             founding->setField("route", "bootstrap");
-            founding->setField("leg", "charisma");
+            founding->setAdvantage("charisma",true);
             pgp::bridge::complete_formative_fixture(*founding);
             campaign.startFounderCampaign();
             break;

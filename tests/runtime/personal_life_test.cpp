@@ -18,7 +18,7 @@ int main() {
         const auto program=runtime::compile_collection(content::load_collection(document.dump(),registry),registry);
         const auto& scenario=std::get<content::ScenarioDefinition>(program.collection.find("scenario.founder_campaign")->data);
         content::FoundingSelection selection;
-        selection.family="rich";selection.leg="genius";selection.route="bootstrap";selection.office="home";selection.researcher="founder";
+        selection.family="rich";selection.advantages={"genius"};selection.route="bootstrap";selection.office="home";selection.researcher="founder";
         for(const auto& scene:scenario.founding->scenes) selection.choices[scene.id]=scene.choices.front().id;
         const auto funds=content::founding_terms(*scenario.founding,selection).personal_contribution_cents;
         selection.personal_investment_cents=funds-25080000;

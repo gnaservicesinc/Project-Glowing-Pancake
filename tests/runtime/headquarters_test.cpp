@@ -29,7 +29,7 @@ int main() {
         runtime::ScenarioOptions options;options.founding=selected;options.seed=719;
         options.identity=runtime::CampaignIdentity{"Physical HQ","Alex Vale","they/them"};
         auto inherited_options=options;
-        inherited_options.founding->route="hired_ceo";inherited_options.founding->office="shared";inherited_options.founding->leg="political";
+        inherited_options.founding->route="hired_ceo";inherited_options.founding->office="shared";inherited_options.founding->advantages={"political"};
         inherited_options.founding->researcher="none";
         const auto inherited=runtime::begin_scenario(program,"scenario.founder_campaign","US-CA",core::ObjectiveSelection{core::ObjectiveKind::survival,{}},inherited_options);
         const auto& office=inherited.world.simulation;

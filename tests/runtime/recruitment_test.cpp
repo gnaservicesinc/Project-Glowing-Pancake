@@ -18,7 +18,7 @@ void check_founder_audiences() {
     check(scenario.management->people->founder_audiences.empty(),"No gender-based pay or mood rules may remain active.");
     const auto start=[&](std::string gender) {
         content::FoundingSelection founder;
-        founder.family="rich";founder.leg="charisma";founder.route="bootstrap";founder.office="home";founder.researcher="none";
+        founder.family="rich";founder.advantages={"charisma"};founder.route="bootstrap";founder.office="home";founder.researcher="none";
         founder.gender=std::move(gender);founder.orientation="queer";
         for(const auto& scene:scenario.founding->scenes)founder.choices.emplace(scene.id,scene.choices.front().id);
         runtime::ScenarioOptions options;options.founding=founder;options.seed=718;
@@ -62,7 +62,7 @@ int main() {
         founder.family = "rich";
         founder.route = "bootstrap";
         founder.office = "home";
-        founder.leg = "charisma";
+        founder.advantages = {"charisma"};
         founder.researcher = "none";
         for (const auto &scene : scenario.founding->scenes)
             founder.choices.emplace(scene.id, scene.choices.front().id);

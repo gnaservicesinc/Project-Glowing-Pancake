@@ -120,18 +120,23 @@ by the authored maximum; they do not print passive revenue. AI assistance requir
 independent Frontier evidence, an active deployment, a human supervisor with a
 computer and allocated compute. Advanced human-only teams require Architecture.
 
-The childhood catalogue contains six shared scenes, eight optional activities,
-eight optional camps and sixteen conditional follow-ups. A saved story seed picks
-one activity and one camp; choices open or bypass their follow-ups. Inactive
-branches grant no skills, interests, reputation or funding bonuses. Going back
-removes hidden answers. Investing all personal savings remains valid.
+The founding catalogue includes 60 school scenes and 217 authored choices.
+The saved story seed samples one episode for each early personality tendency,
+one summer camp, and other events in each school stage. It also fixes choice
+order for that playthrough. Choices open follow-ups and determine whether the
+founder enters the market directly, studies for an undergraduate degree or
+pursues a doctorate. Going back clears answers on branches that close. Investing
+all personal savings remains valid.
 
-To author another chain, add an ordinary `scenes` entry with `pool: "activity"`
-or `pool: "camp"`. Add later scenes with `requires_choice: "parent-id/choice-id"`.
-Leave `pool` empty on follow-ups. Dates must follow the parent. Use `skill_rewards`
-for catalogue skill IDs and `trait_rewards` for bounded interest/trait labels,
-keyed by `scene-id/choice-id`. Keep rewards visible in choice details. The content
-review/finalize workflow remains required; there is no executable event script.
+Set each sampled scene's `pool` to a key in `scene_pools`. The pool's `minimum`
+and `maximum` set how many scenes to draw without replacement. Put a follow-up
+later than its parent and give it `requires_choice: "parent-id/choice-id"`.
+Omit its `pool` if the follow-up should appear whenever that answer is chosen.
+Use `skill_rewards` for catalogue skills and `trait_rewards` for personality or
+interest traits. Both use `scene-id/choice-id` keys. A single-choice scene can
+also set a supported founder tendency through `profile_field` on the scene and
+`profile_value` on its options. Review and finalize the changed collection before
+using it in the game.
 
 The supplied money illustrations now accompany actual balances in University
 and Accounts. Account cards reveal explanatory notes, courses show progress and

@@ -25,19 +25,23 @@ QString money(std::int64_t cents) {
         .arg(magnitude % 100, 2, 10, QLatin1Char('0'));
 }
 
+constexpr auto story_seed_attempts = 16;
+
 QVariantMap defaults() {
     return {{"first_name","Alex"},{"last_name","Vale"},{"birth_sex","indeterminate"},{"gender","nonbinary"},{"pronouns","they/them"},{"orientation","questioning"},
         {"home_app","room"},{"home_room","Bedroom"},{"home_guide",""},{"home_offer",""},{"home_replies",QVariantMap{}},{"company_draft","Daybreak Research"},
-        {"investment","-1"},{"charter",""},{"company","Daybreak Research"},{"seed","19972015"},{"headquarters","US-CA"},{"difficulty","difficulty.standard"},
+        {"investment","-1"},{"charter",""},{"company","Daybreak Research"},{"seed",QString::number(QRandomGenerator::system()->generate64())},{"headquarters","US-CA"},{"difficulty","difficulty.standard"},
         {"sociability","introverted"},{"activity","sedentary"},{"disposition","deliberate"},
-        {"family","middle"},{"leg","genius"},{"route","investment"},{"legal_form","corporation"},
+        {"family","middle"},{"advantages",QStringList{}},{"route","investment"},{"legal_form","corporation"},
         {"office","home"},{"researcher","founder"},{"mission","survival"},{"mission_draft","survival"},
         {"style",QVariantList{0,0,0,0,0,0,0,0,0,0,0,0}},{"appearance",QVariantList{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}},
-        {"story_seed",QString::number(QRandomGenerator::global()->generate64())},{"choices",QVariantMap{}},{"backers",QStringList{}},{"partner",""}};
+        {"story_seed",QString::number(QRandomGenerator::system()->generate64())},{"choices",QVariantMap{}},{"backers",QStringList{}},{"partner",""}};
 }
 
-bool eligible_ceo(const content::FoundingSelection& selection) {
-    return selection.family == "rich" || selection.leg == "genius" || selection.leg == "political" || selection.leg == "wealthy";
+std::vector<std::string> selected_advantages(const QVariantMap& form) {
+    std::vector<std::string> result;
+    for(const auto& id:form.value("advantages").toStringList()) result.push_back(id.toStdString());
+    return result;
 }
 
 QString percent(std::uint32_t basis_points) {
@@ -78,7 +82,7 @@ FoundingController::FoundingController(const content::Collection& collection, st
     if (!file.open(QIODevice::ReadOnly) || file.size() > 32768) return;
     const auto saved = QJsonDocument::fromJson(file.readAll()).object();
     const auto format = saved.value("format").toString();
-    if (format != QStringLiteral("founding-draft-5")) return;
+    if (format != QStringLiteral("founding-draft-6")) return;
     const auto fields = saved.value("form").toObject().toVariantMap();
     for (auto it = fields.begin(); it != fields.end(); ++it)
         if (form_.contains(it.key())) form_[it.key()] = it.value();
@@ -88,7 +92,19 @@ FoundingController::FoundingController(const content::Collection& collection, st
 }
 
 void FoundingController::reset(bool save) {
+    const auto first_scene = [&]() -> const content::FormativeScene* {
+        if (!catalog_) return nullptr;
+        content::FoundingSelection biography;
+        biography.family = form_.value("family").toString().toStdString();
+        biography.advantages = selected_advantages(form_);
+        biography.story_seed = form_.value("story_seed").toString().toULongLong();
+        const auto scenes = content::formative_scenes(*catalog_, biography);
+        return scenes.empty() ? nullptr : scenes.front();
+    };
+    const auto previous_first = first_scene();
     form_ = defaults();
+    for (int attempt = 0; previous_first && first_scene() == previous_first && attempt < story_seed_attempts; ++attempt)
+        form_["story_seed"] = QString::number(QRandomGenerator::system()->generate64());
     deriveOpening();
     beat_ = QStringLiteral("opening");
     error_.clear();
@@ -110,7 +126,7 @@ content::FoundingSelection FoundingController::selection() const {
     selected.activity = field("activity");
     selected.disposition = field("disposition");
     selected.family = field("family");
-    selected.leg = field("leg");
+    selected.advantages=selected_advantages(form_);
     selected.route = field("route");
     selected.partner = field("partner");
     bool investment_ok=false;const auto dollars=form_.value("investment").toString().toLongLong(&investment_ok);
@@ -144,8 +160,7 @@ QVariantList FoundingController::options(const std::vector<content::FoundingOpti
     QVariantList result;
     const auto selected = selection();
     for (const auto& row : rows) {
-        auto reason = content::founding_ineligibility(row, selected);
-        if (row.id == "wealthy" && selected.family != "rich") reason = "Requires rich parents at birth.";
+        const auto reason = content::founding_ineligibility(row, selected);
         result.push_back(QVariantMap{{"id",text(row.id)},{"name",text(row.name)},{"detail",text(row.detail)+(row.prestige || row.buzz?tr(" · +%1 prestige / +%2 buzz").arg(row.prestige).arg(row.buzz):QString{})},
             {"available",reason.empty()},{"reason",text(reason)}});
     }
@@ -155,25 +170,29 @@ QVariantList FoundingController::options(const std::vector<content::FoundingOpti
 QVariantList FoundingController::families() const {
     if(!catalog_)return {};
     auto rows=options(catalog_->families);
+    auto biography=selection();
+    biography.advantages.clear();
     for(auto& value:rows) {
         auto row=value.toMap();const auto id=row.value("id").toString().toStdString();
-        row["detail"]=row.value("detail").toString()+tr(" · Family savings at 18: %1").arg(money(content::founding_option(catalog_->families,id).capital_cents));
+        biography.family=id;
+        row["detail"]=row.value("detail").toString()+tr(" · Family savings at 18: %1").arg(money(content::founding_savings(*catalog_,biography)));
         if(premises_rules_)row["detail"]=row.value("detail").toString()+tr(" · %1 free home workspaces").arg(core::headquarters_home(*premises_rules_,id).plan.rooms.size());
         value=row;
     }
     return rows;
 }
-QVariantList FoundingController::legs() const {
+bool FoundingController::selectableAdvantage(const content::FoundingOption& option,const content::FoundingSelection& selected) const {
+    return option.id!="wealthy" && (option.id!="political" || selected.has_advantage("wealthy")) &&
+        content::founding_ineligibility(option,selected).empty();
+}
+QVariantList FoundingController::advantageOptions() const {
     if (!catalog_) return {};
-    auto rows = options(catalog_->legs);
-    const bool rich = form_.value("family") == "rich";
-    for (auto& val : rows) {
-        auto row = val.toMap();
-        const bool avail = row.value("id").toString() != "wealthy" || rich;
-        row["available"] = avail;
-        row["reason"] = avail ? QString{} : tr("Requires rich parents.");
-        val = row;
-    }
+    const auto selected=selection();
+    auto rows=options(catalog_->legs);
+    rows.removeIf([&](const auto& row) {
+        const auto& option=content::founding_option(catalog_->legs,row.toMap().value("id").toString().toStdString());
+        return !selectableAdvantage(option,selected);
+    });
     return rows;
 }
 QVariantList FoundingController::routes() const {
@@ -191,8 +210,8 @@ QVariantMap FoundingController::homeOffer(const QString& id) const {
     auto status=reply.value("status").toString();
     auto source=reply.value("source").toString();
     const auto selected=selection();
-    if(status.isEmpty() && id=="alder" && selected.leg=="genius") {status="offered";source="recruiter";}
-    if(status.isEmpty() && id=="frontier" && selected.leg=="genius" && selected.family!="rich" &&
+    if(status.isEmpty() && id=="alder" && selected.has_advantage("genius")) {status="offered";source="recruiter";}
+    if(status.isEmpty() && id=="frontier" && selected.has_advantage("genius") && !selected.has_advantage("wealthy") &&
         selected.route!="hired_ceo" && selected.route!="partnership" && selected.backers.empty()) {
         status="offered";source="introduction";
     }
@@ -310,7 +329,7 @@ QString FoundingController::contactHomeOffer(QString id) {
         auto status=offer.value("status").toString();
         auto source=offer.value("source").toString();
         if (status=="listed") {
-            status=id=="alder" && !eligible_ceo(selection())?"rejected":"offered";
+            status=id=="alder" && !content::founding_ceo_eligible(selection())?"rejected":"offered";
             source=id=="alder"?"application":offer.value("kind")=="partner"?"partnership":"pitch";
         }
         replies[id]=QVariantMap{{"status",status},{"source",source}};
@@ -392,18 +411,16 @@ QVariantList FoundingController::chapters() const {
             const auto& scene=*active;
             const auto traits_before=content::formative_traits_before(*catalog_,current,scene.id);
             const auto max_sel=content::scene_max_selections(scene,current);
-            const auto& eff_date=(current.leg=="genius" && !scene.genius_date.empty())?scene.genius_date:scene.date;
-            auto rows=options(scene.choices);
-            for(std::size_t i=0;i<static_cast<std::size_t>(rows.size()) && i<scene.choices.size();++i) {
-                const auto& opt=scene.choices[i];
-                auto value=rows[static_cast<qsizetype>(i)].toMap();
+            const auto& eff_date=(current.has_advantage("genius") && !scene.genius_date.empty())?scene.genius_date:scene.date;
+            QVariantList rows;
+            for(const auto* choice : content::formative_options(scene,current)) {
+                const auto& opt=*choice;
                 const auto reason=content::option_ineligibility(opt,current,traits_before);
-                value["available"]=reason.empty();
-                value["reason"]=text(reason);
-                auto detail=value.value("detail").toString();
-                if(!opt.combo_leg.empty() && current.leg==opt.combo_leg) detail+=tr(" · Special combo bonus");
+                auto detail=text(opt.detail);
+                if(opt.prestige || opt.buzz) detail+=tr(" · +%1 prestige / +%2 buzz").arg(opt.prestige).arg(opt.buzz);
+                if(!opt.combo_leg.empty() && current.has_advantage(opt.combo_leg)) detail+=tr(" · Special combo bonus");
                 if(opt.grants_doctorate) detail+=tr(" · Grants Dr. title");
-                const auto delay_years=(current.leg=="genius"?opt.genius_delay_days:opt.delay_days)/365U;
+                const auto delay_years=(current.has_advantage("genius")?opt.genius_delay_days:opt.delay_days)/365U;
                 if(delay_years>0) detail+=tr(" · +%1 yr(s)").arg(delay_years);
                 if(opt.student_loan_cents>0) detail+=tr(" · %1 student debt").arg(money(opt.student_loan_cents));
                 if(opt.best_friends_delta>0) detail+=tr(" · +%1 friend(s)").arg(opt.best_friends_delta);
@@ -411,12 +428,13 @@ QVariantList FoundingController::chapters() const {
                 if(const auto traits=catalog_->trait_rewards.find(key);traits!=catalog_->trait_rewards.end()) {
                     for(const auto& trait:traits->second)detail+=" · "+text(trait);
                 }
-                value["detail"]=detail;
-                rows[static_cast<qsizetype>(i)]=value;
+                rows.push_back(QVariantMap{{"id",text(opt.id)},{"name",text(opt.name)},{"detail",detail},
+                    {"available",reason.empty()},{"reason",text(reason)}});
             }
             result.push_back(QVariantMap{{"id",text(scene.id)},{"title",text(scene.title)},
                 {"date",text(eff_date)},{"nominalDate",text(scene.date)},{"text",text(scene.text)},
                 {"section",text(scene.section)},{"eventKind",text(scene.event_kind)},{"prompt",text(scene.prompt)},
+                {"profileField",text(scene.profile_field)},
                 {"maxSelections",static_cast<int>(max_sel)},{"requiresChoice",text(scene.requires_choice)},{"choices",rows}});
         }
     }
@@ -437,13 +455,12 @@ QVariantList FoundingController::headquarters() const {
 
 QVariantMap FoundingController::personalFunds() const {
     if(!catalog_) return {};
-    const auto family=form_.value("leg")=="political"?"rich":form_.value("family").toString().toStdString();
-    const auto total=content::founding_option(catalog_->families,family).capital_cents+content::founding_option(catalog_->legs,form_.value("leg").toString().toStdString()).capital_cents;
+    const auto total=content::founding_savings(*catalog_,selection());
     return {{"total",money(total)},{"dollars",QString::number(total/100)}};
 }
 QVariantMap FoundingController::familyHome() const {
     if(!premises_rules_)return {};
-    const auto family=form_.value("leg")=="political"?std::string{"rich"}:form_.value("family").toString().toStdString();
+    const auto family=form_.value("family").toString().toStdString();
     const auto home=core::headquarters_home(*premises_rules_,family);
     QVariantList rooms;QStringList names;
     std::size_t i=0;
@@ -499,7 +516,7 @@ QString FoundingController::signingError() const {
     if(!catalog_) return tr("The founding catalog is unavailable.");
     try {
         const auto selected=selection();
-        if(selected.route=="hired_ceo" && (!eligible_ceo(selected) ||
+        if(selected.route=="hired_ceo" && (!content::founding_ceo_eligible(selected) ||
             (beat_=="home" && homeOffer("alder").value("status")!="selected")))
             return tr("Review and accept a leadership offer before signing an appointment.");
         if(selected.route=="partnership" && !selected.partner.empty() && beat_=="home" &&
@@ -561,7 +578,7 @@ void FoundingController::saveDraft() {
         std::filesystem::create_directories(draft_path_.parent_path());
         QSaveFile file{QString::fromStdU16String(draft_path_.u16string())};
         const auto bytes = QJsonDocument{QJsonObject::fromVariantMap(
-            {{"format","founding-draft-5"},{"beat",beat_},{"form",form_}})}.toJson(QJsonDocument::Compact);
+            {{"format","founding-draft-6"},{"beat",beat_},{"form",form_}})}.toJson(QJsonDocument::Compact);
         if (!file.open(QIODevice::WriteOnly) || file.write(bytes) != bytes.size() || !file.commit())
             error_ = tr("Could not save your place in the prologue.");
         else error_.clear();
@@ -591,7 +608,7 @@ void FoundingController::setBeat(QString id) {
 void FoundingController::setField(QString key, QVariant value) {
     const auto answer = value.toString();
     if (!form_.contains(key) || key == "choices" || key == "backers" || key=="partner" || key=="mission_draft" || key=="home_replies" || key=="home_offer" || key=="company_draft" ||
-        key=="appearance" || key=="style" || answer.size() > 128 ||
+        key=="appearance" || key=="style" || key=="advantages" || answer.size() > 128 ||
         form_.value(key).toString() == answer) return;
     if (key=="route" && answer=="hired_ceo" && beat_=="home") return;
     if (key=="mission" && !form_.value("partner").toString().isEmpty()) return;
@@ -599,6 +616,7 @@ void FoundingController::setField(QString key, QVariant value) {
     if(key=="birth_sex" && answer!="female" && answer!="male" && answer!="indeterminate") return;
     if(key=="orientation" && std::ranges::find(content::founder_orientations,answer.toStdString())==content::founder_orientations.end()) return;
     if(key=="pronouns" && !pronounOptions().contains(answer)) return;
+    if(key=="family" && (!catalog_ || std::ranges::find(catalog_->families,answer.toStdString(),&content::FoundingOption::id)==catalog_->families.end())) return;
     if(key=="investment") {bool ok=false;const auto dollars=answer.toLongLong(&ok);if(!ok || dollars < -1 || dollars>10000000000)return;}
     if(key=="story_seed") {bool ok=false;(void)answer.toULongLong(&ok);if(!ok)return;}
     const bool was_ceo=form_.value("route")=="hired_ceo";
@@ -618,8 +636,26 @@ void FoundingController::setField(QString key, QVariant value) {
         if (answer == "nonprofit" && form_.value("mission").toString() == "profit") form_["mission"] = "survival";
     }
     if (was_ceo && form_.value("route")!="hired_ceo") form_["company"]=form_.value("company_draft");
-    if (key == "leg" && answer != "genius") form_["researcher"] = "first_hire";
-    if (key == "story_seed" || key == "leg" || key == "family" || key == "legal_form") pruneChoices();
+    if (key=="family" && answer!="rich") {
+        auto advantages=form_.value("advantages").toStringList();
+        advantages.removeAll("political");
+        form_["advantages"]=advantages;
+    }
+    if (key == "story_seed" || key == "family" || key == "legal_form") pruneChoices();
+    deriveOpening();
+    saveDraft();
+    emit changed();
+}
+
+void FoundingController::setAdvantage(QString id,bool enabled) {
+    if(!catalog_) return;
+    const auto option=std::ranges::find(catalog_->legs,id.toStdString(),&content::FoundingOption::id);
+    auto advantages=form_.value("advantages").toStringList();
+    if(option==catalog_->legs.end() || !selectableAdvantage(*option,selection()) || enabled==advantages.contains(id)) return;
+    if(enabled) advantages.push_back(id);
+    else advantages.removeAll(id);
+    form_["advantages"]=advantages;
+    pruneChoices();
     deriveOpening();
     saveDraft();
     emit changed();
@@ -649,29 +685,37 @@ QString FoundingController::answerText(QString field, QString value) {
 
 void FoundingController::deriveOpening() {
     if(!catalog_ || !catalog_->opening) return;
-    const auto leg=form_.value("leg").toString();
-    if(leg=="wealthy" && form_.value("family")!="rich") form_["leg"]="genius";
     auto route=form_.value("route").toString();
-    if(route=="bootstrap" && content::founding_option(catalog_->routes,"bootstrap").family=="rich" && form_.value("family")!="rich" && form_.value("leg")!="political") route=form_.value("legal_form")=="nonprofit"?"mission_director":"investment";
-    form_["route"]=route;
-    bool can_research=(form_.value("leg")=="genius");
-    if(!can_research) {
-        try { can_research=content::founding_terms(*catalog_,selection(),false).doctorate_count>0; } catch(...) {}
+    content::FoundingSelection biography;
+    biography.family=form_.value("family").toString().toStdString();
+    biography.legal_form=form_.value("legal_form").toString().toStdString();
+    biography.advantages=selected_advantages(form_);
+    if(route=="bootstrap" && !content::founding_ineligibility(content::founding_option(catalog_->routes,"bootstrap"),biography).empty())
+        route=form_.value("legal_form")=="nonprofit"?"mission_director":"investment";
+    if(route=="hired_ceo" && !content::founding_ceo_eligible(biography)) {
+        route="investment";
+        form_["company"]=form_.value("company_draft");
     }
-    form_["researcher"]=can_research?"founder":"none";
+    form_["route"]=route;
     form_["office"]=(route=="hired_ceo" || route=="partnership")?"shared":"home";
     form_["difficulty"]="";
     if(route!="investment" && route!="mission_director") form_["backers"]=QStringList{};
     if(!form_.value("partner").toString().isEmpty()) {
         const auto* partner=content::founding_partner(*catalog_,form_.value("partner").toString().toStdString());
-        content::FoundingSelection biography;
-        biography.leg=form_.value("leg").toString().toStdString();
-        biography.family=form_.value("family").toString().toStdString();
         if(route!="partnership" || !partner || !content::partner_ineligibility(*partner,biography).empty()) {
             form_["partner"]="";
             form_["mission"]=form_.value("mission_draft","survival");
         } else form_["mission"]=text(partner->objective);
     }
+    bool can_research=biography.has_advantage("genius");
+    if(!can_research) {
+        try {
+            auto selection_for_terms=selection();
+            selection_for_terms.researcher="none";
+            can_research=content::founding_terms(*catalog_,selection_for_terms,false).doctorate_count>0;
+        } catch(...) {}
+    }
+    form_["researcher"]=can_research?"founder":"none";
     if(form_.value("gender")!="woman" && form_.value("gender")!="man" && form_.value("gender")!="nonbinary") form_["gender"]="nonbinary";
     if(form_.value("birth_sex")!="female" && form_.value("birth_sex")!="male" && form_.value("birth_sex")!="indeterminate") form_["birth_sex"]="indeterminate";
     if(std::ranges::find(content::founder_orientations,form_.value("orientation").toString().toStdString())==content::founder_orientations.end()) form_["orientation"]="questioning";
@@ -729,7 +773,6 @@ void FoundingController::cycleAppearance(int part,int direction) {
 void FoundingController::pruneChoices() {
     if (!catalog_) return;
     auto choices = form_.value("choices").toMap();
-    if (choices.isEmpty()) return;
     for (;;) {
         bool pruned = false;
         form_["choices"] = choices;
@@ -765,6 +808,16 @@ void FoundingController::pruneChoices() {
         if (!pruned) break;
     }
     form_["choices"] = choices;
+    form_["sociability"] = QStringLiteral("introverted");
+    form_["activity"] = QStringLiteral("sedentary");
+    form_["disposition"] = QStringLiteral("deliberate");
+    for (const auto* scene : content::formative_scenes(*catalog_, selection())) {
+        if (scene->profile_field.empty()) continue;
+        const auto id = choices.value(text(scene->id)).toString().toStdString();
+        const auto choice = std::ranges::find(scene->choices, id, &content::FoundingOption::id);
+        if (choice != scene->choices.end() && !choice->profile_value.empty())
+            form_[text(scene->profile_field)] = text(choice->profile_value);
+    }
 }
 
 void FoundingController::choose(QString scene, QString id) {
@@ -792,9 +845,6 @@ void FoundingController::choose(QString scene, QString id) {
         if (!allowed) return;
         choices[scene] = id;
     }
-    if (scene == "elem_classroom") form_["sociability"] = (id == "outgoing") ? QStringLiteral("outgoing") : QStringLiteral("introverted");
-    else if (scene == "elem_playground") form_["activity"] = (id == "athletic") ? QStringLiteral("athletic") : QStringLiteral("sedentary");
-    else if (scene == "elem_project") form_["disposition"] = (id == "impulsive") ? QStringLiteral("impulsive") : QStringLiteral("deliberate");
     form_["choices"] = choices;
     pruneChoices();
     deriveOpening();

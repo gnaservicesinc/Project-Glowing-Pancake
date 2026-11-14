@@ -21,7 +21,7 @@ void schedule_social_smoke(QQuickWindow& window,pgp::bridge::CampaignController&
         const auto capture=[&](const char* suffix){return screenshot.isEmpty() || window.grabWindow().save(screenshot+"."+suffix+".png");};
         auto* world=campaign.world();const auto& s=campaign.snapshot()->checkpoint.world.simulation;
         switch(run->phase) {
-        case 0:{if(!press("menuNewGameButton")){fail("New game");return;}auto* f=campaign.founding();f->setField("family","rich");f->setField("route","hired_ceo");pgp::bridge::complete_formative_fixture(*f);campaign.startFounderCampaign();break;}
+        case 0:{if(!press("menuNewGameButton")){fail("New game");return;}auto* f=campaign.founding();f->setField("family","rich");f->setAdvantage("genius",true);f->setField("route","hired_ceo");pgp::bridge::complete_formative_fixture(*f);campaign.startFounderCampaign();break;}
         case 1:if(auto* c=item("birthKeepsakeClose")){c->forceActiveFocus();QTest::keyClick(&window,Qt::Key_Space);}world->navigate("workspace","hq","laptop","people","");break;
         case 2:if(!press("peopleSocialTab")){fail("Social circle tab");return;}break;
         case 3:{const auto people=world->relationships().value("people").toList();if(people.size()<2){fail("HQ people");return;}run->person=people.front().toMap().value("id").toString().toStdString();if(!press("socialChat")){fail("Take a break");return;}run->frames=0;break;}

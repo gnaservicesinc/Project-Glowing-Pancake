@@ -12,7 +12,7 @@ int main() {
         const auto program=runtime::compile_collection(content::load_collection(persistence::read_bounded(PGP_EVENTS_SOURCE,content::maximum_document_bytes),registry),registry);
         const auto& scenario=std::get<content::ScenarioDefinition>(program.collection.find("scenario.founder_campaign")->data);
         content::FoundingSelection selection;
-        selection.family="rich";selection.leg="political";selection.route="hired_ceo";selection.office="shared";selection.researcher="none";
+        selection.family="rich";selection.advantages={"political"};selection.route="hired_ceo";selection.office="shared";selection.researcher="none";
         for(const auto& scene:scenario.founding->scenes)selection.choices[scene.id]=scene.choices.front().id;
         runtime::ScenarioOptions options;options.founding=selection;
         options.identity=runtime::CampaignIdentity{"Alder Research","Alex Vale","they/them"};

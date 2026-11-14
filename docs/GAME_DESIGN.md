@@ -31,10 +31,9 @@ No multiplayer, real model execution, external generative dialogue service, 3D w
 
 **New Game** opens on a California hospital scene in **1997**. The prologue
 presents one decision at a time as the founder grows up. It establishes a name,
-gender, pronouns, temperament, family resources and one leg up (Actual Genius,
-Extremely Charismatic, Wealthy Elite,
-or Child of Political Elite). Wealthy Elite requires rich parents; the political
-route is available from any class and makes the family wealthy by age 18.
+gender, pronouns, temperament and family resources. Actual Genius and
+Extremely Charismatic are independent optional advantages. A wealthy family
+automatically grants Wealthy Elite and makes Child of Political Elite available.
 Original childhood/teenage scenes retain choices for later events and public
 identity. They shape opportunities rather than permanent talent ceilings.
 

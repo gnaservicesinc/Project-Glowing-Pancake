@@ -40,7 +40,7 @@ void schedule_personal_life_smoke(QQuickWindow& window,pgp::bridge::CampaignCont
         switch(run->phase) {
         case 0: {
             if(!press("menuNewGameButton")){fail("New Game");return;}
-            auto* story=campaign.founding();story->setField("family","rich");story->setField("leg","genius");
+            auto* story=campaign.founding();story->setField("family","rich");story->setAdvantage("genius",true);
             story->setField("route","bootstrap");story->setField("investment","100000");
             pgp::bridge::complete_formative_fixture(*story);
             campaign.startFounderCampaign();break;

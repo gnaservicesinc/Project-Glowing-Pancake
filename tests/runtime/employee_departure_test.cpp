@@ -9,7 +9,7 @@ void check(bool okay,const char* why) {if(!okay)throw std::runtime_error(why);}
 runtime::Runtime start(const runtime::CompiledProgram& program,bool genius=false) {
     const auto& scenario=std::get<content::ScenarioDefinition>(program.collection.find("scenario.founder_campaign")->data);
     content::FoundingSelection founder;
-    founder.family="rich";founder.leg=genius?"genius":"political";
+    founder.family="rich";founder.advantages={genius?"genius":"political"};
     founder.route="hired_ceo";founder.office="shared";founder.researcher=genius?"founder":"none";
     for(const auto& scene:scenario.founding->scenes)founder.choices[scene.id]=scene.choices.front().id;
     runtime::ScenarioOptions options;options.founding=founder;options.seed=719;

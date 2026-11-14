@@ -2,11 +2,13 @@
 #include "founding_controller.hpp"
 #include "world_controller.hpp"
 #include "management_controller.hpp"
+#include <pgp/runtime/campaign_identity.hpp>
 #include <pgp/runtime/scenario.hpp>
 #include <pgp/persistence/save.hpp>
 #include <QCoreApplication>
 #include <QTemporaryDir>
 #include <iostream>
+#include <set>
 #include <stdexcept>
 
 int main(int argc,char** argv) {
@@ -18,6 +20,17 @@ int main(int argc,char** argv) {
         const auto program=runtime::compile_collection(content::load_collection(persistence::read_bounded(PGP_F04_SOURCE,content::maximum_document_bytes),registry),registry);
         QTemporaryDir scratch;
         const auto path=std::filesystem::path{scratch.path().toStdString()}/"founding.json";
+        bridge::FoundingController seeded{program.collection,path.parent_path()/"seeds.json"};
+        std::set<std::uint64_t> world_seeds, story_seeds;
+        for (int attempt=0;attempt<16;++attempt) {
+            seeded.reset();
+            check(world_seeds.insert(runtime::parse_world_seed(seeded.form().value("seed").toString().toStdString())).second &&
+                story_seeds.insert(seeded.selection().story_seed).second,"Each new introduction needs fresh world and story seeds.");
+        }
+        seeded.setBeat("appearance");
+        bridge::FoundingController resumed_seed{program.collection,path.parent_path()/"seeds.json"};
+        check(resumed_seed.beat()=="appearance" && resumed_seed.form().value("seed")==seeded.form().value("seed") &&
+            resumed_seed.selection().story_seed==seeded.selection().story_seed,"Resuming a draft must retain both seeds.");
         bridge::FoundingController setup{program.collection,path};
         setup.setField("gender","woman");setup.setField("pronouns","she/her");
         setup.setField("gender","arbitrary");setup.setField("pronouns","arbitrary");
@@ -41,6 +54,7 @@ int main(int argc,char** argv) {
         bridge::FoundingController reopened{program.collection,path};
         check(reopened.portrait()==setup.portrait() && reopened.beat()=="appearance","Current-build drafts must retain the edited portrait.");
         setup.setField("family","rich");setup.setField("route","bootstrap");
+        setup.setAdvantage("genius",true);setup.setAdvantage("charisma",true);
         check(setup.backers().empty() && setup.form().value("office")=="home","A self-funded founder must not receive unsolicited backers.");
         pgp::bridge::complete_formative_fixture(setup);
         setup.setField("investment","100000");
@@ -55,13 +69,13 @@ int main(int argc,char** argv) {
             return QVariantMap{};
         };
         bridge::FoundingController applicant{program.collection,path.parent_path()/"applicant.json"};
-        applicant.setField("leg","charisma");applicant.setBeat("home");
+        applicant.setAdvantage("charisma",true);applicant.setBeat("home");
         check(offer(applicant,"alder").value("status")=="listed" && applicant.contactHomeOffer("alder").isEmpty(),"An ordinary founder can apply to the lab.");
         check(offer(applicant,"alder").value("status")=="rejected" && !applicant.respondHomeOffer("alder","accept").isEmpty(),"A rejected application must close without an appointment.");
         bridge::FoundingController rejected{program.collection,path.parent_path()/"applicant.json"};
         check(offer(rejected,"alder").value("status")=="rejected" && rejected.form().value("home_offer")=="alder","A rejection and its selected thread must survive restart.");
         bridge::FoundingController invited{program.collection,path.parent_path()/"invited.json"};
-        invited.setField("family","poor");invited.setBeat("home");
+        invited.setField("family","poor");invited.setAdvantage("genius",true);invited.setBeat("home");
         check(offer(invited,"alder").value("source")=="recruiter" && offer(invited,"frontier").value("source")=="introduction","A genius without family wealth should receive both approaches.");
         check(!invited.respondHomeOffer("alder","accept").isEmpty(),"Review a message before responding.");
         check(invited.contactHomeOffer("alder").isEmpty() && invited.respondHomeOffer("alder","later").isEmpty(),"An invitation can be kept for later.");
@@ -87,7 +101,9 @@ int main(int argc,char** argv) {
         bridge::WorldController world{std::filesystem::path{scratch.path().toStdString()}/"world"};
         world.update(std::make_shared<const bridge::CampaignSnapshot>(bridge::CampaignSnapshot{1,checkpoint,{},true,false}),program,true);
         check(world.founder().value("portrait")==setup.portraitForAge(18),"The world profile must show the customized portrait.");
-        check(world.founder().value("bio").toString().contains("Actual Genius"),"The founder's leg up must appear in the profile.");
+        const auto biography=world.founder().value("bio").toString();
+        check(biography.contains("Actual Genius") && biography.contains("Extremely Charismatic") && biography.contains("Wealthy Elite"),
+            "Every applicable advantage must appear in the founder's profile.");
         const auto workspaces=[](QVariantList rooms){
             rooms.erase(std::remove_if(rooms.begin(),rooms.end(),[](const auto& room){return room.toMap().value("passage").toBool();}),rooms.end());
             return rooms;
@@ -192,20 +208,32 @@ int main(int argc,char** argv) {
                 for(const auto& v:ctrl.chapters()) if(v.toMap().value("id")==id) return v.toMap();
                 return QVariantMap{};
             };
-            const auto leg_avail=[](const bridge::FoundingController& ctrl,const QString& id) {
-                for(const auto& v:ctrl.legs()) if(v.toMap().value("id")==id) return v.toMap().value("available").toBool();
+            const auto advantage_shown=[](const bridge::FoundingController& ctrl,const QString& id) {
+                for(const auto& v:ctrl.advantageOptions()) if(v.toMap().value("id")==id) return true;
                 return false;
             };
             bridge::FoundingController school{program.collection,path.parent_path()/"school.json"};
             school.setField("family","poor");
-            check(!leg_avail(school,"wealthy"),"Wealthy Elite leg must be unavailable when born poor.");
+            school.setAdvantage("wealthy",true);school.setAdvantage("political",true);
+            check(school.selection().advantages.empty() && !school.selection().has_advantage("wealthy") &&
+                !advantage_shown(school,"wealthy") && !advantage_shown(school,"political"),
+                "A poor founder can continue without any advantages, and cannot select elite backgrounds.");
             school.setField("family","rich");
-            check(leg_avail(school,"wealthy"),"Wealthy Elite leg must unlock when born rich.");
-            school.setField("leg","wealthy");
+            check(school.selection().has_advantage("wealthy") && school.personalFunds().value("dollars")=="7000000" &&
+                !advantage_shown(school,"wealthy") && advantage_shown(school,"political"),
+                "Choosing the wealthy household must immediately apply its savings and unlock the political option.");
+            school.setAdvantage("genius",true);school.setAdvantage("charisma",true);school.setAdvantage("political",true);
+            school.setBeat("advantages");
+            bridge::FoundingController resumed_school{program.collection,path.parent_path()/"school.json"};
+            check(resumed_school.beat()=="advantages" && resumed_school.selection()==school.selection() &&
+                resumed_school.selection().advantages.size()==3 && resumed_school.personalFunds().value("dollars")=="7100000",
+                "All three optional advantages must coexist, affect savings and resume exactly.");
             school.setField("family","poor");
-            check(school.form().value("leg")!="wealthy","Switching family back to poor must clear the Wealthy Elite leg.");
+            check(!school.selection().has_advantage("wealthy") && !school.selection().has_advantage("political") &&
+                school.selection().has_advantage("genius") && school.selection().has_advantage("charisma"),
+                "Changing family background must clear only the now-ineligible elite advantages.");
 
-            school.setField("family","rich");school.setField("leg","genius");
+            school.setField("family","rich");school.setAdvantage("charisma",false);
             school.choose("ms_sport","no_sport");
             school.choose("ms_clubs","robotics");school.choose("ms_clubs","coding");school.choose("ms_clubs","debate");
             check(find_chapter(school,"ms_clubs").value("maxSelections").toInt()==3 &&
@@ -224,12 +252,11 @@ int main(int argc,char** argv) {
                 if(!find_chapter(school,"ms_bully").isEmpty()) break;
             }
             check(!find_chapter(school,"ms_bully").isEmpty(),"Must find a story_seed revealing ms_bully in bridge.");
-            school.setField("leg","genius");
             check(!find_opt(find_chapter(school,"ms_bully"),"befriend").value("available").toBool(),
-                  "Befriend bullies option must be unavailable without Charisma leg.");
-            school.setField("leg","charisma");
+                  "Befriend bullies option must be unavailable without Charisma.");
+            school.setAdvantage("charisma",true);
             check(find_opt(find_chapter(school,"ms_bully"),"befriend").value("available").toBool(),
-                  "Befriend bullies option must unlock with Charisma leg.");
+                  "A founder can unlock the Charisma option while keeping Genius.");
 
             for(int seed=1;seed<4096;++seed) {
                 school.setField("story_seed",seed);
@@ -244,7 +271,7 @@ int main(int argc,char** argv) {
                   "Addict trait must close the university track with an explicit reason.");
 
             school.choose("hs_drugs","pass");
-            school.setField("leg","political");school.setField("family","rich");school.setField("route","bootstrap");
+            school.setAdvantage("genius",false);school.setAdvantage("political",true);school.setField("route","bootstrap");
             school.setField("office","home");school.setField("researcher","founder");
             school.choose("grad_choice","college");school.choose("ug_funding","loans");school.choose("grad_school","phd_ml");
             pgp::bridge::complete_formative_fixture(school);

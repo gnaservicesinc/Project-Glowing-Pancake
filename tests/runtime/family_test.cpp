@@ -16,7 +16,7 @@ int main(){using namespace pgp;try {
     }
     const auto registry=content::foundation_registry();const auto program=runtime::compile_collection(content::load_collection(doc.dump(),registry),registry);
     const auto& scenario=std::get<content::ScenarioDefinition>(program.collection.find("scenario.founder_campaign")->data);
-    content::FoundingSelection f;f.family="rich";f.leg="political";f.route="bootstrap";f.office="home";f.researcher="none";f.gender="woman";f.orientation="bisexual";
+    content::FoundingSelection f;f.family="rich";f.advantages={"political"};f.route="bootstrap";f.office="home";f.researcher="none";f.gender="woman";f.orientation="bisexual";
     for(const auto& scene:scenario.founding->scenes)f.choices[scene.id]=scene.choices.front().id;
     runtime::ScenarioOptions options;options.founding=f;options.seed=719;options.identity=runtime::CampaignIdentity{"Family Chapters","Alex Vale","she/her"};
     auto base=runtime::begin_scenario(program,"scenario.founder_campaign","US-CA",core::ObjectiveSelection{core::ObjectiveKind::survival,{}},options);base.world.enabled_flows=std::vector<std::string>{"life.family.first_child","life.family.first_application","life.family.marriage"};

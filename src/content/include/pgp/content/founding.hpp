@@ -26,6 +26,7 @@ struct FoundingOption {
     std::uint32_t research_bonus=0, research_speed_bp=0;
     bool grants_doctorate=false;
     std::string education_label;
+    std::string profile_value;
     auto operator<=>(const FoundingOption&) const = default;
 };
 struct FormativeScene {
@@ -36,7 +37,12 @@ struct FormativeScene {
     std::string requires_leg, requires_trait, excludes_trait, excludes_choice;
     std::uint32_t max_selections=1;
     std::string cap_reduced_when_not;
+    std::string profile_field;
     auto operator<=>(const FormativeScene&) const = default;
+};
+struct FormativePool {
+    std::size_t minimum=1, maximum=1;
+    auto operator<=>(const FormativePool&) const = default;
 };
 struct FoundingOpeningRules {
     std::uint32_t inherited_staff=3, cofounder_staff=1, ceo_equity_bp=500;
@@ -58,6 +64,7 @@ struct FoundingPartner {
 struct FoundingCatalog {
     std::vector<FoundingOption> families, legs, routes, backers, offices, researchers;
     std::vector<FormativeScene> scenes;
+    std::map<std::string,FormativePool,std::less<>> scene_pools;
     std::int64_t formation_cents=0, compute_monthly_cents=0, founder_salary_cents=0;
     std::uint32_t prestige_finance_bp=0, buzz_finance_bp=0, maximum_finance_bonus_bp=0;
     std::optional<FoundingOpeningRules> opening;
@@ -70,7 +77,8 @@ struct FoundingCatalog {
 struct FoundingSelection {
     std::string mode="campaign", first_name="Alex", last_name="Vale", gender="nonbinary";
     std::string sociability="introverted", activity="sedentary", disposition="deliberate";
-    std::string family="middle", leg="genius", route="partnership", legal_form="corporation";
+    std::string family="middle", route="partnership", legal_form="corporation";
+    std::vector<std::string> advantages{"genius"};
     std::string office="shared", researcher="founder";
     std::map<std::string,std::string,std::less<>> choices;
     std::vector<std::string> backers;
@@ -79,11 +87,13 @@ struct FoundingSelection {
     std::int64_t personal_investment_cents=-1;
     std::string birth_sex="indeterminate", orientation="questioning";
     std::uint64_t story_seed=19972015;
+    [[nodiscard]] bool has_advantage(std::string_view id) const;
     auto operator<=>(const FoundingSelection&) const = default;
 };
 inline constexpr std::array<std::string_view,8> founder_orientations{
     "straight","gay_or_lesbian","bisexual","pansexual","asexual","queer","questioning","demisexual"};
 [[nodiscard]] std::vector<const FormativeScene*> formative_scenes(const FoundingCatalog&,const FoundingSelection&);
+[[nodiscard]] std::vector<const FoundingOption*> formative_options(const FormativeScene&,const FoundingSelection&);
 [[nodiscard]] std::vector<std::string> formative_skills(const FoundingCatalog&,const FoundingSelection&);
 [[nodiscard]] std::vector<std::string> formative_traits(const FoundingCatalog&,const FoundingSelection&);
 [[nodiscard]] bool transgender_founder(const FoundingSelection&);
@@ -114,6 +124,8 @@ struct FoundingTerms {
 [[nodiscard]] std::string founding_ineligibility(const FoundingOption&,const FoundingSelection&);
 [[nodiscard]] const FoundingPartner* founding_partner(const FoundingCatalog&,std::string_view id);
 [[nodiscard]] std::string partner_ineligibility(const FoundingPartner&,const FoundingSelection&);
+[[nodiscard]] bool founding_ceo_eligible(const FoundingSelection&);
+[[nodiscard]] std::int64_t founding_savings(const FoundingCatalog&,const FoundingSelection&);
 // A complete validation/preview is pure: changing an answer cannot stack rewards.
 [[nodiscard]] FoundingTerms founding_terms(const FoundingCatalog&,const FoundingSelection&,bool complete=true);
 }

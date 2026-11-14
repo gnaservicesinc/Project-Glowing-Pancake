@@ -50,7 +50,7 @@ is no difficulty choice. Hiring, premises shopping and experiments belong in pla
 ```mermaid
 flowchart TD
     Start[New Game] --> Intro[1997 hospital scene and name]
-    Intro --> Family[Family resources and one leg up]
+    Intro --> Family[Family resources and early advantages]
     Family --> Youth[Childhood and teenage choices]
     Youth --> Entry[2015: The door is open]
     Entry --> Charter[Legal form, entry route, name and mission]
@@ -76,24 +76,21 @@ decisions in sequence. Let the player reveal a beat immediately or use reduced
 motion. Use the main menu's Resume action for a saved place in the prologue.
 The world seed can be edited from the signing review.
 
-### Family and one leg up
+### Family and early advantages
 
 First choose poor, middle-class or rich parents. This sets resources, school
-access, social contacts and the texture of scenes, not inherent ability or
-virtue. Then choose exactly one exceptional advantage:
+access, social contacts and the texture of scenes. Choose any combination of
+the available optional advantages.
 
-| Leg up | Availability | Opening distinction | Tradeoff and later relevance |
+| Advantage | Availability | Opening distinction | Tradeoff and later relevance |
 | --- | --- | --- | --- |
 | Actual Genius | Every family background | Can perform the first qualified research assignment personally; unusual technical entry offers | Founder time is finite; research competes with fundraising and leadership |
 | Extremely Charismatic | Every family background | Better access to meetings, recruitment and persuasive pitches | Claims need evidence; reputation damage can be larger after an unsupported promise |
-| Wealthy Elite | Rich parents required | Larger accessible founder contribution and elite commercial network | Separate personal funds from company funds; expectations and concentration risk |
-| Child of Political Elite | Every family background | Political/institutional contacts; family becomes wealthy by age 18 | Disclosed conflicts, scrutiny and family expectations; no guaranteed votes or immunity |
+| Wealthy Elite | Automatic with rich parents | Additional personal savings and an elite commercial network | Separate personal funds from company funds, with expectations and concentration risk |
+| Child of Political Elite | Optional with rich parents | Political and institutional contacts | Disclosed conflicts, scrutiny and family expectations |
 
-“Child of Political Elite” is the gender-neutral display label for the user's
-“Son of Political Elite.” Its family rise occurs during the introduction and
-is recorded as events; a poor starting childhood remains part of the history.
-Rich families can self-fund without selecting Wealthy Elite; that leg up adds
-scale/access rather than being the only permission to use family capital.
+Rich families can self-fund. Political connections add to the family background
+and open their own formative events.
 
 Every combination needs at least one viable startup route. Genius is exceptional
 research capacity, not free compute, data, salaries or universal expertise.
@@ -118,7 +115,7 @@ history with time passing between consequential choices.
 
 Use age-appropriate choices: early chapters may describe family decisions and
 let the player choose the background, rather than pretending a baby directs
-the household. Context varies with family and leg up. At least one later
+the household. Context varies with family and early advantages. At least one later
 callback should acknowledge each major selected thread. Most flags flavor text;
 only selected choices affect mechanics, with bounded deltas and visible reasons.
 

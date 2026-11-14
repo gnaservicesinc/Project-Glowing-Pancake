@@ -241,10 +241,13 @@ QVariantMap WorldController::founder() const {
         } else
 #endif
         {
-            const QString advantage=f.leg=="genius"?tr("Actual Genius"):f.leg=="wealthy"?tr("Wealthy Elite"):f.leg=="political"?tr("Child of Political Elite"):tr("Extremely Charismatic");
-            bio=tr("%1\nFamily: %2\n%3 · %4 · %5").arg(advantage,q(f.family),q(f.sociability),q(f.activity),q(f.disposition));
             const auto* definition=program_?program_->collection.find(w.scenario_id):nullptr;
             const auto* scenario=definition?std::get_if<content::ScenarioDefinition>(&definition->data):nullptr;
+            QStringList advantages;
+            if(scenario && scenario->founding) for(const auto& option:scenario->founding->legs)
+                if(f.has_advantage(option.id)) advantages.push_back(q(option.name));
+            bio=tr("Family: %1\n%2 · %3 · %4").arg(q(f.family),q(f.sociability),q(f.activity),q(f.disposition));
+            if(!advantages.isEmpty()) bio.prepend(advantages.join(" · ")+"\n");
             if(scenario && scenario->founding)for(const auto& trait:content::formative_traits(*scenario->founding,f))bio+="\n"+q(trait);
         }
         if(content::transgender_founder(f)) bio+=tr("\nTransgender");

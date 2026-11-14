@@ -1062,6 +1062,9 @@ int main(int argc, char* argv[]) {
                     inspector->presentations().size() == 1 &&
                     inspector->presentations().front().toMap().value("detail").toString().startsWith(QStringLiteral("Meet the mayor after lunch.")),
                     "The shared runtime preview must show the edited copy.");
+                QCoreApplication::processEvents();
+                const auto* preview = view_item(window->contentItem(), QStringLiteral("flowPresentation"));
+                verify(preview && preview->property("textSize").toInt() > 0, "The shared event preview card did not load with readable text.");
                 browser.closeDraft();
             }
             std::cout << "Studio library view loaded and filtered " << all_rows << " rows\n";

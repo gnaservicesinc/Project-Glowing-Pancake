@@ -32,7 +32,7 @@ void schedule_family_smoke(QQuickWindow& window,pgp::bridge::CampaignController&
                 if(campaign.companyName()!="Family Chapters" || !w.family || w.family->pending.size()!=1){fail("A different campaign is active; preserve it");return;}run->resumed=true;run->phase=9;return;
             }
             const auto& program=*campaign.snapshot()->content;const auto& definition=std::get<content::ScenarioDefinition>(program.collection.find("scenario.founder_campaign")->data);
-            content::FoundingSelection f;f.family="rich";f.leg="political";f.route="hired_ceo";f.office="shared";f.researcher="none";
+            content::FoundingSelection f;f.family="rich";f.advantages={"political"};f.route="hired_ceo";f.office="shared";f.researcher="none";
             for(const auto& scene:definition.founding->scenes)f.choices[scene.id]=scene.choices.front().id;
             runtime::ScenarioOptions options;options.founding=f;options.seed=719;options.identity=runtime::CampaignIdentity{"Family Chapters","Alex Vale","they/them"};
             auto initial=runtime::begin_scenario(program,"scenario.founder_campaign","US-CA",core::ObjectiveSelection{core::ObjectiveKind::survival,{}},options);initial.world.enabled_flows=std::vector<std::string>{};

@@ -108,6 +108,7 @@ ColumnLayout {
     Repeater {
         model: panel.inspector.presentations
         Frame {
+            id: preview
             required property var modelData
             Layout.fillWidth: true
             contentItem: ColumnLayout {
@@ -119,6 +120,7 @@ ColumnLayout {
                 }
                 FlowPresentation {
                     Layout.fillWidth: true
+                    textSize: preview.font.pixelSize
                     heading: modelData.title
                     detail: modelData.detail
                     choices: modelData.choices
