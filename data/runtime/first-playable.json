@@ -10,7 +10,7 @@
     "music.weitblick": "9da14349e75eaa6e799a45522c2c8cb00046372efefd2a6121caf1959b10140b"
   },
   "content_schema": 1,
-  "content_version": "0.78.0-dev.1",
+  "content_version": "0.79.0-dev.1",
   "currency_basis": "constant_2014_cents",
   "definitions": [
     {
@@ -80809,7 +80809,8 @@
             "company.century.roster.international.3": "beijing",
             "company.century.roster.international.4": "bengaluru",
             "company.century.roster.international.5": "tokyo",
-            "company.century.roster.international.6": "sao_paulo"
+            "company.century.roster.international.6": "sao_paulo",
+            "company.public_research_fellowship": "los_angeles"
           },
           "industry_team_target": 10,
           "international_headquarters": [
@@ -83186,7 +83187,7 @@
         "research.compute.batched_serving"
       ],
       "resilience": "resilience.domestic",
-      "revision": 50,
+      "revision": 51,
       "rivals": [
         {
           "capacity_milli_CU_per_day": 380000,
@@ -84105,6 +84106,54 @@
           "staff": 4,
           "start_after_days": 8401,
           "training_milli_CU_per_day": 60000,
+          "training_work_milli_CU": 7200000,
+          "warning_lead_days": 0
+        },
+        {
+          "capacity_milli_CU_per_day": 120000,
+          "cash_cents": 10000000000,
+          "data_id": "data.licensed_documents",
+          "id": "company.public_research_fellowship",
+          "monthly_lease_cents": 900000,
+          "monthly_payroll_cents": 1800000,
+          "name": "Public Methods Fellowship",
+          "planning": {
+            "group": "fellowship",
+            "leader": "Inez Calder",
+            "price_ceiling_cents": 150,
+            "price_floor_cents": 50,
+            "priorities": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "publish_results": false,
+            "recipes": [
+              "recipe.efficient",
+              "recipe.document_baseline"
+            ],
+            "region": "US",
+            "research": [],
+            "reserve_floor_cents": 5000000,
+            "runway_months": 2,
+            "services": [
+              "product.document_specialist"
+            ],
+            "slot": 1
+          },
+          "player_deployment_threshold": 0,
+          "recipe_id": "recipe.document_baseline",
+          "seed": 32645,
+          "staff": 4,
+          "start_after_days": 0,
+          "training_milli_CU_per_day": 100000,
           "training_work_milli_CU": 7200000,
           "warning_lead_days": 0
         }

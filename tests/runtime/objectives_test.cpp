@@ -32,6 +32,12 @@ Json source() {
     // Shipped player campaigns use the unscored retrospective.
     for(auto& definition:document["definitions"]) if(definition.contains("objectives"))
         definition["objectives"]["retrospective"]=false;
+    // The scored fixture rewrites the century rivals' shared definitions.
+    // Keep only the scenario variants that participate in those checks.
+    auto& definitions=document["definitions"];
+    const auto founder=std::ranges::find_if(definitions,[](const auto& row) {return row["id"]=="scenario.founder_campaign";});
+    if(founder!=definitions.end()) definitions.erase(founder);
+    pgp_test::prune_unused_flows(document);
     return document;
 }
 const SimulationState& state(const Runtime& game) {return game.checkpoint().world.simulation;}

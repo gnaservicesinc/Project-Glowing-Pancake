@@ -1,4 +1,5 @@
 #include <pgp/runtime/runtime.hpp>
+#include <pgp/runtime/career.hpp>
 #include <pgp/runtime/society.hpp>
 #include <pgp/runtime/authority.hpp>
 #include <pgp/runtime/romance.hpp>
@@ -643,6 +644,8 @@ void validate_checkpoint_with_simulation(const CompiledProgram& program, const C
                     invalid("Saved business offer catalog differs from its scenario");
                 std::vector<std::string> expected,actual;
                 for (const auto& rival:scenario->rivals) if (!competition || content::selected_rival(rival,*competition)) expected.push_back(rival.id);
+                if(const auto* fellowship=career_fellowship(world,program);fellowship && career_appointment(world,fellowship->id))
+                    expected.push_back(fellowship->id);
                 if (world.competition) for (const auto& rival:world.competition->companies) actual.push_back(rival.definition_id);
                 if (expected!=actual || (!competition && scenario->rivals.empty() && world.competition) ||
                     (competition && (!world.competition || world.competition->setup!=competition))) invalid("Saved rival roster/settings differ from their scenario");
@@ -660,6 +663,7 @@ void validate_checkpoint_with_simulation(const CompiledProgram& program, const C
     validate_acquisitions(world,program,validate_core_simulation);
     if(validate_core_simulation) validate_authority_world(world);
     validate_objectives(world,program,validate_core_simulation);
+    validate_career(world,program,validate_core_simulation);
     if (validate_core_simulation) {
         if (world.competition) for (const auto& rival : world.competition->companies)
             if (rival.simulation.civic) invalid("US institutions belong to the shared world, not a rival checkpoint");

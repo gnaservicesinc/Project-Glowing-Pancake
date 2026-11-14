@@ -1,6 +1,7 @@
 #include "world_smoke.hpp"
 #include "campaign_controller.hpp"
 #include <pgp/persistence/current_campaign.hpp>
+#include <pgp/runtime/career.hpp>
 #include <QCoreApplication>
 #include <QKeyEvent>
 #include <QQuickItem>
@@ -37,9 +38,47 @@ void schedule_life_report_smoke(QQuickWindow& window,pgp::bridge::CampaignContro
         if(++check->ticks>200){fail("Timed out");return;}
         if(!campaign.ready() || campaign.busy() || !window.isSceneGraphInitialized()) return;
         if(check->initial && campaign.snapshot()->checkpoint!=*check->initial){fail("Reading changed the simulation");return;}
+        if(check->phase>=10) {
+            const auto& world=campaign.snapshot()->checkpoint.world;
+            const auto click=[&](const char* id) {
+                auto* control=item(id);
+                if(!control || !control->isEnabled()) {fail(id);return false;}
+                press(window,control);return true;
+            };
+            if(window.width()!=650 || window.height()!=480){window.showNormal();window.resize(650,480);check->settle=0;return;}
+            if(++check->settle<5) return;
+            if(check->phase==10) {
+                auto* heading=item("careerHeading");
+                if(!heading || !item("careerJobPicker") || !heading->property("text").toString().contains("appointment")){fail("Find funded work after closure");return;}
+                if(!screenshot.isEmpty()) window.grabWindow().save(screenshot+".career-offers.png");
+                if(click("reviewCareerAppointment")) {check->settle=0;++check->phase;}
+                return;
+            }
+            if(check->phase==11 || check->phase==13) {
+                if(!screenshot.isEmpty()) window.grabWindow().save(screenshot+(check->phase==11?".career-appointment.png":".career-research.png"));
+                if(click("confirmCareerAction")) {check->settle=0;++check->phase;}
+                return;
+            }
+            if(check->phase==12) {
+                if(!pgp::runtime::career_employer(world) || !campaign.canAdvance()){fail("Paid appointment opens playable time");return;}
+                if(!item("reviewCareerResearch")) {campaign.step();return;}
+                if(click("reviewCareerResearch")) {check->settle=0;++check->phase;}
+                return;
+            }
+            if(world.objectives->career->back().projects.empty()){fail("Research did not enter the lab's saved work register");return;}
+            std::cout<<"Career desk passed at 650×480 and 200% text with keyboard hiring and funded research.\n";
+            timer->stop();QCoreApplication::exit(0);return;
+        }
         if(check->phase==0) {
             if(auto* resume=item("menuResumeButton")){press(window,resume);return;}
             if(!campaign.currentCampaign() || !campaign.objectives()->retrospective()){fail("Needs an isolated retrospective campaign");return;}
+            if(pgp::runtime::career_open(campaign.snapshot()->checkpoint.world)) {
+                campaign.setTextScalePercent(200);
+                window.showNormal();window.resize(650,480);
+                if(!campaign.world()->navigate("workspace","hq","laptop","objectives","")){fail("Open the career desk");return;}
+                check->phase=pgp::runtime::career_employer(campaign.snapshot()->checkpoint.world)?14:10;
+                return;
+            }
             campaign.setTextScalePercent(100);
             window.showNormal();window.resize(1280,800);
             check->initial=campaign.snapshot()->checkpoint;

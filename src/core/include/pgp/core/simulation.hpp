@@ -194,7 +194,8 @@ using CommandAction = std::variant<ChangeCompanyMission,RespondToMissionConcern,
                                    NegotiateExecutiveDispute,AcknowledgePublicCase,RelinquishInstitutionalMandate,DirectRegionalProcurement,
                                    RegisterFrontierSystem,StartFrontierTrial,AuthorizeFrontierResearch,AuthorizeFrontierRefresh,CancelFrontierPolicy,
                                    ProposeSuccession,VoteSuccession,CancelSuccession,RetireFounderChair,AcknowledgeSuccession,AnnounceFounderDeparture,
-                                   SelectCampaignObjectives,AcknowledgeObjectiveBreach,EndWithPostmortem,ContinueAfterEnding,FinishFounderRun>;
+                                   SelectCampaignObjectives,AcknowledgeObjectiveBreach,EndWithPostmortem,ContinueAfterEnding,FinishFounderRun,
+                                   AcceptResearchAppointment,DirectCareerResearch,PublishCareerResearch>;
 struct Command { std::uint64_t expected_revision; CommandAction action; };
 struct CommandResult {
     CommandReason reason;

@@ -14,6 +14,8 @@ class ObjectivesController final : public QObject {
     Q_PROPERTY(bool available READ available NOTIFY changed)
     Q_PROPERTY(bool retrospective READ retrospective NOTIFY changed)
     Q_PROPERTY(QVariantMap report READ report NOTIFY changed)
+    Q_PROPERTY(QVariantMap career READ career NOTIFY changed)
+    Q_PROPERTY(bool careerAvailable READ careerAvailable NOTIFY changed)
     Q_PROPERTY(bool editable READ editable NOTIFY changed)
     Q_PROPERTY(bool ended READ ended NOTIFY changed)
     Q_PROPERTY(bool observer READ observer NOTIFY changed)
@@ -34,6 +36,8 @@ public:
     [[nodiscard]] bool available() const;
     [[nodiscard]] bool retrospective() const;
     [[nodiscard]] QVariantMap report() const;
+    [[nodiscard]] QVariantMap career() const;
+    [[nodiscard]] bool careerAvailable() const;
     [[nodiscard]] bool editable() const;
     [[nodiscard]] bool ended() const;
     [[nodiscard]] bool observer() const;
@@ -52,6 +56,7 @@ public:
     Q_INVOKABLE void reviewSelection(QString primary,QStringList secondary);
     Q_INVOKABLE void reviewEnd();
     Q_INVOKABLE void reviewContinue();
+    Q_INVOKABLE void reviewCareer(QString action,QString id);
     Q_INVOKABLE void confirm();
     Q_INVOKABLE void clearReview();
 signals:

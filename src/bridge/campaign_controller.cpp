@@ -2,6 +2,7 @@
 #include <QMetaProperty>
 #include <QUuid>
 #include <pgp/runtime/authority.hpp>
+#include <pgp/runtime/career.hpp>
 #include "flow_presentation.hpp"
 
 #include <pgp/core/integer_codec.hpp>
@@ -275,9 +276,8 @@ void CampaignController::acceptSnapshot(CampaignSnapshotPtr snapshot) {
     const bool first = !snapshot_;
     const bool replace = first || snapshot_->generation != snapshot->generation;
     const auto& ending=snapshot->checkpoint.world.objectives;
-    const bool life_ending=!replace && snapshot_->checkpoint.world.objectives &&
-        !snapshot_->checkpoint.world.objectives->end && ending && ending->end &&
-        ending->mode==runtime::ObjectiveMode::retrospective;
+    const bool life_ending=!replace && !runtime::objective_time_stopped(snapshot_->checkpoint.world) &&
+        runtime::objective_time_stopped(snapshot->checkpoint.world) && ending->mode==runtime::ObjectiveMode::retrospective;
     if(snapshot->content || replace) active_content_=snapshot->content;
     const auto& content=activeProgram();
     auto projects = project_rows(snapshot->checkpoint);
@@ -515,8 +515,13 @@ QString CampaignController::cashText() const { return snapshot_ ? money(snapshot
 QString CampaignController::availableText() const { return snapshot_ ? money(core::discretionary_cash(snapshot_->checkpoint.world.simulation)) : QStringLiteral("—"); }
 QString CampaignController::phaseText() const {
     if (!snapshot_) return QStringLiteral("Preparing");
-    if(runtime::observing_world(snapshot_->checkpoint.world)) return paused()?QStringLiteral("Observer paused"):QStringLiteral("Observing");
-    if(runtime::objective_time_stopped(snapshot_->checkpoint.world)) return tr("Final report ready");
+    const auto& world=snapshot_->checkpoint.world;
+    if(runtime::career_open(world)) {
+        if(!runtime::career_employer(world)) return tr("Looking for work");
+        return paused()?tr("Research appointment paused"):tr("Research appointment in progress");
+    }
+    if(runtime::objective_time_stopped(world)) return tr("Final report ready");
+    if(runtime::observing_world(world)) return paused()?QStringLiteral("Observer paused"):QStringLiteral("Observing");
     if(requiredKind()!=QStringLiteral("none")) return tr("Decision required");
     switch (snapshot_->checkpoint.world.simulation.phase) {
     case core::DayPhase::opening: return QStringLiteral("Morning briefing");

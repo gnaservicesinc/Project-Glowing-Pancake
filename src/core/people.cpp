@@ -11,7 +11,7 @@ const PeopleRules& rules(const SimulationState& s) {
     return *s.management->catalog.people;
 }
 std::uint32_t draw(SplitMix64& rng,std::uint32_t upper) {return static_cast<std::uint32_t>(rng.bounded(upper));}
-Applicant applicant(SimulationState& s,bool opening) {
+Applicant applicant(SimulationState& s,bool opening,std::string_view role_override={}) {
     auto& p=*s.management->people;const auto& r=rules(s);
     SplitMix64 rng{p.stream};
     PersonProfile person;
@@ -26,6 +26,7 @@ Applicant applicant(SimulationState& s,bool opening) {
     person.experience=draw(rng,age-20);
     person.education=std::array{"Apprenticeship and independent study","Bachelor's degree","Master's degree","Doctorate"}[draw(rng,4)];
     person.role=std::array{"Researcher","Software engineer","Evaluation researcher"}[draw(rng,3)];
+    if(!role_override.empty()) person.role=role_override;
     person.applied_on=s.date;
     person.portrait=make_portrait(p.stream,person.id);
     person.preferred_mission=std::array{"research","public benefit","commercial"}[draw(rng,3)];
@@ -147,7 +148,8 @@ void validate_people_rules(const PeopleRules& r) {
     for(const auto* names:{&r.first_names,&r.last_names}) for(const auto& name:*names)
         if(name.empty() || name.size()>48 || name.find('\0')!=std::string::npos) invalid("Name pool entry is empty or oversized.");
 }
-void initialize_people(SimulationState& s,std::uint64_t seed,std::string founder_name,std::string founder_pronouns,bool founder_researcher,std::uint32_t prestige,std::string mission) {
+void initialize_people(SimulationState& s,std::uint64_t seed,std::string founder_name,std::string founder_pronouns,
+                       bool founder_researcher,std::uint32_t prestige,std::string mission,std::string_view opening_staff_role) {
     if(!s.management || !s.management->catalog.people) return;
     validate_people_rules(*s.management->catalog.people);
     if(!s.capacity || !s.accounts || s.capacity->available_staff>s.management->catalog.people->maximum_hq)
@@ -158,7 +160,7 @@ void initialize_people(SimulationState& s,std::uint64_t seed,std::string founder
     state.mission=std::move(mission);
     s.management->people=std::move(state);
     for(std::uint32_t i=0;i<s.capacity->available_staff;++i) {
-        auto terms=applicant(s,true);
+        auto terms=applicant(s,true,opening_staff_role);
         if(i==0 && founder_researcher && !founder_name.empty()) {
             terms.profile.name=std::move(founder_name);terms.profile.pronouns=std::move(founder_pronouns);
             terms.profile.gender="Founder identity";terms.profile.role="Founder / researcher";

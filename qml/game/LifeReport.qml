@@ -15,7 +15,8 @@ Rectangle {
     readonly property var articles: (report.articles || []).filter(article=>section==="all" || article.id===section)
     function sectionName(article) {
         return ({all:qsTr("Full edition"),company:qsTr("Company"),world:qsTr("World"),
-            industry:qsTr("Other labs"),people:qsTr("People"),departures:qsTr("Departure"),choices:qsTr("Choices")})[article.id] || article.title
+            industry:qsTr("Other labs"),people:qsTr("People"),departures:qsTr("Departure"),
+            career:qsTr("Later career"),choices:qsTr("Choices")})[article.id] || article.title
     }
     color: "#e8dfc8"
     border.color: "#a99e84"

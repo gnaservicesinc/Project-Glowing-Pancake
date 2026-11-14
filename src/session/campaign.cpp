@@ -90,12 +90,12 @@ OperationResult Campaign::operate(
             }
         }
     }
-    if(runtime::observing_world(after.world)) return {std::move(outcome),{},false};
     if(runtime::objective_time_stopped(after.world)) {
         const bool newspaper=after.world.objectives->mode==runtime::ObjectiveMode::retrospective;
         return {std::move(outcome),{},true,ended?std::optional<std::string>{newspaper?
             "A new edition is ready in World & legacy.":"Campaign outcome is ready in Objectives."}:std::nullopt};
     }
+    if(runtime::observing_world(after.world)) return {std::move(outcome),{},false};
     if(const auto breach=runtime::required_objective_review(after.world))
         return {std::move(outcome),{},true,runtime::objective_breach_explanation(after.world,*breach)};
     const bool liquidity_halt = after.world.simulation.liquidity &&
@@ -203,6 +203,9 @@ OperationResult Campaign::submit(const core::Command& command) {
         std::holds_alternative<core::AnnounceFounderDeparture>(command.action) ||
         std::holds_alternative<core::EndWithPostmortem>(command.action) ||
         std::holds_alternative<core::ContinueAfterEnding>(command.action) ||
+        std::holds_alternative<core::AcceptResearchAppointment>(command.action) ||
+        std::holds_alternative<core::DirectCareerResearch>(command.action) ||
+        std::holds_alternative<core::PublishCareerResearch>(command.action) ||
         std::holds_alternative<core::ConsumeReservation>(command.action) ||
         std::holds_alternative<core::ResolveOpeningChoice>(command.action) ||
         std::holds_alternative<core::AddRecurringObligation>(command.action) ||

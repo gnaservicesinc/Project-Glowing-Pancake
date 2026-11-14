@@ -109136,6 +109136,45 @@
         "prepared_headquarters": 24,
         "scenarios": 8
       }
+    },
+    {
+      "changed_definitions": [
+        {
+          "after_hash": "8243fce8dc8d7cbc0695de77693d514c9846ebec4e7bca59bd823b5ed2615eb7",
+          "before_hash": "32576606b100783c65c5a464b2fd374dfbd8dd1727e29e9cd024ea2d4de25d69",
+          "change": "changed",
+          "id": "scenario.founder_campaign",
+          "kind": "scenario",
+          "old_revision": 50,
+          "revision": 51
+        }
+      ],
+      "changed_text_keys": [],
+      "collection_hash": "36ff83cefc7fee9638495816315cfe822ab9581b897d12d8041f2e1bb37529c6",
+      "compatibility": {
+        "content_schema": 1,
+        "save_format": 1,
+        "simulation_rules": 1
+      },
+      "content_version": "0.79.0-dev.1",
+      "game_version_at_finalization": "0.0.0-dev",
+      "generation": 83,
+      "minimum_game_change": "minor",
+      "previous_content_version": "0.78.0-dev.1",
+      "previous_snapshot": "authoring/snapshots/000082.collection.json",
+      "purpose": "internal-playtest",
+      "required_game_version": "0.1.0-dev.1",
+      "save_policy": "reject-prior-content",
+      "snapshot": "authoring/snapshots/000083.collection.json",
+      "summary": "Fund a public research fellowship for displaced founders when established labs cannot hire.",
+      "target": "data/runtime/first-playable.json",
+      "validation": {
+        "compiler": "shared-game-runtime",
+        "exact_prepared_save_roundtrips": 24,
+        "lints": [],
+        "prepared_headquarters": 24,
+        "scenarios": 8
+      }
     }
   ],
   "format": 1

@@ -70,10 +70,19 @@ template<> struct Extension<runtime::CampaignEnd> {
         f("posting_cursor",r.posting_cursor);
     }
 };
+template<> struct Extension<runtime::CareerResearch> {
+    static constexpr auto maximum_rows=runtime::career_project_limit;
+    static void fields(auto& r,auto f) {f("topic",r.topic);f("project",r.project);f("published_on",r.published_on);}
+};
+template<> struct Extension<runtime::ResearchAppointment> {
+    static constexpr auto maximum_rows=runtime::career_appointment_limit;
+    static void fields(auto& r,auto f) {f("employer",r.employer);f("accepted_on",r.accepted_on);f("projects",r.projects);}
+};
 template<> struct Extension<runtime::ObjectivesState> {
     static void fields(auto& r,auto f) {
         f("deadline",r.deadline);f("selections",r.selections);f("months",r.months);f("breaches",r.breaches);f("race",r.race);
         f("end",r.end);f("mode",r.mode);f("observer_day",r.observer_day);f("observer_paused",r.observer_paused);
+        f("career",r.career,true);
     }
 };
 }

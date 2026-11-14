@@ -1,6 +1,6 @@
 # Project status and next handoff
 
-Updated 2026-11-13
+Updated 2026-11-14
 
 ## Implementation progress
 
@@ -10,7 +10,7 @@ The user accepted the current core as the starting point for the next phase
 and directed the initial implementation pass to wrap up. The gameplay
 checkpoint was `d1f2bd3`, with internal content 0.29.0-dev.1. The current
 content, including the expanded school introduction, is
-**0.78.0-dev.1**, generation **82**.
+**0.79.0-dev.1**, generation **83**.
 
 ## Campaign journal and founder walkthrough
 
@@ -27,7 +27,7 @@ The native 650×480 walkthrough at 200% text resumed the pending offer in a
 second process and found the decline receipt without an expense. The founder
 walkthrough reached the paused company through the revised school arc, played
 the first day and checked fresh-save continuation. Content finalization passed
-24 prepared-opening save roundtrips; funded career re-entry remains open.
+24 prepared-opening save roundtrips.
 
 The founder company now has a **Next step** shortcut in the workspace and
 contextual guidance in Company and Lab. The guide uses the actual equipment,
@@ -139,11 +139,25 @@ date. The appointment transfers the executive seat and changes audience
 confidence when the handover completes. The outsider can lead resignation
 coverage alongside fact checks on the founder's statement.
 
-Career re-entry remains required. Early company closure currently records its
-chapter at the existing company boundary. The guaranteed funded route back,
-other public controversies, and surprising internal successor appointments
-remain selected work. Nonprofit reaction expansion and native rival training
-also remain unfinished.
+Insolvency, loss of institutional control and enforceable closure orders open
+paid research appointments. When operating labs cannot hire, an endowment
+funds a named team, an office, compute and salary at the Public Methods
+Fellowship. The research desk estimates workdays, can defer training, and
+publishes completed work through the public research system. The original
+company's records and the founder's family carry forward. Salary and
+publications appear in the newspaper. The world calendar can continue to
+the age-100 boundary.
+
+Focused checks cover insolvency, an enforceable closure with no rivals,
+settled salary, research cancellation and restart, publication, and exact
+save reload. The native Mac walkthrough accepted the fellowship and commissioned
+research by keyboard at 650×480 with 200% text, then reopened the saved appointment
+and project in a second process. Content finalization passed 24 prepared-opening
+save roundtrips.
+
+Dedicated board dismissal, acquisition, new company formation and USCIF
+routes remain selected work, along with broader public controversies,
+surprising internal appointments, nonprofit reactions and native rival training.
 
 The Release development edition has two main menu entries. Content Studio
 launches the repository editor and remembers the selected checkout. Playtest

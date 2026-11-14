@@ -6,6 +6,7 @@ ColumnLayout {
     id: panel
     required property int textSize
     readonly property var desk: campaign.objectives
+    readonly property var career: panel.visible && desk.retrospective ? desk.career : ({})
     property bool choosing: false
     DraftState {
         id: choosingDraft
@@ -15,7 +16,148 @@ ColumnLayout {
         onReset: panel.choosing = false
     }
     spacing: 10
-    function focusRetrospective() { return edition.focusHeadline() }
+    function focusRetrospective() {
+        if (careerDesk.visible) {
+            careerHeading.forceActiveFocus(Qt.OtherFocusReason)
+            return careerHeading
+        }
+        return edition.focusHeadline()
+    }
+    ColumnLayout {
+        id: careerDesk
+        Layout.fillWidth: true
+        visible: panel.career.open === true
+        spacing: 8
+        component CareerCopy: Label {
+            Layout.fillWidth: true
+            Layout.minimumWidth: 0
+            Layout.preferredWidth: 0
+            wrapMode: Text.Wrap
+            textFormat: Text.PlainText
+            font.pixelSize: panel.textSize
+        }
+        component CareerAction: WorldButton {
+            Layout.maximumWidth: careerDesk.width
+            font.pixelSize: panel.textSize
+            enabled: !campaign.busy && campaign.paused
+        }
+        CareerCopy {
+            id: careerHeading
+            objectName: "careerHeading"
+            property bool revealAtTop: true
+            text: panel.career.title || ""
+            font.bold: true
+        }
+        CareerCopy { text: panel.career.detail || ""; visible: text.length > 0 }
+        DraftComboBox {
+            id: jobs
+            objectName: "careerJobPicker"
+            Layout.fillWidth: true
+            Layout.minimumWidth: 0
+            visible: count > 0
+            model: panel.career.jobs || []
+            textRole: "label"
+            valueRole: "id"
+            font.pixelSize: panel.textSize
+            Accessible.name: qsTr("Research appointment")
+        }
+        CareerCopy {
+            text: jobs.currentIndex >= 0 ? jobs.model[jobs.currentIndex].detail : ""
+            visible: jobs.visible && text.length > 0
+        }
+        CareerAction {
+            objectName: "reviewCareerAppointment"
+            visible: jobs.currentIndex >= 0
+            text: qsTr("Review appointment")
+            onClicked: panel.desk.reviewCareer("accept", jobs.model[jobs.currentIndex].id)
+        }
+        CareerAction {
+            objectName: "reviewCareerSearch"
+            visible: panel.career.looking === true
+            text: qsTr("Continue looking for work")
+            onClicked: panel.desk.reviewCareer("search", "")
+        }
+        CareerAction {
+            objectName: "advanceCareerDay"
+            visible: panel.career.employed === true || (panel.career.open === true && campaign.canAdvance)
+            enabled: campaign.canAdvance && !campaign.storageBlocked
+            text: qsTr("Next day")
+            onClicked: campaign.step()
+        }
+        DraftComboBox {
+            id: topics
+            objectName: "careerResearchPicker"
+            Layout.fillWidth: true
+            Layout.minimumWidth: 0
+            visible: count > 0
+            model: panel.career.options || []
+            textRole: "label"
+            valueRole: "id"
+            font.pixelSize: panel.textSize
+            Accessible.name: qsTr("Research topic")
+        }
+        CareerCopy {
+            visible: panel.career.employed === true
+            text: topics.currentIndex >= 0 ? topics.model[topics.currentIndex].detail :
+                campaign.paused ? qsTr("No research is ready for funding with the lab's current staff, compute and budget.") :
+                                  qsTr("Pause to review available research.")
+        }
+        CareerAction {
+            objectName: "reviewCareerResearch"
+            visible: topics.currentIndex >= 0
+            text: qsTr("Review research")
+            onClicked: panel.desk.reviewCareer("research", topics.model[topics.currentIndex].id)
+        }
+        Repeater {
+            model: panel.career.projects || []
+            ColumnLayout {
+                required property var modelData
+                Layout.fillWidth: true
+                CareerCopy { text: modelData.label + " · " + modelData.detail }
+                CareerAction {
+                    objectName: "reviewCareerPublication"
+                    visible: modelData.publish
+                    text: qsTr("Review publication")
+                    onClicked: panel.desk.reviewCareer("publish", modelData.id)
+                }
+                CareerAction {
+                    visible: modelData.resume
+                    text: qsTr("Review resuming research")
+                    onClicked: panel.desk.reviewCareer("resume", modelData.project)
+                }
+                CareerAction {
+                    visible: modelData.cancel
+                    text: qsTr("Review cancellation")
+                    onClicked: panel.desk.reviewCareer("cancel", modelData.project)
+                }
+            }
+        }
+        GameDialog {
+            id: careerReview
+            modal: true
+            title: qsTr("Review career decision")
+            width: Math.min(620, (Overlay.overlay ? Overlay.overlay.width : 650) - 32)
+            anchors.centerIn: Overlay.overlay
+            visible: careerDesk.visible && panel.desk.reviewText.length > 0
+            contentItem: ScrollView {
+                implicitHeight: Math.min(reviewCopy.implicitHeight + 8, (Overlay.overlay ? Overlay.overlay.height : 480) * 0.48)
+                contentWidth: availableWidth
+                clip: true
+                Label {
+                    id: reviewCopy
+                    width: parent.width
+                    text: panel.desk.reviewText
+                    wrapMode: Text.Wrap
+                    font.pixelSize: panel.textSize
+                }
+            }
+            footer: DialogButtonBox {
+                CareerAction { objectName: "confirmCareerAction"; text: qsTr("Confirm"); onClicked: panel.desk.confirm() }
+                CareerAction { text: qsTr("Back"); onClicked: panel.desk.clearReview() }
+            }
+            onClosed: panel.desk.clearReview()
+        }
+    }
     LifeReport {
         id: edition
         Layout.fillWidth: true

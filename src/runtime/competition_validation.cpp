@@ -1,4 +1,5 @@
 #include "competition_internal.hpp"
+#include <pgp/runtime/career.hpp>
 #include <algorithm>
 #include <set>
 #include <stdexcept>
@@ -83,13 +84,16 @@ void resources(const WorldState& world,const CompiledProgram& program,const Riva
 }
 void validate_planning(const WorldState& world,const CompiledProgram& program,bool deep) {
     const auto& state=*world.competition;
-    if (state.companies.size()>20 || state.notices.size()>4096 || state.releases.size()>core::allocation_product_limit || !world.simulation.lab || !world.simulation.market || world.scenario_id.empty())
+    if (state.companies.size()>21 || state.notices.size()>4096 || state.releases.size()>core::allocation_product_limit || !world.simulation.lab || !world.simulation.market || world.scenario_id.empty())
         invalid("Planned competition is missing its source/resources or exceeds a bound");
     const auto* definition=program.collection.find(world.scenario_id);
     const auto* scenario=definition?std::get_if<content::ScenarioDefinition>(&definition->data):nullptr;
     if (!scenario || content::scenario_competition(*scenario,world.difficulty)!=state.setup) invalid("Saved rival settings differ from their authored setup");
     std::vector<std::string> expected,actual;
     for (const auto& row:scenario->rivals) if (content::selected_rival(row,*state.setup)) expected.push_back(row.id);
+    const auto* fellowship=career_fellowship(world,program);
+    const auto* fellow=fellowship?career_appointment(world,fellowship->id):nullptr;
+    if(fellow) expected.push_back(fellowship->id);
     for (const auto& row:state.companies) actual.push_back(row.definition_id);
     if (expected!=actual) invalid("Saved planned roster differs from its configured slots");
     std::set<std::tuple<std::string,std::string,std::string>> notice_ids;
@@ -117,7 +121,9 @@ void validate_planning(const WorldState& world,const CompiledProgram& program,bo
                 invalid("A scheduled rival spent before entry or skipped its actual entry date");
             continue;
         }
-        const auto entry=rival.response?rival.response->mobilized_on.value_or(campaign_calendar_limit(world)):authored.player_deployment_threshold>0?(rival.warned_on?advance_days(*rival.warned_on,authored.warning_lead):campaign_calendar_limit(world)):earliest;
+        const auto entry=fellow && rival.definition_id==fellow->employer?fellow->accepted_on:
+            rival.response?rival.response->mobilized_on.value_or(campaign_calendar_limit(world)):
+            authored.player_deployment_threshold>0?(rival.warned_on?advance_days(*rival.warned_on,authored.warning_lead):campaign_calendar_limit(world)):earliest;
         const auto& simulation=rival.simulation;
         if (*plan.entered_on!=entry || *plan.entered_on>campaign_day(world) || !simulation.accounts || !simulation.lab || !simulation.capacity || !simulation.market || !simulation.deployments || !simulation.management || !simulation.liquidity ||
             simulation.accounts->owner!=authored.id || simulation.lab->catalog!=world.simulation.lab->catalog || simulation.lab->starts_on!=entry ||

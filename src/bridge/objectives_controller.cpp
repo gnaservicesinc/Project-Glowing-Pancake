@@ -1,4 +1,6 @@
 #include "objectives_controller.hpp"
+#include <pgp/runtime/career.hpp>
+#include "flow_presentation.hpp"
 #include "life_report.hpp"
 #include <algorithm>
 #include <stdexcept>
@@ -110,6 +112,52 @@ bool ObjectivesController::retrospective() const {
     return scenario && scenario->objectives && scenario->objectives->retrospective;
 }
 QVariantMap ObjectivesController::report() const {return retrospective()?lifeReport(snapshot_->checkpoint,*program_):QVariantMap{};}
+bool ObjectivesController::careerAvailable() const {return available() && career_open(world());}
+QVariantMap ObjectivesController::career() const {
+    if(!careerAvailable()) return {};
+    const auto* employer=career_employer(world());
+    QVariantList jobs,options,projects;
+    for(const auto& job:research_job_offers(world(),*program_))
+        jobs.push_back(QVariantMap{{"id",text(job.employer)},{"label",text(job.name)},
+            {"detail",(job.fellowship?
+                tr("%1 per month in 2014 dollars. The fellowship endowment pays your salary and funds an equipped team for public research."):
+                tr("%1 per month in 2014 dollars. Direct the lab's research and choose when to publish your results.")).arg(money(job.salary))}});
+    QString title=tr("Find a research appointment"),detail;
+    if(employer) {
+        title=tr("Research desk at %1").arg(text(rival_definition(*program_,employer->definition_id).name));
+        detail=tr("%1 per month · %2 paid across appointments. Research uses the employer's budget and team.")
+            .arg(money(career_payroll(*employer)->monthly_amount),money(career_salary_received(world())));
+        const auto topicName=[&](std::string_view id) {
+            const auto* title=program_->collection.message(std::string(id)+".title");
+            return title?text(*title):readable(id);
+        };
+        const bool paused=snapshot_->driver_halted || campaign_paused(world());
+        if(paused) for(const auto& option:career_research_options(world(),*program_))
+            options.push_back(QVariantMap{{"id",text(option.topic)},{"label",topicName(option.topic)},
+                {"detail",tr("%1 from the lab budget · up to %2 CU/day · %3 staff · about %4 workdays at full allocation")
+                    .arg(money(option.fee),QString::number(option.allocation.daily_compute.value()/1000.0,'f',2))
+                    .arg(option.allocation.staff).arg(option.estimated_duration.value())}});
+        const auto& state=employer->simulation;
+        for(const auto& project:objectives().career->back().projects) {
+            const auto& work=*std::ranges::find(state.capacity->projects,project.project,&CapacityProject::id);
+            const auto& run=*std::ranges::find(state.lab->research,project.project,&ResearchRun::project_id);
+            const bool public_topic=std::ranges::find(state.lab->publications,project.topic,&ResearchPublication::research_id)!=state.lab->publications.end();
+            auto status=project.published_on?tr("Published %1").arg(date(*project.published_on)):
+                run.completed?(public_topic?tr("Research complete"):tr("Ready to publish")):run.failed?tr("Research setback"):
+                work.status==ProjectStatus::cancelled?tr("Cancelled"):work.status==ProjectStatus::paused?tr("Paused"):
+                tr("%1% of compute work").arg(work.total_work.value()>0?work.completed_work.value()*100/work.total_work.value():0);
+            if(work.status==ProjectStatus::active && work.required_staff_days)
+                status+=tr(" · %1 of %2 staff-days").arg(work.completed_staff_days).arg(work.required_staff_days);
+            projects.push_back(QVariantMap{{"id",text(project.topic)},{"project",text(project.project)},
+                {"label",topicName(project.topic)},{"detail",status},
+                {"resume",paused && work.status==ProjectStatus::paused},
+                {"cancel",paused && (work.status==ProjectStatus::active || work.status==ProjectStatus::paused)},
+                {"publish",run.completed && !public_topic && paused}});
+        }
+    } else if(jobs.empty()) detail=tr("No operating lab can fund an offer today. You can advance the world and check again as labs open and their finances change.");
+    return {{"open",true},{"title",title},{"detail",detail},{"jobs",jobs},{"options",options},{"projects",projects},
+        {"employed",employer!=nullptr},{"looking",!employer && jobs.empty() && !observing_world(world())}};
+}
 bool ObjectivesController::editable() const {return available() && !retrospective() && !objectives().end &&
     (snapshot_->driver_halted || runtime::campaign_paused(world()));}
 bool ObjectivesController::ended() const {return available() && objectives().end.has_value();}
@@ -130,8 +178,12 @@ QStringList ObjectivesController::secondary() const {
 QVariantList ObjectivesController::options() const {return available()?objectiveOptions(runtime::has_asi_objective(world())):QVariantList{};}
 QString ObjectivesController::overview() const {
     if(!available()) return {};
-    if(retrospective()) return ended()?QStringLiteral("The recorded life and world"):
-        QStringLiteral("World & legacy");
+    if(retrospective()) {
+        if(careerAvailable()) return career_employer(world())?
+            tr("Manage research and publication at your current lab."):
+            tr("Review paid research appointments and choose where to work.");
+        return ended()?tr("The recorded life and world"):tr("World & legacy");
+    }
     const auto& o=objectives();
     if(o.mode==ObjectiveMode::freeplay) return QStringLiteral("Sandbox · no campaign deadline or scored ending. Your chosen mission is a direction; systemic play continues.");
     const auto mode=o.mode==ObjectiveMode::observer?QStringLiteral("Observer · institution frozen"):
@@ -293,6 +345,46 @@ void ObjectivesController::reviewContinue() {
         objectives().end->cause==CampaignEndCause::catastrophe);
     stage(core::ContinueAfterEnding{},failure?QStringLiteral("Continue as an observer. Rivals and regional outcomes advance while this institution stays frozen."):
         QStringLiteral("Continue in a custom sandbox. Keep the scored result and play beyond it without further objective endings."));
+}
+void ObjectivesController::reviewCareer(QString action,QString id) {
+    if(!available() || !career_open(world())) return;
+    if(action=="accept") {
+        const auto offers=research_job_offers(world(),*program_);
+        const auto offer=std::ranges::find(offers,id.toStdString(),&ResearchJobOffer::employer);
+        if(offer!=offers.end()) stage(core::AcceptResearchAppointment{offer->employer},
+            (offer->fellowship?
+                tr("Accept a research fellowship at %1 for %2 per month. Its endowment pays the salary, equipped staff and compute. Direct research and choose when to publish the findings."):
+                tr("Join %1 as research director at %2 per month. You can commit its spare staff and compute to research and publish the results."))
+                .arg(text(offer->name),money(offer->salary)));
+    } else if(action=="search" && !observing_world(world())) {
+        stage(core::ContinueAfterEnding{},tr("Resume the calendar to look for employment. The other labs and regional economy will continue."));
+    } else if(action=="research" && career_employer(world())) {
+        const auto options=career_research_options(world(),*program_);
+        const auto topic=std::ranges::find(options,id.toStdString(),&CareerResearchOption::topic);
+        if(topic!=options.end()) {
+            const auto& state=career_employer(world())->simulation;
+            const auto* label=program_->collection.message(topic->topic+".title");
+            QStringList team;
+            for(const auto& person_id:topic->allocation.researchers) {
+                const auto& roster=state.management->people->employees;
+                const auto member=std::ranges::find_if(roster,[&](const auto& person){return person.terms.profile.id==person_id;});
+                if(member!=roster.end()) team.push_back(text(member->terms.profile.name));
+            }
+            auto description=tr("Start %1 with %2. The lab commits up to %3 CU/day and pays %4 in project fees.")
+                .arg(label?text(*label):readable(topic->topic),team.join(tr(", ")),
+                     QString::number(static_cast<double>(topic->allocation.daily_compute.value())/1000.0,'f',2),money(topic->fee));
+            if(std::ranges::any_of(state.capacity->projects,[](const auto& project) {
+                return project.kind==ProjectKind::training && project.status==ProjectStatus::active && project.pauses.size()<128;
+            })) description+=tr(" Active training will pause to make room.");
+            stage(core::DirectCareerResearch{topic->topic},std::move(description));
+        }
+    } else if(action=="publish" && career_employer(world())) {
+        stage(core::PublishCareerResearch{id.toStdString()},tr("Publish the result through the employer's lab. Other labs can use the public finding."));
+    } else if(action=="resume" && career_employer(world())) {
+        stage(core::ResumeProject{id.toStdString()},tr("Resume this project with its assigned team and compute source."));
+    } else if(action=="cancel" && career_employer(world())) {
+        stage(core::CancelProject{id.toStdString()},tr("Cancel this project and release its reserved staff and compute. The employer has already paid any project fees."));
+    }
 }
 void ObjectivesController::confirm() {
     if(!pending_ || reviewed_revision_!=world().simulation.revision) return;

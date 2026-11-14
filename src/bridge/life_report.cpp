@@ -1,4 +1,6 @@
 #include "life_report.hpp"
+#include "flow_presentation.hpp"
+#include <pgp/runtime/career.hpp>
 #include "departure_presentation.hpp"
 #include <pgp/runtime/family.hpp>
 #include <pgp/runtime/romance.hpp>
@@ -29,17 +31,20 @@ QString index(std::uint32_t value) {
 QVariantMap lifeReport(const runtime::Checkpoint& checkpoint,const runtime::CompiledProgram& program) {
     const auto& world=checkpoint.world;
     const auto& state=world.simulation;
-    const auto day=world.objectives && world.objectives->end?world.objectives->end->day:runtime::campaign_day(world);
+    const auto day=world.objectives && world.objectives->end && !world.objectives->observer_day?
+        world.objectives->end->day:runtime::campaign_day(world);
     const auto name=world.identity?text(world.identity->founder_name):QStringLiteral("The founder");
     const auto company=world.identity?text(world.identity->company_name):QStringLiteral("The company");
     const bool completed=world.objectives && world.objectives->end &&
-        world.objectives->end->cause==runtime::CampaignEndCause::deadline;
+        (world.objectives->end->cause==runtime::CampaignEndCause::deadline ||
+         world.objectives->observer_day==world.objectives->deadline);
     const int age=world.romance?runtime::family_age(world.romance->founder.born_on,day):
         core::from_ordinal(day).year-1997;
     const bool obituary=world.founding && completed && age==100;
     const bool voluntary=world.objectives && world.objectives->end &&
         world.objectives->end->cause==runtime::CampaignEndCause::retirement;
-    const bool chapter_closed=world.objectives && world.objectives->end && !completed && !voluntary;
+    const bool chapter_closed=world.objectives && world.objectives->end &&
+        world.objectives->end->cause!=runtime::CampaignEndCause::deadline && !voluntary;
     QVariantList articles;
     const auto article=[&](const QString& id,const QString& title,const QStringList& paragraphs) {
         if(!paragraphs.empty()) articles.push_back(QVariantMap{{"id",id},{"title",title},{"paragraphs",paragraphs}});
@@ -47,7 +52,7 @@ QVariantMap lifeReport(const runtime::Checkpoint& checkpoint,const runtime::Comp
     QStringList company_record;
     if(obituary) company_record.push_back(QStringLiteral("%1, whose career included %2, has died at the age of 100. "
         "This account draws on the decisions, relationships and public record of that career.").arg(name,company));
-    else company_record.push_back(QStringLiteral("%1's record with %2, as of %3.").arg(name,company,date(day)));
+    else company_record.push_back(QStringLiteral("%1's record with %2, as of %3.").arg(name,company,date(state.date)));
     if(voluntary) company_record.push_back(QStringLiteral("At age %1, %2 stepped down as chief executive following the announced handover.").arg(age).arg(name));
     if(world.founding) company_record.push_back(QStringLiteral("%1 opened as a %2 in %3.")
         .arg(company,world.founding->legal_form=="nonprofit"?QStringLiteral("nonprofit"):QStringLiteral("corporation"),
@@ -72,6 +77,10 @@ QVariantMap lifeReport(const runtime::Checkpoint& checkpoint,const runtime::Comp
             break;
         case runtime::CampaignEndCause::institutional_control:
             company_record.push_back(QStringLiteral("The founder lost the last right to direct the company. Its ownership and obligations remain in the record."));
+            break;
+        case runtime::CampaignEndCause::final_order:
+            company_record.push_back(QStringLiteral("An enforceable federal order ended the company's operations on %1.")
+                .arg(date(world.objectives->end->day)));
             break;
         default:
             company_record.push_back(QStringLiteral("The founder's chapter at the company ended before the planned retrospective."));
@@ -184,6 +193,21 @@ QVariantMap lifeReport(const runtime::Checkpoint& checkpoint,const runtime::Comp
         if(!coverage.value("facts").toString().isEmpty()) departures.push_back(coverage.value("facts").toString());
     }
     article("departures",QStringLiteral("The departure and its coverage"),departures);
+    QStringList career;
+    if(world.objectives && world.objectives->career) {
+        for(const auto& job:*world.objectives->career) {
+            const auto& employer=runtime::rival_definition(program,job.employer);
+            career.push_back((employer.planning->group=="fellowship"?
+                QStringLiteral("On %1, %2 accepted an endowed research appointment at %3."):
+                QStringLiteral("On %1, %2 joined %3 to direct research.")).arg(date(job.accepted_on),name,text(employer.name)));
+            for(const auto& project:job.projects) if(project.published_on) {
+                const auto* title=program.collection.message(project.topic+".title");
+                career.push_back(QStringLiteral("%1 published on %2.").arg(title?text(*title):readable(project.topic),date(*project.published_on)));
+            }
+        }
+        career.push_back(QStringLiteral("The appointments paid %1 in total salary.").arg(money(runtime::career_salary_received(world))));
+    }
+    article("career",QStringLiteral("Research after the first company"),career);
 
     QStringList choices;
     const auto& history=checkpoint.runtime.presentations;
@@ -206,7 +230,7 @@ QVariantMap lifeReport(const runtime::Checkpoint& checkpoint,const runtime::Comp
     return {{"obituary",obituary},{"date",date(day)},{"masthead",QStringLiteral("THE WORLD REGISTER")},
         {"headline",obituary?QStringLiteral("%1 dies at 100").arg(name):
             voluntary?QStringLiteral("%1 looks back at %2").arg(name).arg(age):
-            chapter_closed?QStringLiteral("%1’s chapter at %2 closes").arg(name,company):
+            chapter_closed && !world.objectives->observer_day?QStringLiteral("%1’s chapter at %2 closes").arg(name,company):
             QStringLiteral("%1 — a life in progress").arg(name)},
         {"deck",world.founding?QStringLiteral("1997–%1 · %2").arg(core::from_ordinal(day).year).arg(company):company},
         {"articles",articles}};

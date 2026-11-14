@@ -95,9 +95,11 @@ std::vector<RivalDefinition> load_rival_definitions(std::string_view bytes) {
             fields(source,{"group","region","leader","slot","reserve_floor_cents","price_floor_cents","price_ceiling_cents","runway_months","publish_results","priorities","research","recipes","services"});
             RivalPlanning value;value.group=text(source.at("group"));value.region=text(source.at("region"));value.leader=text(source.at("leader"));
             const auto slot=number(source.at("slot"));
-            if ((value.group!="domestic" && value.group!="international" && value.group!="heavyweight") || slot==0 || slot>(value.group=="heavyweight"?4U:8U)) invalid("Rival planning group/slot is unsupported");
+            const bool fellowship=value.group=="fellowship";
+            if ((value.group!="domestic" && value.group!="international" && value.group!="heavyweight" && !fellowship) ||
+                slot==0 || slot>(fellowship?1U:value.group=="heavyweight"?4U:8U)) invalid("Rival planning group/slot is unsupported");
             const std::set<std::string> regions{"US","Canada","Europe","China","India","EastAsiaOceania","LatinAmerica","AfricaMiddleEast"};
-            if (!regions.contains(value.region) || (((value.group=="domestic")!=(value.region=="US")) && value.group!="heavyweight")) invalid("Rival planning region/group is inconsistent");
+            if (!regions.contains(value.region) || (((value.group=="domestic" || fellowship)!=(value.region=="US")) && value.group!="heavyweight")) invalid("Rival planning region/group is inconsistent");
             value.slot=static_cast<std::uint32_t>(slot);value.reserve_floor=core::Cents{number(source.at("reserve_floor_cents"))};
             value.price_floor=core::Cents{number(source.at("price_floor_cents"))};value.price_ceiling=core::Cents{number(source.at("price_ceiling_cents"))};
             if (value.price_floor.value()==0 || value.price_floor>value.price_ceiling || value.price_ceiling.value()>core::market_price_limit) invalid("Rival price policy exceeds actual market bounds");
@@ -136,7 +138,10 @@ std::vector<RivalDefinition> load_rival_definitions(std::string_view bytes) {
             rival.training_rate>rival.capacity || rival.start_after.value()>(rival.planning?36524:1096) || rival.warning_lead.value()>365 ||
             (rival.planning && rival.planning->reserve_floor>rival.cash) ||
             (rival.player_deployment_threshold==0 && rival.warning_lead.value()!=0) ||
-            ((rival.player_deployment_threshold>0)!=(rival.warning_lead.value()>=90))) invalid("Rival budget, warning or resource terms are invalid");
+            ((rival.player_deployment_threshold>0)!=(rival.warning_lead.value()>=90)) ||
+            (rival.planning && rival.planning->group=="fellowship" &&
+                (rival.start_after.value()!=0 || rival.player_deployment_threshold!=0 || rival.warning_lead.value()!=0)))
+            invalid("Rival budget, warning or resource terms are invalid");
     }
     std::sort(result.begin(),result.end(),[](const auto& a,const auto& b){return a.id<b.id;}); return result;
 }
@@ -183,6 +188,7 @@ std::string canonical_competition_setup(const CompetitionSetup& setup) {
 bool selected_rival(const RivalDefinition& definition,const CompetitionSetup& setup) {
     if (!definition.planning) return false;
     const auto& row=*definition.planning;
+    if (row.group=="fellowship") return false;
     return row.slot<=(row.group=="domestic"?setup.domestic:row.group=="international"?setup.international:setup.heavyweights);
 }
 }

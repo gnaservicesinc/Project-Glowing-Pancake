@@ -5,7 +5,7 @@
     "simulation_rules": 1
   },
   "components": {
-    "content": "0.78.0-dev.1",
+    "content": "0.79.0-dev.1",
     "editor": "0.0.0-dev",
     "game": "0.0.0-dev"
   },

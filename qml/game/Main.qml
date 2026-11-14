@@ -1007,9 +1007,13 @@ ApplicationWindow {
                     Panel {
                         visible: !campaign.welcome && campaign.objectives.ended && window.room !== "objectives"
                         contentItem: ColumnLayout {
-                            Heading { text: qsTr("Campaign outcome recorded") }
+                            Heading { text: campaign.objectives.careerAvailable ? qsTr("Your next chapter") : qsTr("Campaign outcome recorded") }
                             Copy { text: campaign.objectives.overview }
-                            Action { text: campaign.objectives.retrospective ? qsTr("Read the newspaper") : qsTr("Review objectives and postmortem"); onClicked: campaign.objectives.retrospective ? window.openNewspaper() : window.openApp("objectives", "", "laptop") }
+                            Action {
+                                text: campaign.objectives.careerAvailable ? qsTr("Open career desk") :
+                                    campaign.objectives.retrospective ? qsTr("Read the newspaper") : qsTr("Review objectives and postmortem")
+                                onClicked: campaign.objectives.retrospective ? window.openNewspaper() : window.openApp("objectives", "", "laptop")
+                            }
                         }
                     }
                     Panel {

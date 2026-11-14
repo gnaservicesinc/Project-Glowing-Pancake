@@ -1,6 +1,6 @@
 # Feedback and later-phase backlog
 
-Updated 2026-11-13
+Updated 2026-11-14
 
 **The initial skeleton implementation queue is closed.** The current core is
 the starting point for human feedback. Work now follows the user's selected
@@ -49,9 +49,13 @@ backgrounds and audience reactions. The board review shows the authority,
 seats and costs that follow a funded handover. An approved outsider can lead
 resignation coverage and changes audience confidence on taking office.
 
-Next implement the personal career state across forced departures and guaranteed
-re-entry. Broader public controversies and surprising internal appointments
-remain selected work.
+Insolvency, loss of institutional control and enforceable closure orders open a
+career desk with paid research appointments. If operating labs lack a funded
+opening, the Public Methods Fellowship supplies an endowed research role. The
+desk uses the employer's payroll, compute and named team, and records published
+work in the founder's biography. Board dismissal, acquisition, new company
+formation and the USCIF route still need their dedicated transitions.
+Broader public controversies and surprising internal appointments remain selected work.
 Sorting and efficient serving now have finite innovation paths. Required levels,
 actual project costs and dated serving compute effects use the ordinary research
 and deployment commands. Rival profiles can pursue batched inference.

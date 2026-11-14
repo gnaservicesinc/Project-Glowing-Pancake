@@ -48,6 +48,18 @@ struct CampaignEnd {
     auto operator<=>(const CampaignEnd&) const = default;
 };
 enum class ObjectiveMode { scored, sandbox, observer, freeplay, retrospective };
+struct CareerResearch {
+    std::string topic,project;
+    std::optional<core::OrdinalDay> published_on;
+    auto operator<=>(const CareerResearch&) const = default;
+};
+struct ResearchAppointment {
+    std::string employer;
+    core::OrdinalDay accepted_on{0};
+    std::vector<CareerResearch> projects;
+    auto operator<=>(const ResearchAppointment&) const = default;
+};
+inline constexpr std::size_t career_appointment_limit=21, career_project_limit=128;
 struct ObjectivesState {
     core::OrdinalDay deadline{0};
     std::vector<ObjectiveSelectionEvent> selections;
@@ -59,6 +71,7 @@ struct ObjectivesState {
     // In observer mode the institution and its private morning stay frozen.
     std::optional<core::OrdinalDay> observer_day;
     bool observer_paused = true;
+    std::optional<std::vector<ResearchAppointment>> career{};
     auto operator<=>(const ObjectivesState&) const = default;
 };
 inline constexpr std::size_t objective_selection_limit = 128;

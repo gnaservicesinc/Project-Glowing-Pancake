@@ -236,7 +236,8 @@ void validate_contact_funding(const SimulationState&);
 [[nodiscard]] bool contact_funding_available(const SimulationState&,std::string_view);
 [[nodiscard]] std::uint32_t employee_contact_room(const SimulationState&,std::string_view person);
 void validate_people_rules(const PeopleRules&);
-void initialize_people(SimulationState&,std::uint64_t seed,std::string founder_name={},std::string founder_pronouns={},bool founder_researcher=false,std::uint32_t prestige=0,std::string mission="research");
+void initialize_people(SimulationState&,std::uint64_t seed,std::string founder_name={},std::string founder_pronouns={},
+    bool founder_researcher=false,std::uint32_t prestige=0,std::string mission="research",std::string_view opening_staff_role={});
 void prepare_people(SimulationState&);
 void add_referred_applicant(SimulationState&,std::string_view referrer);
 void validate_people(const SimulationState&,bool deep=true);

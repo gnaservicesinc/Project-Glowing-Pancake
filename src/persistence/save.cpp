@@ -1040,8 +1040,8 @@ std::optional<std::filesystem::path> AutosaveRing::write(const runtime::Compiled
     const runtime::Checkpoint& checkpoint,AutosaveReason reason,bool enabled,SaveLimits limits) const {
     if (!enabled) return std::nullopt;
     if (reason==AutosaveReason::monthly_boundary &&
-        (core::from_ordinal(checkpoint.world.simulation.date).day!=1 ||
-         (checkpoint.world.simulation.phase!=core::DayPhase::work_ready &&
+        (core::from_ordinal(runtime::campaign_day(checkpoint.world)).day!=1 ||
+         (!runtime::observing_world(checkpoint.world) && checkpoint.world.simulation.phase!=core::DayPhase::work_ready &&
           checkpoint.world.simulation.phase!=core::DayPhase::awaiting_choice && checkpoint.world.simulation.phase!=core::DayPhase::finished)))
         throw PersistenceError("autosave_boundary","Monthly autosaves require the first morning, including a suspended opening choice, or completed final month");
     if (reason==AutosaveReason::campaign_end && checkpoint.world.simulation.phase!=core::DayPhase::finished &&

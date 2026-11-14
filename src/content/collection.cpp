@@ -1325,6 +1325,15 @@ void validate_references(const Collection& collection, const Registry& registry)
                             for (const auto& id:rival.planning->research) if (std::none_of(catalog.research.begin(),catalog.research.end(),[&](const auto& row){return row.id==id;})) fail("rivals",path,"Rival research priority is not in this scenario");
                             for (const auto& id:rival.planning->recipes) if (std::none_of(catalog.recipes.begin(),catalog.recipes.end(),[&](const auto& row){return row.id==id;})) fail("rivals",path,"Rival recipe priority is not in this scenario");
                             for (const auto& id:rival.planning->services) if (std::none_of(services.begin(),services.end(),[&](const auto& row){return row.product.id==id;})) fail("rivals",path,"Rival service priority is not in this scenario");
+                            if(rival.planning->group=="fellowship" &&
+                               (!scenario_definition->founding || !scenario_definition->objectives ||
+                                !scenario_definition->lab->research_workplaces ||
+                                !scenario_definition->management->people ||
+                                !scenario_definition->management->people->talent ||
+                                !scenario_definition->management->people->talent->roles.contains("Researcher") ||
+                                scenario_definition->management->people->talent->roles.at("Researcher")!="ml_research" ||
+                                !scenario_definition->management->people->industry_headquarters.contains(rival.id)))
+                                fail("rivals",path,"A career fellowship requires a founder scenario with a staffed research office.");
                             if (rival.response) {
                                 const auto& p=*rival.response;const auto& management=*scenario_definition->management;
                                 if (std::none_of(management.specialists.begin(),management.specialists.end(),[&](const auto& row){return row.id==p.specialist_id;}) ||

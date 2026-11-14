@@ -1,4 +1,5 @@
 #include "objectives_internal.hpp"
+#include <pgp/runtime/career.hpp>
 
 #include <algorithm>
 #include <stdexcept>
@@ -83,16 +84,18 @@ bool objective_is_custom(const ObjectivesState& objectives) noexcept {
 bool objective_time_stopped(const WorldState& world) noexcept {
     return world.objectives && world.objectives->end &&
         (world.objectives->mode==ObjectiveMode::scored || world.objectives->mode==ObjectiveMode::freeplay ||
-         world.objectives->mode==ObjectiveMode::retrospective);
+         (world.objectives->mode==ObjectiveMode::retrospective &&
+          (!world.objectives->observer_day || *world.objectives->observer_day==world.objectives->deadline)));
 }
 bool observing_world(const WorldState& world) noexcept {
-    return world.objectives && world.objectives->mode==ObjectiveMode::observer;
+    return world.objectives && (world.objectives->mode==ObjectiveMode::observer ||
+        (world.objectives->mode==ObjectiveMode::retrospective && world.objectives->observer_day.has_value()));
 }
 OrdinalDay campaign_day(const WorldState& world) noexcept {
     return world.objectives?world.objectives->observer_day.value_or(world.simulation.date):world.simulation.date;
 }
 OrdinalDay campaign_calendar_limit(const WorldState& world) {
-    return observing_world(world)?sandbox_limit():world.simulation.end_date;
+    return world.objectives && world.objectives->mode==ObjectiveMode::observer?sandbox_limit():world.simulation.end_date;
 }
 bool campaign_paused(const WorldState& world) noexcept {
     return observing_world(world)?world.objectives->observer_paused:world.simulation.paused;
@@ -302,6 +305,10 @@ void finish_founder_run(WorldState& world) {
     finish(world,CampaignEndCause::retirement,std::to_string(*plan));
 }
 void continue_campaign(WorldState& world) {
+    if(career_open(world) && !world.objectives->observer_day) {
+        world.objectives->observer_day=world.simulation.date;
+        return;
+    }
     if(!world.objectives || world.objectives->mode!=ObjectiveMode::scored)
         invalid("This campaign has already continued or has no scored ending.");
     auto& o=*world.objectives;
@@ -356,7 +363,11 @@ void validate_objectives(const WorldState& world,const CompiledProgram& program,
     if(through<world.campaign_start || through>o.deadline || o.months.size()!=month_end_count(through))
         invalid("Saved objective window is missing or contains an unsettled calendar month.");
     if(o.mode==ObjectiveMode::scored || o.mode==ObjectiveMode::retrospective) {
-        if(state.end_date!=o.deadline || o.observer_day || !o.observer_paused || (o.end && (!state.paused || o.end->day!=state.date)))
+        const bool valid_career_clock=can_continue_career(world) &&
+            o.observer_day && *o.observer_day>=state.date && *o.observer_day<=o.deadline &&
+            (*o.observer_day!=o.deadline || o.observer_paused);
+        if(state.end_date!=o.deadline || (o.observer_day && !valid_career_clock) || (!o.observer_day && !o.observer_paused) ||
+            (o.end && (!state.paused || o.end->day!=state.date)))
             invalid("Scored campaign clock differs from its recorded ending.");
     } else if(!o.end || o.end->day>state.date ||
         (o.mode==ObjectiveMode::observer && (!actual_failure(o.end->cause) || !o.observer_day || *o.observer_day<state.date ||

@@ -1,4 +1,5 @@
 #include "competition_internal.hpp"
+#include <pgp/runtime/career.hpp>
 #include "competition_people.hpp"
 #include <pgp/runtime/society.hpp>
 #include <pgp/core/workplace_research.hpp>
@@ -95,7 +96,8 @@ RivalObservation observe(const WorldState& world,OrdinalDay day,std::uint64_t dr
 }
 struct Candidate {std::uint32_t kind;std::string action,subject;std::int64_t score;CommandAction command;};
 std::vector<Candidate> candidates(const RivalCompany& rival,const content::RivalDefinition& definition,
-    const RivalObservation& observation,std::uint64_t draw,const CivicState* civic,const SocietyState* society,Days review_interval) {
+    const RivalObservation& observation,std::uint64_t draw,const CivicState* civic,const SocietyState* society,Days review_interval,
+    bool player_research) {
     const auto& s=rival.simulation;const auto& profile=*definition.planning;const auto& lab=*s.lab;
     std::vector<Candidate> result;SplitMix64 variation{draw};
     std::array<std::uint32_t,10> noise{};for (auto& value:noise) value=static_cast<std::uint32_t>(variation.bounded(31));
@@ -110,7 +112,9 @@ std::vector<Candidate> candidates(const RivalCompany& rival,const content::Rival
         return usable>=checked_unit_add(protected_runway,checked_unit_add(immediate,Cents{checked_add(extra_monthly.value(),extra_monthly.value())}));
     };
     const auto report=capacity_report(*s.capacity);
-    const auto staff=s.capacity->available_staff>report.assigned_staff?s.capacity->available_staff-report.assigned_staff:0;
+    const auto spare_staff=s.capacity->available_staff>report.assigned_staff?s.capacity->available_staff-report.assigned_staff:0;
+    // Keep one available staff assignment for the research director's work.
+    const auto staff=spare_staff>0 && player_research?spare_staff-1:spare_staff;
     std::string source, hosting_source;
     MilliCUPerDay compute{0}, hosting_compute{0};
     bool imported=false;
@@ -135,7 +139,7 @@ std::vector<Candidate> candidates(const RivalCompany& rival,const content::Rival
         const auto& data=find(lab.catalog.data,definition.data_id);
         if (affordable(data.price)) offer(0,"data",data.id,500,BuyData{data.id});
     }
-    for (std::size_t i=0;i<profile.research.size();++i) {
+    for (std::size_t i=0;!player_research && i<profile.research.size();++i) {
         const auto& node=find(lab.catalog.research,profile.research[i]);
         const bool committed=std::ranges::any_of(lab.research,[&](const auto& run) {
             return run.research_id == node.id && !run.failed && find(s.capacity->projects,run.project_id).status != ProjectStatus::cancelled;
@@ -245,7 +249,7 @@ std::vector<Candidate> candidates(const RivalCompany& rival,const content::Rival
             const auto& work=find(s.capacity->projects,project.project);
             if(work.status==ProjectStatus::completed && !project.released_on)offer(9,"software_release",project.project,100,ManageTalent{ReleaseSoftware{project.id}});
         }
-        if(talents.software.empty()) {
+        if(talents.software.empty() && staff>0) {
             SoftwareDesign design;design.name=definition.name+" Workspace";design.brief="chat";
             for(const auto& employee:s.management->people->employees)if(person_has_skill(s,employee.terms.profile.id,"programming") && software_worker_blocker(s,employee.terms.profile.id).empty()){design.workers={employee.terms.profile.id};break;}
             const auto quote=software_quote(s,design);
@@ -389,7 +393,9 @@ SimulationState opening_rival(const WorldState& world,const CompiledProgram& pro
         // The ordinary opening helper picks the first market in this state.
         std::rotate(markets.begin(),selected,selected+1);
         state.infrastructure=std::move(infrastructure);initialize_workplace(state,"leased",false);
-        initialize_people(state,rival_seed(world,definition),"","",false,0,"research");
+        const bool fellowship=definition.planning->group=="fellowship";
+        initialize_people(state,rival_seed(world,definition),"","",false,0,
+            fellowship?"public benefit":"research",fellowship?"Researcher":"");
         initialize_headquarters(state,rival_seed(world,definition));
         auto& premises=state.infrastructure->workplace->headquarters->premises.front();
         const auto& market=find(state.infrastructure->catalog.workplace->headquarters->markets,premises.market);
@@ -411,10 +417,13 @@ void review_rival(WorldState& world,const CompiledProgram& program,RivalCompany&
     const auto stream_index=static_cast<std::size_t>(RandomStream::rivals);const auto before=rival.simulation.random[stream_index];
     SplitMix64 stream{before};const auto draw=stream.next();rival.simulation.random[stream_index]=stream.state();
     const auto observation=observe(world,rival.simulation.date,draw);
-    const auto collaboration=plan_research_collaboration(world,program,rival.definition_id);
-    auto actions=collaboration.empty()?candidates(rival,definition,observation,draw,world.simulation.civic ? &*world.simulation.civic : nullptr,
-        world.society?&*world.society:nullptr,world.competition->setup->review_interval):std::vector<Candidate>{};
+    const bool player_research=career_employer(world)==&rival;
+    const bool fellowship=definition.planning->group=="fellowship";
+    const auto collaboration=player_research || fellowship?std::string{}:plan_research_collaboration(world,program,rival.definition_id);
+    auto actions=collaboration.empty() && !fellowship?candidates(rival,definition,observation,draw,world.simulation.civic ? &*world.simulation.civic : nullptr,
+        world.society?&*world.society:nullptr,world.competition->setup->review_interval,player_research):std::vector<Candidate>{};
     RivalDecision decision{rival.simulation.date,"wait","","Conserve runway; no feasible action met the company's resource and reserve limits.",false,before,stream.state(),observation};
+    if(fellowship) decision.explanation="The endowment funds the founder's research program.";
     if(!collaboration.empty()){decision.action="collaborate";decision.subject=collaboration;decision.explanation="A trusted industry connection arranged funded joint research, with named staff and compute committed at both labs.";decision.accepted=true;rival.attempted=true;}
     else if (!actions.empty()) {
         auto selected=std::move(actions.front());decision.action=std::move(selected.action);decision.subject=std::move(selected.subject);
@@ -455,6 +464,19 @@ void prepare_rival_morning(WorldState& world,const CompiledProgram& program,Riva
     if (!rival.planning->entered_on || !active(rival.simulation) || (rival.response && rival.response->retired_on)) return;
     const auto day=campaign_day(world);
     acknowledge_leadership(rival);
+    if(career_employer(world)==&rival) {
+        // Resume deferred training when the research team can spare the allocation.
+        std::vector<std::string> paused;
+        for(const auto& work:rival.simulation.capacity->projects)
+            if(work.kind==ProjectKind::training && work.status==ProjectStatus::paused) paused.push_back(work.id);
+        for(const auto& id:paused) {
+            const auto& state=rival.simulation;
+            const auto report=capacity_report(*state.capacity);
+            const auto& work=find(state.capacity->projects,id);
+            if(report.assigned_staff<report.available_staff && work.staff<report.available_staff-report.assigned_staff)
+                (void)submit(rival,ResumeProject{id});
+        }
+    }
     while (const auto* alert=required_deployment_incident(rival.simulation)) {
         if (!submit(rival,AcknowledgeDeploymentIncident{alert->id})) invalid("Rival incident notice could not be acknowledged");
     }

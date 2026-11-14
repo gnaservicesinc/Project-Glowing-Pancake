@@ -99,6 +99,14 @@ the company chapter instead. **Read the newspaper** reopens the edition from
 the workspace. The development scenarios' earlier
 scored acceptance records below are historical.
 
+After insolvency, loss of control or an enforceable closure order, select
+**Open career desk**. Review a research appointment's salary and accept it to
+resume the calendar. If operating labs cannot hire, the Public Methods
+Fellowship offers paid research from its endowment. The desk shows estimated
+workdays and uses the employer's staff, equipment and compute. You can defer
+model training to make room, resume or cancel unfinished research, and publish
+finished results. Salary payments and publications appear in the career record.
+
 **Leadership** lets you prepare a successor and build a resignation statement
 from a reason and PR angle. Preview the statement and possible coverage before
 paying for the announcement. Reporters check profit, publications, customer start

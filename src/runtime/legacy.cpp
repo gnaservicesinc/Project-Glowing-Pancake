@@ -1,4 +1,5 @@
 #include <pgp/runtime/legacy.hpp>
+#include <pgp/runtime/career.hpp>
 #include <pgp/runtime/competition.hpp>
 #include <pgp/runtime/mergers.hpp>
 #include <algorithm>
@@ -26,6 +27,7 @@ FounderLegacy founder_legacy(const WorldState& world,std::string_view institutio
     FounderLegacy result;result.institution=institution;
     result.holder=s.succession?s.succession->founder_holder:s.management->catalog.scoring.founder;
     if(s.succession) {result.cash=s.succession->personal_cash;result.liabilities=succession_catalog(s).personal_liabilities;}
+    if(institution==world.company_id) result.cash=checked_unit_add(result.cash,career_salary_received(world));
     const auto private_values=personal_valuation(s,OrdinalDay{s.date.value()+1});
     result.assets=private_values.assets;
     result.liabilities=checked_unit_add(result.liabilities,private_values.liabilities);

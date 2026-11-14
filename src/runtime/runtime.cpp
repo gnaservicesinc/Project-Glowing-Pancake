@@ -1,4 +1,5 @@
 #include <pgp/runtime/runtime.hpp>
+#include <pgp/runtime/career.hpp>
 #include <pgp/runtime/society.hpp>
 #include <pgp/runtime/authority.hpp>
 #include <pgp/runtime/romance.hpp>
@@ -757,6 +758,23 @@ RuntimeResult Runtime::submit(const core::Command& command) {
     if (command.expected_revision != checkpoint_.world.simulation.revision)
         return {RuntimeReason::stale_revision, checkpoint_.world.simulation.revision, "The command's observed revision is stale.", {}, {}};
     const auto& action=command.action;
+    if(std::holds_alternative<core::AcceptResearchAppointment>(action) ||
+       std::holds_alternative<core::DirectCareerResearch>(action) ||
+       std::holds_alternative<core::PublishCareerResearch>(action))
+        return transaction(program_,checkpoint_,command.expected_revision,[&](auto& next,auto& result,auto&,bool&) {
+            try {
+                if(const auto* job=std::get_if<core::AcceptResearchAppointment>(&action)) {
+                    accept_research_appointment(next.world,program_,job->employer);
+                    result.explanation="The lab has added the research appointment to its payroll.";
+                } else if(const auto* research=std::get_if<core::DirectCareerResearch>(&action)) {
+                    direct_career_research(next.world,program_,research->topic);
+                    result.explanation="Your employer funded the research and assigned its staff and compute.";
+                } else {
+                    publish_career_research(next.world,std::get<core::PublishCareerResearch>(action).topic);
+                    result.explanation="Your employer published the completed research.";
+                }
+            } catch(const std::invalid_argument& error) {fail(RuntimeReason::effect_rejected,error.what());}
+        });
     const bool objectives_command=std::holds_alternative<core::FinishFounderRun>(action) || std::holds_alternative<core::SelectCampaignObjectives>(action) ||
         std::holds_alternative<core::AcknowledgeObjectiveBreach>(action) || std::holds_alternative<core::EndWithPostmortem>(action) ||
         std::holds_alternative<core::ContinueAfterEnding>(action);
@@ -793,25 +811,46 @@ RuntimeResult Runtime::submit(const core::Command& command) {
                         core::OrdinalDay{next.world.simulation.date.value()-1});
                 }
                 if(!observing_world(next.world)) prepare(next,program_,result,steps,trace_mode_);
-                result.explanation=observing_world(next.world)?"Observer mode preserves the institution's final accounts.":"Sandbox continues with the scored ending preserved.";
+                result.explanation=career_open(next.world)?"The world can advance while you look for a research appointment.":
+                    observing_world(next.world)?"Observer mode preserves the institution's final accounts.":"Sandbox continues with the scored ending preserved.";
             }
         } catch(const std::invalid_argument& error) { fail(RuntimeReason::effect_rejected,error.what()); }
     });
     if(observing_world(checkpoint_.world)) return transaction(program_,checkpoint_,command.expected_revision,[&](auto& next,auto& result,auto&,bool& core_valid) {
         auto& world=next.world;
+        if(objective_time_stopped(world)) fail(RuntimeReason::campaign_finished,"The final life edition is ready.");
         if(const auto* pause=std::get_if<core::SetPaused>(&action)) {
             world.objectives->observer_paused=pause->paused;
+        } else if(const auto* employer=career_employer(world);employer &&
+            (std::holds_alternative<core::ResumeProject>(action) || std::holds_alternative<core::CancelProject>(action))) {
+            const auto* resume=std::get_if<core::ResumeProject>(&action);
+            const auto& project=resume?resume->id:std::get<core::CancelProject>(action).id;
+            const auto& work=world.objectives->career->back().projects;
+            if(std::ranges::find(work,project,&CareerResearch::project)==work.end())
+                fail(RuntimeReason::effect_rejected,"Choose a project from your current appointment.");
+            auto& lab=*std::ranges::find(world.competition->companies,employer->definition_id,&RivalCompany::definition_id);
+            if(!competition_detail::submit_rival(lab,action))
+                fail(RuntimeReason::effect_rejected,resume?"The project needs its original staff, working equipment and available compute to resume.":
+                    "Only unfinished research can be cancelled.");
+            world.objectives->observer_paused=true;
+            result.explanation=resume?"The employer resumed the project.":"The employer cancelled the project and released its resources.";
         } else if(const auto* day=std::get_if<core::AdvanceDay>(&action)) {
             if(day->market_allocation || !day->industry_adoptions.empty() || !day->wholesale_work.empty() || !day->market_influences.empty())
                 fail(RuntimeReason::effect_rejected,"Observer time uses only actual world transactions.");
             const auto prior=campaign_day(world);
-            if(prior>=core::to_ordinal({9999,1,1})) fail(RuntimeReason::campaign_finished,"The simulation reached its calendar limit.");
+            if(prior>=campaign_calendar_limit(world)) fail(RuntimeReason::campaign_finished,"The simulation reached its calendar limit.");
+            const bool career=career_open(world);
+            const bool employed=career && career_employer(world);
+            const bool seeking=career && !employed && research_job_offers(world,program_).empty();
             competition_detail::refresh_wholesale(world,program_,true);
             const auto assignments=prepare_competition_day(world,program_);
             world.objectives->observer_day=core::advance_days(prior,core::Days{1});
             advance_competition(world,program_,prior,assignments);
             advance_society(world,prior);
-            result.explanation="The world advanced while the institution's final accounts stayed frozen.";
+            if(career && (objective_time_stopped(world) || (employed && !career_employer(world)) ||
+                (seeking && !research_job_offers(world,program_).empty()))) world.objectives->observer_paused=true;
+            result.explanation=career?"The founder's next chapter advanced one day.":
+                "The world advanced while the institution's final accounts stayed frozen.";
         } else fail(RuntimeReason::campaign_finished,"Observer mode cannot change the institution's final state.");
         core_valid=true;
     });
