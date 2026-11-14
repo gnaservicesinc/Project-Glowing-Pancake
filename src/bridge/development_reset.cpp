@@ -41,6 +41,7 @@ void CampaignWorker::resetLocalData(std::uint64_t token, bool current_only) {
             for(const auto& entry:fs::directory_iterator(paths_.saves_directory))
                 if(entry.path().filename()!="current-campaign.lock") fs::remove_all(entry.path());
             for(const auto& suffix:{"",".bak",".tmp"}) fs::remove(fs::path{paths_.settings_file.string()+suffix});
+            fs::remove(root/"founding-history.ini");
             fs::remove_all(root/"world-navigation");
         }
         for(const auto& name:{"founding-draft.json","founding-draft.json.bak","founding-draft.json.tmp"}) fs::remove(root/name);

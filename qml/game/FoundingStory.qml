@@ -18,7 +18,7 @@ QtObject {
         const genius = advantages.includes("genius")
         const charismatic = advantages.includes("charisma")
         const political = advantages.includes("political")
-        const previewText = story.preview || ""
+        const education = story.education
         const homeArt = { poor: "street-apartments", middle: street, rich: "street-hillside" }[form.family] || street
         const foundingArt = form.legal_form === "nonprofit" ? "trust" : "company"
         const tones = {
@@ -206,10 +206,10 @@ QtObject {
                 })
         }
 
-        const lateLaunch = previewText.indexOf("Delayed start:") >= 0 || choices.grad_choice === "college"
-        const adultHeader = lateLaunch ? qsTr("SILICON VALLEY  /  LAUNCH EVE") : qsTr("SILICON VALLEY  /  JANUARY 2015")
+        const lateLaunch = education.entryDelayDays > 0
+        const adultHeader = qsTr("SILICON VALLEY  /  %1").arg(education.launchDate || "")
         const adultBody = lateLaunch
-            ? qsTr("Rival research labs opened while you were finishing your degree or service. Your savings untouched and tuition behind you, it is finally time to step into the arena.")
+            ? qsTr("Rival labs have had a head start. This morning, back at the home you grew up in, you can put what you learned to work and decide how to enter the industry.")
             : qsTr("The Valley has changed around the home you grew up in. Yesterday was your eighteenth birthday. Birthday cards still stand on your desk.")
         add("eighteen", homeArt, adultHeader, lateLaunch ? qsTr("Stepping onto the floor") : qsTr("A morning of your own"),
             adultBody, "", "narration", {
@@ -229,10 +229,10 @@ QtObject {
             qsTr("How do you describe your sexual orientation?"), [option("straight",qsTr("Straight")),option("gay_or_lesbian",qsTr("Gay or lesbian")),
                 option("bisexual",qsTr("Bisexual")),option("pansexual",qsTr("Pansexual")),option("asexual",qsTr("Asexual")),
                 option("queer",qsTr("Queer")),option("questioning",qsTr("Questioning")),option("demisexual",qsTr("Demisexual"))].map(row => Object.assign({},row,{detail:story.orientationAudience(row.id)})))
-        add("appearance",homeArt,qsTr("THE DAY AFTER YOUR EIGHTEENTH BIRTHDAY"),qsTr("Your reflection"),
+        add("appearance",homeArt,adult,qsTr("Your reflection"),
             qsTr("Make this person your own. Your starting look is editable, from body shape to clothes and hair."),
             qsTr("Choose any feature to customize it."),"appearance")
-        add("home", homeArt, lateLaunch ? qsTr("SILICON VALLEY  /  LAUNCH DAY") : qsTr("SILICON VALLEY  /  JANUARY 2015"), "", "", "", "home")
+        add("home", homeArt, adultHeader, "", "", "", "home")
         const reflections = {
             outgoing: qsTr("You naturally gathered classmates around one table and got the conversation moving."),
             introverted: qsTr("With quiet space of your own, you learned how to think deeply without a crowd."),

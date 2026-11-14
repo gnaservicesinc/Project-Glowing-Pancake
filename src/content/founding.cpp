@@ -488,16 +488,8 @@ bool queer_founder(const FoundingSelection& s) {
     return transgender_founder(s) || s.gender=="nonbinary" ||
         (s.orientation!="straight" && s.orientation!="questioning");
 }
-FoundingTerms founding_terms(const FoundingCatalog& c,const FoundingSelection& s,bool complete) {
-    shape(s);FoundingTerms t;t.nonprofit=s.legal_form=="nonprofit";
-    for(const auto& id:s.advantages) {
-        const auto& option=founding_option(c.legs,id);
-        if(const auto why=founding_ineligibility(option,s);!why.empty()) invalid(why);
-    }
-    const auto& route=founding_option(c.routes,s.route);const auto& office=founding_option(c.offices,s.office);
-    const auto& researcher=founding_option(c.researchers,s.researcher);
-    for(const auto* option:{&route,&office}) if(const auto why=founding_ineligibility(*option,s);!why.empty()) invalid(why);
-    if(researcher.id!="founder") if(const auto why=founding_ineligibility(researcher,s);!why.empty()) invalid(why);
+FoundingTerms founding_formative_terms(const FoundingCatalog& c,const FoundingSelection& s,bool complete) {
+    FoundingTerms t;
     const bool community=queer_founder(s);
     std::int64_t prestige_signed=community?c.queer_community_prestige:0;
     std::int64_t buzz_signed=community?c.queer_community_buzz:0;
@@ -553,6 +545,21 @@ FoundingTerms founding_terms(const FoundingCatalog& c,const FoundingSelection& s
             t.education_label+=cred;
         }
     }
+    return t;
+}
+
+FoundingTerms founding_terms(const FoundingCatalog& c,const FoundingSelection& s,bool complete) {
+    shape(s);
+    for(const auto& id:s.advantages) {
+        const auto& option=founding_option(c.legs,id);
+        if(const auto why=founding_ineligibility(option,s);!why.empty()) invalid(why);
+    }
+    const auto& route=founding_option(c.routes,s.route);const auto& office=founding_option(c.offices,s.office);
+    const auto& researcher=founding_option(c.researchers,s.researcher);
+    for(const auto* option:{&route,&office}) if(const auto why=founding_ineligibility(*option,s);!why.empty()) invalid(why);
+    if(researcher.id!="founder") if(const auto why=founding_ineligibility(researcher,s);!why.empty()) invalid(why);
+    auto t=founding_formative_terms(c,s,complete);
+    t.nonprofit=s.legal_form=="nonprofit";
     const bool can_research=s.has_advantage("genius") || t.doctorate_count>0;
     if(s.researcher=="founder" && !can_research) invalid("Only Actual Genius or a doctoral graduate can supply the first research assignment without hiring a researcher.");
     t.founder_researcher=s.researcher=="founder";

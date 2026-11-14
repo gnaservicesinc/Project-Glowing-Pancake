@@ -31,6 +31,19 @@ int main(int argc,char** argv) {
         bridge::FoundingController resumed_seed{program.collection,path.parent_path()/"seeds.json"};
         check(resumed_seed.beat()=="appearance" && resumed_seed.form().value("seed")==seeded.form().value("seed") &&
             resumed_seed.selection().story_seed==seeded.selection().story_seed,"Resuming a draft must retain both seeds.");
+        const auto opener_path=path.parent_path()/"opening-history"/"founding-draft.json";
+        QString previous_opening;
+        for (int attempt=0;attempt<16;++attempt) {
+            bridge::FoundingController next{program.collection,opener_path};
+            next.reset();
+            const auto first="chapter-"+next.chapters().front().toMap().value("id").toString();
+            check(first!=previous_opening,"A new playthrough should avoid the last school opening across relaunches.");
+            next.setBeat(first);
+            check(std::filesystem::exists(opener_path.parent_path()/"founding-history.ini"),
+                "The school opening must be remembered on disk.");
+            check(std::filesystem::remove(opener_path),"Delete the previous draft while retaining its opening history.");
+            previous_opening=first;
+        }
         bridge::FoundingController setup{program.collection,path};
         setup.setField("gender","woman");setup.setField("pronouns","she/her");
         setup.setField("gender","arbitrary");setup.setField("pronouns","arbitrary");
@@ -273,7 +286,24 @@ int main(int argc,char** argv) {
             school.choose("hs_drugs","pass");
             school.setAdvantage("genius",false);school.setAdvantage("political",true);school.setField("route","bootstrap");
             school.setField("office","home");school.setField("researcher","founder");
+            school.choose("grad_choice","apprentice");
+            check(school.education().value("entryDelayDays").toInt()==180 &&
+                school.education().value("launchDate")=="2015-06-30" &&
+                find_opt(find_chapter(school,"grad_choice"),"apprentice").value("detail").toString().contains("180 day"),
+                "A short career route must disclose its exact delay and date before financing.");
+            school.choose("grad_choice","contract");
+            check(school.education().value("entryDelayDays").toInt()==90 &&
+                school.education().value("launchDate")=="2015-04-01",
+                "Software contracts must open the founder timeline 90 days after the market.");
+            pgp::bridge::complete_formative_fixture(school);
+            const auto& founder_scenario=std::get<content::ScenarioDefinition>(program.collection.find("scenario.founder_campaign")->data);
+            const auto contract_selection=school.selection();
+            const auto opening=content::scenario_opening(founder_scenario,"","company.player","",&contract_selection);
+            check(QString::fromStdString(core::iso_date(opening.launch_day))==school.education().value("launchDate").toString(),
+                "The home date must match the actual start of the selected campaign.");
             school.choose("grad_choice","college");school.choose("ug_funding","loans");school.choose("grad_school","phd_ml");
+            check(school.education().value("doctorateCount").toInt()==1 && school.education().value("hasStudentDebt").toBool(),
+                "The profile and student debt must be visible before the formation review.");
             pgp::bridge::complete_formative_fixture(school);
             school.setField("investment",QString::number(catalog.formation_cents+500000));
             const auto prev=school.preview();

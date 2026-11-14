@@ -22,7 +22,7 @@ downloads dependencies or launches a program during builds.
 
 | Command | Implemented behavior |
 | --- | --- |
-| `./make.sh` | Both applications in Release, optimized for the local CPU; testing/debugging off; no tests or launch |
+| `./make.sh` | Both applications in Release, optimized for the local CPU; stages the game on Mac; no tests or launch |
 | `./make.sh --package --jobs 4` | Mac game app with bundled Qt, resources and icon in `dist`; no launch |
 | `./script/build_and_run.sh` | Explicitly build, package and launch the Mac app; also used by the Codex Run action |
 | `./make.sh --test` | Build then run CTest; propagate failures |
@@ -66,7 +66,7 @@ ctest --test-dir build/release -R '^runtime[.]founder-journey$' --output-on-fail
 ./make.sh  # Return to both apps with testing/debugging disabled.
 ```
 
-`--all` remains reserved. On macOS, `--package` stages a relocatable local
+`--all` remains reserved. On macOS, a desktop game build stages a relocatable local
 development app in `dist/Project Glowing Pancake.app`, including its icon,
 menu video, Qt frameworks/plugins/QML imports and notices. It is ad-hoc signed;
 notarized distribution and other-platform packages remain later gates.

@@ -5,6 +5,7 @@
 #include <QJsonObject>
 #include <QLocale>
 #include <QSaveFile>
+#include <QSettings>
 #include <QRandomGenerator>
 #include <pgp/core/checked_arithmetic.hpp>
 #include <pgp/core/objectives.hpp>
@@ -26,6 +27,7 @@ QString money(std::int64_t cents) {
 }
 
 constexpr auto story_seed_attempts = 16;
+constexpr auto last_school_opening_key = "intro/lastSchoolOpening";
 
 QVariantMap defaults() {
     return {{"first_name","Alex"},{"last_name","Vale"},{"birth_sex","indeterminate"},{"gender","nonbinary"},{"pronouns","they/them"},{"orientation","questioning"},
@@ -92,18 +94,12 @@ FoundingController::FoundingController(const content::Collection& collection, st
 }
 
 void FoundingController::reset(bool save) {
-    const auto first_scene = [&]() -> const content::FormativeScene* {
-        if (!catalog_) return nullptr;
-        content::FoundingSelection biography;
-        biography.family = form_.value("family").toString().toStdString();
-        biography.advantages = selected_advantages(form_);
-        biography.story_seed = form_.value("story_seed").toString().toULongLong();
-        const auto scenes = content::formative_scenes(*catalog_, biography);
-        return scenes.empty() ? nullptr : scenes.front();
-    };
-    const auto previous_first = first_scene();
+    QSettings history{QString::fromStdU16String((draft_path_.parent_path()/"founding-history.ini").u16string()),
+        QSettings::IniFormat};
+    history.sync();
+    const auto previous_first = history.value(last_school_opening_key).toString();
     form_ = defaults();
-    for (int attempt = 0; previous_first && first_scene() == previous_first && attempt < story_seed_attempts; ++attempt)
+    for (int attempt = 0; attempt < story_seed_attempts && !previous_first.isEmpty() && firstSchoolBeat() == previous_first; ++attempt)
         form_["story_seed"] = QString::number(QRandomGenerator::system()->generate64());
     deriveOpening();
     beat_ = QStringLiteral("opening");
@@ -111,6 +107,16 @@ void FoundingController::reset(bool save) {
     if (save && available()) saveDraft();
     emit changed();
     emit beatChanged();
+}
+
+QString FoundingController::firstSchoolBeat() const {
+    if (!catalog_) return {};
+    content::FoundingSelection biography;
+    biography.family = form_.value("family").toString().toStdString();
+    biography.advantages = selected_advantages(form_);
+    biography.story_seed = form_.value("story_seed").toString().toULongLong();
+    const auto scenes = content::formative_scenes(*catalog_, biography);
+    return scenes.empty() ? QString{} : QStringLiteral("chapter-")+text(scenes.front()->id);
 }
 
 content::FoundingSelection FoundingController::selection() const {
@@ -420,8 +426,8 @@ QVariantList FoundingController::chapters() const {
                 if(opt.prestige || opt.buzz) detail+=tr(" · +%1 prestige / +%2 buzz").arg(opt.prestige).arg(opt.buzz);
                 if(!opt.combo_leg.empty() && current.has_advantage(opt.combo_leg)) detail+=tr(" · Special combo bonus");
                 if(opt.grants_doctorate) detail+=tr(" · Grants Dr. title");
-                const auto delay_years=(current.has_advantage("genius")?opt.genius_delay_days:opt.delay_days)/365U;
-                if(delay_years>0) detail+=tr(" · +%1 yr(s)").arg(delay_years);
+                const auto delay_days=current.has_advantage("genius")?opt.genius_delay_days:opt.delay_days;
+                if(delay_days>0) detail+=tr(" · Delays launch by %n day(s)",nullptr,static_cast<int>(delay_days));
                 if(opt.student_loan_cents>0) detail+=tr(" · %1 student debt").arg(money(opt.student_loan_cents));
                 if(opt.best_friends_delta>0) detail+=tr(" · +%1 friend(s)").arg(opt.best_friends_delta);
                 const auto key=scene.id+"/"+opt.id;
@@ -439,6 +445,18 @@ QVariantList FoundingController::chapters() const {
         }
     }
     return result;
+}
+
+QVariantMap FoundingController::education() const {
+    if(!catalog_) return {};
+    try {
+        const auto terms=content::founding_formative_terms(*catalog_,selection());
+        const auto launch=core::advance_days(starts_on_,core::Days{terms.entry_delay_days});
+        return {{"launchDate",text(core::iso_date(launch))},{"entryDelayDays",terms.entry_delay_days},
+            {"doctorateCount",terms.doctorate_count},{"hasStudentDebt",terms.student_loan_cents>0}};
+    } catch(const std::exception&) {
+        return {};
+    }
 }
 
 QVariantList FoundingController::headquarters() const {
@@ -556,7 +574,11 @@ QString FoundingController::preview() const {
             if(!terms.education_label.empty()) sources<<tr("Credentials: %1").arg(text(terms.education_label));
             if(terms.doctorate_count>0) sources<<tr("Title: Dr. (%1 doctorate(s)) · %2% research effort needed").arg(terms.doctorate_count).arg(terms.research_work_scale_bp/100);
             if(terms.student_loan_cents>0) sources<<tr("Student debt at entry: %1 (no added cash)").arg(money(terms.student_loan_cents));
-            if(terms.entry_delay_days>0) sources<<tr("Delayed start: +%1 year(s) in school/service").arg(terms.entry_delay_days/365U);
+            if(terms.entry_delay_days>0) {
+                const auto launch=core::advance_days(starts_on_,core::Days{terms.entry_delay_days});
+                sources<<tr("Delayed start: %1 (%n day(s) after the market opens)",nullptr,static_cast<int>(terms.entry_delay_days))
+                    .arg(text(core::iso_date(launch)));
+            }
             if(terms.best_friends>0) sources<<tr("Childhood best friends in industry: %1").arg(terms.best_friends);
             if(terms.bully_count>0) sources<<tr("Unresolved hostility: %1 same-age peers").arg(terms.bully_count);
             const auto desks=selected.office=="home"?0U:terms.opening_staff+(terms.founder_researcher?0U:1U);
@@ -590,6 +612,16 @@ void FoundingController::saveDraft() {
 void FoundingController::setBeat(QString id) {
     if (!available() || id.isEmpty() || id.size() > 80 || id == beat_) return;
     beat_ = std::move(id);
+    if (beat_.startsWith("chapter-") && beat_ == firstSchoolBeat()) {
+        std::error_code error;
+        std::filesystem::create_directories(draft_path_.parent_path(),error);
+        if (!error) {
+            QSettings history{QString::fromStdU16String((draft_path_.parent_path()/"founding-history.ini").u16string()),
+                QSettings::IniFormat};
+            history.setValue(last_school_opening_key,beat_);
+            history.sync();
+        }
+    }
     if (beat_=="home") {
         auto replies=form_.value("home_replies").toMap();
         for (const auto& offer_id : {QStringLiteral("alder"),QStringLiteral("frontier")}) {
@@ -710,9 +742,7 @@ void FoundingController::deriveOpening() {
     bool can_research=biography.has_advantage("genius");
     if(!can_research) {
         try {
-            auto selection_for_terms=selection();
-            selection_for_terms.researcher="none";
-            can_research=content::founding_terms(*catalog_,selection_for_terms,false).doctorate_count>0;
+            can_research=content::founding_formative_terms(*catalog_,selection()).doctorate_count>0;
         } catch(...) {}
     }
     form_["researcher"]=can_research?"founder":"none";

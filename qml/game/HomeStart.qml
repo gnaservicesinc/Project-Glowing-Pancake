@@ -10,10 +10,9 @@ Rectangle {
     required property real textScale
     readonly property int typeSize:Math.round(16*textScale)
     readonly property bool rich:story.form.family==="rich"
-    readonly property string previewText: story.preview || ""
-    readonly property bool hasDr: previewText.indexOf("Title: Dr.") >= 0
-    readonly property bool delayedLaunch: previewText.indexOf("Delayed start:") >= 0
-    readonly property bool hasStudentDebt: previewText.indexOf("Student debt") >= 0
+    readonly property var education: story.education
+    readonly property bool hasDr: education.doctorateCount > 0
+    readonly property bool hasStudentDebt: education.hasStudentDebt === true
     readonly property var offers: story.homeOffers
     readonly property var partners: offers.filter(offer => offer.kind === "partner")
     readonly property int waitingOffers: offers.filter(offer => offer.status === "offered").length
@@ -114,7 +113,7 @@ Rectangle {
                     ColumnLayout {
                         Layout.fillWidth:true;spacing:4
                         Heading {text:(home.hasDr?qsTr("Dr. "):"")+home.story.form.first_name+" "+home.story.form.last_name}
-                        Copy {text:home.delayedLaunch?qsTr("Graduated & Launch Ready · Silicon Valley"):qsTr("January 2015 · Age 18 · Pre-Founding");font.pixelSize:home.typeSize*0.85;color:"#c9d6d0"}
+                        Copy {text:qsTr("%1 · Pre-founding").arg(home.education.launchDate || "");font.pixelSize:home.typeSize*0.85;color:"#c9d6d0"}
                     }
                 }
                 Copy {text:qsTr("Personal savings %1 · Company funds $0 · Silicon Valley%2").arg(home.story.personalFunds.total).arg(home.hasStudentDebt?qsTr(" · Student loan active"):"");color:"#b9dba7";font.pixelSize:home.typeSize*0.92}
@@ -305,7 +304,7 @@ Rectangle {
             DesktopSurface {
                 anchors.fill:parent;textSize:home.typeSize
                 owner:home.story.form.first_name+" "+home.story.form.last_name
-                date:qsTr("January 2015")
+                date:home.education.launchDate || ""
                 status:qsTr("A new morning.\nA world of possibilities.")
                 applications:[
                     {id:"browser",name:qsTr("Web browser"),glyph:"society",tint:"#638a9e"},

@@ -11,6 +11,7 @@ class FoundingController final : public QObject {
     Q_PROPERTY(bool available READ available CONSTANT)
     Q_PROPERTY(QVariantMap form READ form NOTIFY changed)
     Q_PROPERTY(QVariantList chapters READ chapters NOTIFY changed)
+    Q_PROPERTY(QVariantMap education READ education NOTIFY changed)
     Q_PROPERTY(QVariantList families READ families NOTIFY changed)
     Q_PROPERTY(QVariantList advantageOptions READ advantageOptions NOTIFY changed)
     Q_PROPERTY(QVariantList routes READ routes NOTIFY changed)
@@ -33,6 +34,7 @@ public:
     bool available() const {return catalog_.has_value();}
     QVariantMap form() const {return form_;}
     QVariantList chapters() const;
+    QVariantMap education() const;
     QVariantList families() const;
     QVariantList advantageOptions() const;
     QVariantList routes() const;
@@ -80,6 +82,7 @@ private:
     QVariantList options(const std::vector<content::FoundingOption>&) const;
     bool selectableAdvantage(const content::FoundingOption&,const content::FoundingSelection&) const;
     QVariantMap homeOffer(const QString& id) const;
+    QString firstSchoolBeat() const;
     QString commitHomeDraft(QVariantMap next);
     void saveDraft();
     void deriveOpening();

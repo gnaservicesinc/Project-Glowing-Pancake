@@ -27,7 +27,7 @@ Outputs: build/{release,debug,distribution,core-release,core-debug,core-distribu
 On macOS, DEVELOPER_DIR (or xcode-select -p) selects one existing Xcode compiler
 and SDK. Global settings are never changed. The known local Qt installation
 is a build-time fallback only. No SDKs or dependencies are downloaded.
---package stages dist/Project Glowing Pancake.app on macOS. Use
+Mac desktop game builds stage dist/Project Glowing Pancake.app. Use
 --enable-distribution for the distribution edition. Packaging does not notarize
 or launch applications.
 USAGE
@@ -41,7 +41,7 @@ editor=ON
 build_scope=both
 enable_tests=OFF
 native_cpu=ON
-package=0
+package=auto
 run_tests=0
 clean=0
 qt_root="${QT_ROOT:-}"
@@ -100,7 +100,13 @@ if [[ "$distribution" == ON ]]; then
     [[ "$build_scope" != editor ]] || fail 'Build Content Studio separately from the distribution game'
     build_scope=game
 fi
-[[ "$package" == 0 || ( "$build_scope" != editor && "$core_only" == OFF && "$clean" == 0 && "$(uname -s)" == Darwin ) ]] || fail '--package requires a Mac desktop game build'
+if [[ "$build_scope" != editor && "$core_only" == OFF && "$clean" == 0 && "$(uname -s)" == Darwin ]]; then
+    package=1
+elif [[ "$package" == 1 ]]; then
+    fail '--package requires a Mac desktop game build'
+else
+    package=0
+fi
 
 [[ "$core_only" == OFF && "$build_scope" != game ]] || editor=OFF
 

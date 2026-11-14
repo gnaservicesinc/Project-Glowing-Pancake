@@ -126,6 +126,8 @@ struct FoundingTerms {
 [[nodiscard]] std::string partner_ineligibility(const FoundingPartner&,const FoundingSelection&);
 [[nodiscard]] bool founding_ceo_eligible(const FoundingSelection&);
 [[nodiscard]] std::int64_t founding_savings(const FoundingCatalog&,const FoundingSelection&);
+// School effects and reputation are available before financing or signing.
+[[nodiscard]] FoundingTerms founding_formative_terms(const FoundingCatalog&,const FoundingSelection&,bool complete=false);
 // A complete validation/preview is pure: changing an answer cannot stack rewards.
 [[nodiscard]] FoundingTerms founding_terms(const FoundingCatalog&,const FoundingSelection&,bool complete=true);
 }

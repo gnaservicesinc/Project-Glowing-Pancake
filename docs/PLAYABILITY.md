@@ -260,8 +260,9 @@ to receive the family wealth advantage. On **An early advantage**, choose any
 combination of **Actual Genius** and **Extremely Charismatic**. Wealthy families
 can also choose **Child of Political Elite**. Continue with an empty selection
 to skip the optional advantages. Each new game draws a school itinerary and
-choice order and starts with a fresh world seed. A resumed introduction keeps
-its draws and decisions. After school, customize the portrait’s features, colors,
+choice order and starts with a fresh world seed. New games avoid the last
+school opener even after deleting the current campaign. A resumed introduction
+keeps its draws and decisions. After school, customize the portrait’s features, colors,
 clothing, patterns and build. The intro ends here, before company decisions.
 
 At eighteen, you wake in your parents’ Silicon Valley house, unemployed. Use the
