@@ -138,7 +138,7 @@ QJsonObject run_canvas_walkthrough(Browser& browser, QQuickWindow& window) {
     require(item(QStringLiteral("studioPreview"))->isVisible() && !item(QStringLiteral("flowCanvas"))->isVisible(), QStringLiteral("Narrow-window settings navigation failed."));
     click(QStringLiteral("showStudioCanvas"));
     require(item(QStringLiteral("flowCanvas"))->isVisible(), QStringLiteral("Narrow-window navigation lost the canvas."));
-    for (int i = 0; i < 4; ++i) click(QStringLiteral("canvasZoomIn"));
+    for (int i = 0; i < 8 && canvas->view().value(QStringLiteral("zoom")).toInt() < 2000; ++i) click(QStringLiteral("canvasZoomIn"));
     require(canvas->view().value(QStringLiteral("zoom")).toInt() == 2000 && !browser.draftDirty() && !canvas->layoutDirty(),
         QStringLiteral("Canvas zoom did not reach 200% without changing authored content/layout."));
     window.resize(1280, 720); settle(); focus(QStringLiteral("node/sequence"));

@@ -28,12 +28,25 @@ std::vector<std::string> roots(const DraftDocument& d,const Json& doc,std::strin
 }
 std::vector<std::string> catalog_roots(const Json& doc,std::string_view scenario) {
     std::vector<std::string> result;
-    for(const auto& [id,value]:doc.at("definitions").items()) {
-        const auto path="/definitions/"+escape(id);
-        if(value.at("kind")!="scenario") result.push_back(path);
-        else if(id==scenario) for(const auto* section:{"lab","service_catalog","market","management","infrastructure","business_offers","rivals"})
-            if(value.contains(section)) result.push_back(path+"/"+section);
+    const auto& defs=doc.at("definitions");
+    if(defs.contains(std::string(scenario))) {
+        const auto& active=defs.at(std::string(scenario));
+        const auto base="/definitions/"+escape(scenario);
+        for(const auto* section:{"lab","service_catalog","market","management","infrastructure","business_offers","rivals"})
+            if(active.contains(section)) result.push_back(base+"/"+section);
     }
+    std::vector<std::string> world_defs,research_defs,flow_defs;
+    for(const auto& [id,value]:defs.items()) {
+        const auto kind=value.value("kind",std::string{});
+        if(kind=="scenario") continue;
+        const auto path="/definitions/"+escape(id);
+        if(kind=="research") research_defs.push_back(path);
+        else if(kind=="flow") flow_defs.push_back(path);
+        else world_defs.push_back(path);
+    }
+    result.insert(result.end(),world_defs.begin(),world_defs.end());
+    result.insert(result.end(),research_defs.begin(),research_defs.end());
+    result.insert(result.end(),flow_defs.begin(),flow_defs.end());
     for(const auto* table:{"messages","translations","assets"}) if(doc.contains(table)) result.push_back("/"+std::string(table));
     return result;
 }
@@ -109,7 +122,9 @@ void outline(std::vector<WorldOutlineRow>& out,const Json& value,const std::stri
     std::string search=path+" "+name;
     if(voice) for(const auto& line:value.at("lines")) search+=" "+line.get<std::string>();
     if(value.is_object()) for(const auto& [key,v]:value.items()) if(v.is_primitive()) search+=" "+key+" "+label(key)+" "+scalar(v);
-    out.push_back({path,std::move(name),std::move(search),depth});
+    const bool ui_visible=value.is_structured() && path!="/messages" && !path.starts_with("/messages/") &&
+        path!="/translations" && !path.starts_with("/translations/") && path!="/assets" && !path.starts_with("/assets/");
+    out.push_back({path,std::move(name),std::move(search),depth,ui_visible});
     if(value.is_object()) for(const auto& [key,child]:value.items()) {
         if(child.is_structured() || path=="/messages" || path.starts_with("/translations/"))
             outline(out,child,path+"/"+escape(key),label(key),depth+1);
@@ -164,14 +179,34 @@ std::string index_label(std::string_view path,std::size_t index,std::size_t coun
         return std::string(core::lab_domain_labels[index]);
     return "Entry "+std::to_string(index+1);
 }
+std::string root_display_name(const DraftDocument& d,const Json& value,const std::string& path) {
+    if(path.starts_with("/definitions/") && path.find('/',13)!=std::string::npos)
+        return "Campaign · "+label(last(path));
+    if(value.is_object() && value.contains("id")) {
+        const auto id=value.at("id").get<std::string>();
+        const auto* def=d.collection().find(id);
+        const auto kind=value.value("kind",std::string{});
+        if(kind=="scenario") return "Campaign · "+(def?event_name(d.collection(),*def):short_name(id));
+        if(kind=="research") return "Research · "+(def?event_name(d.collection(),*def):short_name(id));
+        if(kind=="institutional_authority") return "Institutional authority";
+        if(kind=="us_civic") return "US civic & regulatory rules";
+        if(kind=="site_resilience") return "Site resilience & hazards";
+        if(kind=="frontier_research") return "Frontier · "+short_name(id);
+        if(kind=="regional_markets") return "Regional markets · "+short_name(id);
+        if(kind=="regional_society") return "Society & welfare · "+short_name(id);
+        if(def) return event_name(d.collection(),*def);
+        return short_name(id);
+    }
+    return label(last(path));
+}
 }
 std::vector<WorldOutlineRow> catalog_outline(const DraftDocument& d,std::string_view scenario) {
     const auto doc=structured_document(d);std::vector<WorldOutlineRow> rows;
     for(const auto& path:catalog_roots(doc,scenario)) {
         const auto& value=doc.at(Json::json_pointer{path});
-        const auto name=value.is_object() && value.contains("id")?value.at("id").get<std::string>():label(last(path));
+        const auto name=root_display_name(d,value,path);
         if(value.is_object() && value.contains("kind") && value.at("kind")=="flow")
-            rows.push_back({path,name,path+" "+name+" flow",0});
+            rows.push_back({path,name,path+" "+name+" flow",0,false});
         else outline(rows,value,path,name,0);
     }
     return rows;
@@ -180,7 +215,7 @@ std::vector<WorldOutlineRow> world_outline(const DraftDocument& d,std::string_vi
     const auto doc=structured_document(d);std::vector<WorldOutlineRow> rows;
     for(const auto& root:roots(d,doc,scenario)) {
         const auto& value=doc.at(Json::json_pointer{root});
-        outline(rows,value,root,value.at("kind")=="scenario"?"Scenario settings · "+value.at("id").get<std::string>():label(value.at("kind"))+" · "+value.at("id").get<std::string>(),0);
+        outline(rows,value,root,root_display_name(d,value,root),0);
     }
     return rows;
 }
@@ -246,9 +281,15 @@ void WorldForm::build(const DraftDocument& d,bool adding) {
         if(!adding && (f.key=="id" || f.key=="revision" || f.key=="deprecated" ||
             (f.key=="kind" && path_.find("/business_offers/")==path_.npos && path_.find("/catalog/gates/")==path_.npos))) {
             f.control=FormControl::note;f.options.clear();
-            f.help="Stable identity and revision. Duplicate to create a new definition; the snapshot writer owns revisions.";
+            f.help.clear();
         } else {
-            f.help=(scalar_value.is_number_integer()?"Unit: "+units(field_path)+". ":"")+help(field_path);
+            const auto specific=help(field_path);
+            if(scalar_value.is_number_integer()) {
+                f.help="Unit: "+units(field_path)+".";
+                if(!specific.empty()) f.help+=" "+specific;
+            } else {
+                f.help=specific;
+            }
         }
         fields_.push_back(std::move(f));
     };

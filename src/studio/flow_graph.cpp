@@ -104,7 +104,7 @@ struct Builder {
             const auto into = port(key, "fact", "Compared fact", PortType::value, selected, false, std::move(fact), metadata.unit, metadata.type,
                 "A registered fact with this exact scope/type/unit; the shared form initializes its new comparison.");
             const auto fact_key = key + "/fact";
-            node(fact_key, key, clause.fact, metadata.help, "fact", selected); scoped_input(fact_key, key, selected);
+            node(fact_key, key, readable_name(clause.fact), metadata.help, "fact", selected); scoped_input(fact_key, key, selected);
             GraphEndpoint read; read.kind = GraphBinding::value; read.row = key;
             read.value = Expression{ExpressionKind::fact, std::int64_t{0}, Unit::none, clause.fact};
             const auto fact_out = port(fact_key, "value", "Fact value", PortType::value, selected, true, std::move(read), metadata.unit, metadata.type, metadata.help);
@@ -142,7 +142,7 @@ struct Builder {
     void effect(const std::string& node_id, const Effect& effect, std::size_t index) {
         const auto row = "node/" + node_id + "/effect/" + std::to_string(index);
         const auto& metadata = *document.registry().effect(effect.operation);
-        node(row, row, "Effect " + std::to_string(index + 1) + " · " + effect.operation, metadata.help, "effect", effect.target_scope);
+        node(row, row, "Effect " + std::to_string(index + 1) + " · " + readable_name(effect.operation), metadata.help, "effect", effect.target_scope);
         GraphEndpoint member; member.row = row;
         const auto input = port(row, "ordered", "Atomic item " + std::to_string(index + 1), PortType::execution, flow.scope, false, std::move(member),
             Unit::none, ValueType::integer, "Ordered inside one effect node, not an independent execution route. Reorder with its form.", {}, false);
@@ -169,7 +169,7 @@ struct Builder {
             const auto value_in = port(row, "argument/" + argument.name, argument.name, PortType::value, effect.target_scope, false,
                 std::move(input_value), argument.unit, argument.type, argument.help, argument.reference_kind);
             const auto constant_key = row + "/argument/" + argument.name;
-            node(constant_key, row, argument.name + " · " + scalar_text(found->second), unit_label(argument.unit) + " · " + argument.help, "literal", effect.target_scope);
+            node(constant_key, row, readable_name(argument.name) + " · " + scalar_text(found->second), unit_label(argument.unit) + " · " + argument.help, "literal", effect.target_scope);
             GraphEndpoint literal; literal.kind = GraphBinding::value; literal.row = row; literal.field = "argument/" + argument.name;
             literal.value = Expression{ExpressionKind::literal, found->second, argument.unit};
             const auto literal_out = port(constant_key, "value", "Entered value", PortType::value, effect.target_scope, true, std::move(literal), argument.unit,
@@ -178,7 +178,8 @@ struct Builder {
         }
     }
     void build() {
-        node("flow", "flow", data.flow, flow.group ? "Reusable group. Callers supply the scope and named variables." :
+        const auto& collection = document.collection();
+        node("flow", "flow", event_name(collection, collection.definitions.at(data.flow)), flow.group ? "Reusable group. Callers supply the scope and named variables." :
             "Automatic root: false starts none, true runs entry. Calls use incoming context. " + std::string(lifecycle_label(flow.lifecycle.mode)), "flow", flow.scope);
         scoped_input("flow", "flow", flow.scope);
         if (flow.group) {
@@ -215,6 +216,10 @@ struct Builder {
             if (current.kind == NodeKind::random) detail += " · weighted " + current.random_stream + " draw on actual execution";
             if (current.kind == NodeKind::end) detail += " · return to saved frame; continuous owner persists until exit";
             if (current.kind == NodeKind::effect) detail += " · atomic ordered effects, then continue";
+            if (current.kind == NodeKind::dialogue || current.kind == NodeKind::news || current.kind == NodeKind::result) {
+                const auto* copy = document.collection().message(current.text_key.empty() ? current.title_key : current.text_key);
+                if (copy && !copy->empty()) detail = copy->substr(0, copy->find('\n'));
+            }
             node(key, key, std::string(node_label(current.kind)) + " · " + readable_name(id), detail, "execution", flow.scope);
             GraphEndpoint input; input.kind = GraphBinding::execution; input.row = key; input.node_id = id;
             (void)port(key, "in", "Execute", PortType::execution, flow.scope, false, std::move(input));

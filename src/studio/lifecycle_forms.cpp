@@ -208,7 +208,7 @@ void build_flow_settings(FormBuilder& builder) {
     builder.note("Who this event applies to", std::string(scope_name(builder.flow.scope)), "Choose the scope when creating a flow.");
     const bool deprecated=builder.draft.collection().definitions.at(builder.id).deprecated;
     builder.add_document("deprecated", "Event status", deprecated ? "true" : "false",
-        "Deprecation keeps the flow and existing references available. Scenario enrollment controls execution.",
+        "Keep Current for active events, or mark Deprecated when retiring an old event.",
         FormControl::choice,[id=builder.id](Collection& collection, FlowDefinition&, std::string_view value) {
             collection.definitions.at(id).deprecated=value=="true";
         },{{"false","Current"},{"true","Deprecated"}});
@@ -236,13 +236,17 @@ void build_flow_settings(FormBuilder& builder) {
         const auto* scenario = std::get_if<ScenarioDefinition>(&definition.data);
         if (!scenario) continue;
         const bool enabled = std::find(scenario->flows.begin(), scenario->flows.end(), builder.id) != scenario->flows.end();
-        builder.add_document("scenario/" + id, event_name(builder.draft.collection(), definition), enabled ? "true" : "false", "Enable this flow as a scenario root.",
+        const bool main_campaign = id == "scenario.founder_campaign";
+        builder.add_document("scenario/" + id,
+                             main_campaign ? "Active in campaign" : event_name(builder.draft.collection(), definition),
+                             enabled ? "true" : "false",
+                             main_campaign ? "Whether this event can trigger during the campaign." : "Enable this flow as a scenario root.",
                              FormControl::choice, [id, flow_id = builder.id](Collection& collection, FlowDefinition&, std::string_view value) {
             auto& list = std::get<ScenarioDefinition>(collection.definitions.at(id).data).flows;
             const auto found = std::find(list.begin(), list.end(), flow_id);
             if (value == "true" && found == list.end()) list.push_back(flow_id);
             if (value == "false" && found != list.end()) list.erase(found);
-        }, boolean_choices());
+        }, main_campaign ? std::vector<FormOption>{{"false", "Disabled"}, {"true", "Enabled"}} : boolean_choices());
     }
 }
 void build_lifecycle_form(FormBuilder& builder) {
@@ -333,6 +337,12 @@ bool create_flow(DraftDocument& draft, std::string_view id, std::string_view sco
             flow.nodes.emplace(flow.entry_node, std::move(node));
         } else if (presentation != "logic") {
             throw std::invalid_argument("Choose what the player should see.");
+        }
+        if (const auto found = candidate.definitions.find("scenario.founder_campaign"); found != candidate.definitions.end()) {
+            if (auto* campaign = std::get_if<content::ScenarioDefinition>(&found->second.data)) {
+                if (std::find(campaign->flows.begin(), campaign->flows.end(), id) == campaign->flows.end())
+                    campaign->flows.emplace_back(id);
+            }
         }
     }
     candidate.definitions.emplace(std::string(id), content::Definition{std::string(id), 1, std::move(flow)});

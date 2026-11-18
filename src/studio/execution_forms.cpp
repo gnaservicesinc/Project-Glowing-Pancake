@@ -192,9 +192,22 @@ void node_fields(FormBuilder& builder, const std::string& id, const Node& node, 
             if(p.kind==ParticipantKind::contact || p.kind==ParticipantKind::organization)
                 builder.add(prefix+"name","Name message",p.name_key,"Localized contact or organization name.",FormControl::text,[get](FlowDefinition& flow,std::string_view value){get(flow).name_key=value;});
             builder.add(prefix+"role","Role message",p.role_key,"Optional for company profiles; required for external participants.",FormControl::text,[get](FlowDefinition& flow,std::string_view value){get(flow).role_key=value;});
-            if(p.portrait) for(std::size_t part=0;part<p.portrait->parts.size();++part)
-                builder.add(prefix+"portrait/"+std::to_string(part),"Portrait layer "+std::to_string(part+1),std::to_string(p.portrait->parts[part]),"Version 1 vector part/color ID; order follows the portrait kit.",FormControl::integer,
-                    [get,part](FlowDefinition& flow,std::string_view value){get(flow).portrait->parts[part]=static_cast<std::uint8_t>(parse_count(value,0,core::portrait_part_counts[part]-1));});
+            if(p.portrait) {
+                static constexpr std::array<const char*, 15> portrait_labels{
+                    "Portrait head shape", "Portrait hair style", "Portrait nose", "Portrait ears",
+                    "Portrait mouth", "Portrait chin", "Portrait neck", "Portrait eyes",
+                    "Portrait eyebrows", "Portrait facial hair", "Portrait glasses", "Portrait skin tone",
+                    "Portrait hair color", "Portrait clothing color", "Portrait background"
+                };
+                for(std::size_t part=0;part<p.portrait->parts.size();++part) {
+                    const auto label = part < portrait_labels.size()
+                        ? std::string(portrait_labels[part])
+                        : "Portrait layer " + std::to_string(part + 1);
+                    builder.add(prefix+"portrait/"+std::to_string(part), label, std::to_string(p.portrait->parts[part]),
+                        "Choose a style or color variation (0 to " + std::to_string(core::portrait_part_counts[part] - 1) + ").", FormControl::integer,
+                        [get,part](FlowDefinition& flow,std::string_view value){get(flow).portrait->parts[part]=static_cast<std::uint8_t>(parse_count(value,0,core::portrait_part_counts[part]-1));});
+                }
+            }
             builder.action(prefix+"remove","Remove participant","Remove this participant from this presentation.",[access,i](FlowDefinition& flow,std::string_view){auto& people=access(flow).participants;people.erase(people.begin()+static_cast<std::ptrdiff_t>(i));});
         }
         if(node.participants.size()<8) builder.action("add_participant","Add participant","Add an organization; choose a different source and edit its name/role as needed.",[access](FlowDefinition& flow,std::string_view) {
@@ -411,7 +424,7 @@ void append_node_outline(std::vector<OutlineRow>& rows, const Collection& collec
 } // namespace
 
 void add_link_fields(FormBuilder& builder, std::string key, std::string label, const std::string& target, LinkAccess access) {
-    builder.add(key, std::move(label), target, "Retarget this link and remove only paths no longer reachable from entry/exit. Undo restores the whole change. The compiler rejects cycles and incompatible continuations.",
+    builder.add(key, std::move(label), target, "Choose which step runs next.",
                 FormControl::choice, [access](FlowDefinition& flow, std::string_view value) { access(flow) = value; prune_unused(flow); },
                 node_choices(builder.flow));
     builder.add_document(key + "/insert", "Add a box here", {}, "The new step goes before the current destination.",

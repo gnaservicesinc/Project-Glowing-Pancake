@@ -17,7 +17,7 @@ ColumnLayout {
     readonly property real viewportHeight: viewport.height
     readonly property var filteredNodes: author.nodes.filter(node => !nodeSearch.text.length || (node.title + " " + node.key).toLowerCase().indexOf(nodeSearch.text.toLowerCase()) >= 0)
     readonly property var filteredPalette: author.palette.filter(node => !paletteSearch.text.length || node.label.toLowerCase().indexOf(paletteSearch.text.toLowerCase()) >= 0)
-    spacing: 6
+    spacing: 4
     focus: true
 
     function portColor(kind) { return ["#d5aeff", "#ffcc7c", "#8ad8ff", "#91e0b7"][kind] || "#b5c8d6" }
@@ -82,6 +82,20 @@ ColumnLayout {
         panY = viewport.height / 2 - (top + bottom) * zoom / 2
         changedView(persist)
     }
+    function initialFit() {
+        if (!author.nodes.length || viewport.width < 1 || viewport.height < 1) return
+        let left = 1048576, top = 1048576, right = 0, bottom = 0
+        for (const node of author.nodes) { left = Math.min(left, node.x); top = Math.min(top, node.y); right = Math.max(right, node.x + node.width); bottom = Math.max(bottom, node.y + node.height) }
+        const fitZoom = Math.max(0.1, Math.min(1, (viewport.width - 32) / (right - left), (viewport.height - 32) / (bottom - top)))
+        if (fitZoom >= 0.65) {
+            fitAll(false)
+            return
+        }
+        zoom = 0.8
+        panX = 24 - left * zoom
+        panY = 24 - top * zoom
+        changedView(false)
+    }
     function previewMove(key, x, y) { const next = {}; next[key] = {x: x, y: y}; dragging = next; wires.requestPaint() }
     function finishMove(ticket, key, x, y) { const ok = author.moveNode(ticket, key, x, y); dragging = ({}); wires.requestPaint(); return ok }
     function cancelMove() { dragging = ({}); wires.requestPaint() }
@@ -105,7 +119,17 @@ ColumnLayout {
     RowLayout {
         Layout.fillWidth: true
         TextField { id: nodeSearch; objectName: "canvasSearch"; Layout.fillWidth: true; placeholderText: qsTr("Find a box by name"); Accessible.name: qsTr("Find canvas box") }
-        ComboBox { id: navigator; objectName: "canvasNavigator"; Layout.preferredWidth: 180; model: graph.filteredNodes; textRole: "title"; valueRole: "key"; Accessible.name: qsTr("Canvas box navigator") }
+        ComboBox {
+            id: navigator
+            objectName: "canvasNavigator"
+            Layout.preferredWidth: 210
+            model: graph.filteredNodes
+            textRole: "title"
+            valueRole: "key"
+            popup.height: Math.min(300, popup.contentItem.implicitHeight + 16)
+            onModelChanged: if (count > 0 && currentIndex < 0) currentIndex = 0
+            Accessible.name: qsTr("Canvas box navigator")
+        }
         Button { objectName: "focusCanvasNode"; text: qsTr("Focus"); enabled: navigator.currentIndex >= 0; onClicked: graph.focusNode(navigator.currentValue, true) }
     }
     Flow {
@@ -117,10 +141,10 @@ ColumnLayout {
         Button { text: qsTr("Fit all"); onClicked: graph.fitAll(true) }
         Button { text: qsTr("Fit selected"); enabled: !!graph.author.selectedKey; onClicked: graph.focusNode(graph.author.selectedKey, true) }
         Button { objectName: "autoLayoutCanvas"; text: qsTr("Arrange"); onClicked: graph.author.autoLayout() }
-        Button { objectName: "saveCanvasLayout"; text: qsTr("Save layout"); enabled: graph.author.layoutDirty; onClicked: graph.author.saveLayout() }
-        Button { text: qsTr("Undo move"); enabled: graph.author.canUndoLayout; onClicked: graph.author.undoLayout() }
-        Button { text: qsTr("Redo move"); enabled: graph.author.canRedoLayout; onClicked: graph.author.redoLayout() }
-        Button { text: qsTr("Reload saved layout"); onClicked: reloadDialog.open() }
+        Button { objectName: "saveCanvasLayout"; visible: graph.author.layoutDirty || graph.author.canUndoLayout || graph.author.canRedoLayout; text: qsTr("Save layout"); enabled: graph.author.layoutDirty; onClicked: graph.author.saveLayout() }
+        Button { visible: graph.author.layoutDirty || graph.author.canUndoLayout || graph.author.canRedoLayout; text: qsTr("Undo move"); enabled: graph.author.canUndoLayout; onClicked: graph.author.undoLayout() }
+        Button { visible: graph.author.layoutDirty || graph.author.canUndoLayout || graph.author.canRedoLayout; text: qsTr("Redo move"); enabled: graph.author.canRedoLayout; onClicked: graph.author.redoLayout() }
+        Button { visible: graph.author.layoutDirty || graph.author.canUndoLayout || graph.author.canRedoLayout; text: qsTr("Reload saved layout"); onClicked: reloadDialog.open() }
         Button { objectName: "showCanvasNotices"; visible: graph.author.warnings.length > 0; text: qsTr("Compiler notices (%1)").arg(graph.author.warnings.length); onClicked: noticesDialog.open() }
     }
     RowLayout {
@@ -129,17 +153,34 @@ ColumnLayout {
             text: qsTr("Add a box…")
             onClicked: graph.author.prepareInsert()
         }
-        TextField { id: paletteSearch;
-            visible: graph.width >= 560; Layout.fillWidth: true; placeholderText: qsTr("Search this port's palette"); Accessible.name: qsTr("Search node palette") }
-        ComboBox { id: palette; objectName: "canvasPalette"; Layout.fillWidth: true; Layout.maximumWidth: 230; model: graph.filteredPalette; textRole: "label"; valueRole: "value"; Accessible.name: qsTr("Node palette") }
+        TextField {
+            id: paletteSearch
+            visible: graph.width >= 560 && graph.author.palette.length > 8
+            Layout.fillWidth: true
+            placeholderText: qsTr("Search this port's palette")
+            Accessible.name: qsTr("Search node palette")
+        }
+        ComboBox {
+            id: palette
+            objectName: "canvasPalette"
+            Layout.fillWidth: true
+            Layout.maximumWidth: 250
+            model: graph.filteredPalette
+            textRole: "label"
+            valueRole: "value"
+            popup.height: Math.min(300, popup.contentItem.implicitHeight + 16)
+            onModelChanged: if (count > 0 && currentIndex < 0) currentIndex = 0
+            Accessible.name: qsTr("Node palette")
+        }
         Button { objectName: "insertCanvasNode"; text: qsTr("Add"); enabled: palette.currentIndex >= 0; onClicked: graph.createSelected() }
-        Button { objectName: "cancelCanvasLink"; text: qsTr("Cancel link"); enabled: !!graph.author.pendingOutput; onClicked: graph.author.cancelConnection() }
+        Button { objectName: "cancelCanvasLink"; visible: !!graph.author.pendingOutput; text: qsTr("Cancel link"); enabled: !!graph.author.pendingOutput; onClicked: graph.author.cancelConnection() }
     }
     Label {
         Layout.fillWidth: true
         text: author.portLabel || qsTr("Select a box to edit its settings. Add a box to the current route, or select a connection point to choose a different route.")
         textFormat: Text.PlainText
-        wrapMode: Text.Wrap
+        maximumLineCount: 1
+        elide: Text.ElideRight
     }
     Label {
         objectName: "canvasStatus"
@@ -147,7 +188,8 @@ ColumnLayout {
         visible: author.message.length > 0
         text: author.message
         textFormat: Text.PlainText
-        wrapMode: Text.WrapAnywhere
+        maximumLineCount: 1
+        elide: Text.ElideRight
     }
     Label {
         objectName: "canvasWarnings"
@@ -155,8 +197,7 @@ ColumnLayout {
         visible: author.warnings.length > 0
         text: qsTr("%1 compiler notice(s) · %2").arg(author.warnings.length).arg(author.warnings[0] || "")
         textFormat: Text.PlainText
-        wrapMode: Text.Wrap
-        maximumLineCount: 2
+        maximumLineCount: 1
         elide: Text.ElideRight
     }
     Rectangle {
@@ -227,22 +268,24 @@ ColumnLayout {
     }
     Label {
         Layout.fillWidth: true
+        visible: Object.keys(graph.inspector.graphTrace).length > 0
         text: qsTr("Trace: green = committed/true; amber = waiting/queued; red = false/rejected candidate; purple = separate synthetic probe. State labels and full details are also in settings.")
-        wrapMode: Text.Wrap
+        maximumLineCount: 1
+        elide: Text.ElideRight
         font.pixelSize: 11
     }
     Connections {
         target: graph.author
         function onGraphChanged() {
             wires.requestPaint()
-            if (!graph.initializedView) Qt.callLater(() => graph.fitAll(false))
+            if (!graph.initializedView) Qt.callLater(() => graph.initialFit())
             if (graph.restoreCanvasFocus) { graph.restoreCanvasFocus = false; Qt.callLater(() => graph.forceActiveFocus(Qt.OtherFocusReason)) }
         }
         function onViewChanged() {
             const view = graph.author.view
             graph.panX = view.x; graph.panY = view.y; graph.zoom = view.zoom / 1000
             graph.initializedView = view.restored
-            if (!view.restored) Qt.callLater(() => graph.fitAll(false))
+            if (!view.restored) Qt.callLater(() => graph.initialFit())
             wires.requestPaint()
         }
     }

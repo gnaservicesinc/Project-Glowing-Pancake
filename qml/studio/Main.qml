@@ -78,14 +78,29 @@ ApplicationWindow {
                 onClicked: window.browse()
             }
             Button {
+                objectName: "openGameContent"
+                text: qsTr("Game content")
+                checkable: true
+                checked: !window.showLibrary && studio.worldMode
+                enabled: studio.checkout.length > 0 && !studio.saving
+                onClicked: {
+                    if (eventStory.changed && !eventStory.applyEdits()) return
+                    if (childhoodScene.changed && !childhoodScene.applyEdits()) return
+                    if (studio.openGameContent()) window.showLibrary = false
+                }
+            }
+            Button {
                 text: qsTr("New event")
                 enabled: studio.checkout.length > 0
                 onClicked: newEvent.open()
             }
             Button {
-                visible: studio.editing && window.showLibrary
-                text: qsTr("Back to editing")
-                onClicked: window.showLibrary = false
+                visible: studio.editing && !window.editingChapter && studio.workingFlow.length > 0 && (window.showLibrary || studio.worldMode)
+                text: qsTr("Back to event")
+                onClicked: {
+                    studio.selectWorkspace(false)
+                    window.showLibrary = false
+                }
             }
             Item { Layout.fillWidth: true }
             Button {
@@ -98,8 +113,12 @@ ApplicationWindow {
                     MenuItem { text: qsTr("Open project folder…"); onTriggered: projectPicker.open() }
                     MenuItem {
                         text: qsTr("Game data")
-                        enabled: studio.editing && !window.editingChapter
-                        onTriggered: { studio.selectWorkspace(true, true); window.showLibrary = false }
+                        enabled: studio.checkout.length > 0
+                        onTriggered: {
+                            if (eventStory.changed && !eventStory.applyEdits()) return
+                            if (childhoodScene.changed && !childhoodScene.applyEdits()) return
+                            if (studio.openGameContent()) window.showLibrary = false
+                        }
                     }
                     MenuItem {
                         objectName: "openAssetRegister"
@@ -167,10 +186,9 @@ ApplicationWindow {
                         { label: qsTr("Company events"), value: "flow" },
                         { label: qsTr("Player decisions"), value: "decisions" },
                         { label: qsTr("News stories"), value: "news" },
-                        { label: qsTr("Childhood scenes"), value: "chapter" },
-                        { label: qsTr("Scenarios"), value: "scenario" },
-                        { label: qsTr("All game content"), value: "" }
+                        { label: qsTr("Childhood scenes"), value: "chapter" }
                     ]
+                    popup.height: Math.min(300, popup.contentItem.implicitHeight + 16)
                     onActivated: window.updateFilter()
                 }
             }
@@ -192,11 +210,46 @@ ApplicationWindow {
                     Keys.onReturnPressed: window.editSelected()
                     ScrollBar.vertical: ScrollBar {}
                     delegate: ItemDelegate {
+                        id: libraryDelegate
                         required property var modelData
                         required property int index
+                        readonly property string badgeText: modelData.kind === "chapter" ? qsTr("Childhood scene")
+                            : modelData.hasChoices ? qsTr("Decision")
+                            : modelData.hasNews ? qsTr("News")
+                            : modelData.state === "Reusable group" ? qsTr("Reusable steps")
+                            : qsTr("Background")
                         width: ListView.view.width - 12
                         highlighted: ListView.isCurrentItem
                         text: modelData.title || qsTr("Content file")
+                        contentItem: ColumnLayout {
+                            spacing: 2
+                            RowLayout {
+                                Layout.fillWidth: true
+                                spacing: 8
+                                Label {
+                                    Layout.fillWidth: true
+                                    text: libraryDelegate.text
+                                    textFormat: Text.PlainText
+                                    elide: Text.ElideRight
+                                    font.bold: true
+                                }
+                                Label {
+                                    text: libraryDelegate.badgeText
+                                    textFormat: Text.PlainText
+                                    font.pixelSize: 11
+                                    color: "#a8c1d8"
+                                }
+                            }
+                            Label {
+                                Layout.fillWidth: true
+                                visible: !!(libraryDelegate.modelData.synopsis)
+                                text: libraryDelegate.modelData.synopsis || ""
+                                textFormat: Text.PlainText
+                                elide: Text.ElideRight
+                                opacity: 0.78
+                                font.pixelSize: 12
+                            }
+                        }
                         onClicked: { library.currentIndex = index; library.forceActiveFocus() }
                         onDoubleClicked: window.editSelected()
                     }
@@ -217,6 +270,12 @@ ApplicationWindow {
                         anchors.margins: 16
                         contentWidth: availableWidth
                         readonly property var entry: library.currentItem ? library.currentItem.modelData : ({})
+                        readonly property string typeLabel: !entry.title ? ""
+                            : entry.kind === "chapter" ? qsTr("Childhood scene")
+                            : entry.hasChoices ? qsTr("Player decision")
+                            : entry.hasNews ? qsTr("News story")
+                            : entry.state === "Reusable group" ? qsTr("Reusable steps")
+                            : qsTr("Background logic")
                         ColumnLayout {
                             width: overview.availableWidth
                             spacing: 12
@@ -229,8 +288,9 @@ ApplicationWindow {
                             }
                             Label {
                                 Layout.fillWidth: true
-                                visible: !!overview.entry.state
-                                text: overview.entry.state || ""
+                                visible: overview.typeLabel.length > 0
+                                text: overview.typeLabel + (overview.entry.state === "Disabled" ? qsTr(" · Not active in campaign") : "")
+                                color: "#a8c1d8"
                             }
                             Label {
                                 Layout.fillWidth: true
@@ -291,17 +351,27 @@ ApplicationWindow {
                 visible: !studio.worldMode && !window.editingChapter
                 Layout.fillWidth: true
                 TabBar {
+                    id: eventTabs
                     currentIndex: window.page
-                    onCurrentIndexChanged: {
-                        if (currentIndex !== 0 && eventStory.changed && !eventStory.applyEdits()) {
+                    function switchTo(target) {
+                        if (target !== 0 && eventStory.changed && !eventStory.applyEdits()) {
                             window.page = 0
                             setCurrentIndex(0)
-                        } else window.page = currentIndex
+                        } else {
+                            window.page = target
+                        }
                     }
-                    TabButton { text: qsTr("Story"); width: implicitWidth }
-                    TabButton { text: qsTr("Steps"); width: implicitWidth }
-                    TabButton { objectName: "showStudioCanvas"; text: qsTr("Graph"); width: implicitWidth }
-                    TabButton { objectName: "showStudioSettings"; text: qsTr("Preview in game"); width: implicitWidth }
+                    onCurrentIndexChanged: switchTo(currentIndex)
+                    TabButton { text: qsTr("Story"); width: implicitWidth; onClicked: eventTabs.switchTo(0) }
+                    TabButton { text: qsTr("Steps"); width: implicitWidth; onClicked: eventTabs.switchTo(1) }
+                    TabButton { objectName: "showStudioCanvas"; text: qsTr("Graph"); width: implicitWidth; onClicked: eventTabs.switchTo(2) }
+                    TabButton { objectName: "showStudioSettings"; text: qsTr("Preview in game"); width: implicitWidth; onClicked: eventTabs.switchTo(3) }
+                }
+                Connections {
+                    target: window
+                    function onPageChanged() {
+                        if (eventTabs.currentIndex !== window.page) eventTabs.setCurrentIndex(window.page)
+                    }
                 }
                 Item { Layout.fillWidth: true }
                 Button {
@@ -455,7 +525,7 @@ ApplicationWindow {
                     Layout.fillWidth: true
                     text: presentation.currentValue === "chapter"
                         ? qsTr("After creating it, choose a date and write the player’s choices.")
-                        : qsTr("After creating it, choose when it happens and which scenarios use it.")
+                        : qsTr("After creating it, you can edit its story text, choices, timing, and conditions.")
                     wrapMode: Text.Wrap
                 }
                 Label {

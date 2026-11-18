@@ -1,5 +1,6 @@
 #pragma once
 #include <pgp/studio/world_forms.hpp>
+#include <pgp/core/lab.hpp>
 #include <nlohmann/json.hpp>
 #include <algorithm>
 #include <cctype>
@@ -11,9 +12,41 @@ inline std::string escape(std::string_view v) {
     std::string out;for (char c:v) {if(c=='~') out+="~0";else if(c=='/') out+="~1";else out+=c;}return out;
 }
 inline std::string last(std::string_view path) {return std::string(path.substr(path.rfind('/')+1));}
+inline std::string short_name(std::string_view id) {
+    const auto dot=id.find('.');
+    return readable_name(dot==std::string_view::npos?id:id.substr(dot+1));
+}
 inline std::string label(std::string v) {
+    if(v=="cash_cents") return "Starting cash (cents)";
+    if(v=="default_policy_budget_cents") return "Default policy budget (cents)";
+    if(v=="default_reserve_floor_cents") return "Default cash reserve floor (cents)";
+    if(v=="default_monthly_ceiling_cents") return "Default monthly spending limit (cents)";
+    if(v=="opening_founder_share_bp") return "Founder starting share (bp)";
+    if(v=="ownership_basis_points") return "Ownership shares (bp)";
+    if(v=="identity_effects_bp") return "Public trust effects";
+    if(v=="monthly_probability_bp") return "Monthly hazard probability";
+    if(v=="initial_components_bp") return "Starting regional welfare";
+    if(v=="capacity_milli_CU_per_day") return "Compute capacity (milli-CU/day)";
+    if(v=="work_milli_CU" || v=="experiment_milli_CU") return "Required compute work (milli-CU)";
+    if(v=="pue_milli") return "Power efficiency (PUE × 1000)";
+    if(v=="first_agenda_day") return "Docket opens (day since 2014-01-01)";
+    if(v=="branches_after_day") return "Branching starts (day since 2014-01-01)";
+    if(v=="evidence_axis") return "Evaluation domain";
     for(char& c:v) if(c=='_') c=' ';
     if(!v.empty()) v[0]=static_cast<char>(std::toupper(static_cast<unsigned char>(v[0])));
+    const auto replace_suffix=[&](std::string_view from,std::string_view to) {
+        if(v.size()>from.size() && std::string_view{v}.ends_with(from)) {
+            v.replace(v.size()-from.size(),from.size(),to);
+            return true;
+        }
+        return false;
+    };
+    if(!replace_suffix(" milli CU per day"," (milli-CU/day)"))
+        if(!replace_suffix(" milli CU"," (milli-CU)"))
+            if(!replace_suffix(" basis points"," (bp)"))
+                if(!replace_suffix(" bp"," (bp)"))
+                    if(!replace_suffix(" cents"," (cents)"))
+                        (void)replace_suffix(" mib"," (MiB)");
     return v;
 }
 inline std::string scalar(const Json& j) {return j.is_string()?j.get<std::string>():j.dump();}
@@ -86,7 +119,7 @@ inline std::string help(std::string_view path) {
     if(key=="map_sha256" || key=="map_asset_id") return "Identity of the prepared offline map asset. Retain its matching hash and provenance.";
     if(key=="assumptions") return "Visible authored-balance assumptions. Label fictional exposure and future parameters honestly.";
     if(path.find("/monthly_probability_bp/")!=path.npos) return "Monthly chance for this named hazard; all hazards together must leave a quiet outcome. Profiles are authored game balance.";
-    return "This value belongs to the selected scenario section. Its owning content schema validates bounds, vocabulary and dependent references.";
+    return {};
 }
 inline std::vector<FormOption> choices(const DraftDocument& draft,const Json& doc,std::string_view scenario,std::string_view path,const Json& value) {
     std::vector<FormOption> out;
@@ -94,6 +127,11 @@ inline std::vector<FormOption> choices(const DraftDocument& draft,const Json& do
         if(std::none_of(out.begin(),out.end(),[&](const auto& o){return o.value==id;})) out.push_back({id,name.empty()?id:std::move(name),{}});
     };
     if(value.is_boolean()) {add("false","False");add("true","True");return out;}
+    if(value.is_number_integer() && last(path)=="evidence_axis") {
+        for(std::size_t i=0;i<core::lab_domain_labels.size();++i)
+            add(std::to_string(i),std::to_string(i)+" · "+std::string(core::lab_domain_labels[i]));
+        return out;
+    }
     if(!value.is_string()) return out;
     const auto key=last(path);
     const auto parent=path.substr(0,path.rfind('/'));
@@ -111,7 +149,10 @@ inline std::vector<FormOption> choices(const DraftDocument& draft,const Json& do
     if(array_key=="headquarters_choices") {add("US-CA","California");add("US-TX","Texas");add("US-WA","Washington");}
     if(!definition_kind.empty()) {
         if(key=="regional_markets" || key=="resilience" || key=="civic" || key=="society" || key=="authority" || key=="frontier") add("","Disabled");
-        for(const auto& [id,d]:draft.collection().definitions) if(content::definition_kind(d)==definition_kind) add(id);
+        for(const auto& [id,d]:draft.collection().definitions) if(content::definition_kind(d)==definition_kind) {
+            const auto display=event_name(draft.collection(),d);
+            add(id,display.empty()||display==id?id:display+" ("+id+")");
+        }
     }
     const auto* def=draft.collection().find(scenario);
     if(!def || !std::holds_alternative<content::ScenarioDefinition>(def->data)) return out;
@@ -138,7 +179,7 @@ inline std::vector<FormOption> choices(const DraftDocument& draft,const Json& do
             if(s.lab) {
                 const auto lab=content::scenario_lab_catalog(draft.collection(),s);
                 for(const auto& row:lab.data) add(row.id,row.name+" · Data");
-                for(const auto& row:lab.research) add(row.id,row.id+" · Research");
+                for(const auto& row:lab.research) add(row.id,short_name(row.id)+" · Research");
                 for(const auto& row:lab.recipes) add(row.id,row.name+" · Recipe");
             }
             if(s.infrastructure) for(const auto& row:s.infrastructure->hardware) add(row.id,row.name+" · Hardware");
@@ -170,11 +211,11 @@ inline std::vector<FormOption> choices(const DraftDocument& draft,const Json& do
             const auto id=std::string(core::civic_key(rule));add(id,label(id));
         }
     if(key=="source_id") add("lease.initial","Opening compute lease");
-    if(key=="founder") for(const auto& [id,amount]:s.ownership) {(void)amount;add(id);}
+    if(key=="founder") for(const auto& [id,amount]:s.ownership) {(void)amount;add(id,short_name(id));}
     if(array_key=="research" || array_key=="requires_research" || array_key=="all_of" || array_key=="any_of") {
-        for(const auto& [id,d]:draft.collection().definitions) if(std::holds_alternative<content::ResearchDefinition>(d.data)) add(id);
+        for(const auto& [id,d]:draft.collection().definitions) if(std::holds_alternative<content::ResearchDefinition>(d.data)) add(id,event_name(draft.collection(),d));
         if(s.lab && (path.find("/planning/")!=path.npos || array_key=="requires_research"))
-            for(const auto& row:s.lab->research) add(row.id);
+            for(const auto& row:s.lab->research) add(row.id,short_name(row.id));
     }
     if(key=="kind" && path.find("/business_offers/")!=path.npos) for(const auto* id:{"compute_lease","recovery_pilot","enterprise_contract"}) add(id,label(id));
     if(key=="group") for(const auto* id:{"domestic","international","heavyweight"}) add(id,label(id));
@@ -189,13 +230,13 @@ inline std::vector<FormOption> choices(const DraftDocument& draft,const Json& do
         const auto id=std::string(core::channel_key(channel));add(id,label(id));
     }
     if(key=="segment_id" || array_key=="public_services" || array_key=="science" || array_key=="industry")
-        for(const auto& row:content::scenario_market_setup(draft.collection(),s).segments) add(row.id);
+        for(const auto& row:content::scenario_market_setup(draft.collection(),s).segments) add(row.id,short_name(row.id));
     if(key=="product_id" && path.find("/market/contracts/")!=path.npos) {
-        if(s.market) for(const auto& row:s.market->offers) add(row.product.id);
+        if(s.market) for(const auto& row:s.market->offers) add(row.product.id,short_name(row.product.id));
     } else if(key=="pilot_product" || key=="product_id" || array_key=="services")
-        for(const auto& row:content::scenario_services(draft.collection(),s)) add(row.product.id);
-    if(key=="product_id" && s.market) for(const auto& row:s.market->offers) add(row.product.id);
-    if(key=="publication_node" && s.lab) for(const auto& row:s.lab->research) add(row.id);
+        for(const auto& row:content::scenario_services(draft.collection(),s)) add(row.product.id,short_name(row.product.id));
+    if(key=="product_id" && s.market) for(const auto& row:s.market->offers) add(row.product.id,short_name(row.product.id));
+    if(key=="publication_node" && s.lab) for(const auto& row:s.lab->research) add(row.id,short_name(row.id));
     if(key=="specialist_id" && s.management) for(const auto& row:s.management->specialists) add(row.id,row.name);
     if(key=="lease_offer_id") for(const auto& row:s.business_offers) if(row.kind==core::BusinessOfferKind::compute_lease) add(row.id,row.name);
     if(path.find("/covered/")!=path.npos) for(const auto kind:{core::SiteHazard::grid,core::SiteHazard::heat,core::SiteHazard::storm,core::SiteHazard::flood,core::SiteHazard::fire,core::SiteHazard::earthquake}) {

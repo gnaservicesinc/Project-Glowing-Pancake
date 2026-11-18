@@ -23,11 +23,13 @@ ColumnLayout {
                 id: scenario
                 Layout.fillWidth: true
                 model: panel.inspector.scenarios
+                popup.height: Math.min(300, popup.contentItem.implicitHeight + 16)
                 Accessible.name: qsTr("Test scenario")
             }
             ComboBox {
                 id: headquarters
                 model: panel.inspector.headquarters(scenario.currentText)
+                popup.height: Math.min(300, popup.contentItem.implicitHeight + 16)
                 Accessible.name: qsTr("Test headquarters")
             }
         }
@@ -84,7 +86,7 @@ ColumnLayout {
         Layout.fillWidth: true
         columns: width > 500 ? 2 : 1
         visible: panel.inspector.cleanupOwners.length > 0
-        ComboBox { id: owner; model: panel.inspector.cleanupOwners; Accessible.name: qsTr("Synthetic cleanup owner") }
+        ComboBox { id: owner; model: panel.inspector.cleanupOwners; popup.height: Math.min(300, popup.contentItem.implicitHeight + 16); Accessible.name: qsTr("Synthetic cleanup owner") }
         Button {
             text: qsTr("Synthetic cleanup on separate copy")
             enabled: !panel.inspector.busy

@@ -58,6 +58,7 @@ Dialog {
                 model: editor.author.groupOptions
                 textRole: "label"
                 valueRole: "value"
+                popup.height: Math.min(300, popup.contentItem.implicitHeight + 16)
                 Accessible.name: qsTr("Reusable group to call")
                 onCurrentIndexChanged: editor.bindings = ({})
             }
@@ -68,6 +69,7 @@ Dialog {
                 model: editor.author.groupContinuations
                 textRole: "label"
                 valueRole: "value"
+                popup.height: Math.min(300, popup.contentItem.implicitHeight + 16)
                 Accessible.name: qsTr("Continue at this node after the group returns")
             }
             Repeater {

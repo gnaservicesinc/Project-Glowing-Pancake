@@ -13,6 +13,7 @@ class WorldController final : public QObject {
     Q_PROPERTY(QVariantList sections READ sections NOTIFY changed)
     Q_PROPERTY(QVariantList fields READ fields NOTIFY changed)
     Q_PROPERTY(QString path READ path NOTIFY changed)
+    Q_PROPERTY(QString sectionTitle READ sectionTitle NOTIFY changed)
     Q_PROPERTY(QString ticket READ ticket NOTIFY changed)
     Q_PROPERTY(QString message READ message NOTIFY changed)
     Q_PROPERTY(QString report READ report NOTIFY changed)
@@ -29,6 +30,7 @@ class WorldController final : public QObject {
     Q_PROPERTY(QVariantMap mapGeometry READ mapGeometry NOTIFY changed)
     Q_PROPERTY(QString mapCredit READ mapCredit NOTIFY changed)
     Q_PROPERTY(bool catalogMode READ catalogMode NOTIFY changed)
+    Q_PROPERTY(QString familyFilter READ familyFilter WRITE setFamilyFilter NOTIFY changed)
     Q_PROPERTY(QVariantList catalogEntries READ catalogEntries NOTIFY changed)
     Q_PROPERTY(QVariantList catalogTemplates READ catalogTemplates NOTIFY changed)
     Q_PROPERTY(QVariantList referenceUses READ referenceUses NOTIFY changed)
@@ -45,6 +47,7 @@ public:
     QVariantList sections() const {return sections_;}
     QVariantList fields() const {return fields_;}
     QString path() const;
+    QString sectionTitle() const {return section_title_;}
     QString ticket() const {return QString::number(static_cast<qulonglong>(ticket_));}
     QString message() const {return message_;}
     QString report() const {return report_;}
@@ -61,6 +64,7 @@ public:
     QVariantMap mapGeometry() const;
     QString mapCredit() const;
     bool catalogMode() const {return catalog_mode_;}
+    QString familyFilter() const {return family_filter_;}
     QVariantList catalogEntries() const {return catalog_entries_;}
     QVariantList catalogTemplates() const {return catalog_templates_;}
     QVariantList referenceUses() const {return reference_uses_;}
@@ -70,6 +74,7 @@ public:
     bool selectedDeprecated() const;
     bool canDeprecate() const;
     Q_INVOKABLE bool setCatalogMode(bool);
+    Q_INVOKABLE void setFamilyFilter(QString filter);
     Q_INVOKABLE void selectCatalogEntry(QString path);
     Q_INVOKABLE bool reviewRename(QString newId);
     Q_INVOKABLE bool applyRename();
@@ -126,6 +131,6 @@ private:
     QVariantList scenarios_,sections_,fields_,templates_,states_;
     QVariantMap map_;
     QVariantMap unapplied_;
-    QString message_,report_,selected_state_,map_credit_,map_hash_;
+    QString message_,report_,selected_state_,map_credit_,map_hash_,section_title_,family_filter_;
 };
 } // namespace pgp::studio

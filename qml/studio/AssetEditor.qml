@@ -40,6 +40,7 @@ Dialog {
                 textRole: "label"
                 valueRole: "id"
                 currentIndex: indexOfValue(editor.selectedId)
+                popup.height: Math.min(300, popup.contentItem.implicitHeight + 16)
                 Accessible.name: qsTr("Asset records")
                 onActivated: editor.select(currentValue)
             }

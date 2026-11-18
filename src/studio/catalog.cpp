@@ -102,6 +102,7 @@ void index_node(CatalogIndex& index,const content::Registry& registry,const Json
             registry.effect(node.at("op").get_ref<const std::string&>()) : nullptr;
         for(const auto& [key,value]:node.items()) {
             const auto child=path+"/"+detail::pointer_escape(key);
+            if(relative=="/lab/creative_research") index.references.push_back({"research",key,owner,child});
             if(value.is_string()) {
                 auto reference=reference_family(key,child,kind);
                 bool linked_identity=false;
@@ -197,7 +198,10 @@ RefactorPlan RefactorPlan::rename(const DraftDocument& draft,std::string_view ty
         result.changes_.push_back({entry.owner,entry.path,std::string(before),std::string(after),true});
     }
     for(const auto& ref:index.references) if(ref.family==type && ref.id==before) {
-        document.at(Json::json_pointer{ref.path})=std::string(after);
+        if(parent(ref.path).ends_with("/creative_research")) {
+            auto& table=document.at(Json::json_pointer{parent(ref.path)});
+            const auto value=table.at(std::string(before));table.erase(std::string(before));table[std::string(after)]=value;
+        } else document.at(Json::json_pointer{ref.path})=std::string(after);
         result.changes_.push_back({ref.owner,ref.path,std::string(before),std::string(after),false});
     }
     if (type=="text" && document.contains("translations")) {

@@ -20,6 +20,38 @@ ColumnLayout {
             author.selectOutline(row.key)
     }
 
+    function optionIndex(options, value) {
+        if (!options || !options.length) return -1
+        for (let i = 0; i < options.length; ++i) {
+            if (options[i].value === value) return i
+        }
+        return value === "" && options[0].value === "" ? 0 : -1
+    }
+
+    function formatUnitPreview(label, help, textValue) {
+        if (typeof textValue !== "string" || !/^-?[0-9]+$/.test(textValue.trim())) return ""
+        const n = Number(textValue.trim())
+        if (!Number.isSafeInteger(n)) return ""
+        const info = (label + " " + help).toLowerCase()
+        if (info.indexOf("constant-2014 cents") >= 0 || info.indexOf("cents") >= 0) {
+            const sign = n < 0 ? "-" : ""
+            const abs = Math.abs(n)
+            const dollars = Math.floor(abs / 100).toLocaleString("en-US")
+            const cents = String(abs % 100).padStart(2, "0")
+            return "= " + sign + "$" + dollars + "." + cents
+        }
+        if (info.indexOf("basis points") >= 0 || info.indexOf("basis-point") >= 0 || info.indexOf("(bp)") >= 0) {
+            return "= " + (n / 100).toFixed(2) + "%"
+        }
+        if (info.indexOf("milli-cu/day") >= 0) {
+            return "= " + (n / 1000).toFixed(2) + " CU/day"
+        }
+        if (info.indexOf("milli-cu") >= 0) {
+            return "= " + (n / 1000).toFixed(2) + " CU"
+        }
+        return ""
+    }
+
     function commit(ticket, key, value) {
         if (!author.changeForm(ticket, key, value)) {
             errorKey = key
@@ -86,13 +118,24 @@ ColumnLayout {
             }
         }
     }
+    Label {
+        visible: !forms.showOutline && forms.showFields && forms.author.outlineIndex >= 0 && forms.author.outlineIndex < forms.author.flowOutline.length
+        Layout.fillWidth: true
+        Layout.bottomMargin: 4
+        text: visible ? forms.author.flowOutline[forms.author.outlineIndex].label.trim() : ""
+        textFormat: Text.PlainText
+        wrapMode: Text.Wrap
+        font.bold: true
+        font.pixelSize: 16
+    }
     Repeater {
         id: fieldRepeater
         model: forms.showFields ? forms.author.formFields : []
         delegate: ColumnLayout {
             id: row
-            visible: !["id", "title", "text", "label", "predicate_id"].includes(row.field.key)
+            visible: !["id", "title", "text", "label", "predicate_id", "visit_limit"].includes(row.field.key)
                 && !row.field.key.endsWith("/id")
+                && !(row.field.key.startsWith("scenario/") && row.field.key !== "scenario/scenario.founder_campaign")
             Layout.bottomMargin: 8
             required property var modelData
             readonly property var field: modelData
@@ -160,12 +203,15 @@ ColumnLayout {
                     model: row.field.options
                     textRole: "label"
                     valueRole: "value"
-                    currentIndex: indexOfValue(row.field.value)
+                    currentIndex: forms.optionIndex(row.field.options, row.field.value)
+                    Component.onCompleted: currentIndex = forms.optionIndex(row.field.options, row.field.value)
+                    onModelChanged: currentIndex = forms.optionIndex(row.field.options, row.field.value)
+                    popup.height: Math.min(300, popup.contentItem.implicitHeight + 16)
                     Accessible.name: row.field.label
                     Accessible.description: row.field.help
                     onActivated: {
                         if (!forms.commit(row.ticket, row.field.key, currentValue))
-                            currentIndex = indexOfValue(row.field.value)
+                            currentIndex = forms.optionIndex(row.field.options, row.field.value)
                     }
                 }
             }
@@ -194,6 +240,8 @@ ColumnLayout {
             Component {
                 id: input
                 RowLayout {
+                    readonly property string unitPreview: row.field.control === "integer"
+                        ? forms.formatUnitPreview(row.field.label, row.field.help, entered.text) : ""
                     function focusEditor() { entered.forceActiveFocus(Qt.OtherFocusReason) }
                     TextField {
                         id: entered
@@ -205,6 +253,13 @@ ColumnLayout {
                         Accessible.name: row.field.label
                         Accessible.description: row.field.help
                         onAccepted: forms.commit(row.ticket, row.field.key, text)
+                    }
+                    Label {
+                        visible: unitPreview.length > 0
+                        text: unitPreview
+                        color: "#8fe2b4"
+                        font.bold: true
+                        font.pixelSize: 12
                     }
                     Button {
                         text: qsTr("Apply")

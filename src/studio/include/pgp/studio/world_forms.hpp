@@ -13,6 +13,7 @@ struct WorldLocation {
 struct WorldOutlineRow {
     std::string key,label,search;
     std::size_t depth=0;
+    bool ui_visible=true;
 };
 struct WorldSectionChange {
     std::string path;

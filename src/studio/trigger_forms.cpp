@@ -296,7 +296,7 @@ std::string expression_kind(ExpressionKind kind) {
 std::string expression_label(const Expression& expression) {
     switch (expression.kind) {
     case ExpressionKind::literal: return "Value · " + scalar_text(expression.value);
-    case ExpressionKind::fact: return "Read fact · " + expression.fact;
+    case ExpressionKind::fact: return "Read fact · " + readable_name(expression.fact);
     case ExpressionKind::add: return "Add operands";
     case ExpressionKind::subtract: return "Subtract right from left";
     case ExpressionKind::scale: return "Multiply by " + std::to_string(expression.numerator) + "/" + std::to_string(expression.denominator);
@@ -306,7 +306,8 @@ std::string expression_label(const Expression& expression) {
 std::vector<FormOption> expression_facts(const Registry& registry, const FactMetadata& type) {
     std::vector<FormOption> result;
     for (const auto& [id, fact] : registry.facts())
-        if (fact.scope == type.scope && fact.type == type.type && fact.unit == type.unit) result.push_back({id, id, fact_help(fact)});
+        if (fact.scope == type.scope && fact.type == type.type && fact.unit == type.unit)
+            result.push_back({id, fact.default_value && !fact.help.empty() ? fact.help : readable_name(id), fact_help(fact)});
     return result;
 }
 void expression_fields(FormBuilder& builder, const Expression& expression, const FactMetadata& type, const ExpressionAccess& access) {

@@ -376,6 +376,33 @@ public:
             }
         });
     }
+    Q_INVOKABLE bool openGameContent() {
+        if (!editing()) {
+            QString targetFile;
+            QString targetId;
+            for (const auto& entry : source_) {
+                const auto row = entry.toMap();
+                if (row.value(QStringLiteral("validation")).toString() != QStringLiteral("Validated") ||
+                    row.value(QStringLiteral("kind")).toString() == QStringLiteral("document")) continue;
+                const auto file = row.value(QStringLiteral("file")).toString();
+                const auto id = row.value(QStringLiteral("id")).toString();
+                if (id == QStringLiteral("scenario.founder_campaign")) {
+                    targetFile = file;
+                    targetId = id;
+                    break;
+                }
+                if (targetId.isEmpty() || (file == QStringLiteral("data/runtime/first-playable.json") && row.value(QStringLiteral("kind")).toString() == QStringLiteral("scenario"))) {
+                    targetFile = file;
+                    targetId = id;
+                }
+            }
+            if (targetId.isEmpty() || !beginDraft(targetFile, targetId)) return false;
+        }
+        chapter_owner_.clear();
+        chapter_id_.clear();
+        selectWorkspace(true, true);
+        return editing() && worldMode();
+    }
     Q_INVOKABLE void selectWorkspace(bool world, bool catalogs = false) {
         if (world) {
             try {
@@ -596,6 +623,7 @@ public:
             emit draftChanged();
             return false;
         }
+        if (existingDraft()) return saveDraft(QString{});
         if (!draft_->dirty()) return true;
         auto next = std::make_shared<studio::DraftDocument>(*draft_);
         const auto active_chapter = chapter();

@@ -6,6 +6,71 @@ namespace {
 QString text(std::string_view v) {return QString::fromUtf8(v.data(),static_cast<qsizetype>(v.size()));}
 std::string path_parent(std::string_view path) {return std::string(path.substr(0,path.rfind('/')));}
 std::string record_path(const CatalogEntry& entry) {return entry.family=="text" || entry.family=="owner"?entry.path:path_parent(entry.path);}
+std::string short_name(std::string_view id) {
+    const auto dot=id.find('.');
+    return readable_name(dot==std::string_view::npos?id:id.substr(dot+1));
+}
+QString category_name(std::string_view family) {
+    if(family=="research") return QStringLiteral("Research topic");
+    if(family=="recipe") return QStringLiteral("AI model recipe");
+    if(family=="evaluation") return QStringLiteral("Evaluation benchmark");
+    if(family=="dataset") return QStringLiteral("Dataset");
+    if(family=="hardware") return QStringLiteral("Hardware");
+    if(family=="state") return QStringLiteral("US state");
+    if(family=="protection") return QStringLiteral("Site protection");
+    if(family=="insurance") return QStringLiteral("Insurance plan");
+    if(family=="product") return QStringLiteral("Product / service");
+    if(family=="segment") return QStringLiteral("Market segment");
+    if(family=="region") return QStringLiteral("World region");
+    if(family=="contract") return QStringLiteral("Customer contract");
+    if(family=="wholesale") return QStringLiteral("Wholesale offer");
+    if(family=="company") return QStringLiteral("Rival company");
+    if(family=="executive") return QStringLiteral("Executive");
+    if(family=="specialist") return QStringLiteral("Specialist role");
+    if(family=="board") return QStringLiteral("Board seat");
+    if(family=="leadership_track") return QStringLiteral("Succession track");
+    if(family=="institution_role") return QStringLiteral("Institutional role");
+    if(family=="business_offer") return QStringLiteral("Business offer");
+    if(family=="financing" || family=="corporate_financing") return QStringLiteral("Financing round");
+    if(family=="funding_support") return QStringLiteral("Funding support");
+    if(family=="deal") return QStringLiteral("Supplier deal");
+    if(family=="setback") return QStringLiteral("Project setback");
+    if(family=="variable") return QStringLiteral("Story variable");
+    if(family=="flow") return QStringLiteral("Event flow");
+    if(family=="text") return QStringLiteral("Localized text");
+    return text(readable_name(family));
+}
+bool matches_family_filter(std::string_view family,std::string_view filter,bool search_empty) {
+    if(filter.empty()) return !search_empty || (family!="text" && family!="flow");
+    if(filter=="research") return family=="research";
+    if(filter=="models") return family=="recipe" || family=="evaluation";
+    if(filter=="datasets") return family=="dataset";
+    if(filter=="infrastructure") return family=="hardware" || family=="state" || family=="protection" || family=="insurance";
+    if(filter=="markets") return family=="product" || family=="segment" || family=="region" || family=="contract" || family=="wholesale";
+    if(filter=="rivals") return family=="company";
+    if(filter=="people") return family=="executive" || family=="specialist" || family=="board" || family=="leadership_track" || family=="institution_role";
+    if(filter=="offers") return family=="business_offer" || family=="financing" || family=="corporate_financing" || family=="funding_support" || family=="deal" || family=="setback";
+    if(filter=="events") return family=="variable" || family=="flow";
+    if(filter=="text") return family=="text";
+    return true;
+}
+std::string human_use_location(std::string_view owner,std::string_view path) {
+    const std::string prefix="/definitions/"+std::string(owner)+"/";
+    if(path.starts_with(prefix)) path.remove_prefix(prefix.size());
+    else if(path.starts_with('/')) path.remove_prefix(1);
+    std::string out;
+    std::size_t pos=0;
+    while(pos<path.size()) {
+        const auto next=path.find('/',pos);
+        const auto part=path.substr(pos,next==std::string_view::npos?std::string_view::npos:next-pos);
+        pos=next==std::string_view::npos?path.size():next+1;
+        const bool numeric=!part.empty() && std::all_of(part.begin(),part.end(),[](unsigned char c){return std::isdigit(c)!=0;});
+        if(part.empty() || numeric) continue;
+        if(!out.empty()) out+=" · ";
+        out+=readable_name(part);
+    }
+    return out.empty()?std::string("Reference"):out;
+}
 }
 const CatalogIndex& WorldController::catalog() {
     if(!draft_) throw std::invalid_argument("Open a working collection.");
@@ -24,34 +89,64 @@ void WorldController::project_catalog() {
     }
     const auto& index=catalog();
     const auto target_family=catalog_list_family(path_);
+    const auto filter_str=family_filter_.toStdString();
     for(const auto& entry:index.entries) {
         const auto record=record_path(entry);
-        if(!target_family.empty() && entry.family==target_family && entry.path.ends_with("/id"))
-            catalog_templates_.push_back(QVariantMap{{"value",text(record)},{"label",text(entry.title+" · "+entry.id+" · "+entry.owner)}});
         const auto* owner=draft_->collection().find(entry.owner);
+        std::string clean_title=entry.title;
+        if(entry.family=="flow" && owner) clean_title=event_name(draft_->collection(),*owner);
+        else if(entry.family=="text") clean_title=entry.id;
+        else if(clean_title.empty() || clean_title==entry.id) clean_title=short_name(entry.id);
+        if(!target_family.empty() && entry.family==target_family && entry.path.ends_with("/id")) {
+            const auto owner_title=owner?event_name(draft_->collection(),*owner):short_name(entry.owner);
+            catalog_templates_.push_back(QVariantMap{{"value",text(record)},{"label",text(clean_title+" · "+owner_title)}});
+        }
         const bool global=owner && !std::holds_alternative<content::ScenarioDefinition>(owner->data);
         if((entry.owner!=scenario_ && !global && entry.family!="text") || entry.family=="scenario" ||
             entry.family=="owner" || entry.family=="project") continue;
-        const auto label=entry.family+" · "+entry.title+" · "+entry.id+(owner && owner->deprecated?" · Deprecated":"");
-        if(search_.empty() || text(label).contains(text(search_),Qt::CaseInsensitive))
-            catalog_entries_.push_back(QVariantMap{{"key",text(record)},{"family",text(entry.family)},{"label",text(label)}});
+        const auto category=category_name(entry.family);
+        const bool deprecated=owner && owner->deprecated;
+        const auto qtitle=text(clean_title);
+        const auto label=qtitle+QStringLiteral(" · ")+category+(deprecated?QStringLiteral(" · Deprecated"):QString{});
+        const auto search_blob=text(entry.family+" "+entry.title+" "+entry.id+" ")+category+QStringLiteral(" ")+qtitle;
+        if(matches_family_filter(entry.family,filter_str,search_.empty()) &&
+            (search_.empty() || search_blob.contains(text(search_),Qt::CaseInsensitive))) {
+            catalog_entries_.push_back(QVariantMap{{"key",text(record)},{"family",text(entry.family)},{"category",category},
+                {"title",qtitle},{"id",text(entry.id)},{"deprecated",deprecated},{"label",label}});
+        }
         const auto selected_depth=family_=="text" || family_=="owner"?identity_path_.size():path_parent(identity_path_).size();
         if((path_==record || path_.starts_with(record+"/")) && record.size()>selected_depth) {
             identity_=entry.id;family_=entry.family;identity_path_=entry.path;
         }
     }
-    if(!identity_.empty()) for(const auto& use:content_uses(index,family_,identity_,true))
-        reference_uses_.push_back(QVariantMap{{"owner",text(use.owner)},{"path",text(use.path)},{"family",text(use.family)}});
+    if(!identity_.empty()) for(const auto& use:content_uses(index,family_,identity_,true)) {
+        const auto* use_owner=draft_->collection().find(use.owner);
+        const auto owner_name=use_owner?event_name(draft_->collection(),*use_owner):readable_name(use.owner);
+        reference_uses_.push_back(QVariantMap{{"owner",text(use.owner)},{"path",text(use.path)},{"family",text(use.family)},
+            {"summary",text(owner_name+" · "+human_use_location(use.owner,use.path))}});
+    }
     if(previous_identity!=identity_path_) {
         rename_plan_.reset();
         rename_changes_.clear();
     }
+}
+void WorldController::setFamilyFilter(QString filter) {
+    if(family_filter_==filter) return;
+    family_filter_=std::move(filter);
+    if(draft_ && catalog_mode_) {
+        project_catalog();
+        emit changed();
+    } else emit changed();
 }
 bool WorldController::setCatalogMode(bool enabled) {
     if(enabled==catalog_mode_) return true;
     return perform([&] {
         if(hasStaged() || hasUnapplied() || adding_) throw std::invalid_argument("Apply or reset the current fields before switching authoring workspaces.");
         catalog_mode_=enabled;path_.clear();search_.clear();refresh();
+        if(catalog_mode_ && !catalog_entries_.isEmpty() && (identity_.empty() || family_=="flow")) {
+            path_=catalog_entries_.front().toMap().value(QStringLiteral("key")).toString().toStdString();
+            refresh();
+        }
     });
 }
 void WorldController::selectCatalogEntry(QString selected) {

@@ -63,18 +63,23 @@ void WorldController::set_document(DraftDocument* d,std::string_view preferred) 
     if(replaced) {staged_.clear();catalog_index_.reset();catalog_mode_=false;}
     if(edited) {rename_plan_.reset();rename_changes_.clear();}
     else if(edited && hasStaged()) message_=QStringLiteral("The document changed while these sections were staged. Their values are preserved; discard the stale batch and review the current document.");
-    if(replaced) {setUnapplied({});path_.clear();search_.clear();scenario_.clear();selected_state_.clear();}
+    if(replaced) {setUnapplied({});path_.clear();search_.clear();family_filter_.clear();scenario_.clear();selected_state_.clear();}
     if(!preferred.empty()) {scenario_=preferred;path_.clear();}
     if(edited) {report_.clear();adding_=false;}
     refresh();
 }
 void WorldController::refresh() {
-    scenarios_.clear();sections_.clear();states_.clear();fields_.clear();templates_.clear();form_.reset();++ticket_;
+    scenarios_.clear();sections_.clear();states_.clear();fields_.clear();templates_.clear();section_title_.clear();form_.reset();++ticket_;
     if(!draft_) {scenario_.clear();path_.clear();emit changed();return;}
     for(const auto& [id,d]:draft_->collection().definitions) if(std::holds_alternative<content::ScenarioDefinition>(d.data)) scenarios_.push_back(option({id,event_name(draft_->collection(),d),{}}));
     const auto* selected=draft_->collection().find(scenario_);
     if(!selected || !std::holds_alternative<content::ScenarioDefinition>(selected->data)) {
-        scenario_=scenarios_.isEmpty()?std::string{}:scenarios_.front().toMap().value(QStringLiteral("value")).toString().toStdString();path_.clear();
+        const auto* main_campaign=draft_->collection().find("scenario.founder_campaign");
+        if(main_campaign && std::holds_alternative<content::ScenarioDefinition>(main_campaign->data))
+            scenario_="scenario.founder_campaign";
+        else
+            scenario_=scenarios_.isEmpty()?std::string{}:scenarios_.front().toMap().value(QStringLiteral("value")).toString().toStdString();
+        path_.clear();
     }
     if(scenario_.empty() && !catalog_mode_) {emit changed();return;}
     const auto rows=catalog_mode_?catalog_outline(*draft_,scenario_):world_outline(*draft_,scenario_);
@@ -83,7 +88,19 @@ void WorldController::refresh() {
         const auto slash=path_.rfind('/');
         path_=slash==std::string::npos || slash<12?rows.front().key:path_.substr(0,slash);
     }
+    std::vector<std::string> trail;
     for(const auto& row:rows) {
+        if(row.depth<trail.size()) trail.resize(row.depth);
+        trail.push_back(row.label);
+        if(row.key==path_) {
+            QStringList parts;
+            for(const auto& part:trail) {
+                const auto q=text(part);
+                if(parts.isEmpty() || parts.back()!=q) parts.push_back(q);
+            }
+            section_title_=parts.join(QStringLiteral(" · "));
+        }
+        if(!row.ui_visible) continue;
         if(!search_.empty() && !text(row.search).contains(text(search_),Qt::CaseInsensitive)) continue;
         sections_.push_back(QVariantMap{{"key",text(row.key)},{"label",QString(static_cast<qsizetype>(row.depth*2),QChar{0x00a0})+text(row.label)}});
     }
