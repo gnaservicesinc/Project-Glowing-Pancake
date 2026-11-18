@@ -189,16 +189,33 @@ public:
         if (!definition || !chapter_id_.empty()) return {};
         const auto& collection = draft_->collection();
         const auto& event = std::get<content::FlowDefinition>(definition->data);
-        const auto key = studio::event_presentation(event);
+        const auto key = selectedPassage(event);
         const auto node = event.nodes.find(key);
         const auto copy = [&](const auto& message) {
             const auto* value = collection.message(message);
             return value ? text(*value) : QString{};
         };
+        QVariantList passages;
+        for (const auto id : studio::story_passages(event)) {
+            const auto& page = event.nodes.at(std::string{id});
+            const auto label = page.kind == content::NodeKind::dialogue ? tr("Decision") :
+                page.kind == content::NodeKind::news ? tr("News") : tr("Outcome");
+            const auto headline = copy(page.title_key.empty() ? page.text_key : page.title_key).section(u'\n', 0, 0);
+            passages.push_back(QVariantMap{{"id", text(id)}, {"label", tr("%1 · %2").arg(label, headline)}});
+        }
         QVariantList choices;
-        if (node != event.nodes.end()) for (const auto& choice : node->second.choices)
-            choices.push_back(QVariantMap{{"text", copy(choice.label_key)},
-                {"next", text(studio::readable_name(choice.next))}});
+        if (node != event.nodes.end()) for (const auto& choice : node->second.choices) {
+            QString next_page;
+            std::set<std::string> visited;
+            auto next=event.nodes.find(choice.next);
+            while(next!=event.nodes.end() && visited.insert(next->first).second) {
+                const auto& step=next->second;
+                if(!step.text_key.empty()) { next_page=text(next->first); break; }
+                if(step.kind!=content::NodeKind::delay && step.kind!=content::NodeKind::effect) break;
+                next=event.nodes.find(step.next);
+            }
+            choices.push_back(QVariantMap{{"text", copy(choice.label_key)}, {"nextPassage", next_page}});
+        }
         QString timing;
         if (event.group) timing = QStringLiteral("Another event starts these steps.");
         else if (!event.on_committed.empty())
@@ -218,11 +235,21 @@ public:
             if (scenario && std::ranges::find(scenario->flows, flow_) != scenario->flows.end())
                 scenarios << text(studio::event_name(collection, item));
         }
-        return {{"hasMessage", node != event.nodes.end()},
+        return {{"passage", text(key)}, {"passages", passages}, {"hasMessage", node != event.nodes.end()},
             {"dialogue", node != event.nodes.end() && node->second.kind == content::NodeKind::dialogue},
             {"title", node == event.nodes.end() ? QString{} : copy(node->second.title_key)},
             {"body", node == event.nodes.end() ? QString{} : copy(node->second.text_key)},
             {"choices", choices}, {"timing", timing}, {"scenarios", scenarios}};
+    }
+    Q_INVOKABLE bool selectPassage(const QString& id) {
+        if (!draft_ || flow_.empty() || !chapter_id_.empty()) return false;
+        const auto& event = std::get<content::FlowDefinition>(draft_->collection().definitions.at(flow_).data);
+        const auto passages = studio::story_passages(event);
+        if (std::ranges::find(passages, id.toStdString()) == passages.end()) return false;
+        passage_flow_ = flow_;
+        passage_ = id.toStdString();
+        emit draftChanged();
+        return true;
     }
     Q_INVOKABLE bool changeEventStory(const QString& name, const QString& title, const QString& body,
                                       const QVariantList& labels) {
@@ -233,14 +260,14 @@ public:
             const auto new_name = name.trimmed();
             if (new_name.isEmpty()) throw std::invalid_argument("Give this event a name.");
             const auto editor_key = flow_ + ".editor_title";
-            const auto node = event.nodes.find(studio::event_presentation(event));
+            const auto node = event.nodes.find(selectedPassage(event));
             if (node != event.nodes.end()) {
                 auto& message = node->second;
                 if (body.trimmed().isEmpty()) throw std::invalid_argument("Write the message players will read.");
                 if (!message.title_key.empty()) {
                     if (title.trimmed().isEmpty()) throw std::invalid_argument("Give the dialogue a title.");
                     if (message.title_key == editor_key && title != new_name)
-                        message.title_key = flow_ + ".dialogue_title";
+                        message.title_key = flow_ + "." + node->first + ".dialogue_title";
                     candidate.messages[message.title_key] = title.trimmed().toStdString();
                 }
                 if (message.choices.size() != static_cast<std::size_t>(labels.size()))
@@ -260,7 +287,7 @@ public:
     Q_INVOKABLE bool appendStoryChoice() {
         if (!draft_ || flow_.empty()) return false;
         const auto& event = std::get<content::FlowDefinition>(draft_->collection().definitions.at(flow_).data);
-        const auto node = studio::event_presentation(event);
+        const auto node = selectedPassage(event);
         if (node.empty()) return false;
         return edit([&] {
             (void)studio::FlowForm::open(*draft_, flow_, "node/" + std::string(node)).apply(*draft_, "append", {});
@@ -273,7 +300,7 @@ public:
             return;
         }
         const auto& event = std::get<content::FlowDefinition>(draft_->collection().definitions.at(flow_).data);
-        const auto key = studio::event_presentation(event);
+        const auto key = selectedPassage(event);
         if (key.empty()) { selectOutline(QStringLiteral("flow")); return; }
         auto row = QStringLiteral("node/") + text(key);
         if (choice >= 0) row += QStringLiteral("/choice/") + QString::number(choice);
@@ -514,6 +541,7 @@ public:
             const auto is_flow = std::holds_alternative<content::FlowDefinition>(definition->data);
             world_mode_=!chapter && !is_flow;
             flow_ = is_flow ? key : std::string{};
+            passage_flow_.clear();
             canvas_.set_document(nullptr, {}, {});
             world_.set_document(nullptr);
             draft_ = std::move(next);
@@ -684,6 +712,13 @@ signals:
     void formChanged();
     void savingChanged();
 private:
+    std::string_view selectedPassage(const content::FlowDefinition& event) const {
+        if (passage_flow_ == flow_) {
+            const auto it = event.nodes.find(passage_);
+            if (it != event.nodes.end() && !it->second.text_key.empty()) return it->first;
+        }
+        return studio::event_presentation(event);
+    }
     static QVariantList libraryRows(const studio::Library& library) {
         QVariantList next;
         for (const auto& document : library.documents) {
@@ -703,6 +738,9 @@ private:
                 row.insert(QStringLiteral("kind"), text(definition.kind));
                 row.insert(QStringLiteral("title"), text(definition.title));
                 row.insert(QStringLiteral("synopsis"), text(definition.synopsis));
+                row.insert(QStringLiteral("storyText"),text(definition.story_text));
+                row.insert(QStringLiteral("hasChoices"),definition.has_dialogue);
+                row.insert(QStringLiteral("hasNews"),definition.has_news);
                 row.insert(QStringLiteral("owner"), text(definition.owner));
                 row.insert(QStringLiteral("revision"), definition.revision);
                 row.insert(QStringLiteral("tags"), strings(definition.tags));
@@ -856,13 +894,16 @@ private:
             const auto row = entry.toMap();
             const auto kind = row.value(QStringLiteral("kind")).toString();
             const bool event = kind == QStringLiteral("flow") || kind == QStringLiteral("chapter");
-            if ((!kind_.isEmpty() && (kind_ == QStringLiteral("events") ? !event : kind != kind_)) ||
+            const bool matches=kind_.isEmpty() || kind==kind_ || (kind_=="events" && event) ||
+                (kind_=="decisions" && row.value("hasChoices").toBool()) ||
+                (kind_=="news" && row.value("hasNews").toBool());
+            if (!matches ||
                 (!origin_.isEmpty() && row.value(QStringLiteral("origin")) != origin_)) continue;
             if (!search_.isEmpty()) {
                 const QStringList searchable{row.value(QStringLiteral("id")).toString(), row.value(QStringLiteral("file")).toString(),
                     row.value(QStringLiteral("title")).toString(), row.value(QStringLiteral("synopsis")).toString(),
                     row.value(QStringLiteral("tags")).toStringList().join(u' '), row.value(QStringLiteral("validation")).toString(),
-                    row.value(QStringLiteral("state")).toString()};
+                    row.value(QStringLiteral("state")).toString(),row.value(QStringLiteral("storyText")).toString()};
                 if (!searchable.join(u' ').contains(search_, Qt::CaseInsensitive)) continue;
             }
             visible.push_back(entry);
@@ -884,7 +925,7 @@ private:
     QString checkout_, message_, search_, kind_, origin_ = QStringLiteral("Reviewed");
     std::set<studio::Origin> indexed_;
     std::unique_ptr<studio::DraftDocument> draft_;
-    std::string flow_, chapter_owner_, chapter_id_;
+    std::string flow_, passage_flow_, passage_, chapter_owner_, chapter_id_;
     QString draft_message_;
     QVariantList outline_, fields_;
     QStringList working_flows_;
@@ -972,6 +1013,40 @@ int main(int argc, char* argv[]) {
             if (list->property("count").toLongLong() != 0) throw std::runtime_error("Studio view check: Library type filtering failed.");
             browser.filter({}, QStringLiteral("events"), QStringLiteral("Reviewed"));
             if (list->property("count").toLongLong() != all_rows) throw std::runtime_error("Studio view check: Library filter reset failed.");
+            const auto reviewed=QStringLiteral("data/runtime/first-playable.json");
+            const auto newsroom=QStringLiteral("story.the_missing_zero");
+            if(browser.locate(reviewed,newsroom)>=0) {
+                browser.filter(QStringLiteral("pale ring"),QStringLiteral("decisions"),QStringLiteral("Reviewed"));
+                if(browser.locate(reviewed,newsroom)<0) throw std::runtime_error("Studio lost the searchable text of a later decision.");
+                browser.filter(QStringLiteral("figures corrected"),QStringLiteral("news"),QStringLiteral("Reviewed"));
+                if(browser.locate(reviewed,newsroom)<0 || !browser.beginDraft(reviewed,newsroom))
+                    throw std::runtime_error("Studio could not find the correction as news.");
+                const auto title=browser.workingTitle();
+                const auto first=browser.eventStory();
+                const auto second=first.value("choices").toList().at(1).toMap().value("nextPassage").toString();
+                if(second!="scan" || !browser.selectPassage(second) || !browser.selectPassage("erratum"))
+                    throw std::runtime_error("Studio could not follow the branch or open the correction.");
+                const auto original=browser.eventStory().value("body").toString();
+                if(!browser.changeEventStory(title,{},original+" Revision.",{}) || !browser.selectPassage("letter") ||
+                   browser.eventStory().value("body")!=first.value("body") || !browser.selectPassage("erratum") ||
+                   browser.eventStory().value("body").toString()!=original+" Revision.")
+                    throw std::runtime_error("Editing a later news passage must preserve the opening decision.");
+                browser.undo();
+                if(browser.draftDirty() || browser.eventStory().value("body").toString()!=original)
+                    throw std::runtime_error("Undo must restore the selected news passage.");
+                browser.closeDraft();
+                if(!browser.beginDraft(reviewed,"scenario.founder_campaign"))
+                    throw std::runtime_error("Studio could not open the founder's world.");
+                auto* author=qobject_cast<studio::WorldController*>(browser.worldController());
+                author->filter("coworker voice");
+                if(author->sections().size()!=12) throw std::runtime_error("Studio could not find the authored coworker voices.");
+                author->selectSection(author->sections().first().toMap().value("key").toString());
+                if(!author->apply(author->ticket(),{{"lines/0","I kept a copy of our first notebook."}}))
+                    throw std::runtime_error("Studio could not edit a spoken line in its personality form. "+author->message().toStdString());
+                browser.undo();
+                browser.closeDraft();
+                browser.filter({},QStringLiteral("events"),QStringLiteral("Reviewed"));
+            }
             if (browser.locate(QStringLiteral("data/runtime/first-playable.json"), QStringLiteral("curiosity")) >= 0) {
                 const auto created = browser.createChapter(QStringLiteral("An afternoon at the fair"), QStringLiteral("Your class takes the bus to the fair."));
                 const auto added = created && browser.addChapterChoice();

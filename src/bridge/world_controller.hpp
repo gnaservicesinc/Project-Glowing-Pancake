@@ -13,6 +13,7 @@ class WorldController final : public QObject {
     Q_PROPERTY(QString setting READ setting NOTIFY changed)
     Q_PROPERTY(bool atHeadquarters READ atHeadquarters NOTIFY changed)
     Q_PROPERTY(QVariantList industryPeople READ industryPeople NOTIFY changed)
+    Q_PROPERTY(QVariantMap deskColleague READ deskColleague NOTIFY changed)
     Q_PROPERTY(QVariantMap relationships READ relationships NOTIFY changed)
     Q_PROPERTY(QVariantMap familyAlbum READ familyAlbum NOTIFY changed)
     Q_PROPERTY(QVariantMap romance READ romance NOTIFY changed)
@@ -71,6 +72,8 @@ public:
     QVariantMap founder() const;
     QVariantMap talent() const;
     QVariantMap relationships() const;
+    QVariantMap deskColleague() const;
+    Q_INVOKABLE QVariantMap deskPerson(QString id) const;
     QVariantMap familyAlbum() const;
     Q_INVOKABLE QVariantMap familyQuote(QVariantMap draft) const;
     Q_INVOKABLE void manageFamily(QVariantMap draft,QString revision);
@@ -110,6 +113,7 @@ public:
     Q_INVOKABLE void placePersonalDecor(int item,int property,int x,int y,bool rotated,QString revision);
     Q_INVOKABLE void storePersonalDecor(int item,QString revision);
     Q_INVOKABLE void sellPersonalDecor(int item,QString revision);
+    Q_INVOKABLE void payStudentLoan(QString revision);
     Q_INVOKABLE void payPersonalUpkeep(QString revision);
     bool contactsAvailable() const;
     Q_INVOKABLE QVariantList roomContacts(int room) const;

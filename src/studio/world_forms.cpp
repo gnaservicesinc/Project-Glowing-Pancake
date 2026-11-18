@@ -104,7 +104,10 @@ void authorized(const DraftDocument& d,const Json& doc,std::string_view scenario
 std::string index_label(std::string_view,std::size_t,std::size_t);
 void outline(std::vector<WorldOutlineRow>& out,const Json& value,const std::string& path,std::string name,std::size_t depth) {
     if(out.size()>=32768) throw std::invalid_argument("World outline exceeds its bounded section count.");
+    const bool voice=path.find("/social/conversation_replies/")!=path.npos && value.is_object() && value.contains("lines");
+    if(voice) name="Coworker voice · "+label(value.at("activity").get<std::string>())+" · "+value.at("trait").get<std::string>();
     std::string search=path+" "+name;
+    if(voice) for(const auto& line:value.at("lines")) search+=" "+line.get<std::string>();
     if(value.is_object()) for(const auto& [key,v]:value.items()) if(v.is_primitive()) search+=" "+key+" "+label(key)+" "+scalar(v);
     out.push_back({path,std::move(name),std::move(search),depth});
     if(value.is_object()) for(const auto& [key,child]:value.items()) {
@@ -262,6 +265,13 @@ void WorldForm::build(const DraftDocument& d,bool adding) {
     }
     if(value.is_object()) {
         for(const auto& [key,v]:value.items()) if(v.is_primitive() && !v.is_null()) field(key,label(key),v,path_+"/"+escape(key));
+        if(path_.find("/social/conversation_replies/")!=path_.npos && value.contains("lines")) {
+            const auto& lines=value.at("lines");
+            for(std::size_t i=0;i<lines.size();++i) {
+                const auto key="lines/"+std::to_string(i);
+                field(key,"Spoken reply "+std::to_string(i+1),lines[i],path_+"/"+key);
+            }
+        }
         if(dynamic_map(path_)) {
             fields_.push_back({"@new_key","New entry ID","","Optional stable lowercase ID to add with the other changes.",FormControl::text,{}});
             fields_.push_back({"@new_value","New entry value","0","Unit: "+units(path_)+". Added atomically with the other fields.",FormControl::integer,{}});

@@ -58,6 +58,7 @@ void schedule_research_smoke(QQuickWindow &window, pgp::bridge::CampaignControll
         }
         if (!window.isSceneGraphInitialized() || !campaign.ready() || campaign.busy())
             return;
+        if (press("deskChoice_pass") || press("closeDeskStory")) return;
         const auto &s = campaign.snapshot()->checkpoint.world.simulation;
         const auto *manager = campaign.management();
         auto *world = campaign.world();
@@ -111,6 +112,7 @@ void schedule_research_smoke(QQuickWindow &window, pgp::bridge::CampaignControll
             }
             break;
         case 7:
+            if (!item("technology_"+child)) press("technologyScope");
             if (!press("technology_" + child)) {
                 fail("Select a connected technology");
                 return;
@@ -118,8 +120,8 @@ void schedule_research_smoke(QQuickWindow &window, pgp::bridge::CampaignControll
             break;
         case 8: {
             auto *start = item("startGroundedResearch");
-            if (!start || start->isEnabled()) {
-                fail("Missing prerequisites and insufficient creativity must prevent starting");
+            if (!start || (!run->previewed && start->isEnabled())) {
+                fail("Research requires a named researcher before it can start");
                 return;
             }
             if(has_pacing && !run->previewed) {
@@ -211,6 +213,7 @@ void schedule_research_smoke(QQuickWindow &window, pgp::bridge::CampaignControll
                 return;
             }
             if(!manager->researchTopic("research.compute.batched_serving").isEmpty()) {
+                if(!item("technology_research.compute.batched_serving")) press("technologyScope");
                 if(!press("technology_research.compute.batched_serving")) {fail("Select batched serving in the graph");return;}
                 run->frames=0;
                 break;

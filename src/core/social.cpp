@@ -102,6 +102,16 @@ void validate_social_rules(const SocialRules& r) {
        r.remote_chance_bp<0 || r.remote_chance_bp>r.state_chance_bp || r.city_gain<1 || r.city_gain>40 || r.state_gain<1 || r.state_gain>r.city_gain ||
        r.remote_gain<1 || r.remote_gain>r.state_gain || r.remote_ceiling<1 || r.remote_ceiling>r.thresholds[2] || r.remote_breakthrough_bp<0 || r.remote_breakthrough_bp>100 ||
        r.referral_days<30 || r.referral_days>365)invalid("Geographic social rates, online limits or referral intervals are invalid.");
+    if(r.replies.size()>96) invalid("Too many conversation replies.");
+    std::set<std::pair<std::string,std::string>> matches;
+    for(const auto& reply:r.replies) {
+        if((reply.activity!="chat" && reply.activity!="listen" && reply.activity!="hobby") ||
+           reply.trait.empty() || reply.trait.size()>80 || reply.affinity_bonus<0 || reply.affinity_bonus>10 ||
+           reply.lines.empty() || reply.lines.size()>8 || !matches.emplace(reply.activity,reply.trait).second)
+            invalid("Conversation replies need an activity, a unique trait, bounded rapport and one to eight lines.");
+        for(const auto& line:reply.lines) if(line.empty() || line.size()>160)
+            invalid("Conversation replies must fit a saved social memory.");
+    }
     if(r.mission_conflict)validate_mission_conflict_rules(*r.mission_conflict);
     int previous=0;for(int threshold:r.thresholds){if(threshold<=previous || threshold>1000)invalid("Friendship thresholds must increase.");previous=threshold;}
 }
@@ -246,6 +256,16 @@ void socialize(SimulationState& s,const Socialize& action) {
             gain+=skateboarding_respect_bonus(person_age(s,"founder"),person_age(s,id));
         memory=shared?"Spent time on a shared interest":"Tried something new together";
     }
+    const auto& personality=traits(s,id);
+    const auto reply=std::ranges::find_if(r.replies,[&](const auto& row) {
+        return row.activity==action.activity && std::ranges::find(personality,row.trait)!=personality.end();
+    });
+    if(reply!=r.replies.end()) {
+        const auto* previous=social_link(s,"founder",id);
+        const auto turn=static_cast<std::size_t>(previous ? previous->encounters : 0);
+        memory=reply->lines[turn % reply->lines.size()];
+        gain+=reply->affinity_bonus;
+    }
     int ceiling=1000;bool fit_enabled=true;
     if(external(s,id) || former(s,id)) {
         const auto distance=social_distance(s,"founder",id);
@@ -258,7 +278,7 @@ void socialize(SimulationState& s,const Socialize& action) {
             const bool rebuilding=concern && concern->rivalry_on && concern->settled_on;
             if(rebuilding)gain=std::max(gain,r.interaction_gain/2);
             ceiling=rebuilding || (old && old->affinity>=r.thresholds[2])?1000:r.remote_ceiling;
-            memory="Made time to catch up online";
+            if(reply==r.replies.end()) memory="Made time to catch up online";
         }
     }
     encounter(s,"founder",id,gain,memory,ceiling,fit_enabled);link(s,"founder",id).last_invited=s.date;s.management->people->social->last_outing=s.date;

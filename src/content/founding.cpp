@@ -102,6 +102,7 @@ void to_json(Json& j,const FoundingCatalog& c) {
     if(!c.skill_rewards.empty())j["skill_rewards"]=c.skill_rewards;
     if(!c.scene_pools.empty())j["scene_pools"]=c.scene_pools;
     if(c.opening) j["opening"]=*c.opening;
+    if(c.appointment) j["appointment"]=Json::parse(canonical_founding_selection(*c.appointment));
     if(c.startup_loan) j["startup_loan"]=*c.startup_loan;
     if(!c.partners.empty()) j["partners"]=c.partners;
     if(c.queer_community_buzz) j["queer_community_buzz"]=c.queer_community_buzz;
@@ -115,6 +116,7 @@ void from_json(const Json& j,FoundingCatalog& c) {
     if(j.contains("trait_rewards"))j.at("trait_rewards").get_to(c.trait_rewards);
     if(j.contains("skill_rewards"))j.at("skill_rewards").get_to(c.skill_rewards);
     if(j.contains("scene_pools"))j.at("scene_pools").get_to(c.scene_pools);
+    if(j.contains("appointment")) c.appointment=load_founding_selection(j.at("appointment").dump());
     if(j.contains("opening")) c.opening=j.at("opening").get<FoundingOpeningRules>();
     if(j.contains("startup_loan")) c.startup_loan=j.at("startup_loan").get<FoundingLoan>();
     if(j.contains("partners")) c.partners=j.at("partners").get<std::vector<FoundingPartner>>();
@@ -422,6 +424,15 @@ FoundingCatalog load_founding_catalog(std::string_view bytes) {
         (void)founding_option(scene->choices,key.substr(slash+1));
         std::set<std::string> unique;for(const auto& id:rewards){text(id,table==&c.trait_rewards?80:64);if(!unique.insert(id).second)invalid("Duplicate formative reward.");}
     }
+    }
+    if(c.appointment) {
+        const auto& biography=*c.appointment;
+        if(!c.opening || biography.route!="hired_ceo" || !founding_ceo_eligible(biography) ||
+           biography.mode!="campaign" || !biography.backers.empty() || biography.personal_investment_cents!=0)
+            invalid("A prepared appointment must qualify for the existing CEO offer.");
+        if(biography.choices.size()!=formative_scenes(c,biography).size())
+            invalid("A prepared biography must contain exactly the chapters that happened.");
+        (void)founding_terms(c,biography);
     }
     return c;
 }

@@ -5,6 +5,7 @@
 #include <QCoreApplication>
 #include <fstream>
 #include <iostream>
+#include <set>
 namespace {
 using namespace pgp;
 int checks=0;
@@ -38,6 +39,22 @@ void run() {
           statements.value("cash").toString().contains(QStringLiteral("Ending cash")) &&
           statements.value("units").toString().contains(QStringLiteral("Earned product revenue")),
           "Accounts view omitted current balances, cash reconciliation or actual unit economics");
+    std::set<QString> references;
+    qint64 cash=0;
+    int before=-1;
+    do {
+        const auto page=management.cashLedgerPage(before);
+        for(const auto& entry:page.value("entries").toList()) {
+            const auto row=entry.toMap();
+            check(!row.value("cause").toString().isEmpty() && references.insert(row.value("reference").toString()).second,
+                  "Cash-book pagination repeated a payment or omitted its explanation");
+            cash+=row.value("signedCents").toLongLong();
+        }
+        const int older=page.value("older").toInt();
+        check(!older || before<0 || older<before,"Cash-book cursor must move toward the opening");
+        before=older;
+    } while(before>0);
+    check(cash==advanced.world.simulation.cash.value() && references.size()>20,"Every cash entry must reconcile across pages to the current company balance");
     const auto outlook=management.cashScenarios();
     const auto cases=outlook.value("cases").toList();
     check(cases.size()==3 && cases.front().toMap().value("near").toString().contains(QStringLiteral("Through")) &&
@@ -81,7 +98,7 @@ void run() {
     pricing.setDecisionPage(1);
     check(pricing.decisions()->rowCount()==1 && pricing.decisions()->idAt(0)==QStringLiteral("decision:65536"),"Older decisions are inaccessible");
     pricing.setDecisionPage(0);check(pricing.decisions()->rowCount()==128,"Newest decision page could not be restored");
-    check(management.scoreText().contains(QStringLiteral("Provisional")) && management.scoreText().contains(QStringLiteral("founder")),"Score presentation hid its provisional status or ownership tradeoff");
+    check(management.scoreText().contains(QStringLiteral("Company record through")) && management.scoreText().contains(QStringLiteral("Founder ownership")),"The dated company record must show founder ownership.");
     bridge::SocietyController society;
     society.update(later,true);society.regions()->setSelectedId(QStringLiteral("region.us"));
     check(society.regions()->rowCount()==8 && society.global().contains(QStringLiteral("lowest region")) &&

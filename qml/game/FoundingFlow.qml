@@ -421,6 +421,14 @@ FocusScope {
         RowLayout {
             Layout.fillWidth: true
             WorldButton { objectName: "foundingBackButton"; visible: opening.beatIndex > 0; text: qsTr("← Back"); textSize: opening.typeSize; padding: opening.compact ? 8 : 14; onClicked: opening.previousBeat() }
+            WorldButton {
+                objectName: "foundingPreparedAppointment"
+                visible: opening.beatId === "opening" && !!opening.story.appointmentName
+                text: qsTr("Start at Alder Research")
+                hint: qsTr("Play as %1, a prepared researcher with a job offer and an equipped lab. Review the appointment before signing.").arg(opening.story.appointmentName)
+                textSize: opening.typeSize
+                onClicked: opening.story.prepareAppointment()
+            }
             Item { Layout.fillWidth: true }
             WorldButton {
                 id: continueAction; objectName: "foundingNextButton"

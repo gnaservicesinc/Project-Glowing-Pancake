@@ -377,10 +377,109 @@ void rival_nonfiring_and_budget(const Json& source) {
           "The private completed-model fixture accidentally exposed a customer deployment");
     check(persistence::decode_save(program,persistence::encode_save(program,engine.checkpoint())).checkpoint==engine.checkpoint(),"Budget-declined/closed rival failed exact save validation");
 }
+void founder_desk(const runtime::CompiledProgram& program) {
+    const auto& scenario=std::get<content::ScenarioDefinition>(program.collection.find("scenario.founder_campaign")->data);
+    runtime::ScenarioOptions options;
+    options.founding=scenario.founding->appointment.value();
+    options.identity=runtime::CampaignIdentity{"Alder Research","Robin Ibarra","they/them"};
+    auto start=runtime::begin_scenario(program,"scenario.founder_campaign","US-CA",core::ObjectiveSelection{core::ObjectiveKind::survival,{}},options);
+    start.world.enabled_flows=std::vector<std::string>{"story.the_missing_zero","story.open_bench"};
+    runtime::Runtime game{program,start};
+    accepted(game.prepare_opening(revision(game)));
+    step(game);
+    check(!occurrences(game.checkpoint(),"story.the_missing_zero"),"A new appointment needs a quiet first morning");
+    step(game);
+    const auto entry=game.checkpoint();
+    const auto decide=[](runtime::Runtime& run,const char* response) {accepted(run.choose(revision(run),waiting(run),response));};
+    const auto seen=[](const runtime::Runtime& run,std::string_view id,std::string_view node) {
+        return std::ranges::any_of(run.current_state().runtime.presentations,[&](const auto& p){return p.flow_id==id && p.node_id==node;});
+    };
+    for(const auto& [route,answer,expected]:std::array<std::array<const char*,3>,4>{{
+        {"tickets","source","verified"},{"tickets","hold","second"},{"method","blind","second"},{"method","copy","correction"}}}) {
+        runtime::Runtime branch{program,entry};
+        decide(branch,route); decide(branch,answer);
+        check(seen(branch,"story.the_missing_zero",expected),"A newsroom choice lost its distinct outcome");
+        step(branch,3);
+        const auto due=branch.checkpoint();
+        const auto id=waiting(branch);
+        decide(branch,"return");
+        check(branch.current_state().world.simulation.lab->licenses==due.world.simulation.lab->licenses,
+              "Returning the file must not accept its rights");
+        runtime::Runtime delivery{program,persistence::decode_save(program,persistence::encode_save(program,due)).checkpoint};
+        decide(delivery,"take");
+        const auto delivered=delivery.checkpoint();
+        check(delivered.world.simulation.cash==due.world.simulation.cash &&
+              delivered.world.simulation.accounts->postings==due.world.simulation.accounts->postings &&
+              delivered.world.simulation.lab->licenses.size()==due.world.simulation.lab->licenses.size()+1 &&
+              !delivery.choose(revision(delivery),id,"take").accepted() && delivered==delivery.checkpoint(),
+              "Delivery, retry and reload must share one free license and no postings");
+    }
+    runtime::Runtime declined{program,entry};
+    decide(declined,"pass"); step(declined,5);
+    check(!seen(declined,"story.the_missing_zero","license"),"Declining the case must cancel the later archive visit");
+    // Follow the three opening labs from the same market observation and clock.
+    step(declined,21);
+    std::set<std::pair<std::string,std::string>> first_projects;
+    for(const auto& definition:scenario.rivals) {
+        if(!program.collection.message(definition.id+".entry_quote")) continue;
+        const auto& companies=declined.current_state().world.competition->companies;
+        const auto rival=std::ranges::find(companies,definition.id,&runtime::RivalCompany::definition_id);
+        check(rival!=companies.end() && rival->planning && rival->planning->entered_on,"A quoted founder must actually enter the industry");
+        const auto& decisions=rival->planning->decisions;
+        const auto project=std::ranges::find_if(decisions,[](const auto& d) {
+            return d.accepted && (d.action=="research" || d.action=="train" || d.action=="evaluate");
+        });
+        check(project!=decisions.end(),"An opening competitor must fund lab work");
+        first_projects.emplace(project->action,project->subject);
+        if(!definition.planning->publish_results) check(rival->simulation.lab->publications.empty(),"A private lab must respect its publication policy");
+        std::cout<<definition.name<<" · "<<project->action<<" · "<<project->subject<<'\n';
+    }
+    check(first_projects.size()>=2,"The founding labs must make different working decisions in the same market");
+    runtime::Runtime owned{program,start};
+    accepted(owned.prepare_opening(revision(owned)));
+    apply(owned,core::BuyData{"data.civic_forms_open"});step(owned,2);decide(owned,"tickets");decide(owned,"source");step(owned,3);
+    const auto original=owned.current_state().world.simulation.lab->licenses;
+    decide(owned,"take");
+    check(owned.current_state().world.simulation.lab->licenses==original &&
+          persistence::decode_save(program,persistence::encode_save(program,owned.checkpoint())).checkpoint==owned.checkpoint(),
+          "An archive handoff must respect a license the founder already acquired");
+
+    // Produce qualifying evidence through ordinary work on the small lab fixture.
+    auto small=runtime::begin_scenario(program,"scenario.first_playable","US-CA");
+    small.world.enabled_flows=std::vector<std::string>{"story.open_bench"};
+    runtime::Runtime lab{program,small};
+    accepted(lab.prepare_opening(revision(lab)));
+    apply(lab,core::BuyData{"data.licensed_documents"});
+    const core::LabAllocation testing{"lease.initial",core::MilliCUPerDay{20000},2};
+    apply(lab,core::StartResearch{"research.held_out_evaluation",testing});
+    apply(lab,core::StartTraining{{"desk_model","recipe.document_baseline","",{"data.licensed_documents"},"lease.initial",core::MilliCUPerDay{60000},4,core::MilliCU{3600000}}});
+    step(lab,60);
+    apply(lab,core::StartEvaluation{"desk_evidence","desk_model","evaluation.held_out",testing});
+    check(!occurrences(lab.checkpoint(),"story.open_bench"),"A planned evaluation must not trigger a public reading");
+    step(lab,3);
+    const auto invitation=lab.checkpoint();
+    runtime::Runtime private_show{program,invitation};
+    decide(private_show,"private");
+    check(private_show.current_state().world.simulation.market->demand_changes.empty(),"A private test must not change demand");
+    decide(lab,"open");
+    const auto& market=*lab.current_state().world.simulation.market;
+    const auto changes=market.demand_changes;
+    check(changes.size()==1 && changes.front().expires_before==core::advance_days(changes.front().starts_on,core::Days{14}) &&
+          changes.front().segment_id=="segment.enterprise" && changes.front().delta==core::BasisPointDelta{500} &&
+          lab.current_state().world.simulation.cash==invitation.world.simulation.cash,
+          "The reading must change enterprise demand for fourteen days without paying unearned revenue");
+    step(lab,14);
+    check(seen(lab,"story.open_bench","close") && persistence::decode_save(program,persistence::encode_save(program,lab.checkpoint())).checkpoint==lab.checkpoint(),
+          "The end of the public reading must be reported and survive reload");
 }
-int main() {
+
+}
+int main(int argc,char** argv) {
     try {
         std::ifstream input(PGP_SLICE_CONTENT_PATH); const auto source=Json::parse(input); const auto program=compile(source);
+        if(argc==2 && std::string_view{argv[1]}=="--founder-desk") {
+            founder_desk(program); std::cout<<checks<<" newsroom and public reading checks passed\n"; return 0;
+        }
         pack_and_studio(source,program); supplier_paths(source); demand_paths(source); research_and_finance(source);
         recovery_and_failures(source); full_baseline_and_rivals(source,program); rival_nonfiring_and_budget(source);
         std::cout << checks << " base-event, opportunity, rival, Studio and three-year checks passed\n"; return 0;

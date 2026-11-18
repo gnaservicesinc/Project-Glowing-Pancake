@@ -132,7 +132,7 @@ void CampaignWorker::newCampaign(std::uint64_t token,std::string headquarters,bo
             active_=true;
         }
         campaign_=std::move(next);active_content_=installed_;missing_content_hash_.clear();++generation_;halted_=true;milestone_.reset();publish();
-        emit operationCompleted(static_cast<qulonglong>(token),true,QStringLiteral("New campaign started. Time is paused."));
+        emit operationCompleted(static_cast<qulonglong>(token),true,QString{});
     } catch (const std::exception& error) {
         emit noticeRaised(error_text(error));emit operationCompleted(static_cast<qulonglong>(token),false,error_text(error));
     }

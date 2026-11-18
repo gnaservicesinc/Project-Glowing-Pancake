@@ -23,7 +23,8 @@ std::string readable_name(std::string_view name) {
     }
     return result;
 }
-std::string_view event_presentation(const content::FlowDefinition& flow) {
+std::vector<std::string_view> story_passages(const content::FlowDefinition& flow) {
+    std::vector<std::string_view> passages;
     std::vector<std::string_view> pending{flow.entry_node};
     std::set<std::string_view> seen;
     while (!pending.empty()) {
@@ -32,13 +33,17 @@ std::string_view event_presentation(const content::FlowDefinition& flow) {
         if (!seen.insert(id).second) continue;
         const auto node = flow.nodes.find(id);
         if (node == flow.nodes.end()) continue;
-        if (node->second.kind == content::NodeKind::dialogue || node->second.kind == content::NodeKind::news)
-            return node->first;
+        if (node->second.kind == content::NodeKind::dialogue || node->second.kind == content::NodeKind::news ||
+            node->second.kind == content::NodeKind::result) passages.push_back(node->first);
         const auto start = pending.size();
         detail::visit_node_links(node->second, [&](const auto& next) { pending.push_back(next); });
         std::reverse(pending.begin() + static_cast<std::ptrdiff_t>(start), pending.end());
     }
-    return {};
+    return passages;
+}
+std::string_view event_presentation(const content::FlowDefinition& flow) {
+    const auto passages = story_passages(flow);
+    return passages.empty() ? std::string_view{} : passages.front();
 }
 std::string event_name(const content::Collection& collection, const content::Definition& definition) {
     if (const auto* flow = std::get_if<content::FlowDefinition>(&definition.data)) {

@@ -7,6 +7,12 @@ ColumnLayout {
     required property var manager
     required property int textSize
     required property bool readyForForecast
+    property int ledgerBefore: -1
+    readonly property var ledger: {
+        campaign.world.reviewToken
+        return visible && section === "cashbook" ? manager.cashLedgerPage(ledgerBefore) : ({})
+    }
+    onVisibleChanged: if (!visible) ledgerBefore = -1
     property string section: "statements"
     property var forecast: ({})
     readonly property var statements: visible && section === "statements" ? manager.financialStatements : ({})
@@ -31,6 +37,7 @@ ColumnLayout {
         Repeater {
             model: [
                 { id: "statements", label: qsTr("Statements") },
+                { id: "cashbook", label: qsTr("Cash book") },
                 { id: "scenarios", label: qsTr("Cash scenarios") },
                 { id: "tax", label: qsTr("Corporate tax") },
                 { id: "bills", label: qsTr("Bills and debt") }
@@ -45,6 +52,24 @@ ColumnLayout {
                 Accessible.name: text
                 onClicked: panel.section = modelData.id
             }
+        }
+    }
+    ColumnLayout {
+        visible: panel.section === "cashbook"
+        Layout.fillWidth: true
+        Heading { text: qsTr("Money in and out · %1 on hand").arg(campaign.cashText) }
+        Repeater {
+            model: panel.ledger.entries || []
+            RowLayout {
+                required property var modelData
+                Layout.fillWidth: true
+                Line { text: modelData.date + "  ·  " + modelData.cause }
+                Label { text: modelData.amount; font.pixelSize: panel.textSize; color: modelData.incoming ? "#afdcc3" : "#f5c6a7" }
+            }
+        }
+        RowLayout {
+            WorldButton { visible: panel.ledgerBefore >= 0; text: qsTr("Latest"); textSize: panel.textSize; onClicked: panel.ledgerBefore = -1 }
+            WorldButton { visible: !!panel.ledger.older; text: qsTr("Older payments"); textSize: panel.textSize; onClicked: panel.ledgerBefore = panel.ledger.older }
         }
     }
     Line { text: qsTr("Company accounts · USD in 2014 purchasing power") }

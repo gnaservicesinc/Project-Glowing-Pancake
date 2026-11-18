@@ -10,6 +10,12 @@
 namespace pgp::core {
 struct SimulationState;
 struct PersonProfile;
+struct ConversationReply {
+    std::string activity, trait;
+    int affinity_bonus = 0;
+    std::vector<std::string> lines;
+    auto operator<=>(const ConversationReply&) const = default;
+};
 struct SocialRules {
     int interval_days=7,weekly_gain=10,shared_gain=2,friction=3,interaction_gain=18;
     int outgoing_threshold=40,private_threshold=400,remote_decay=2,mood_cap=6;
@@ -17,6 +23,7 @@ struct SocialRules {
     int city_gain=12,state_gain=6,remote_gain=1,remote_breakthrough_bp=10,referral_days=90;
     std::array<int,5> thresholds{80,200,400,650,850};
     std::optional<MissionConflictRules> mission_conflict;
+    std::vector<ConversationReply> replies{};
     auto operator<=>(const SocialRules&) const=default;
 };
 struct SocialLink {

@@ -51,6 +51,7 @@ private:
 [[nodiscard]] std::vector<OutlineRow> flow_outline(const DraftDocument& draft, std::string_view flow);
 [[nodiscard]] std::vector<FormOption> flow_scope_options(const DraftDocument& draft);
 [[nodiscard]] std::string readable_name(std::string_view name);
+[[nodiscard]] std::vector<std::string_view> story_passages(const content::FlowDefinition&);
 [[nodiscard]] std::string_view event_presentation(const content::FlowDefinition&);
 [[nodiscard]] std::string event_name(const content::Collection&, const content::Definition&);
 bool create_flow(DraftDocument& draft, std::string_view id, std::string_view scope,

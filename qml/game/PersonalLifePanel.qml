@@ -81,6 +81,14 @@ ColumnLayout {
         text:qsTr("Personal savings %1 · Private assets %2 · Unpaid upkeep %3").arg(life.cash || "").arg(life.assets || "").arg(life.unpaid || "")
         color:"#b9dba7"
     }
+    Copy {visible: !!panel.life.studentLoan; text: panel.life.studentLoan || ""}
+    WorldButton {
+        visible: !!panel.life.studentPayoff
+        enabled: panel.editable && !!panel.life.canPayStudentLoan
+        text: qsTr("Pay %1 from personal savings").arg(panel.life.studentPayoff || "")
+        textSize: panel.textSize
+        onClicked: campaign.world.payStudentLoan(campaign.world.reviewToken)
+    }
     Copy {text:qsTr("Homes, art and interiors use your savings and paid salary. Asset values use the disclosed resale prices.")}
     WorldButton {
         objectName:"personalPayUpkeep"

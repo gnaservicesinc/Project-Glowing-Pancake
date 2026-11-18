@@ -1,11 +1,21 @@
 # Feedback and later-phase backlog
 
-Updated 2026-11-14
+Updated 2026-11-18
 
 **The initial skeleton implementation queue is closed.** The current core is
 the starting point for human feedback. Work now follows the user's selected
 feedback changes. Proposed deeper mechanics from the initial pass await
 that review.
+
+## Qt playability feedback
+
+Implemented the staffed Alder Research opening, trait-driven desk conversations,
+a branching newsroom investigation and an earned public reading. The industry
+wire carries actual rival activity. Content Studio supports editing throughout
+each story. Company ledger reconciliation, separation of education debt and
+the connected research view address the accounting and technology feedback.
+Independent player and author sessions, further campaign content, learned-policy
+evaluation and the remaining F-07 work are open.
 
 ## Selected life and development expansion (F-07, in progress)
 

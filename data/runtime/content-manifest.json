@@ -90,13 +90,13 @@
     }
   ],
   "collection": "data/runtime/first-playable.json",
-  "collection_hash": "f79e69073f883220ba5b2cd9d4d604afc98015fc0160c9e37c6f548371879cb3",
+  "collection_hash": "ad260e2249f52ed544cd9d4a946894ee5bdd31a3fd50fa1080e8b91d34b8260a",
   "compatibility": {
     "content_schema": 1,
     "save_format": 1,
     "simulation_rules": 1
   },
-  "content_version": "0.80.0-dev.1",
+  "content_version": "0.82.0-dev.1",
   "definitions": [
     {
       "id": "authority.executive_disclosure",
@@ -1187,14 +1187,14 @@
     {
       "id": "scenario.century_frontier",
       "kind": "scenario",
-      "revision": 20,
-      "semantic_hash": "73371f0fc3afcce87f850e8d45ceac2bce010856d21fc777c4f4d1e240771642"
+      "revision": 21,
+      "semantic_hash": "a341d266d95329049fdf7f7a35e8dcd7d9564237c58181eb580dac3907998920"
     },
     {
       "id": "scenario.century_plateau",
       "kind": "scenario",
-      "revision": 20,
-      "semantic_hash": "e7aa2a64545ed785a653f78e1970d09ff59627ddee110d9f7459327020466f76"
+      "revision": 21,
+      "semantic_hash": "4b8ed699db2d3dcb1bad34ac0400212b84e94726fc7c78277f6f7619399a5ea9"
     },
     {
       "id": "scenario.first_playable",
@@ -1205,8 +1205,8 @@
     {
       "id": "scenario.founder_campaign",
       "kind": "scenario",
-      "revision": 52,
-      "semantic_hash": "c1aac64918f3004172ea60504bdfc25fd339d40e4fa1a6725390b8a1ae99b4a3"
+      "revision": 54,
+      "semantic_hash": "7661df638a4bea1457d3c8268b0d32e224a52fce1787cba9819f0b9b37ed9fdc"
     },
     {
       "id": "scenario.world_competition",
@@ -1341,6 +1341,18 @@
       "semantic_hash": "92d570b5995e8a822c3df99941ec4d3661a3a54bfade7c2e6a2d1f90e6f0cd33"
     },
     {
+      "id": "story.open_bench",
+      "kind": "flow",
+      "revision": 1,
+      "semantic_hash": "eb4e1934662df4db41378871b438129f398205b09653bce5bcdbbc855f687110"
+    },
+    {
+      "id": "story.the_missing_zero",
+      "kind": "flow",
+      "revision": 1,
+      "semantic_hash": "5ee2594f4c25a0a4d0d4d9fa4818bb9b69671a3242572e4fa9b80254747744ae"
+    },
+    {
       "id": "story.willow_council",
       "kind": "flow",
       "revision": 2,
@@ -1348,8 +1360,8 @@
     }
   ],
   "format": 1,
-  "generation": 84,
-  "messages_hash": "f79cbc598ad67720637d8b94ff3347567a032ff18098bc3380b7f8bc5dfb3bad",
+  "generation": 86,
+  "messages_hash": "e5946984912b46eefc82ff435b92f90ca78084b9ca13abc105b735d6893507b4",
   "save_policy": "reject-prior-content",
   "scenario_flow_roots": {
     "scenario.century_frontier": [
@@ -1744,7 +1756,9 @@
       "life.family.marriage",
       "life.mission.concern",
       "life.mission.rival",
-      "life.mission.resignation"
+      "life.mission.resignation",
+      "story.the_missing_zero",
+      "story.open_bench"
     ],
     "scenario.world_competition": [
       "slice.research_milestone",
@@ -1823,5 +1837,5 @@
       "deployment.incident_news"
     ]
   },
-  "source_hash": "9adedf816cb65159502892e814ac7852f718ff3e4beced3620ba5716cd209930"
+  "source_hash": "b573667eee9dedb44c1461275d114e6da1857dc17722a6c9e85c473c328046d2"
 }

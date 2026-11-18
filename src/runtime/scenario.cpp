@@ -192,11 +192,6 @@ Checkpoint begin_scenario(const CompiledProgram& program, std::string_view scena
             const auto& lender = scenario->founding->startup_loan->lender;
             core::draw_debt(accounts, opening.launch_day, *opening.startup_debt, "Startup loan from " + lender);
         }
-        if (opening.student_debt) {
-            core::draw_debt(accounts, opening.launch_day, *opening.student_debt, "University student loans");
-            core::record_cash(accounts, opening.launch_day, core::Cents{-opening.student_debt->principal.value()},
-                core::Account::expenses, "University tuition covered by student loans", "founding/student_tuition");
-        }
         if (opening.setup_cost.value() > 0) {
             core::record_cash(accounts, opening.launch_day, core::Cents{-opening.setup_cost.value()}, core::Account::expenses,
                 "Formation, office deposit and first researcher signing costs", "founding/setup");
@@ -213,6 +208,12 @@ Checkpoint begin_scenario(const CompiledProgram& program, std::string_view scena
     }
     if (!options.charter.empty()) core::initialize_charter(world.simulation, options.charter);
     core::initialize_succession(world.simulation, world.identity ? std::optional{world.identity->founder_name} : std::nullopt);
+    if(const auto& loan=opening.student_debt) {
+        if(!world.simulation.succession || !world.simulation.succession->personal_life)
+            throw std::invalid_argument("Student borrowing requires founder personal finances.");
+        world.simulation.succession->personal_life->student_loan=core::PersonalStudentLoan{
+            loan->principal,loan->monthly_interest,loan->drawn_on,loan->due,{}};
+    }
     const auto terms = (world.founding && scenario->founding)
         ? std::optional{content::founding_terms(*scenario->founding, *world.founding)}
         : std::nullopt;

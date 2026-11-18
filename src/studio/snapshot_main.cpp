@@ -7,6 +7,9 @@
 #include <map>
 namespace {
 using Json=nlohmann::json;
+// A review includes both collections' changed definitions, pretty printed.
+constexpr std::size_t review_bytes=32U*1024U*1024U;
+constexpr std::size_t review_tokens=4'000'000;
 void usage() {
     std::cout<<"pgp-content-tool review --checkout ROOT --source data/drafts/NAME.json --version VERSION --summary TEXT [--target data/runtime/first-playable.json] [--game-version VERSION] [--plan .work/NAME.json]\n"
         <<"pgp-content-tool finalize --checkout ROOT --plan .work/NAME.json\npgp-content-tool check --checkout ROOT\npgp-content-tool recover --checkout ROOT\n"
@@ -46,7 +49,7 @@ int main(int argc,char** argv) {
             if (const auto target=take("--target",false);!target.empty()) request.target=target;
             if (const auto game=take("--game-version",false);!game.empty()) request.game_version=game;
             const auto output=take("--plan",false);ensure_empty();const auto review=studio::review_snapshot(root,request);
-            if (!output.empty()) persistence::atomic_write(plan_path(output),review.report_json,[](std::string_view){throw std::invalid_argument("Select a new review-plan filename.");},4U*1024U*1024U,false);
+            if (!output.empty()) persistence::atomic_write(plan_path(output),review.report_json,[](std::string_view){throw std::invalid_argument("Select a new review-plan filename.");},review_bytes,false);
             std::cout<<review.report_json;return 0;
         }
         if (command=="finalize") {
@@ -55,8 +58,8 @@ int main(int argc,char** argv) {
             // then compares its digest; editable plan text grants no write paths.
             // Review documents include before/after definition bodies. Their
             // event budget is larger than the compact state/history metadata.
-            const auto plan=studio::detail::snapshot_parse(persistence::read_bounded(selected,4U*1024U*1024U),
-                4U*1024U*1024U,800000);const auto& row=plan.at("request");
+            const auto plan=studio::detail::snapshot_parse(persistence::read_bounded(selected,review_bytes),
+                review_bytes,review_tokens);const auto& row=plan.at("request");
             studio::SnapshotRequest request;request.source=row.at("source").get<std::string>();request.target=row.at("target").get<std::string>();
             request.content_version=row.at("content_version").get<std::string>();request.summary=row.at("summary").get<std::string>();request.save_policy=row.at("save_policy").get<std::string>();
             if (!row.at("game_version").is_null()) request.game_version=row.at("game_version").get<std::string>();

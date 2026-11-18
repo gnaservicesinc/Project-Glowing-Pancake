@@ -1437,7 +1437,7 @@ void validate_references(const Collection& collection, const Registry& registry)
                             const auto found = effect_value.arguments.find(argument.name);
                             if (found == effect_value.arguments.end()) continue;
                             const auto& target=std::get<std::string>(found->second);
-                            if (argument.reference_kind=="business_offer" || argument.reference_kind=="market_segment") {
+                            if (argument.reference_kind=="business_offer" || argument.reference_kind=="market_segment" || argument.reference_kind=="dataset") {
                                 bool exists=false;
                                 for (const auto& [candidate_id,candidate]:collection.definitions) {
                                     (void)candidate_id;
@@ -1445,13 +1445,20 @@ void validate_references(const Collection& collection, const Registry& registry)
                                     if (!scenario) continue;
                                     if (argument.reference_kind=="business_offer")
                                         exists=exists || std::any_of(scenario->business_offers.begin(),scenario->business_offers.end(),[&](const auto& row){return row.id==target;});
-                                    else if (scenario->market) {
+                                    else if (argument.reference_kind=="dataset") {
+                                        const bool allowed=scenario->lab && std::ranges::any_of(scenario->lab->data,[&](const auto& row) {
+                                            return row.id==target && row.price.value()==0 && row.open_weight_release;
+                                        });
+                                        if(!allowed && std::ranges::find(scenario->flows,definition.id)!=scenario->flows.end())
+                                            fail("reference",child(path,node_id),"The scenario using this story must supply the named free, redistributable dataset.");
+                                        exists=exists || allowed;
+                                    } else if (scenario->market) {
                                         const auto* regional = regional_markets(collection, *scenario);
                                         const auto& segments = regional ? regional->products.segments : scenario->market->segments;
                                         exists = exists || std::ranges::any_of(segments, [&](const auto& row) { return row.id == target; });
                                     }
                                 }
-                                if (!exists) fail("dangling_reference",child(path,node_id),"Referenced scenario offer or market segment does not exist");
+                                if (!exists) fail("dangling_reference",child(path,node_id),"Referenced scenario offer, open dataset or market segment does not exist");
                             } else (void)reference(target, argument.reference_kind, child(path, node_id));
                         }
                     }

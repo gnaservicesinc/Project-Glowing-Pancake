@@ -2,13 +2,21 @@
 
 A free, offline strategy game about founding an AI company and guiding it through a century of research, products, competition, politics, and consequences.
 
+**Play the Qt game.** Choose **New Game → Start at Alder Research** to play as
+Robin Ibarra. Read the appointment, sign it and begin the first day in a
+staffed lab. Click a coworker at their desk or use the conversation button.
+Advance two mornings to meet Nell Soto, a local editor who needs help checking
+a disputed number. Your answer determines what appears in print and what
+the archive later offers the lab. You can also create your own founder and
+play through childhood, school and company formation.
+
 The selected campaign redesign starts with a California birth in 1997, company
 play at 18 in 2015 and a newspaper retrospective on the founder's passing at
 100 in 2097. [Life and development](docs/LIFE_AND_DEVELOPMENT_PLAN.md),
 [campaign flow](docs/CAMPAIGN_FLOW.md),
 [technology design](docs/TECHNOLOGY.md) and the
 [140-candidate technology catalog](docs/TECHNOLOGY_CATALOG.md) describe the new
-direction. New Game creates the founder, then opens their childhood bedroom
+direction. Creating your own founder opens the birth record, then their childhood bedroom
 before any company exists. The birth record is one editable form, and formative
 choices appear together. The portrait editor provides independent colors; home
 and company computers use a shared icon desktop. The home computer leads to legal formation, financing

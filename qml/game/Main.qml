@@ -1272,7 +1272,7 @@ ApplicationWindow {
         width:Math.min(parent.width-32,650)
         height:storageMessage.implicitHeight+24
         color:"#49362b";radius:8
-        visible:!window.menuVisible && !window.deviceOpen && campaign.notice.length>0
+        visible:!window.menuVisible && !window.deviceOpen && (!worldDesktop.storyOpen || campaign.storageBlocked) && campaign.notice.length>0
         ColumnLayout {
             id:storageMessage
             anchors.left:parent.left;anchors.right:parent.right;anchors.top:parent.top;anchors.margins:12

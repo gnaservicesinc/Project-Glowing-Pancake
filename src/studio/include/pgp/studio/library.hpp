@@ -20,6 +20,8 @@ struct DefinitionEntry {
     std::string title{};
     std::string synopsis{};
     std::string owner{};
+    std::string story_text{};
+    bool has_dialogue=false, has_news=false;
 };
 struct LibraryDocument {
     std::filesystem::path relative_path;

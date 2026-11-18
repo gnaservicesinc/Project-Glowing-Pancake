@@ -1,4 +1,5 @@
 #include "world_controller.hpp"
+#include "portrait_url.hpp"
 #include <QLocale>
 #include <algorithm>
 #include <map>
@@ -85,14 +86,19 @@ QVariantMap puzzleRow(const core::HQInfrastructurePuzzle& puzzle) {
 QVariantMap WorldController::headquarters() const {
     if(!available(snapshot_)) return {};
     const auto& s=snapshot_->checkpoint.world.simulation;const auto& h=hq(snapshot_);const auto& r=rules(snapshot_);const auto& p=core::current_headquarters(s);const auto& city=find(r.markets,p.market);
-    QVariantList items,roomRows,notices;std::map<std::string,QString> names;
+    QVariantList items,roomRows,notices;std::map<std::string,QString> names, portraits;
     names["founder"]=snapshot_->checkpoint.world.identity?q(snapshot_->checkpoint.world.identity->founder_name):tr("You");
-    if(s.management && s.management->people) for(const auto& e:s.management->people->employees) names[e.terms.profile.id]=q(e.terms.profile.name);
+    if(s.management && s.management->people) for(const auto& e:s.management->people->employees) {
+        const auto& profile=e.terms.profile;
+        names[profile.id]=q(profile.name);
+        if(!e.departed_on && e.ready_on<=s.date && profile.role!="Founder / researcher" && core::social_rules(s))
+            portraits[profile.id]=portrait_url(profile,s.date);
+    }
     for(const auto& i:h.items) {
         const auto& e=find(r.equipment,i.offer);const bool delivered=i.delivered_on<=s.date,placed=i.premises==p.id;
         items.push_back(QVariantMap{{"id",i.id},{"offer",q(e.id)},{"name",q(e.name)},{"kind",q(e.kind)},{"supplier",q(e.supplier)},{"inherited",i.inherited},{"deskDevice",core::hq_desk_device(e.kind)},{"portable",core::hq_portable(e.kind)},
             {"x",i.x},{"y",i.y},{"width",i.rotated?e.depth:e.width},{"depth",i.rotated?e.width:e.depth},{"rotated",i.rotated},{"mount",i.mount},{"placed",placed},{"delivered",delivered},
-            {"powered",i.powered},{"watts",e.watts},{"compute",static_cast<double>(e.compute.value())/1000},{"person",q(i.person)},{"personName",names.contains(i.person)?names.at(i.person):QString{}},
+            {"powered",i.powered},{"watts",e.watts},{"compute",static_cast<double>(e.compute.value())/1000},{"person",q(i.person)},{"personPortrait",e.kind=="desk" && portraits.contains(i.person)?portraits.at(i.person):QString{}},{"personName",names.contains(i.person)?names.at(i.person):QString{}},
             {"detail",!i.person.empty() && core::hq_portable(e.kind)?tr("Issued to %1 · work at any desk or from home").arg(names[i.person]):!delivered?tr("Delivery %1").arg(date(i.delivered_on)):placed?tr("Placed in headquarters"):tr("Delivered · in storage")},
             {"ownership",i.inherited?tr("Inherited company equipment"):tr("Purchased from %1 for %2").arg(q(e.supplier),money(i.paid))}});
     }

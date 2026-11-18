@@ -161,6 +161,17 @@ LibraryDocument inspect(const Library& library, const Candidate& candidate, cons
         entry.uses.assign(uses.begin(),uses.end());
         if (const auto* flow = std::get_if<content::FlowDefinition>(&definition.data)) {
             entry.tags = flow->tags;
+            const auto append=[&](const std::string& key) {
+                if(const auto* copy=program.collection.message(key)) {entry.story_text+=*copy;entry.story_text+='\n';}
+            };
+            for(const auto& [node_id,node]:flow->nodes) {
+                (void)node_id;
+                entry.has_dialogue |= node.kind==content::NodeKind::dialogue;
+                entry.has_news |= node.kind==content::NodeKind::news;
+                append(node.title_key);append(node.text_key);
+                for(const auto& choice:node.choices) append(choice.label_key);
+                for(const auto& person:node.participants) {append(person.name_key);append(person.role_key);}
+            }
             const auto first = flow->nodes.find(event_presentation(*flow));
             if (first != flow->nodes.end())
                 if (const auto* copy = program.collection.message(first->second.text_key))
@@ -175,6 +186,7 @@ LibraryDocument inspect(const Library& library, const Candidate& candidate, cons
                 DefinitionEntry chapter{scene.id, "chapter", definition.revision, {}, {}, {}};
                 chapter.title = scene.title;
                 chapter.synopsis = scene.text;
+                for(const auto& choice:scene.choices) chapter.story_text+=choice.name+"\n"+choice.detail+"\n";
                 chapter.owner = id;
                 chapter.state = "Childhood scene";
                 document.definitions.push_back(std::move(chapter));

@@ -24,6 +24,18 @@ GridLayout {
     readonly property var selectedNode: nodes.find(node => node.id === selectedId) || ({})
     readonly property var connected: nodes.filter(node => (selectedNode.all || []).includes(node.id)
         || (selectedNode.any || []).includes(node.id) || node.all.includes(selectedId) || node.any.includes(selectedId))
+    property bool fullTree: false
+    readonly property var graphNodes: {
+        if (fullTree || !selectedNode.id) return nodes
+        const related = [selectedNode, ...connected]
+        const levels = [...new Set(related.map(node => node.level))].sort((a,b) => a-b)
+        const slots = new Map()
+        return related.map(node => {
+            const slot = slots.get(node.level) || 0
+            slots.set(node.level, slot + 1)
+            return Object.assign({}, node, {level: levels.indexOf(node.level), slot: slot})
+        })
+    }
     readonly property var visibleSources: sources.filter(source => source.canAllocate)
     readonly property var teamPreview: {
         campaign.management.researchGraph
@@ -41,8 +53,10 @@ GridLayout {
     function select(id, reveal) {
         selectedId = id
         campaign.world.setDraft("research/tree", id)
-        if (!reveal) return
-        const node = nodes.find(row => row.id === id)
+        if (reveal || !fullTree) Qt.callLater(revealSelection)
+    }
+    function revealSelection() {
+        const node = graphNodes.find(row => row.id === selectedId)
         if (node) {
             graph.contentX = Math.max(0, Math.min(graph.contentWidth - graph.width, node.level * columnStep - columnStep / 3))
             graph.contentY = Math.max(0, Math.min(graph.contentHeight - graph.height, node.slot * rowStep - rowStep))
@@ -92,7 +106,7 @@ GridLayout {
         color: "#c5dbce"
     }
     Copy { Layout.columnSpan: tree.columns; text: qsTr("Technology tree"); font.pixelSize: tree.textSize * 1.5; font.bold: true; color: "#f1e5c5" }
-    Copy { Layout.columnSpan: tree.columns; text: qsTr("Follow the links from earlier discoveries. Solid links count individually, and one result satisfies a dashed group. Teams with enough distinct traits can start some topics before finishing those links.") }
+    Copy { Layout.columnSpan: tree.columns; text: qsTr("Solid links show required discoveries. Any one dashed link satisfies that group. Select a topic to see what it enables and what your team would need.") }
     GameField {
         id: search
         Layout.columnSpan: tree.columns
@@ -114,6 +128,13 @@ GridLayout {
         Accessible.name: qsTr("Select a technology from the tree")
         onActivated: tree.select(currentValue, true)
     }
+    WorldButton {
+        objectName: "technologyScope"
+        Layout.columnSpan: tree.columns
+        text: tree.fullTree ? qsTr("Show connected topics") : qsTr("Show all %1 technologies").arg(tree.nodes.length)
+        textSize: tree.textSize
+        onClicked: { tree.fullTree = !tree.fullTree; Qt.callLater(tree.revealSelection) }
+    }
     Rectangle {
         Layout.fillWidth: true
         Layout.minimumWidth: 0
@@ -130,8 +151,8 @@ GridLayout {
             anchors.margins: 5
             clip: true
             boundsBehavior: Flickable.StopAtBounds
-            contentWidth: Math.max(width, tree.nodes.reduce((high,node) => Math.max(high, (node.level + 1) * tree.columnStep), 0))
-            contentHeight: Math.max(height, tree.nodes.reduce((high,node) => Math.max(high, (node.slot + 1) * tree.rowStep), 0))
+            contentWidth: Math.max(width, tree.graphNodes.reduce((high,node) => Math.max(high, (node.level + 1) * tree.columnStep), 0))
+            contentHeight: Math.max(height, tree.graphNodes.reduce((high,node) => Math.max(high, (node.slot + 1) * tree.rowStep), 0))
             ScrollBar.horizontal: ScrollBar { policy: ScrollBar.AlwaysOn }
             ScrollBar.vertical: ScrollBar { policy: ScrollBar.AlwaysOn }
             onContentXChanged: links.requestPaint()
@@ -146,13 +167,13 @@ GridLayout {
                 onHeightChanged: requestPaint()
                 Connections {
                     target: tree
-                    function onNodesChanged() { links.requestPaint() }
+                    function onGraphNodesChanged() { links.requestPaint() }
                     function onSelectedIdChanged() { links.requestPaint() }
                 }
                 onPaint: {
                     const ctx = getContext("2d")
                     ctx.reset()
-                    const nodes = new Map(tree.nodes.map(node => [node.id,node]))
+                    const nodes = new Map(tree.graphNodes.map(node => [node.id,node]))
                     function edge(parentId, node, optional) {
                         const source = nodes.get(parentId)
                         if (!source) return
@@ -171,14 +192,14 @@ GridLayout {
                         ctx.bezierCurveTo(bend,y1,bend,y2,x2,y2)
                         ctx.stroke()
                     }
-                    for (const node of tree.nodes) {
+                    for (const node of tree.graphNodes) {
                         for (const id of node.all) edge(id,node,false)
                         for (const id of node.any) edge(id,node,true)
                     }
                 }
             }
             Repeater {
-                model: tree.nodes
+                model: tree.graphNodes
                 WorldButton {
                     required property var modelData
                     objectName: "technology_" + modelData.id
@@ -208,6 +229,12 @@ GridLayout {
         spacing: 10
         Copy { text: tree.selected.name || ""; font.bold: true; font.pixelSize: tree.textSize * 1.25; color: "#f1e5c5" }
         Copy { objectName: "innovationLevel"; visible: !!tree.selected.innovation; text: qsTr("Innovation · level %1").arg(tree.selected.innovationLevel || 0); color: "#ebc887" }
+        Copy {
+            visible: (tree.selected.opportunities || []).length > 0
+            text: qsTr("What this makes possible") + "\n" + (tree.selected.opportunities || []).join("\n")
+            color: "#badcc7"
+        }
+        Copy { visible: !!tree.selected.blocker; text: tree.selected.blocker || ""; color: "#efca93" }
         Copy { visible: !!tree.selected.effects; text: tree.selected.effects || "" }
         Copy { visible: !!tree.selected.fee && !tree.selected.completed && !tree.selected.active && !tree.selected.paused; text: qsTr("Project fee %1").arg(tree.selected.fee || "") }
         Copy { text: qsTr("%1 staff-days · %2 CU of experiments").arg(tree.selected.staffDays || 0).arg(tree.selected.experiment || "0") }

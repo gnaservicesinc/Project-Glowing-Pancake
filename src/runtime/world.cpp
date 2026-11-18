@@ -192,7 +192,7 @@ WorldState foundation_world(core::Cents cash) {
 }
 std::vector<std::string> supported_effects() {
     return {"adjust_cash", "record_decision", "open_negotiation", "register_owned_modifier", "remove_owned_modifier", "set_variable",
-        "accept_business_offer", "temporary_demand_change", "record_world_catastrophe"};
+        "accept_open_dataset", "accept_business_offer", "temporary_demand_change", "record_world_catastrophe"};
 }
 content::Scalar read_fact(const WorldState& world, const content::FactMetadata& metadata,
                           const ScopeBinding& binding) {
@@ -587,19 +587,17 @@ void validate_checkpoint_with_simulation(const CompiledProgram& program, const C
                            draw->debit!=core::Account::cash || draw->credit!=core::Account::debt || draw->document_id!=expected.id)
                             invalid("The startup loan must keep its original principal, interest and maturity.");
                     }
-                    const auto student=std::ranges::find(accounts.debts,content::student_debt_id,&core::Debt::id);
-                    if((student!=accounts.debts.end())!=opening.student_debt.has_value())
-                        invalid("Student debt must match the chosen university funding.");
-                    if(opening.student_debt) {
+                    const auto* actor=world.simulation.succession ? &*world.simulation.succession : nullptr;
+                    const auto* student=actor && actor->personal_life && actor->personal_life->student_loan
+                        ? &*actor->personal_life->student_loan : nullptr;
+                    if(std::ranges::find(accounts.debts,content::student_debt_id,&core::Debt::id)!=accounts.debts.end() ||
+                       bool(student)!=opening.student_debt.has_value())
+                        invalid("Student debt belongs to the founder's personal accounts.");
+                    if(student) {
                         const auto& expected=*opening.student_debt;
-                        const auto draw=std::ranges::find(accounts.postings,"debt/"+expected.id,&core::Posting::key);
-                        const auto tuition=std::ranges::find(accounts.postings,"founding/student_tuition",&core::Posting::key);
-                        if(student->drawn_on!=expected.drawn_on || student->due!=expected.due || student->monthly_interest!=expected.monthly_interest ||
-                           draw==accounts.postings.end() || draw->amount!=expected.principal || draw->day!=expected.drawn_on ||
-                           draw->debit!=core::Account::cash || draw->credit!=core::Account::debt || draw->document_id!=expected.id ||
-                           tuition==accounts.postings.end() || tuition->amount!=expected.principal || tuition->day!=expected.drawn_on ||
-                           tuition->debit!=core::Account::expenses || tuition->credit!=core::Account::cash)
-                            invalid("University student loans must remain separate from company operating cash.");
+                        if(student->principal!=expected.principal || student->drawn_on!=expected.drawn_on ||
+                           student->due!=expected.due || student->monthly_interest!=expected.monthly_interest)
+                            invalid("Personal student debt must match the founder's signed terms.");
                     }
                 }
                 if(world.founding || !world.background.empty() || !world.difficulty.empty()) {
@@ -1038,6 +1036,16 @@ void validate_checkpoint_with_simulation(const CompiledProgram& program, const C
                    (*before==0 ? (end->cause!=CampaignEndCause::catastrophe || end->source!=*key || end->day!=receipt.day || ++catastrophe_count!=1) :
                     (*before!=1 || world.objectives->mode!=ObjectiveMode::sandbox || receipt.day<end->day)))
                     invalid("A world-ending event must match a committed authored cause.");
+            } else if (receipt.operation == "accept_open_dataset") {
+                const auto& id=std::get<std::string>(owner.effects[receipt.effect_index].arguments.at("dataset_id"));
+                const auto& lab=world.simulation.lab;
+                if(!lab || (*before!=0 && *before!=1) || receipt.after!=content::Scalar{INT64_C(1)})
+                    invalid("Open dataset receipt lacks its license.");
+                const auto& data=core::lab_data(*lab,id);
+                const auto license=std::ranges::find(lab->licenses,id,&core::DataLicense::offer_id);
+                if(data.price.value()!=0 || !data.open_weight_release || license==lab->licenses.end() ||
+                   license->acquired_on>receipt.day || (!*before && license->acquired_on!=receipt.day))
+                    invalid("Open dataset receipt differs from the acquired catalog license.");
             } else if (receipt.operation == "accept_business_offer") {
                 const auto* after=std::get_if<std::int64_t>(&receipt.after);
                 if (!after || !world.simulation.business_offers || *before<0 || *after<0) invalid("Business offer receipt lacks its actual committed state");

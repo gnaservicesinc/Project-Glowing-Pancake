@@ -403,6 +403,9 @@ Registry foundation_registry() {
     effect("open_negotiation", {{"template_id", ValueType::reference, Unit::none, 0, 0, true, "deal",
            "Registered deal template; opening it creates no payment or signed contract.", {}}},
            "Open a referenced negotiation; a later confirmed command creates commitments.");
+    effect("accept_open_dataset",{{"dataset_id",ValueType::reference,Unit::none,0,0,true,"dataset",
+        "Free dataset with open-weight redistribution rights.",{}}},
+        "Accept the catalog license once. Keeps an existing license and spends no cash.","slice");
     effect("accept_business_offer",{{"offer_id",ValueType::reference,Unit::none,0,0,true,"business_offer",
         "Scenario-owned business offer ID; acceptance rechecks cash, availability and capacity.",{}}},
         "Accept the disclosed lease or recovery pilot through the same validated business transaction as ordinary commands.","slice");

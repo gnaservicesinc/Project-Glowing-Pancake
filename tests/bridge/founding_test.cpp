@@ -307,7 +307,7 @@ int main(int argc,char** argv) {
             pgp::bridge::complete_formative_fixture(school);
             school.setField("investment",QString::number(catalog.formation_cents+500000));
             const auto prev=school.preview();
-            check(prev.contains("Student debt at entry") && prev.contains("Delayed start") &&
+            check(prev.contains("Personal student debt at entry") && prev.contains("Delayed start") &&
                   prev.contains("research effort needed") && !prev.contains("Research speed"),
                   "Preview must disclose student debt, delayed launch years, and unambiguous research effort.");
             runtime::ScenarioOptions dr_options;

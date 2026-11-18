@@ -64,12 +64,15 @@ class CampaignController final : public QObject {
     Q_PROPERTY(bool busy READ busy NOTIFY stateChanged)
     Q_PROPERTY(QString notice READ notice NOTIFY noticeChanged)
     Q_PROPERTY(QString requiredKind READ requiredKind NOTIFY stateChanged)
+    Q_PROPERTY(QString requiredStoryKey READ requiredStoryKey NOTIFY stateChanged)
     Q_PROPERTY(QString requiredTitle READ requiredTitle NOTIFY stateChanged)
     Q_PROPERTY(QString requiredText READ requiredText NOTIFY stateChanged)
     Q_PROPERTY(QVariantList requiredChoices READ requiredChoices NOTIFY stateChanged)
     Q_PROPERTY(QVariantList requiredParticipants READ requiredParticipants NOTIFY stateChanged)
     Q_PROPERTY(bool needsWarning READ needsWarning NOTIFY stateChanged)
     Q_PROPERTY(StableListModel* projects READ projects CONSTANT)
+    Q_PROPERTY(QVariantMap deskDispatch READ deskDispatch NOTIFY stateChanged)
+    Q_PROPERTY(QVariantList deskEditions READ deskEditions NOTIFY stateChanged)
     Q_PROPERTY(StableListModel* inbox READ inbox CONSTANT)
     Q_PROPERTY(QString selectedProjectId READ selectedProjectId WRITE setSelectedProjectId NOTIFY selectionChanged)
     Q_PROPERTY(QString selectedInboxId READ selectedInboxId WRITE setSelectedInboxId NOTIFY selectionChanged)
@@ -166,6 +169,7 @@ public:
     [[nodiscard]] QString notice() const { return notice_; }
     [[nodiscard]] QString requiredKind() const;
     [[nodiscard]] QString requiredTitle() const;
+    [[nodiscard]] QString requiredStoryKey() const;
     [[nodiscard]] QString requiredText() const;
     [[nodiscard]] QVariantList requiredChoices() const;
     [[nodiscard]] QVariantList requiredParticipants() const;
@@ -173,6 +177,8 @@ public:
     [[nodiscard]] StableListModel* projects() const { return projects_; }
     [[nodiscard]] StableListModel* inbox() const { return inbox_; }
     [[nodiscard]] QString selectedProjectId() const { return projects_->selectedId(); }
+    [[nodiscard]] QVariantMap deskDispatch() const { return desk_editions_.value(0).toMap(); }
+    [[nodiscard]] QVariantList deskEditions() const { return desk_editions_; }
     [[nodiscard]] QString selectedInboxId() const { return inbox_->selectedId(); }
     void setSelectedProjectId(QString id);
     void setSelectedInboxId(QString id);
@@ -253,6 +259,7 @@ private:
     CampaignWorker* worker_ = nullptr;
     StableListModel* projects_;
     StableListModel* inbox_;
+    QVariantList desk_editions_;
     CampaignSnapshotPtr snapshot_;
     persistence::Settings settings_;
     const QUrl save_folder_;

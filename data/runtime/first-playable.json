@@ -10,7 +10,7 @@
     "music.weitblick": "9da14349e75eaa6e799a45522c2c8cb00046372efefd2a6121caf1959b10140b"
   },
   "content_schema": 1,
-  "content_version": "0.80.0-dev.1",
+  "content_version": "0.82.0-dev.1",
   "currency_basis": "constant_2014_cents",
   "definitions": [
     {
@@ -25180,7 +25180,7 @@
         "research.compute.batched_serving"
       ],
       "resilience": "resilience.domestic",
-      "revision": 20,
+      "revision": 21,
       "rivals": [
         {
           "capacity_milli_CU_per_day": 380000,
@@ -25256,7 +25256,7 @@
             "price_floor_cents": 50,
             "priorities": [
               120,
-              110,
+              200,
               90,
               100,
               100,
@@ -25273,13 +25273,13 @@
             ],
             "region": "US",
             "research": [
-              "research.held_out_evaluation",
-              "research.efficient_serving",
               "research.reproducible_tooling",
+              "research.efficient_serving",
+              "research.compute.batched_serving",
+              "research.held_out_evaluation",
               "research.data_deduplication",
               "research.sequence_modeling",
-              "research.efficient_image_features",
-              "research.compute.batched_serving"
+              "research.efficient_image_features"
             ],
             "reserve_floor_cents": 5000000,
             "runway_months": 2,
@@ -25313,16 +25313,16 @@
             "priorities": [
               120,
               160,
-              90,
+              210,
               100,
-              100,
+              220,
               22,
               30,
               80,
               40,
               140
             ],
-            "publish_results": true,
+            "publish_results": false,
             "recipes": [
               "recipe.document_baseline"
             ],
@@ -25375,7 +25375,7 @@
               30,
               80,
               40,
-              190
+              240
             ],
             "publish_results": true,
             "recipes": [
@@ -25385,9 +25385,9 @@
             "region": "US",
             "research": [
               "research.held_out_evaluation",
+              "research.data_deduplication",
               "research.efficient_serving",
               "research.reproducible_tooling",
-              "research.data_deduplication",
               "research.sequence_modeling",
               "research.efficient_image_features",
               "research.compute.batched_serving"
@@ -30615,7 +30615,7 @@
         "research.compute.batched_serving"
       ],
       "resilience": "resilience.domestic",
-      "revision": 20,
+      "revision": 21,
       "rivals": [
         {
           "capacity_milli_CU_per_day": 380000,
@@ -30691,7 +30691,7 @@
             "price_floor_cents": 50,
             "priorities": [
               120,
-              110,
+              200,
               90,
               100,
               100,
@@ -30708,13 +30708,13 @@
             ],
             "region": "US",
             "research": [
-              "research.held_out_evaluation",
-              "research.efficient_serving",
               "research.reproducible_tooling",
+              "research.efficient_serving",
+              "research.compute.batched_serving",
+              "research.held_out_evaluation",
               "research.data_deduplication",
               "research.sequence_modeling",
-              "research.efficient_image_features",
-              "research.compute.batched_serving"
+              "research.efficient_image_features"
             ],
             "reserve_floor_cents": 5000000,
             "runway_months": 2,
@@ -30748,16 +30748,16 @@
             "priorities": [
               120,
               160,
-              90,
+              210,
               100,
-              100,
+              220,
               22,
               30,
               80,
               40,
               140
             ],
-            "publish_results": true,
+            "publish_results": false,
             "recipes": [
               "recipe.document_baseline"
             ],
@@ -30810,7 +30810,7 @@
               30,
               80,
               40,
-              190
+              240
             ],
             "publish_results": true,
             "recipes": [
@@ -30820,9 +30820,9 @@
             "region": "US",
             "research": [
               "research.held_out_evaluation",
+              "research.data_deduplication",
               "research.efficient_serving",
               "research.reproducible_tooling",
-              "research.data_deduplication",
               "research.sequence_modeling",
               "research.efficient_image_features",
               "research.compute.batched_serving"
@@ -69660,9 +69660,86 @@
         "life.family.marriage",
         "life.mission.concern",
         "life.mission.rival",
-        "life.mission.resignation"
+        "life.mission.resignation",
+        "story.the_missing_zero",
+        "story.open_bench"
       ],
       "founding": {
+        "appointment": {
+          "activity": "sedentary",
+          "advantages": [
+            "genius"
+          ],
+          "appearance": {
+            "kit": 1,
+            "parts": [
+              3,
+              0,
+              4,
+              0,
+              1,
+              2,
+              1,
+              1,
+              1,
+              0,
+              3,
+              5,
+              5,
+              5,
+              4
+            ],
+            "style": [
+              2,
+              1,
+              2,
+              3,
+              5,
+              4,
+              2,
+              4,
+              3,
+              0,
+              1,
+              4
+            ]
+          },
+          "backers": [],
+          "choices": {
+            "code_camp": "test_release",
+            "elem_best_friend": "accept",
+            "elem_first_job": "label_bins",
+            "elem_playground": "draw_serial",
+            "elem_prodigy": "mentor",
+            "elem_project": "deliberate",
+            "elem_respect_teacher": "show_work",
+            "elem_sharing": "make_timer",
+            "grad_choice": "workforce",
+            "hs_cheat": "notify_teacher",
+            "hs_identity": "systems",
+            "hs_open_lab": "source",
+            "ms_bday_party": "skip",
+            "ms_clubs": "paper",
+            "ms_exclude": "include",
+            "ms_radio": "credit",
+            "ms_sport": "no_sport",
+            "setback": "share"
+          },
+          "disposition": "deliberate",
+          "family": "middle",
+          "first_name": "Robin",
+          "gender": "nonbinary",
+          "last_name": "Ibarra",
+          "legal_form": "corporation",
+          "mode": "campaign",
+          "office": "shared",
+          "orientation": "questioning",
+          "personal_investment_cents": 0,
+          "researcher": "founder",
+          "route": "hired_ceo",
+          "sociability": "introverted",
+          "story_seed": 19972015
+        },
         "backers": [
           {
             "buzz": 0,
@@ -72524,7 +72601,7 @@
               {
                 "buzz": 0,
                 "capital_cents": 0,
-                "detail": "Starts the game with $85,000 student debt — zero extra startup cash.",
+                "detail": "Personal borrowing covers tuition. Simple interest is 0.45% per month from company entry, with principal due in ten years. Repay from your savings in My life.",
                 "family": "",
                 "fee_cents": 0,
                 "id": "loans",
@@ -72558,7 +72635,7 @@
               {
                 "buzz": 0,
                 "capital_cents": 0,
-                "detail": "Campus support shifts cover part of the bill. Start with $32,000 in student debt.",
+                "detail": "Personal borrowing covers tuition. Simple interest is 0.45% per month from company entry, with principal due in ten years. Repay from your savings in My life.",
                 "family": "",
                 "fee_cents": 0,
                 "id": "work_study",
@@ -81805,6 +81882,116 @@
           "social": {
             "city_chance_bp": 8000,
             "city_gain": 14,
+            "conversation_replies": [
+              {
+                "activity": "chat",
+                "affinity_bonus": 5,
+                "lines": [
+                  "“I loved hearing three versions of that meeting. Give me yours before I tell you mine.”",
+                  "“Give me a minute. I just thought of somebody you'd get along with.”"
+                ],
+                "trait": "Social: outgoing"
+              },
+              {
+                "activity": "chat",
+                "affinity_bonus": 1,
+                "lines": [
+                  "“I saved you a seat. It's quiet enough here to finish a thought.”",
+                  "“I've been meaning to ask what got you into this work. We've got a minute.”"
+                ],
+                "trait": "Social: introverted"
+              },
+              {
+                "activity": "listen",
+                "affinity_bonus": 5,
+                "lines": [
+                  "“I keep the crossed-out figures. They're usually where I find what went wrong.”",
+                  "“Give me a pencil. This makes more sense if I draw the part I don't trust.”"
+                ],
+                "trait": "Temperament: deliberate"
+              },
+              {
+                "activity": "listen",
+                "affinity_bonus": 2,
+                "lines": [
+                  "“I said yes to the first idea yesterday. Then somebody asked what we'd actually learn. That one stuck.”",
+                  "“I almost answered for you just then. Go on.”"
+                ],
+                "trait": "Temperament: impulsive"
+              },
+              {
+                "activity": "listen",
+                "affinity_bonus": 5,
+                "lines": [
+                  "“Someone once sat through four bad explanations of mine. The fifth one finally made sense. That meant a lot.”",
+                  "“Can we leave that question open a little longer? I think there's something in it.”"
+                ],
+                "trait": "Temperament: patient"
+              },
+              {
+                "activity": "listen",
+                "affinity_bonus": 2,
+                "lines": [
+                  "“Every time I open a notebook I leave one page for the thing I didn't set out to find.”",
+                  "“I'd take the odd result home with me. The tidy one will still be there tomorrow.”"
+                ],
+                "trait": "Temperament: adventurous"
+              },
+              {
+                "activity": "hobby",
+                "affinity_bonus": 3,
+                "lines": [
+                  "“Try tapping every third beat. Hear how it changes the tune without changing a single note?”",
+                  "“I started recording the station chime. Now I hear it in every song.”"
+                ],
+                "trait": "Interest: music"
+              },
+              {
+                "activity": "hobby",
+                "affinity_bonus": 3,
+                "lines": [
+                  "“I kept a list of birds on the same block for a year. The winter page surprised me.”",
+                  "“If you check under the same log every week, it stops looking like the same log.”"
+                ],
+                "trait": "Interest: nature"
+              },
+              {
+                "activity": "hobby",
+                "affinity_bonus": 3,
+                "lines": [
+                  "“My favorite game gives you one lousy tile. I like seeing what people do with it.”",
+                  "“I've been testing a two-player game on index cards. Everybody finds a rule I forgot.”"
+                ],
+                "trait": "Interest: games"
+              },
+              {
+                "activity": "hobby",
+                "affinity_bonus": 3,
+                "lines": [
+                  "“Read the notes in the margin. The person who filed this map disagreed with the person who drew it.”",
+                  "“A street can change names three times and still show up once in the index. I keep the old directories.”"
+                ],
+                "trait": "Interest: history"
+              },
+              {
+                "activity": "hobby",
+                "affinity_bonus": 3,
+                "lines": [
+                  "“I draw the space between two things first. It keeps me from drawing what I think I see.”",
+                  "“I kept two versions of the same sketch. The one with the smudge looks more like the place.”"
+                ],
+                "trait": "Interest: art"
+              },
+              {
+                "activity": "hobby",
+                "affinity_bonus": 3,
+                "lines": [
+                  "“My recipe card says a pinch. My grandmother wrote it for someone who had watched her hands.”",
+                  "“I've been changing one ingredient each Sunday. Nobody wants me to change last week's soup.”"
+                ],
+                "trait": "Interest: cooking"
+              }
+            ],
             "friction": 3,
             "interaction_gain": 18,
             "interval_days": 7,
@@ -83203,7 +83390,7 @@
         "research.compute.batched_serving"
       ],
       "resilience": "resilience.domestic",
-      "revision": 52,
+      "revision": 54,
       "rivals": [
         {
           "capacity_milli_CU_per_day": 380000,
@@ -83279,7 +83466,7 @@
             "price_floor_cents": 50,
             "priorities": [
               120,
-              110,
+              200,
               90,
               100,
               100,
@@ -83296,13 +83483,13 @@
             ],
             "region": "US",
             "research": [
-              "research.held_out_evaluation",
-              "research.efficient_serving",
               "research.reproducible_tooling",
+              "research.efficient_serving",
+              "research.compute.batched_serving",
+              "research.held_out_evaluation",
               "research.data_deduplication",
               "research.sequence_modeling",
-              "research.efficient_image_features",
-              "research.compute.batched_serving"
+              "research.efficient_image_features"
             ],
             "reserve_floor_cents": 5000000,
             "runway_months": 2,
@@ -83336,16 +83523,16 @@
             "priorities": [
               120,
               160,
-              90,
+              210,
               100,
-              100,
+              220,
               22,
               30,
               80,
               40,
               140
             ],
-            "publish_results": true,
+            "publish_results": false,
             "recipes": [
               "recipe.document_baseline"
             ],
@@ -83398,7 +83585,7 @@
               30,
               80,
               40,
-              190
+              240
             ],
             "publish_results": true,
             "recipes": [
@@ -83408,9 +83595,9 @@
             "region": "US",
             "research": [
               "research.held_out_evaluation",
+              "research.data_deduplication",
               "research.efficient_serving",
               "research.reproducible_tooling",
-              "research.data_deduplication",
               "research.sequence_modeling",
               "research.efficient_image_features",
               "research.compute.batched_serving"
@@ -103508,6 +103695,525 @@
       }
     },
     {
+      "entry_node": "letter",
+      "id": "story.open_bench",
+      "kind": "flow",
+      "lifecycle": {
+        "max_occurrences_per_scope": 1,
+        "mode": "once",
+        "occurrence_scope": "company"
+      },
+      "nodes": {
+        "close": {
+          "kind": "news",
+          "next": "end",
+          "text_key": "story.open_bench.close.body"
+        },
+        "end": {
+          "kind": "end"
+        },
+        "interest": {
+          "effects": [
+            {
+              "delta_bp": 500,
+              "duration_days": 14,
+              "op": "temporary_demand_change",
+              "segment_id": "segment.enterprise",
+              "target": "self"
+            }
+          ],
+          "kind": "effect",
+          "next": "reading"
+        },
+        "letter": {
+          "choices": [
+            {
+              "id": "open",
+              "label_key": "story.open_bench.letter.open",
+              "next": "interest"
+            },
+            {
+              "id": "private",
+              "label_key": "story.open_bench.letter.private",
+              "next": "private"
+            }
+          ],
+          "default_choice_if_dismissed": "private",
+          "kind": "dialogue",
+          "participants": [
+            {
+              "id": "contact.nell_soto",
+              "kind": "contact",
+              "name_key": "cast.nell.name",
+              "portrait": {
+                "kit": 1,
+                "parts": [
+                  3,
+                  8,
+                  0,
+                  0,
+                  1,
+                  2,
+                  0,
+                  3,
+                  0,
+                  0,
+                  2,
+                  5,
+                  6,
+                  0,
+                  2
+                ]
+              },
+              "role_key": "cast.nell.role"
+            }
+          ],
+          "text_key": "story.open_bench.letter.body",
+          "title_key": "story.open_bench.letter.title"
+        },
+        "private": {
+          "kind": "result",
+          "next": "end",
+          "show_committed_changes": true,
+          "text_key": "story.open_bench.private.body"
+        },
+        "reading": {
+          "kind": "news",
+          "next": "wait",
+          "text_key": "story.open_bench.reading.body"
+        },
+        "wait": {
+          "duration_days": 14,
+          "kind": "delay",
+          "next": "close"
+        }
+      },
+      "revision": 1,
+      "scope": "company",
+      "tags": [
+        "story",
+        "founder_desk",
+        "ai_assisted"
+      ],
+      "trigger": {
+        "all_of": [
+          {
+            "fact": "company.independent_evaluations",
+            "op": "gte",
+            "unit": "count",
+            "value": 1
+          },
+          {
+            "fact": "company.has_enterprise_segment",
+            "op": "eq",
+            "unit": "boolean",
+            "value": true
+          }
+        ]
+      }
+    },
+    {
+      "entry_node": "letter",
+      "id": "story.the_missing_zero",
+      "kind": "flow",
+      "lifecycle": {
+        "anchor": {
+          "invalid_day": "clamp_to_month_end",
+          "kind": "scope_created",
+          "offset": {
+            "unit": "days",
+            "value": 2
+          }
+        },
+        "every": {
+          "unit": "days",
+          "value": 7
+        },
+        "max_occurrences_per_scope": 1,
+        "miss_policy": "skip",
+        "mode": "interval",
+        "occurrence_scope": "company"
+      },
+      "nodes": {
+        "correction": {
+          "kind": "result",
+          "next": "correction_wait",
+          "show_committed_changes": true,
+          "text_key": "story.the_missing_zero.correction.body"
+        },
+        "correction_wait": {
+          "duration_days": 1,
+          "kind": "delay",
+          "next": "erratum"
+        },
+        "declined": {
+          "kind": "result",
+          "next": "end",
+          "show_committed_changes": true,
+          "text_key": "story.the_missing_zero.declined.body"
+        },
+        "delivery": {
+          "duration_days": 3,
+          "kind": "delay",
+          "next": "license"
+        },
+        "end": {
+          "kind": "end"
+        },
+        "erratum": {
+          "kind": "news",
+          "next": "later",
+          "text_key": "story.the_missing_zero.erratum.body"
+        },
+        "filed": {
+          "kind": "result",
+          "next": "end",
+          "show_committed_changes": true,
+          "text_key": "story.the_missing_zero.filed.body"
+        },
+        "later": {
+          "duration_days": 2,
+          "kind": "delay",
+          "next": "license"
+        },
+        "letter": {
+          "choices": [
+            {
+              "id": "tickets",
+              "label_key": "story.the_missing_zero.letter.tickets",
+              "next": "rolls"
+            },
+            {
+              "id": "method",
+              "label_key": "story.the_missing_zero.letter.method",
+              "next": "scan"
+            },
+            {
+              "id": "pass",
+              "label_key": "story.the_missing_zero.letter.pass",
+              "next": "declined"
+            }
+          ],
+          "default_choice_if_dismissed": "pass",
+          "kind": "dialogue",
+          "participants": [
+            {
+              "id": "contact.nell_soto",
+              "kind": "contact",
+              "name_key": "cast.nell.name",
+              "portrait": {
+                "kit": 1,
+                "parts": [
+                  3,
+                  8,
+                  0,
+                  0,
+                  1,
+                  2,
+                  0,
+                  3,
+                  0,
+                  0,
+                  2,
+                  5,
+                  6,
+                  0,
+                  2
+                ]
+              },
+              "role_key": "cast.nell.role"
+            },
+            {
+              "id": "contact.gus_bell",
+              "kind": "contact",
+              "name_key": "cast.gus.name",
+              "portrait": {
+                "kit": 1,
+                "parts": [
+                  2,
+                  3,
+                  0,
+                  0,
+                  1,
+                  2,
+                  0,
+                  2,
+                  0,
+                  0,
+                  2,
+                  3,
+                  6,
+                  0,
+                  2
+                ]
+              },
+              "role_key": "cast.gus.role"
+            }
+          ],
+          "text_key": "story.the_missing_zero.letter.body",
+          "title_key": "story.the_missing_zero.letter.title"
+        },
+        "license": {
+          "choices": [
+            {
+              "id": "take",
+              "label_key": "story.the_missing_zero.license.take",
+              "next": "license_effect"
+            },
+            {
+              "id": "return",
+              "label_key": "story.the_missing_zero.license.return",
+              "next": "returned"
+            }
+          ],
+          "default_choice_if_dismissed": "return",
+          "kind": "dialogue",
+          "participants": [
+            {
+              "id": "contact.gus_bell",
+              "kind": "contact",
+              "name_key": "cast.gus.name",
+              "portrait": {
+                "kit": 1,
+                "parts": [
+                  2,
+                  3,
+                  0,
+                  0,
+                  1,
+                  2,
+                  0,
+                  2,
+                  0,
+                  0,
+                  2,
+                  3,
+                  6,
+                  0,
+                  2
+                ]
+              },
+              "role_key": "cast.gus.role"
+            },
+            {
+              "id": "contact.nell_soto",
+              "kind": "contact",
+              "name_key": "cast.nell.name",
+              "portrait": {
+                "kit": 1,
+                "parts": [
+                  3,
+                  8,
+                  0,
+                  0,
+                  1,
+                  2,
+                  0,
+                  3,
+                  0,
+                  0,
+                  2,
+                  5,
+                  6,
+                  0,
+                  2
+                ]
+              },
+              "role_key": "cast.nell.role"
+            }
+          ],
+          "text_key": "story.the_missing_zero.license.body",
+          "title_key": "story.the_missing_zero.license.title"
+        },
+        "license_effect": {
+          "effects": [
+            {
+              "dataset_id": "data.civic_forms_open",
+              "op": "accept_open_dataset",
+              "target": "self"
+            }
+          ],
+          "kind": "effect",
+          "next": "filed"
+        },
+        "returned": {
+          "kind": "result",
+          "next": "end",
+          "show_committed_changes": true,
+          "text_key": "story.the_missing_zero.returned.body"
+        },
+        "rolls": {
+          "choices": [
+            {
+              "id": "source",
+              "label_key": "story.the_missing_zero.rolls.source",
+              "next": "verified"
+            },
+            {
+              "id": "hold",
+              "label_key": "story.the_missing_zero.rolls.hold",
+              "next": "second"
+            }
+          ],
+          "default_choice_if_dismissed": "hold",
+          "kind": "dialogue",
+          "participants": [
+            {
+              "id": "contact.gus_bell",
+              "kind": "contact",
+              "name_key": "cast.gus.name",
+              "portrait": {
+                "kit": 1,
+                "parts": [
+                  2,
+                  3,
+                  0,
+                  0,
+                  1,
+                  2,
+                  0,
+                  2,
+                  0,
+                  0,
+                  2,
+                  3,
+                  6,
+                  0,
+                  2
+                ]
+              },
+              "role_key": "cast.gus.role"
+            },
+            {
+              "id": "contact.nell_soto",
+              "kind": "contact",
+              "name_key": "cast.nell.name",
+              "portrait": {
+                "kit": 1,
+                "parts": [
+                  3,
+                  8,
+                  0,
+                  0,
+                  1,
+                  2,
+                  0,
+                  3,
+                  0,
+                  0,
+                  2,
+                  5,
+                  6,
+                  0,
+                  2
+                ]
+              },
+              "role_key": "cast.nell.role"
+            }
+          ],
+          "text_key": "story.the_missing_zero.rolls.body",
+          "title_key": "story.the_missing_zero.rolls.title"
+        },
+        "scan": {
+          "choices": [
+            {
+              "id": "blind",
+              "label_key": "story.the_missing_zero.scan.blind",
+              "next": "second"
+            },
+            {
+              "id": "copy",
+              "label_key": "story.the_missing_zero.scan.copy",
+              "next": "correction"
+            }
+          ],
+          "default_choice_if_dismissed": "blind",
+          "kind": "dialogue",
+          "participants": [
+            {
+              "id": "contact.nell_soto",
+              "kind": "contact",
+              "name_key": "cast.nell.name",
+              "portrait": {
+                "kit": 1,
+                "parts": [
+                  3,
+                  8,
+                  0,
+                  0,
+                  1,
+                  2,
+                  0,
+                  3,
+                  0,
+                  0,
+                  2,
+                  5,
+                  6,
+                  0,
+                  2
+                ]
+              },
+              "role_key": "cast.nell.role"
+            },
+            {
+              "id": "contact.gus_bell",
+              "kind": "contact",
+              "name_key": "cast.gus.name",
+              "portrait": {
+                "kit": 1,
+                "parts": [
+                  2,
+                  3,
+                  0,
+                  0,
+                  1,
+                  2,
+                  0,
+                  2,
+                  0,
+                  0,
+                  2,
+                  3,
+                  6,
+                  0,
+                  2
+                ]
+              },
+              "role_key": "cast.gus.role"
+            }
+          ],
+          "text_key": "story.the_missing_zero.scan.body",
+          "title_key": "story.the_missing_zero.scan.title"
+        },
+        "second": {
+          "kind": "result",
+          "next": "delivery",
+          "show_committed_changes": true,
+          "text_key": "story.the_missing_zero.second.body"
+        },
+        "verified": {
+          "kind": "result",
+          "next": "delivery",
+          "show_committed_changes": true,
+          "text_key": "story.the_missing_zero.verified.body"
+        }
+      },
+      "revision": 1,
+      "scope": "company",
+      "tags": [
+        "story",
+        "founder_desk",
+        "ai_assisted"
+      ],
+      "trigger": {
+        "fact": "company.is_operating",
+        "op": "eq",
+        "unit": "boolean",
+        "value": true
+      }
+    },
+    {
       "entry_node": "choice",
       "id": "story.willow_council",
       "kind": "flow",
@@ -103630,12 +104336,16 @@
     "cast.customer.name": "Pilot customer",
     "cast.field_desk": "Field desk, Harbormark",
     "cast.founder": "Founder",
+    "cast.gus.name": "Gus Bell",
+    "cast.gus.role": "Keeper of the district archive",
     "cast.incumbent": "Incoming chief executive",
     "cast.iona.name": "Iona Pell",
     "cast.lab": "Independent lab",
     "cast.lio.name": "Lio Ward",
     "cast.maren.name": "Maren Pell",
     "cast.morrow.name": "Morrow Cooperative",
+    "cast.nell.name": "Nell Soto",
+    "cast.nell.role": "Night editor, The Switchback",
     "cast.plainwick.name": "Plainwick lab",
     "cast.procurement": "Procurement lead, Cedar Desk",
     "cast.supplier": "Compute supplier",
@@ -103747,6 +104457,9 @@
     "century.research_data.scan_shortfall.body": "The evaluation leaves a repairable gap\nAt least one independent report lists a concrete limitation. The Lab offers complementary scan and table corpora. A fresh test or a narrower promise can keep existing customers served while you investigate.",
     "civic.election_briefing": "Election results are published\nThe election count is in. Open Civic for the seat breakdown, economic inputs and dates when the new terms begin.",
     "civic.implementation_briefing": "A new policy takes effect\nA policy completed agency implementation today. Open Civic for the effective jurisdiction, eligibility rules and expiration.",
+    "company.century.roster.domestic.1.entry_quote": "“Send us the electricity bill with the benchmark,” says Mira Vale. “If we can run the same job on a smaller machine, that matters to the people buying it.”",
+    "company.century.roster.domestic.2.entry_quote": "“The first customer needs their documents back by Friday,” says Jonah Keene. “I would rather get that delivery right than put a paper out this week.”",
+    "company.century.roster.domestic.3.entry_quote": "“Keep a page the model has never seen,” says Leena Shaw. “I want another lab to be able to check our number.”",
     "deployment.incident.news": "A service incident reaches a new stage\nA deployment incident reached a new stage. Open Office Services to review containment, customer compensation and recovery.",
     "frontier.agi_notice.body": "Independent game AGI assessment. Three independent observation windows established the fictional game AGI criteria for a deployed system.",
     "frontier.asi_notice.body": "Independent game ASI evidence. Independent panels and three physically replicated improvements established the fictional game ASI criteria.",
@@ -103913,6 +104626,37 @@
     "story.morrow_cooperative.followup": "Morrow’s lease term has ended\nThe original cooperative allocation reached the end of its term. Check where any long-running work is now placed and confirm your next capacity plan.",
     "story.morrow_cooperative.result": "The cooperative lease was accepted. The finite allocation and charges are recorded in Operations and Finance.",
     "story.morrow_cooperative.title": "A cooperative read your methods",
+    "story.open_bench.close.body": "The last reader takes her folder home\nThe Switchback closes its fortnight of public tests. The extra enterprise demand from the reading has ended.",
+    "story.open_bench.letter.body": "Nell is laying out the Saturday business page. Your lab has finished an independent evaluation. “Give me a test readers could repeat,” she says. “Or keep the notebook closed. I have a perfectly good crossword.”",
+    "story.open_bench.letter.open": "Show the test at a public reading",
+    "story.open_bench.letter.private": "Keep the evaluation in the lab",
+    "story.open_bench.letter.title": "Room for one figure",
+    "story.open_bench.private.body": "The crossword gets the space\nNell prints the crossword. Your evaluation stays in the lab. No public reading is booked.",
+    "story.open_bench.reading.body": "Readers bring their own test pages\nLocal buyers start comparing document services after the public reading. Enterprise demand rises 5% for 14 days. Any provider can compete for the work. Your company still has to earn each sale.",
+    "story.the_missing_zero.correction.body": "An extra copy of the same mistake\nBoth scans read 18. The depot calls after the edition goes out. Nell runs a correction to 108 and asks Gus to find a fresh set of forms for your lab.",
+    "story.the_missing_zero.declined.body": "Nell takes the night bus\nWithout a second reader, Nell takes the paper register to the depot herself. The next edition credits the ticket clerk. Your company took on no work.",
+    "story.the_missing_zero.erratum.body": "Night route figures corrected\nThe Switchback counted two copies of the same scan as independent sources. The depot register puts ridership at 108. The correction names both sources.",
+    "story.the_missing_zero.filed.body": "Civic forms on the workbench\nThe Civic Forms Exchange collection is available in Lab → Train. A baseline document model can use it. Inspect the sample mix before committing compute. The archive supplied the file at no charge.",
+    "story.the_missing_zero.letter.body": "Nell lays two printouts on your desk. The archive scan says “Night bus riders: 108.” The text she plans to print says 18. “I can fit either number in the headline,” she says. “Which one can I defend by five?” Gus has the paper ticket rolls.",
+    "story.the_missing_zero.letter.method": "Trace the error in the scan",
+    "story.the_missing_zero.letter.pass": "Send Nell back to the archive",
+    "story.the_missing_zero.letter.tickets": "Ask Gus for the ticket rolls",
+    "story.the_missing_zero.letter.title": "The missing zero",
+    "story.the_missing_zero.license.body": "“Here. Spill coffee on these instead.” Gus has brought the Civic Forms Exchange seed collection. The license permits commercial training and open-weight redistribution with attribution. The file is free. Nell wants to know whether you will put it to work.",
+    "story.the_missing_zero.license.return": "Leave the file at the archive",
+    "story.the_missing_zero.license.take": "Accept the free forms for the Lab",
+    "story.the_missing_zero.license.title": "Gus brings the practice file",
+    "story.the_missing_zero.returned.body": "Gus keeps the file\nThe archive copy stays on Gus’s shelf. You can still obtain the ordinary license from the Lab if you need it later.",
+    "story.the_missing_zero.rolls.body": "Gus brings three rolls marked 37, 36 and 35. “Count the punches,” he says. “The machine missed a zero. A person missed it too.” Nell has room for one line about how you checked.",
+    "story.the_missing_zero.rolls.hold": "Hold the figure until a second reader checks",
+    "story.the_missing_zero.rolls.source": "Print 108 and show the three counts",
+    "story.the_missing_zero.rolls.title": "Three rolls and a stapler",
+    "story.the_missing_zero.scan.blind": "Ask for a separately transcribed page",
+    "story.the_missing_zero.scan.body": "Under the fold, the middle digit is a pale ring. Gus slides over a second copy with the same crease. Nell asks whether testing on that copy would settle the question.",
+    "story.the_missing_zero.scan.copy": "Use the second scan as confirmation",
+    "story.the_missing_zero.scan.title": "A crease through the type",
+    "story.the_missing_zero.second.body": "Gus calls the depot\nA clerk reads out 108 from the original register. Nell holds the first edition and gets the figure into the second. Gus offers to bring the practice forms in three days.",
+    "story.the_missing_zero.verified.body": "The count goes to press\nNell pencils “37 + 36 + 35 = 108” under the masthead. Gus asks if you want a copy of the forms that caused the trouble. He will bring the license in three days.",
     "story.willow_council.accept": "Schedule an evidence review",
     "story.willow_council.body": "The company has fulfilled a public commitment. Council secretary Iona Pell wants to see how the result was counted before the next proposal. Set a reminder to review the original promise and the independent report in one month?",
     "story.willow_council.decline": "Leave the record as filed",

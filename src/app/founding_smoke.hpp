@@ -4,3 +4,4 @@
 class QQuickWindow;
 namespace pgp::bridge {class CampaignController;}
 void schedule_founding_smoke(QQuickWindow&,pgp::bridge::CampaignController&,pgp::persistence::LocalPaths,QString,bool partner);
+void schedule_newsroom_smoke(QQuickWindow&,pgp::bridge::CampaignController&,pgp::persistence::LocalPaths,QString);

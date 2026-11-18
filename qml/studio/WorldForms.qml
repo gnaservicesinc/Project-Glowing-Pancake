@@ -83,7 +83,7 @@ ColumnLayout {
                 Layout.fillWidth: true
                 maximumLength: 256
                 enabled: !forms.hasPending && !author.adding
-                placeholderText: author.catalogMode ? qsTr("Search by group or name") : qsTr("Find scoring, policy, rival, region or field")
+                placeholderText: author.catalogMode ? qsTr("Search by group or name") : qsTr("Find a coworker voice, rival, region or rule")
                 Accessible.name: qsTr("Search authoring records and sections")
                 onTextEdited: author.filter(text)
             }

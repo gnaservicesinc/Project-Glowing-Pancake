@@ -109,6 +109,47 @@ void FoundingController::reset(bool save) {
     emit beatChanged();
 }
 
+QString FoundingController::appointmentName() const {
+    if (!catalog_ || !catalog_->appointment) return {};
+    const auto& profile=*catalog_->appointment;
+    return text(profile.first_name+" "+profile.last_name);
+}
+
+bool FoundingController::prepareAppointment() {
+    if (beat_!="opening" || !catalog_ || !catalog_->appointment) return false;
+    const auto& profile=*catalog_->appointment;
+    const auto previous=form_;
+    form_["first_name"]=text(profile.first_name);
+    form_["last_name"]=text(profile.last_name);
+    form_["family"]=text(profile.family);
+    form_["story_seed"]=QString::number(profile.story_seed);
+    form_["gender"]=text(profile.gender);
+    form_["birth_sex"]=text(profile.birth_sex);
+    form_["orientation"]=text(profile.orientation);
+    QStringList advantages;
+    for(const auto& id:profile.advantages) advantages << text(id);
+    form_["advantages"]=advantages;
+    QVariantMap choices;
+    for(const auto& [scene,answer]:profile.choices) choices[text(scene)]=text(answer);
+    form_["choices"]=choices;
+    QVariantList parts,style;
+    for(const auto value:profile.appearance.parts) parts << value;
+    for(const auto value:profile.appearance.style) style << value;
+    form_["appearance"]=parts;
+    form_["style"]=style;
+    pruneChoices();
+    deriveOpening();
+    form_["home_app"]="messages";
+    form_["home_offer"]="alder";
+    form_["home_replies"]=QVariantMap{{"alder",QVariantMap{{"status","offered"},{"source",profile.has_advantage("genius")?"recruiter":"application"}}}};
+    beat_="home";
+    saveDraft();
+    if(!error_.isEmpty()) { form_=previous; beat_="opening"; }
+    emit changed();
+    emit beatChanged();
+    return error_.isEmpty();
+}
+
 QString FoundingController::firstSchoolBeat() const {
     if (!catalog_) return {};
     content::FoundingSelection biography;
@@ -573,7 +614,7 @@ QString FoundingController::preview() const {
             }
             if(!terms.education_label.empty()) sources<<tr("Credentials: %1").arg(text(terms.education_label));
             if(terms.doctorate_count>0) sources<<tr("Title: Dr. (%1 doctorate(s)) · %2% research effort needed").arg(terms.doctorate_count).arg(terms.research_work_scale_bp/100);
-            if(terms.student_loan_cents>0) sources<<tr("Student debt at entry: %1 (no added cash)").arg(money(terms.student_loan_cents));
+            if(terms.student_loan_cents>0) sources<<tr("Personal student debt at entry: %1 · 0.45% simple interest per month, due in 10 years. Repay from My life.").arg(money(terms.student_loan_cents));
             if(terms.entry_delay_days>0) {
                 const auto launch=core::advance_days(starts_on_,core::Days{terms.entry_delay_days});
                 sources<<tr("Delayed start: %1 (%n day(s) after the market opens)",nullptr,static_cast<int>(terms.entry_delay_days))

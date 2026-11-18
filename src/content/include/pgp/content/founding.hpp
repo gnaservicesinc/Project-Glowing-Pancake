@@ -61,19 +61,6 @@ struct FoundingPartner {
     std::uint32_t shares_bp=0, seats=1, maximum_dilution_bp=0;
     auto operator<=>(const FoundingPartner&) const = default;
 };
-struct FoundingCatalog {
-    std::vector<FoundingOption> families, legs, routes, backers, offices, researchers;
-    std::vector<FormativeScene> scenes;
-    std::map<std::string,FormativePool,std::less<>> scene_pools;
-    std::int64_t formation_cents=0, compute_monthly_cents=0, founder_salary_cents=0;
-    std::uint32_t prestige_finance_bp=0, buzz_finance_bp=0, maximum_finance_bonus_bp=0;
-    std::optional<FoundingOpeningRules> opening;
-    std::optional<FoundingLoan> startup_loan;
-    std::vector<FoundingPartner> partners;
-    std::uint32_t queer_community_buzz=0, queer_community_prestige=0;
-    std::map<std::string,std::vector<std::string>> skill_rewards,trait_rewards;
-    auto operator<=>(const FoundingCatalog&) const = default;
-};
 struct FoundingSelection {
     std::string mode="campaign", first_name="Alex", last_name="Vale", gender="nonbinary";
     std::string sociability="introverted", activity="sedentary", disposition="deliberate";
@@ -89,6 +76,20 @@ struct FoundingSelection {
     std::uint64_t story_seed=19972015;
     [[nodiscard]] bool has_advantage(std::string_view id) const;
     auto operator<=>(const FoundingSelection&) const = default;
+};
+struct FoundingCatalog {
+    std::vector<FoundingOption> families, legs, routes, backers, offices, researchers;
+    std::vector<FormativeScene> scenes;
+    std::map<std::string,FormativePool,std::less<>> scene_pools;
+    std::int64_t formation_cents=0, compute_monthly_cents=0, founder_salary_cents=0;
+    std::uint32_t prestige_finance_bp=0, buzz_finance_bp=0, maximum_finance_bonus_bp=0;
+    std::optional<FoundingOpeningRules> opening;
+    std::optional<FoundingLoan> startup_loan;
+    std::vector<FoundingPartner> partners;
+    std::uint32_t queer_community_buzz=0, queer_community_prestige=0;
+    std::map<std::string,std::vector<std::string>> skill_rewards,trait_rewards;
+    std::optional<FoundingSelection> appointment{};
+    auto operator<=>(const FoundingCatalog&) const = default;
 };
 inline constexpr std::array<std::string_view,8> founder_orientations{
     "straight","gay_or_lesbian","bisexual","pansexual","asexual","queer","questioning","demisexual"};

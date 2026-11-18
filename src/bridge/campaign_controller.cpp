@@ -15,6 +15,7 @@
 #include <algorithm>
 #include <set>
 #include <limits>
+#include <map>
 #include <stdexcept>
 
 namespace pgp::bridge {
@@ -89,9 +90,73 @@ std::vector<CampaignRow> project_rows(const runtime::Checkpoint& checkpoint) {
     }
     return rows;
 }
-std::vector<CampaignRow> inbox_rows(const runtime::Checkpoint& checkpoint,const content::Collection& collection,const ManagementController& management) {
+std::vector<CampaignRow> inbox_rows(const runtime::Checkpoint& checkpoint,const content::Collection& collection,const ManagementController& management,QVariantList& editions) {
     std::vector<CampaignRow> rows;
+    constexpr std::size_t clipping_limit=24;
+    using Rank=std::pair<core::OrdinalDay,int>;
+    std::multimap<Rank,QVariantMap> clippings;
+    const auto fits=[&](Rank rank) { return clippings.size()<clipping_limit || rank>=clippings.begin()->first; };
+    const auto feature=[&](core::OrdinalDay day,int priority,const QString& id,const QString& title,const QString& detail,
+                           const QString& section,QString activation={},QString research={}) {
+        const Rank rank{day,priority};
+        if(!fits(rank))return;
+        if(clippings.size()==clipping_limit)clippings.erase(clippings.begin());
+        clippings.emplace(rank,QVariantMap{{"id",id},{"title",title},{"detail",detail},{"date",text(core::iso_date(day))},
+                        {"section",section},{"activation",activation},{"research",research}});
+    };
+    const auto* definition=collection.find(checkpoint.world.scenario_id);
+    const auto* scenario=definition ? std::get_if<content::ScenarioDefinition>(&definition->data) : nullptr;
+    if(scenario && checkpoint.world.competition) {
+        const auto& notices=checkpoint.world.competition->notices;
+        for(std::size_t i=0;i<notices.size();++i) {
+            const auto& notice=notices[i];
+            const auto rival=std::ranges::find(scenario->rivals,notice.company_id,&content::RivalDefinition::id);
+            if(rival==scenario->rivals.end()) continue;
+            const auto name=text(rival->name);
+            QString title,detail;
+            int priority=1;
+            if(notice.kind=="entry") {
+                title=QObject::tr("%1 opens its doors").arg(name);
+                const auto* quote=collection.message(rival->id+".entry_quote");
+                detail=quote ? text(*quote) : rival->planning ?
+                    QObject::tr("%1 opened %2 in %3.").arg(text(rival->planning->leader),name,text(rival->planning->region)) :
+                    QObject::tr("%1 has started operations.").arg(name);
+                if(quote) priority=2;
+            } else if(notice.kind=="publication") {
+                const auto* topic=collection.message(notice.subject+".title");
+                title=QObject::tr("%1 publishes its findings").arg(name);
+                detail=notice.subject.empty()?QObject::tr("The lab released results from its training run."):
+                    QObject::tr("The lab published %1. Open the research tree to see whether your team can adopt the findings.").arg(topic?text(*topic):readable(notice.subject));
+            } else if(notice.kind=="closure") {
+                title=QObject::tr("%1 closes").arg(name);
+                detail=QObject::tr("The company could no longer meet its obligations.");
+            } else continue;
+            const auto date=text(core::iso_date(notice.day));
+            rows.push_back({QStringLiteral("industry:%1").arg(i),title,date,detail,QObject::tr("Industry wire"),false,{},date});
+            feature(notice.day,priority,rows.back().entity_id,title,detail,QObject::tr("Industry wire"),{},
+                    notice.kind=="publication"?text(notice.subject):QString{});
+        }
+        const auto& releases=checkpoint.world.competition->releases;
+        for(std::size_t i=0;i<releases.size();++i) {
+            const auto& release=releases[i];
+            const auto rival=std::ranges::find(scenario->rivals,release.company_id,&content::RivalDefinition::id);
+            if(rival==scenario->rivals.end()) continue;
+            const auto* product_title=collection.message(release.product_id+".title");
+            const auto product=product_title?text(*product_title):readable(release.product_id);
+            const auto title=QObject::tr("%1 delivers its first %2 order").arg(text(rival->name),product);
+            const auto detail=QObject::tr("Customers received work from %1 on %2. This is the first recorded delivery for this product.").arg(text(rival->name),text(core::iso_date(release.day)));
+            const auto date=text(core::iso_date(release.day));
+            rows.push_back({QStringLiteral("industry:delivery:%1").arg(i),title,date,detail,QObject::tr("Industry wire"),false,{},date});
+            feature(release.day,2,rows.back().entity_id,title,detail,QObject::tr("Industry wire"));
+        }
+    }
     for (const auto& row : checkpoint.runtime.presentations) {
+        if(row.kind!=runtime::PresentationKind::dialogue) {
+            const int priority=row.flow_id.starts_with("story.") ? 4 : 0;
+            if(fits({row.day,priority}))
+                feature(row.day,priority,QStringLiteral("article:%1").arg(row.id),presentation_heading(row,collection),presentation_context(checkpoint,row,&collection),
+                        row.kind==runtime::PresentationKind::result?QObject::tr("Your decision"):QObject::tr("News desk"),integer(row.activation_id));
+        }
         if (row.kind == runtime::PresentationKind::news) continue;
         const auto day=text(core::iso_date(row.day));
         const bool pending=row.kind == runtime::PresentationKind::dialogue && !row.resolved;
@@ -124,6 +189,22 @@ std::vector<CampaignRow> inbox_rows(const runtime::Checkpoint& checkpoint,const 
             detail+=article;
         }
         publish();
+    }
+    // Only the recent papers sit on the desk. The journal retains the whole run.
+    std::map<std::pair<std::uint64_t,core::OrdinalDay>,QString> datasets;
+    for(auto it=checkpoint.runtime.receipts.rbegin();it!=checkpoint.runtime.receipts.rend() && !clippings.empty();++it) {
+        if(it->day<clippings.begin()->first.first)break;
+        if(it->operation!="accept_open_dataset")continue;
+        const auto& flow=std::get<content::FlowDefinition>(collection.find(it->flow_id)->data);
+        const auto& effect=flow.nodes.at(it->node_id).effects.at(it->effect_index);
+        datasets.try_emplace(std::pair{it->activation_id,it->day},text(std::get<std::string>(effect.arguments.at("dataset_id"))));
+    }
+    editions.clear();
+    for(auto it=clippings.rbegin();it!=clippings.rend();++it) {
+        auto& edition=it->second;
+        const auto license=datasets.find({edition.value("activation").toULongLong(),it->first.first});
+        if(license!=datasets.end())edition["dataset"]=license->second;
+        editions.push_back(std::move(edition));
     }
     const auto& state = checkpoint.world.simulation;
     if (state.management) for (const auto& n:state.management->notices)
@@ -290,7 +371,7 @@ void CampaignController::acceptSnapshot(CampaignSnapshotPtr snapshot) {
     frontier_->update(snapshot, replace);
     leadership_->update(snapshot,replace);
     objectives_->update(snapshot,content,replace);
-    auto inbox = inbox_rows(snapshot->checkpoint,content.collection,*management_);
+    auto inbox = inbox_rows(snapshot->checkpoint,content.collection,*management_,desk_editions_);
     if ((!first && replace) || snapshot->current_campaign) welcome_=false;
     if (replace) { projects_->beginCampaign(std::move(projects)); inbox_->beginCampaign(std::move(inbox)); }
     else { projects_->setRows(std::move(projects)); inbox_->setRows(std::move(inbox)); }
@@ -569,6 +650,10 @@ QString CampaignController::requiredKind() const {
     }
     return QStringLiteral("none");
 }
+QString CampaignController::requiredStoryKey() const {
+    const auto* row=waitingPresentation();
+    return row ? QStringLiteral("%1/%2").arg(row->activation_id).arg(row->id) : QString{};
+}
 QString CampaignController::requiredTitle() const {
     const auto kind = requiredKind();
     if(kind==QStringLiteral("objective")) return QStringLiteral("An objective is now out of reach");
@@ -613,7 +698,7 @@ QString CampaignController::requiredText() const {
     if (kind == QStringLiteral("core")) return QStringLiteral("A scheduled delivery awaits your decision. Accepting consumes its reserved funds; declining does not refund earlier purchases.");
     if (kind == QStringLiteral("content")) {
         const auto* row=waitingPresentation();
-        auto result=presentation_detail(snapshot_->checkpoint,*row,&activeProgram().collection);
+        auto result=presentation_context(snapshot_->checkpoint,*row,&activeProgram().collection);
         const auto& s=snapshot_->checkpoint.world.simulation;
         if (s.business_offers && (row->flow_id=="slice.supplier_offer" || row->flow_id=="slice.recovery_opportunity"))
             for (const auto& offer:s.business_offers->catalog)

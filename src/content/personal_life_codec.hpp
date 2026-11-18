@@ -20,7 +20,10 @@ template<class T,class F> void fields(T& row,F f) {
         f("delivery_days",row.delivery);f("width",row.width);f("depth",row.depth);f("resale_bp",row.resale);
     } else if constexpr(std::is_same_v<V,core::PersonalLifeState>) {
         f("properties",row.properties);f("decor",row.decor);f("bills",row.bills);f("spent_cents",row.spent);f("unpaid_cents",row.unpaid);
-        f("events",row.events);f("pending_events",row.pending_events);
+        f("events",row.events);f("pending_events",row.pending_events);f("student_loan",row.student_loan,true);
+    } else if constexpr(std::is_same_v<V,core::PersonalStudentLoan>) {
+        f("principal_cents",row.principal);f("monthly_interest_bp",row.monthly_interest);
+        f("drawn_on",row.drawn_on);f("due",row.due);f("paid_on",row.paid_on);
     } else if constexpr(std::is_same_v<V,core::PersonalProperty>) {
         f("id",row.id);f("offer",row.offer);f("purchased_on",row.purchased_on);f("next_upkeep",row.next_upkeep);f("sold_on",row.sold_on);
     } else if constexpr(std::is_same_v<V,core::PersonalDecor>) {

@@ -32,6 +32,7 @@ ScrollView {
         eventName.text = author.workingTitle
         playerTitle.text = story.title || ""
         body.text = story.body || ""
+        passage.currentIndex = (story.passages || []).findIndex(row => row.id === story.passage)
         changed = false
     }
     Connections {
@@ -81,6 +82,21 @@ ScrollView {
             text: editor.author.workingTitle
             onTextEdited: editor.changed = true
         }
+        Label { visible: passage.visible; text: qsTr("Story passage"); font.bold: true }
+        ComboBox {
+            id: passage
+            objectName: "eventStoryPassage"
+            visible: count > 1
+            Layout.fillWidth: true
+            textRole: "label"
+            model: editor.story.passages || []
+            Accessible.name: qsTr("Choose a decision, news story or outcome to edit")
+            onActivated: index => {
+                const next = model[index].id
+                if (editor.applyEdits()) editor.author.selectPassage(next)
+                else currentIndex = model.findIndex(row => row.id === editor.story.passage)
+            }
+        }
         Label { visible: !!editor.story.dialogue; text: qsTr("Title the player sees"); font.bold: true }
         TextField {
             id: playerTitle
@@ -127,7 +143,15 @@ ScrollView {
                     Accessible.name: qsTr("Choice %1 button text").arg(index + 1)
                     onTextEdited: editor.changed = true
                 }
-                Button { text: qsTr("What happens next"); onClicked: editor.openStep("story", index) }
+                Button {
+                    visible: !!modelData.nextPassage
+                    text: qsTr("Read next")
+                    onClicked: {
+                        const next = modelData.nextPassage
+                        if (editor.applyEdits()) editor.author.selectPassage(next)
+                    }
+                }
+                Button { text: qsTr("Edit route"); onClicked: editor.openStep("story", index) }
             }
         }
         RowLayout {

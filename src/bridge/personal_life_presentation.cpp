@@ -53,7 +53,13 @@ QVariantMap WorldController::personalLife() const {
             {"detail",item.delivered_on>state.date?tr("Arrives %1").arg(q(core::iso_date(item.delivered_on))):
                 item.property?tr("Placed in %1").arg(q(find(catalog.properties,owned.properties[item.property-1].offer).name)):tr("Delivered · in personal storage")}});
     }
-    return {{"cash",money(state.succession->personal_cash)},{"assets",money(valuation.assets)},{"unpaid",money(owned.unpaid)},
+    const auto& loan=owned.student_loan;
+    const auto payoff=loan && !loan->paid_on ? core::student_payoff(*loan,state.date) : core::Cents{0};
+    const auto loanDetail=!loan ? QString{} : loan->paid_on ? tr("Student loan paid on %1").arg(q(core::iso_date(*loan->paid_on))) :
+        tr("Student loan · %1 outstanding (%2 principal). Simple interest %3% per month. Due %4.")
+            .arg(money(payoff),money(loan->principal)).arg(static_cast<double>(loan->monthly_interest.value())/100.0).arg(q(core::iso_date(loan->due)));
+    return {{"studentLoan",loanDetail},{"studentPayoff",payoff.value()?money(payoff):QString{}},
+        {"canPayStudentLoan",payoff.value()>0 && payoff<=state.succession->personal_cash},{"cash",money(state.succession->personal_cash)},{"assets",money(valuation.assets)},{"unpaid",money(owned.unpaid)},
         {"hasUnpaid",owned.unpaid.value()>0},{"properties",properties},{"offers",offers},{"decor",decor},{"items",items}};
 }
 
@@ -101,6 +107,7 @@ void WorldController::placePersonalDecor(int item,int property,int x,int y,bool 
 }
 void WorldController::storePersonalDecor(int item,QString revision) {if(item>0)personalAction(core::StorePersonalDecor{static_cast<std::uint32_t>(item)},revision);}
 void WorldController::sellPersonalDecor(int item,QString revision) {if(item>0)personalAction(core::SellPersonalDecor{static_cast<std::uint32_t>(item)},revision);}
+void WorldController::payStudentLoan(QString revision) {personalAction(core::PayStudentLoan{},revision);}
 void WorldController::payPersonalUpkeep(QString revision) {personalAction(core::PayPersonalUpkeep{},revision);}
 
 QVariantMap WorldController::personalEvents() const {

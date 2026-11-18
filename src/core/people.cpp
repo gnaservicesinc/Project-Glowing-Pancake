@@ -106,6 +106,11 @@ void validate_people_rules(const PeopleRules& r) {
         invalid("Research collaboration needs social/skill rules and bounded cost, trust, work and cooldown terms.");
     if(r.social) {
         validate_social_rules(*r.social);
+        for (const auto& reply : r.social->replies) {
+            if (std::ranges::none_of(r.trait_groups, [&](const auto& group) {
+                return std::ranges::find(group, reply.trait) != group.end();
+            })) invalid("A conversation reply names a trait outside the employee personality catalog.");
+        }
         if(r.social->mission_conflict && (!r.talent || !r.dismissal))invalid("Mission conflict needs individual employment and skills.");
     }
     if(r.industry_team_target<1 || r.industry_team_target>256 || r.international_headquarters.size()>6)invalid("Industry hiring target or overseas HQ count is invalid.");

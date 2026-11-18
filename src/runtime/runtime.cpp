@@ -188,15 +188,31 @@ void apply_effect(Checkpoint& checkpoint, Activation& activation, const content:
         world.counterparty_cash = core::Cents{pool};
         add_receipt(checkpoint, activation, index, effect.operation, before, after,
                     core::Cents{core::checked_subtract(0, amount)});
+    } else if (effect.operation == "accept_open_dataset") {
+        auto& s=world.simulation;
+        if(!s.lab || !s.accounts) fail(RuntimeReason::effect_rejected,"This company has no research lab.");
+        const auto& id=std::get<std::string>(effect.arguments.at("dataset_id"));
+        const auto& data=core::lab_data(*s.lab,id);
+        if(data.price.value()!=0 || !data.open_weight_release)
+            fail(RuntimeReason::effect_rejected,"This invitation requires a free, redistributable dataset.");
+        const bool owned=std::ranges::find(s.lab->licenses,id,&core::DataLicense::offer_id)!=s.lab->licenses.end();
+        if(!owned) {
+            const auto why=core::frontier_technology_block(s,core::FrontierTechnology::data,id,s.date);
+            if(!why.empty()) fail(RuntimeReason::effect_rejected,why);
+            core::buy_data(*s.lab,*s.accounts,s.date,id,core::Cents{0});
+        }
+        add_receipt(checkpoint,activation,index,effect.operation,std::int64_t{owned},INT64_C(1));
     } else if (effect.operation == "accept_business_offer") {
         auto& simulation=world.simulation;
         if (!simulation.business_offers || !simulation.accounts || !simulation.capacity)
             fail(RuntimeReason::effect_rejected,"This scenario has no business offer accounts or capacity.");
         core::Cents protected_cash{0}; for (const auto& row:simulation.reservations) protected_cash=core::checked_unit_add(protected_cash,row.reserved);
         const auto before=simulation.cash.value();
+        const auto uncommitted=core::uncommitted_cash(simulation);
         core::accept_business_offer(*simulation.business_offers,*simulation.accounts,*simulation.capacity,simulation.market,simulation.date,
             std::get<std::string>(effect.arguments.at("offer_id")),protected_cash);
         simulation.cash=core::accounts_report(*simulation.accounts).cash;
+        core::require_operating_reserve(uncommitted,simulation);
         add_receipt(checkpoint,activation,index,effect.operation,before,simulation.cash.value());
     } else if (effect.operation == "temporary_demand_change") {
         auto& simulation=world.simulation;

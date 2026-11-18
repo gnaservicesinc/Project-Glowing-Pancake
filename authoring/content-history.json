@@ -109214,6 +109214,159 @@
         "prepared_headquarters": 24,
         "scenarios": 8
       }
+    },
+    {
+      "changed_definitions": [
+        {
+          "after_hash": "253ca7961e01cdc45883d66dc3a587a19d029dad666f68d81090c62b018869e6",
+          "before_hash": "42d642c46db52a77758d1db18ea64ff9c7526f62fd3543a5c99fe71a45032872",
+          "change": "changed",
+          "id": "scenario.century_frontier",
+          "kind": "scenario",
+          "old_revision": 20,
+          "revision": 21
+        },
+        {
+          "after_hash": "084be343dd91d18ca7142cd6dd63d2507e475f0eaeb4f221948da741e7e52abb",
+          "before_hash": "9cd4a213383dc45be680f8cb546ee0b319e7607f3e93d8e4468ffa9828403191",
+          "change": "changed",
+          "id": "scenario.century_plateau",
+          "kind": "scenario",
+          "old_revision": 20,
+          "revision": 21
+        },
+        {
+          "after_hash": "a001ea812bff32d63a7f8995f6dbd3001cc3eb590cfb75f938f9353aa4980b94",
+          "before_hash": "f860089a02f1c77687f82ad5bd7acb7160af25e42f26655a9e43bb3c9c649b61",
+          "change": "changed",
+          "id": "scenario.founder_campaign",
+          "kind": "scenario",
+          "old_revision": 52,
+          "revision": 53
+        },
+        {
+          "after_hash": "a0b6a10869be6952069ce09499d52dc308add93bcf74acec2648b086e90c03be",
+          "before_hash": null,
+          "change": "introduced",
+          "id": "story.open_bench",
+          "kind": "flow",
+          "old_revision": null,
+          "revision": 1
+        },
+        {
+          "after_hash": "e50aaaeea7229c84f6e451c6374e5a857376878928155f80f942029a8ce5dcf6",
+          "before_hash": null,
+          "change": "introduced",
+          "id": "story.the_missing_zero",
+          "kind": "flow",
+          "old_revision": null,
+          "revision": 1
+        }
+      ],
+      "changed_text_keys": [
+        "cast.gus.name",
+        "cast.gus.role",
+        "cast.nell.name",
+        "cast.nell.role",
+        "company.century.roster.domestic.1.entry_quote",
+        "company.century.roster.domestic.2.entry_quote",
+        "company.century.roster.domestic.3.entry_quote",
+        "story.open_bench.close.body",
+        "story.open_bench.letter.body",
+        "story.open_bench.letter.open",
+        "story.open_bench.letter.private",
+        "story.open_bench.letter.title",
+        "story.open_bench.private.body",
+        "story.open_bench.reading.body",
+        "story.the_missing_zero.correction.body",
+        "story.the_missing_zero.declined.body",
+        "story.the_missing_zero.erratum.body",
+        "story.the_missing_zero.filed.body",
+        "story.the_missing_zero.letter.body",
+        "story.the_missing_zero.letter.method",
+        "story.the_missing_zero.letter.pass",
+        "story.the_missing_zero.letter.tickets",
+        "story.the_missing_zero.letter.title",
+        "story.the_missing_zero.license.body",
+        "story.the_missing_zero.license.return",
+        "story.the_missing_zero.license.take",
+        "story.the_missing_zero.license.title",
+        "story.the_missing_zero.returned.body",
+        "story.the_missing_zero.rolls.body",
+        "story.the_missing_zero.rolls.hold",
+        "story.the_missing_zero.rolls.source",
+        "story.the_missing_zero.rolls.title",
+        "story.the_missing_zero.scan.blind",
+        "story.the_missing_zero.scan.body",
+        "story.the_missing_zero.scan.copy",
+        "story.the_missing_zero.scan.title",
+        "story.the_missing_zero.second.body",
+        "story.the_missing_zero.verified.body"
+      ],
+      "collection_hash": "4f992cb7af62b060603fe6716cac5f900facca7c1ffc5435b8a90a3b67c80589",
+      "compatibility": {
+        "content_schema": 1,
+        "save_format": 1,
+        "simulation_rules": 1
+      },
+      "content_version": "0.81.0-dev.1",
+      "game_version_at_finalization": "0.0.0-dev",
+      "generation": 85,
+      "minimum_game_change": "minor",
+      "previous_content_version": "0.80.0-dev.1",
+      "previous_snapshot": "authoring/snapshots/000084.collection.json",
+      "purpose": "internal-playtest",
+      "required_game_version": "0.1.0-dev.1",
+      "save_policy": "reject-prior-content",
+      "snapshot": "authoring/snapshots/000085.collection.json",
+      "summary": "Give the founder a playable newsroom story, an open-data handoff and a public evaluation follow-up. Differentiate three competing labs and disclose personal tuition borrowing.",
+      "target": "data/runtime/first-playable.json",
+      "validation": {
+        "compiler": "shared-game-runtime",
+        "exact_prepared_save_roundtrips": 24,
+        "lints": [],
+        "prepared_headquarters": 24,
+        "scenarios": 8
+      }
+    },
+    {
+      "changed_definitions": [
+        {
+          "after_hash": "40669456e2f7cb847246835cc0aa374a293c3f3441efcfa2280fe758798793ac",
+          "before_hash": "a001ea812bff32d63a7f8995f6dbd3001cc3eb590cfb75f938f9353aa4980b94",
+          "change": "changed",
+          "id": "scenario.founder_campaign",
+          "kind": "scenario",
+          "old_revision": 53,
+          "revision": 54
+        }
+      ],
+      "changed_text_keys": [],
+      "collection_hash": "ad260e2249f52ed544cd9d4a946894ee5bdd31a3fd50fa1080e8b91d34b8260a",
+      "compatibility": {
+        "content_schema": 1,
+        "save_format": 1,
+        "simulation_rules": 1
+      },
+      "content_version": "0.82.0-dev.1",
+      "game_version_at_finalization": "0.0.0-dev",
+      "generation": 86,
+      "minimum_game_change": "minor",
+      "previous_content_version": "0.81.0-dev.1",
+      "previous_snapshot": "authoring/snapshots/000085.collection.json",
+      "purpose": "internal-playtest",
+      "required_game_version": "0.1.0-dev.1",
+      "save_policy": "reject-prior-content",
+      "snapshot": "authoring/snapshots/000086.collection.json",
+      "summary": "Offer Robin Ibarra and a staffed Alder Research lab on the opening screen. Give coworkers 24 authored conversation responses with personality-specific rapport.",
+      "target": "data/runtime/first-playable.json",
+      "validation": {
+        "compiler": "shared-game-runtime",
+        "exact_prepared_save_roundtrips": 24,
+        "lints": [],
+        "prepared_headquarters": 24,
+        "scenarios": 8
+      }
     }
   ],
   "format": 1

@@ -1,11 +1,32 @@
 # Playability and evaluation checkpoints
 
-Updated 2026-11-09. The initial skeleton phase is closed for human feedback.
+Updated 2026-11-18. The initial skeleton phase is closed for human feedback.
 The bundled 2014–2017 Mac development campaign can be
 played from headquarters selection to its ending through the Office, Lab,
 Operations and Inbox. The [backlog](BACKLOG.md) records remaining acceptance gates and the
 [implementation log](IMPLEMENTATION_LOG.md) records checks. Delegation, recovery, milestone controls and slice scoring are implemented;
 independent human validation and release qualification remain open.
+
+## Play a founder's first week
+
+Choose **New Game → Start at Alder Research → Accept and review terms**.
+Sign the appointment and begin the first day. The terms disclose the company
+cash, team and your ownership. An occupied desk opens a conversation. The
+technology tree shows the selected topic, the discoveries around it and what
+it unlocks. The **Show all** control and the search field reach the rest of the tree.
+
+Advance two mornings to receive Nell Soto's letter. You can put it aside and
+reopen it from headquarters. Check the source, propose a test or decline.
+Read the next day's paper and watch for Gus Bell's promised visit if you take
+the case. From a signed archive receipt, open the actual dataset in the Lab.
+Later, a completed independent evaluation can lead to a public reading. A
+public reading attracts customers for fourteen days. Sales still require
+actual deliveries. Page through recent clippings at the desk. A rival publication can take you directly to its topic in the Lab. The company cash ledger is in Accounts → Cash book. Education debt and
+its payoff are in **My life**.
+
+In Content Studio, use **Player decisions** or **News stories** in the library.
+Search for a name or a line from a later passage. Open the event, select that
+passage and follow its choices before saving it to the selected project. To edit a coworker’s dialogue and affinity together, open the founder scenario and search its sections for “coworker voice.”
 
 | Checkpoint | What can be evaluated | State |
 | --- | --- | --- |

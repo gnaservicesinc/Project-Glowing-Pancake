@@ -1202,6 +1202,33 @@ QString ManagementController::briefing() const {
         briefing+=tr("\nUnused customer advances %1").arg(money(report.customer_advances));
     return briefing;
 }
+QVariantMap ManagementController::cashLedgerPage(int before) const {
+    if(!snapshot_ || !state().accounts) return {};
+    const auto& postings=state().accounts->postings;
+    auto at=before<0 ? postings.size() : std::min(postings.size(),static_cast<std::size_t>(before));
+    QVariantList entries;
+    while(at>0) {
+        const auto& p=postings[at-1];
+        const bool received=p.debit==core::Account::cash;
+        if(received || p.credit==core::Account::cash) {
+            if(entries.size()==20) break;
+            auto cause=text(p.cause);
+            if(p.cause.starts_with("lab/data/") && state().lab) {
+                const auto* offer=find(state().lab->catalog.data,p.cause.substr(9));
+                if(offer) cause=tr("Dataset license · %1").arg(text(offer->name));
+            } else if(!cause.contains(u' ')) {
+                cause.replace(u'_',u' ');cause.replace(u'/',QStringLiteral(" · "));
+            }
+            entries.push_back(QVariantMap{{"date",text(core::iso_date(p.day))},{"cause",cause},
+                {"reference",text(p.key)},{"signedCents",QString::number(received?p.amount.value():-p.amount.value())},
+                {"amount",(received?QStringLiteral("+"):QStringLiteral("−"))+money(p.amount)},
+                {"incoming",received}});
+        }
+        --at;
+    }
+    return {{"entries",entries},{"older",static_cast<int>(at)}};
+}
+
 QVariantMap ManagementController::financialStatements() const {
     using namespace core;
     if (!snapshot_ || !state().accounts) return {};
@@ -1396,6 +1423,14 @@ QVariantMap ManagementController::firstCompanyStep() const {
         return step(tr("Plan the first experiment"),
             tr("Open the technology tree and compare available topics. Select the researchers, check their equipment and choose a compute source. Start work when the plan fits your budget."),
             tr("Open the technology tree"),"lab","research");
+    }
+    if(!s.lab->research.empty() && s.lab->models.empty()) {
+        const auto& run=s.lab->research.back();
+        const auto* work=find(s.capacity->projects,run.project_id);
+        if(work && (work->status==core::ProjectStatus::active || work->status==core::ProjectStatus::paused))
+            return step(work->status==core::ProjectStatus::paused?tr("Check the paused experiment"):tr("Your first experiment is running"),
+                tr("Review the assigned team and settled work in the Lab. Advancing a day lets equipped researchers work."),
+                tr("View research"),"lab","research");
     }
     if(s.lab->licenses.empty())
         return step(tr("Choose training data"),

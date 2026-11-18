@@ -3,6 +3,7 @@
 #include <nlohmann/json.hpp>
 namespace pgp::core {
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(MissionConflictRules,commitment_days,employee_days,concern_days,notice_days,repair_days,trust_loss,trust_ceiling)
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(ConversationReply,activity,trait,affinity_bonus,lines)
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(SocialRules,interval_days,weekly_gain,shared_gain,friction,interaction_gain,outgoing_threshold,private_threshold,remote_decay,mood_cap,thresholds,city_chance_bp,state_chance_bp,remote_chance_bp,remote_ceiling,city_gain,state_gain,remote_gain,remote_breakthrough_bp,referral_days)
 }
 namespace pgp::content::social_codec {
@@ -11,6 +12,7 @@ inline nlohmann::json encode(const core::SocialRules& r){
     nlohmann::json j=r;const nlohmann::json defaults=core::SocialRules{};bool implicit=true;
     for(const auto* key:geography_fields)if(j.at(key)!=defaults.at(key))implicit=false;
     if(implicit)for(const auto* key:geography_fields)j.erase(key);
+    if(!r.replies.empty())j["conversation_replies"]=r.replies;
     if(r.mission_conflict)j["mission_conflict"]=*r.mission_conflict;
     return j;
 }
@@ -26,7 +28,17 @@ inline core::SocialRules decode(const nlohmann::json& source){
         if(nlohmann::json(*conflict)!=fields)throw std::invalid_argument("Unsupported mission conflict rules.");
         j.erase("mission_conflict");
     }
+    std::vector<core::ConversationReply> replies;
+    if(j.contains("conversation_replies")) {
+        const auto& rows=j.at("conversation_replies");
+        replies=rows.get<std::vector<core::ConversationReply>>();
+        for(const auto& row:rows) if(!row.at("affinity_bonus").is_number_integer())
+            throw std::invalid_argument("Conversation rapport must be a whole number.");
+        if(nlohmann::json(replies)!=rows)throw std::invalid_argument("Unsupported conversation reply fields.");
+        j.erase("conversation_replies");
+    }
     auto r=j.get<core::SocialRules>();
+    r.replies=std::move(replies);
     if(nlohmann::json(r)!=j)throw std::invalid_argument("Unsupported social rules.");
     r.mission_conflict=conflict;
     core::validate_social_rules(r);

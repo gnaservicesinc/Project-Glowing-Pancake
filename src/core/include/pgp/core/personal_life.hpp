@@ -79,6 +79,16 @@ struct PersonalEvent {
     std::vector<PersonalEventGuest> guests;
     auto operator<=>(const PersonalEvent&) const = default;
 };
+struct PersonalStudentLoan {
+    Cents principal{0};
+    BasisPoints monthly_interest{0};
+    OrdinalDay drawn_on{0}, due{0};
+    std::optional<OrdinalDay> paid_on;
+    auto operator<=>(const PersonalStudentLoan&) const = default;
+};
+// Payoff on the prepared morning, after interest for previously settled days.
+Cents student_payoff(const PersonalStudentLoan&, OrdinalDay morning);
+
 struct PersonalLifeState {
     std::vector<PersonalProperty> properties;
     std::vector<PersonalDecor> decor;
@@ -86,6 +96,7 @@ struct PersonalLifeState {
     Cents spent{0},unpaid{0};
     std::vector<PersonalEvent> events{};
     std::vector<std::uint32_t> pending_events{};
+    std::optional<PersonalStudentLoan> student_loan{};
     auto operator<=>(const PersonalLifeState&) const = default;
 };
 struct BuyPersonalProperty {std::string offer;};
@@ -95,9 +106,10 @@ struct PlacePersonalDecor {std::uint32_t item=0,property=0;int x=0,y=0;bool rota
 struct StorePersonalDecor {std::uint32_t item=0;};
 struct SellPersonalDecor {std::uint32_t item=0;};
 struct PayPersonalUpkeep {};
+struct PayStudentLoan {};
 struct BookPersonalEvent {std::string offer;std::uint32_t property=0;OrdinalDay day{0};std::vector<std::string> guests;};
 struct CancelPersonalEvent {std::uint32_t event=0;};
-using PersonalLifeAction=std::variant<BuyPersonalProperty,SellPersonalProperty,BuyPersonalDecor,PlacePersonalDecor,StorePersonalDecor,SellPersonalDecor,PayPersonalUpkeep,BookPersonalEvent,CancelPersonalEvent>;
+using PersonalLifeAction=std::variant<BuyPersonalProperty,SellPersonalProperty,BuyPersonalDecor,PlacePersonalDecor,StorePersonalDecor,SellPersonalDecor,PayPersonalUpkeep,PayStudentLoan,BookPersonalEvent,CancelPersonalEvent>;
 struct ManagePersonalLife {PersonalLifeAction action;};
 struct PersonalValuation {Cents spent{0},assets{0},liabilities{0};};
 void validate_personal_life_catalog(const PersonalLifeCatalog&);

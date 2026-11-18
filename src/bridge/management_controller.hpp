@@ -173,6 +173,7 @@ public:
     QVariantMap recommended() const;
     QString briefing() const;
     QVariantMap financialStatements() const;
+    Q_INVOKABLE QVariantMap cashLedgerPage(int before = -1) const;
     bool corporateTaxAvailable() const;
     QVariantMap corporateTax() const;
     Q_INVOKABLE QVariantMap cashScenarios() const;

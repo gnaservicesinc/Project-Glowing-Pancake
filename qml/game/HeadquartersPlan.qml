@@ -203,4 +203,19 @@ Item {
             plan.pressedItem=0
         }
     }
+    Repeater {
+        model: !plan.editing && plan.inspectionEnabled ? (plan.headquarters.items || []).filter(
+            item => item.placed && item.kind === "desk" && !!item.personPortrait) : []
+        EmployeePortrait {
+            required property var modelData
+            objectName: "deskPortrait_" + modelData.person
+            width: Math.max(14,Math.min(52,plan.cell * 0.84))
+            height: width
+            x: plan.leftEdge + (modelData.x + modelData.width / 2) * plan.cell - width / 2
+            y: plan.topEdge + (modelData.y + modelData.depth * 0.76) * plan.cell - height / 2
+            portraitSource: modelData.personPortrait; personName: modelData.personName
+            Accessible.name: qsTr("Talk with %1").arg(personName)
+            onClicked: plan.tilePicked(modelData.x,modelData.y,modelData.id)
+        }
+    }
 }

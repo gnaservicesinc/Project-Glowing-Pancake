@@ -1,6 +1,6 @@
 # Project status and next handoff
 
-Updated 2026-11-14
+Updated 2026-11-18
 
 ## Implementation progress
 
@@ -8,9 +8,30 @@ Updated 2026-11-14
 
 The user accepted the current core as the starting point for the next phase
 and directed the initial implementation pass to wrap up. The gameplay
-checkpoint was `d1f2bd3`, with internal content 0.29.0-dev.1. The current
-content, including the expanded school introduction, is
-**0.80.0-dev.1**, generation **84**.
+checkpoint was `d1f2bd3`, with internal content 0.29.0-dev.1. The current finalized content is **0.82.0-dev.1**, generation **86**.
+
+## Qt founder campaign
+
+New Game offers an authored appointment at Alder Research and the full custom
+founder route. Occupied desks open personal conversations. Twelve trait and
+activity combinations have two replies each, with saved memories and affinity.
+Nell Soto's newsroom investigation has four research outcomes, an opportunity
+to decline, dated coverage and a playable archive handoff. An independent lab
+evaluation can lead to an optional public reading and a fortnight of demand.
+The industry wire follows rival entries, published work, first deliveries and
+closures. Juniper, Harborline and Copperfield have distinct planner priorities.
+Content Studio can search dialogue and news throughout a flow and edit later
+passages through the same reviewed repository save as the opening. The founder
+scenario also groups each coworker’s spoken replies with its trait and affinity.
+
+Personal tuition borrowing and repayment use the founder's accounts. Company
+Accounts shows the source and sign of each cash posting. Research shows local
+prerequisites, alternatives and downstream uses, with access to the whole tree.
+The two-process Qt walkthrough signs the appointment, speaks to an occupied
+desk, pages through rival news, resumes an unfinished investigation at 650×480
+and 200% text, then opens its free license in the Lab. A separate Metal render
+checks the occupied desk. The [playability guide](PLAYABILITY.md) gives the
+route through the first week.
 
 ## Campaign journal and founder walkthrough
 

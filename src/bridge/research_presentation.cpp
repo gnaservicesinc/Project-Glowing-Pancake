@@ -261,6 +261,22 @@ QVariantMap ManagementController::researchTopic(QString id) const {
         if(terms) effects.push_back(tr("%1 · %2% less base compute for future releases before rounding")
             .arg(q(terms->name)).arg(static_cast<double>(amount.value())/100.0));
     }
+    QStringList opportunities;
+    const auto dependent=[&](const auto& rows,const QString& action) {
+        for(const auto& row:rows) {
+            if(std::ranges::find(row.requires_research,topic->id)==row.requires_research.end()) continue;
+            QStringList remaining;
+            for(const auto& other:row.requires_research)
+                if(other!=topic->id && !has_result(*s.lab,other))
+                    remaining.push_back(research_->sourceRow(q(other)).value("title",q(other)).toString());
+            auto line=action.arg(q(row.name));
+            if(!remaining.empty()) line+=tr(" · also requires %1").arg(remaining.join(", "));
+            opportunities.push_back(line);
+        }
+    };
+    dependent(s.lab->catalog.recipes,tr("Train · %1"));
+    dependent(s.lab->catalog.evaluations,tr("Evaluate · %1"));
+    dependent(s.lab->catalog.synthesis,tr("Generate data · %1"));
     const auto fee=core::research_cash_fee(s,topic->id);
     return {{"name", authored.value("title", id)},
             {"description", authored.value("detail")},
@@ -273,7 +289,7 @@ QVariantMap ManagementController::researchTopic(QString id) const {
             {"innovationLevel", innovation_level(s.lab->catalog,*topic)},
             {"nextInnovation",next==s.lab->catalog.research.end()?QString{}:q(next->id)},
             {"effects",effects.join(u'\n')},
-            {"fee",fee.value()>0?money(fee):QString{}},
+            {"opportunities",opportunities},{"fee",fee.value()>0?money(fee):QString{}},
             {"equipment", equipment},
             {"blocker", why},
             {"active", active},
@@ -297,14 +313,18 @@ QVariantMap ManagementController::researchTeam(QString id,QStringList workers) c
         QStringList traits;
         for(const auto& worker:s.management->people->employees)if(std::ranges::find(ids,worker.terms.profile.id)!=ids.end())
             for(const auto& trait:core::visible_traits(s,worker.terms.profile))if(!traits.contains(q(trait)))traits.push_back(q(trait));
+        const auto creativity=pacing.threshold==UINT32_MAX
+            ? tr("This topic requires its prerequisite discoveries.")
+            : pacing.threshold ? tr("Team creativity %1 of %2 needed. Each distinct trait counts once.").arg(team.creativity).arg(pacing.threshold)
+            : tr("Team creativity %1.").arg(team.creativity);
         const auto calculation=pacing.missing_groups
             ? tr("Expected year %1 (year %2 of the campaign). Difficulty %3 · %4 of %5 prerequisite groups missing · ×%6 early start multiplier.")
                 .arg(rule.earliest_year).arg(pacing.expected_offset).arg(rule.difficulty).arg(pacing.missing_groups).arg(pacing.prerequisite_groups).arg(pacing.early_multiplier)
             : tr("Expected year %1. Your team can follow the existing research path without a creativity threshold.").arg(rule.earliest_year);
         return {{"creativity",team.creativity},{"required",pacing.threshold},{"compatibility",static_cast<double>(team.compatibility_bp)/100},
             {"days",staff_days},
-            {"explanation",tr("Creativity %1 / %2 needed. Each distinct trait counts once.\n%3\nShared-trait compatibility %4% · %5 staff-days after coordination.")
-                .arg(team.creativity).arg(pacing.threshold).arg(calculation).arg(static_cast<double>(team.compatibility_bp)/100,0,'f',1).arg(staff_days)},
+            {"explanation",tr("%1\n%2\nShared-trait compatibility %3% · %4 staff-days after coordination.")
+                .arg(creativity,calculation).arg(static_cast<double>(team.compatibility_bp)/100,0,'f',1).arg(staff_days)},
             {"traits",traits.join(" · ")}};
     } catch(const std::exception&) {return {};}
 }

@@ -7,17 +7,18 @@ Item {
     property int textSize: 14
     readonly property real headerHeight: hud.height
     readonly property real footerHeight: dock.height
-    readonly property bool dockOverflow: dockRow.width > dock.width-20*uiScale
+    readonly property bool dockOverflow: dockRow.width > dockStrip.width - 20*uiScale
     function scrollDock(direction) { const view=dockScroll.contentItem; view.contentX=Math.max(0,Math.min(dockRow.width-dockScroll.availableWidth,view.contentX+direction*dockScroll.availableWidth*0.7)) }
     readonly property real uiScale:Math.max(1,textSize/14)
     readonly property bool compact: width < 1050*uiScale
     readonly property bool shortLayout:height<textSize*26
     readonly property bool physicalHQ: Object.keys(campaign.world.headquarters).length>0 && campaign.world.atHeadquarters
     property bool furnishing:false
-    property bool planView: softwareWorld
+    readonly property bool softwareWorld: softwareRequested || GraphicsInfo.api === GraphicsInfo.Software
+    property bool planView: false
     property bool inspectingWalks: false
     readonly property bool layoutPlan: furnishing && !!hqTools.traffic.summary
-    readonly property bool showingPlan: planView || layoutPlan
+    readonly property bool showingPlan: softwareWorld || planView || layoutPlan
     onFurnishingChanged: if(!furnishing) inspectingWalks=false
     readonly property var hoveredEquipment: (campaign.world.headquarters.items || []).find(row => row.id === hqTools.hoverTarget) || null
     GameInk { id: ink }
@@ -34,6 +35,49 @@ Item {
     readonly property bool newspaperReady: campaign.objectives.retrospective && campaign.objectives.ended
     readonly property var firstStep: visible && campaign.showGuide && campaign.requiredKind === "none" &&
         !newspaperReady && !furnishing && campaign.world.navigation.app === "" ? campaign.management.firstCompanyStep : ({})
+    readonly property bool atDesk: physicalHQ && place !== "map" && !furnishing && !nav.app
+    readonly property var colleague: visible && atDesk ? campaign.world.deskColleague : ({})
+    property string visitor: ""
+    readonly property var meetingPerson: {
+        campaign.world.reviewToken
+        return visitor && atDesk ? campaign.world.deskPerson(visitor) : ({})
+    }
+    function talkTo(id) {
+        if (!id || campaign.busy || campaign.storageBlocked) return
+        if (!campaign.paused) campaign.togglePaused()
+        visitor = id
+    }
+    property var openedEdition: null
+    property string awaitingOutcome: ""
+    function readEdition(edition) {
+        if (!edition || !edition.title) return
+        openedEdition = edition
+        if (!campaign.paused && !campaign.busy) campaign.togglePaused()
+    }
+    function afterDecision() {
+        if (!visible || !atDesk || !awaitingOutcome || campaign.busy) return
+        if (hasLetter && campaign.requiredStoryKey.split("/")[0] === awaitingOutcome) return
+        if (campaign.deskDispatch.activation === awaitingOutcome) {
+            awaitingOutcome = ""
+            readEdition(campaign.deskDispatch)
+        }
+    }
+    property string deferredStory: ""
+    readonly property bool storyOpen: storyPage.active
+    readonly property bool hasLetter: campaign.requiredKind === "content"
+    readonly property bool showLetter: hasLetter && deferredStory !== campaign.requiredStoryKey
+    Connections {
+        target: campaign
+        function onCommandFinished(accepted, explanation) {
+            if (accepted) desktop.afterDecision()
+            else desktop.awaitingOutcome = ""
+        }
+        function onStateChanged() {
+            if (campaign.requiredStoryKey !== desktop.deferredStory) desktop.deferredStory = ""
+            Qt.callLater(desktop.afterDecision)
+        }
+    }
+    onAtDeskChanged: if (!atDesk) { openedEdition = null; awaitingOutcome = ""; visitor = "" }
     function visit(id) { campaign.world.navigate(id, nav.scale || "hq", "", "", "") }
     function placeApp() {return place==="lab" || place==="research_annex" || place==="evaluation_suite"?"lab":place==="meeting" || place==="collaboration"?"inbox":place==="compute"?"operations":"office"}
     function openPlace() {desktop.openApp(placeApp(),place==="evaluation_suite"?"evaluate":placeApp()==="lab"?"research":"",campaign.world.atHeadquarters && campaign.world.officeKind!=="home"?"desktop":"laptop")}
@@ -50,6 +94,9 @@ Item {
     }
     function showMap(scale) {campaign.world.navigate("map",scale,"","","")}
 
+    Item {
+        anchors.fill: parent
+        enabled: !storyPage.active
     Rectangle {
         anchors.fill:parent
         gradient: Gradient { GradientStop {position:0;color:"#263c4c"} GradientStop {position:0.65;color:"#172a38"} GradientStop {position:1;color:"#101c29"} }
@@ -83,7 +130,14 @@ Item {
                 item.hovered.connect((x,y,target)=>hqTools.hover(x,y,target))
                 item.cancelRequested.connect(()=>hqTools.placing=false)
                 item.rotateRequested.connect(()=>hqTools.rotated=!hqTools.rotated)
-                item.tilePicked.connect((x,y,id)=>{if(!desktop.furnishing && id){desktop.furnishing=true;hqTools.select(id);if(!campaign.paused)campaign.togglePaused()}else hqTools.tile(x,y,id)})
+                item.tilePicked.connect((x,y,id)=>{
+                    const target=(campaign.world.headquarters.items || []).find(row=>row.id===id)
+                    if (desktop.atDesk && target?.personPortrait) desktop.talkTo(target.person)
+                    else if (!desktop.furnishing && id) {
+                        desktop.furnishing=true; hqTools.select(id)
+                        if(!campaign.paused) campaign.togglePaused()
+                    } else hqTools.tile(x,y,id)
+                })
                 item.itemDragged.connect((id,x,y,target)=>hqTools.drag(id,x,y,target))
             } else if(softwareWorld) item.room = "office"
             else {
@@ -162,17 +216,8 @@ Item {
                 WorldButton {objectName:"pauseButton";text:campaign.paused?qsTr("▶ Resume"):qsTr("Ⅱ Pause");textSize:desktop.textSize;primary:campaign.paused;enabled:!campaign.busy && !campaign.storageBlocked && (!campaign.paused || campaign.canPlay);onClicked:campaign.togglePaused()}
                 WorldButton {objectName:"stepButton";visible:!desktop.shortLayout;text:qsTr("Next day");textSize:desktop.textSize;enabled:campaign.paused && campaign.canAdvance && !campaign.storageBlocked;onClicked:campaign.step()}
                 GameSelect {textSize:desktop.textSize;objectName:"speedControl";visible:!desktop.shortLayout;model:[1,10,30,60];currentIndex:model.indexOf(campaign.daysPerSecond);displayText:qsTr("%1 days/s").arg(campaign.daysPerSecond);Accessible.name:qsTr("Days per second");font.pixelSize:desktop.textSize;implicitWidth:desktop.textSize*9;onActivated:campaign.daysPerSecond=model[currentIndex]}
-                WorldButton {objectName:"hudDecisionButton";visible:campaign.requiredKind!=="none";text:qsTr("Review decision");hint:campaign.requiredTitle;textSize:desktop.textSize;primary:true;onClicked:desktop.journalRequested()}
+                WorldButton {objectName:"hudDecisionButton";visible:campaign.requiredKind!=="none";text:qsTr("Review decision");hint:campaign.requiredTitle;textSize:desktop.textSize;primary:true;onClicked:{if(desktop.atDesk && desktop.hasLetter)desktop.deferredStory="";else desktop.journalRequested()}}
                 WorldButton {objectName:"hudNewspaperButton";visible:desktop.newspaperReady;text:qsTr("Read the newspaper");textSize:desktop.textSize;primary:true;onClicked:desktop.newspaperRequested()}
-                WorldButton {
-                    objectName: "worldFirstCompanyStep"
-                    visible: !!desktop.firstStep.action
-                    enabled: !campaign.busy
-                    text: qsTr("Next step")
-                    hint: desktop.firstStep.title || ""
-                    textSize: desktop.textSize
-                    onClicked: desktop.firstStepRequested()
-                }
                 WorldButton {visible:!desktop.shortLayout;text:qsTr("Advance…");textSize:desktop.textSize;onClicked:advanceMenu.open()}
                 WorldButton {visible:desktop.shortLayout && campaign.requiredKind==="none" && !desktop.newspaperReady;text:qsTr("Time & funds");textSize:desktop.textSize;onClicked:compactTime.open()}
                 Label {visible:desktop.compact && !desktop.shortLayout;height:42*desktop.uiScale;text:qsTr("Available %1").arg(campaign.availableText);font.pixelSize:desktop.textSize;color:"#b7dfc7";verticalAlignment:Text.AlignVCenter}
@@ -188,13 +233,18 @@ Item {
             model:desktop.physicalHQ?[]:campaign.world.rooms
             WorldButton {required property var modelData;objectName:"place_"+modelData.id;text:modelData.name;textSize:desktop.textSize;checked:desktop.place===modelData.id;onClicked:desktop.visit(modelData.id)}
         }
+        WorldButton {
+            objectName: "compactDeskButton"; visible: desktop.shortLayout && desktop.atDesk
+            textSize: desktop.textSize; text: qsTr("At your desk"); primary: true
+            onClicked: { if (!campaign.paused && !campaign.busy) campaign.togglePaused(); compactDesk.open() }
+        }
         WorldButton {objectName:"hqFurnishButton";visible:desktop.physicalHQ;primary:desktop.furnishing;iconApp:"facilities";text:desktop.shortLayout?(desktop.furnishing?qsTr("Done arranging"):qsTr("Arrange HQ")):desktop.furnishing?qsTr("Done arranging"):qsTr("Arrange headquarters");textSize:desktop.textSize;onClicked:{desktop.furnishing=!desktop.furnishing;if(desktop.furnishing && !campaign.paused)campaign.togglePaused()}}
         WorldButton {visible:desktop.physicalHQ && !desktop.shortLayout;quiet:true;iconApp:"devices";text:qsTr("Suppliers");textSize:desktop.textSize;onClicked:desktop.openApp("facilities","equipment","laptop")}
         WorldButton {visible:desktop.physicalHQ && !desktop.shortLayout;quiet:true;text:qsTr("Realtor");textSize:desktop.textSize;onClicked:desktop.openApp("facilities","property","laptop")}
         WorldButton {
             objectName:"hqTalkButton"
             quiet:true;iconApp:"people"
-            visible:desktop.physicalHQ && campaign.world.contactsAvailable && !desktop.furnishing
+            visible:desktop.physicalHQ && !desktop.shortLayout && campaign.world.contactsAvailable && !desktop.furnishing
             text:qsTr("Talk at HQ")
             textSize:desktop.textSize
             onClicked:{if(!campaign.paused)campaign.togglePaused();roomConversation.open()}
@@ -207,8 +257,76 @@ Item {
         spacing:7
         Label {text:qsTr("YOUR HEADQUARTERS");font.pixelSize:desktop.textSize*0.74;font.letterSpacing:2.2;color:ink.accent}
         Label {width:parent.width;text:campaign.world.headquarters.title || qsTr("Your workspace");textFormat:Text.PlainText;wrapMode:Text.Wrap;font.family:ink.displayFace;font.pixelSize:desktop.textSize*1.7;color:ink.paper}
-        Label {text:qsTr("%1 rooms · %2 placed furnishings").arg((campaign.world.headquarters.rooms || []).filter(room=>!room.passage).length).arg((campaign.world.headquarters.items || []).filter(row=>row.placed && !row.mount).length);font.pixelSize:desktop.textSize*0.9;color:ink.secondary}
+        Label {text:qsTr("%n room(s)", "", (campaign.world.headquarters.rooms || []).filter(room=>!room.passage).length) + qsTr(" · %1 placed furnishings").arg((campaign.world.headquarters.items || []).filter(row=>row.placed && !row.mount).length);font.pixelSize:desktop.textSize*0.9;color:ink.secondary}
         Label {width:parent.width;text:[...new Set((campaign.world.headquarters.rooms || []).map(row=>row.flooringLabel))].join(" · ");wrapMode:Text.Wrap;font.pixelSize:desktop.textSize*0.8;color:ink.muted}
+    }
+    Rectangle {
+        id: deskCard
+        parent: desktop.shortLayout ? compactDesk.contentItem : worldView.parent
+        x: desktop.shortLayout ? 0 : worldView.x + worldView.width - width - 14
+        y: desktop.shortLayout ? 0 : worldView.y + 14
+        width: desktop.shortLayout ? parent.width : Math.min(worldView.width - 20, desktop.textSize * 24)
+        height: desktop.shortLayout ? parent.height : Math.min(worldView.height - 12, cardColumn.implicitHeight + 20)
+        visible: (!desktop.shortLayout || compactDesk.opened) && desktop.atDesk && !storyPage.active && !desktop.newspaperReady &&
+                 (!!desktop.firstStep.action || !!campaign.deskDispatch.title || !!desktop.colleague.id) && height > desktop.textSize * 2
+        radius: 8; color: "#f328393c"; border.color: "#889b88"
+        ScrollView {
+            id: cardScroll
+            anchors.fill: parent; anchors.margins: 9; clip: true
+            contentWidth: availableWidth
+            ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
+            ColumnLayout {
+                id: cardColumn
+                width: cardScroll.availableWidth; spacing: 6
+                Label {
+                    Layout.fillWidth: true; visible: !!desktop.firstStep.action && !desktop.shortLayout
+                    text: desktop.firstStep.title || ""; textFormat: Text.PlainText; wrapMode: Text.Wrap
+                    color: "#f3e8d1"; font.family: "Georgia"; font.bold: true; font.pixelSize: desktop.textSize * 1.25
+                }
+                WorldButton {
+                    objectName: "worldFirstCompanyStep"; visible: !!desktop.firstStep.action
+                    Layout.fillWidth: true; text: desktop.firstStep.action || ""; primary: true
+                    hint: desktop.firstStep.detail || ""; textSize: desktop.textSize; enabled: !campaign.busy
+                    onClicked: { compactDesk.close(); desktop.firstStepRequested() }
+                }
+                WorldButton {
+                    objectName: "deskTalk"
+                    visible: !!desktop.colleague.name
+                    Layout.fillWidth: true; Layout.preferredWidth: 0
+                    text: qsTr("Talk with %1").arg(desktop.colleague.name || "")
+                    textSize: desktop.textSize
+                    enabled: !campaign.busy && !campaign.storageBlocked
+                    onClicked: { compactDesk.close(); desktop.talkTo(desktop.colleague.id) }
+                }
+                WorldButton {
+                    objectName: "readDeskCutting"
+                    visible: !!campaign.deskDispatch.title
+                    Layout.fillWidth: true; Layout.preferredWidth: 0
+                    text: campaign.deskDispatch.title || ""; iconApp: "inbox"
+                    implicitHeight: Math.max(desktop.textSize*2.6,contentItem.implicitHeight+topPadding+bottomPadding)
+                    textSize: desktop.textSize; onClicked: { compactDesk.close(); desktop.readEdition(campaign.deskDispatch) }
+                }
+                WorldButton {
+                    visible: desktop.shortLayout && campaign.world.contactsAvailable
+                    Layout.fillWidth: true; textSize: desktop.textSize; text: qsTr("Other conversations")
+                    onClicked: { compactDesk.close(); roomConversation.open() }
+                }
+                WorldButton {
+                    visible: desktop.shortLayout
+                    Layout.fillWidth: true; textSize: desktop.textSize; text: qsTr("Back to headquarters")
+                    onClicked: compactDesk.close()
+                }
+            }
+        }
+    }
+    Popup {
+        id: compactDesk
+        anchors.centerIn: Overlay.overlay
+        modal: true; focus: true; padding: 0
+        width: Math.min(desktop.width - 20, desktop.textSize * 24)
+        height: Math.min(desktop.height - 20, cardColumn.implicitHeight + 20)
+        contentItem: Item {}
+        onOpened: cardColumn.forceActiveFocus()
     }
     Row {
         anchors.right:worldView.right;anchors.bottom:worldView.bottom;anchors.margins:16
@@ -367,6 +485,11 @@ Item {
         anchors.left:parent.left;anchors.right:parent.right;anchors.bottom:parent.bottom
         height:desktop.shortLayout?desktop.textSize*3.2+16:76*desktop.uiScale;color:"#101c29"
         Rectangle {width:parent.width;height:1;color:"#425263"}
+        Item {
+            id: dockStrip
+            anchors.horizontalCenter: parent.horizontalCenter
+            height: parent.height
+            width: Math.min(parent.width, desktop.textSize * 60)
         WorldButton {
             objectName:"dockPrevious";anchors.left:parent.left;anchors.verticalCenter:parent.verticalCenter;anchors.leftMargin:4
             visible:desktop.dockOverflow;enabled:dockScroll.contentItem.contentX>1
@@ -388,13 +511,56 @@ Item {
                 spacing:4
                 WorldButton {objectName:"officeTab";iconApp:"office";quiet:true;padding:desktop.textSize*0.65;onActiveFocusChanged:if(activeFocus)desktop.revealDock(this);text:qsTr("Company");textSize:desktop.textSize;onClicked:desktop.openApp("office","","laptop")}
                 WorldButton {objectName:"peopleTab";iconApp:"people";quiet:true;padding:desktop.textSize*0.65;onActiveFocusChanged:if(activeFocus)desktop.revealDock(this);text:qsTr("People");textSize:desktop.textSize;onClicked:desktop.openApp("people","","laptop")}
+                WorldButton {objectName:"labTab";iconApp:"lab";quiet:true;padding:desktop.textSize*0.65;onActiveFocusChanged:if(activeFocus)desktop.revealDock(this);text:qsTr("Lab");textSize:desktop.textSize;onClicked:desktop.openApp("lab","research","laptop")}
+                WorldButton {objectName:"inboxTab";iconApp:"inbox";quiet:true;padding:desktop.textSize*0.65;onActiveFocusChanged:if(activeFocus)desktop.revealDock(this);text:qsTr("News & decisions");textSize:desktop.textSize;onClicked:desktop.journalRequested()}
+                WorldButton {objectName:"devicesButton";iconApp:"devices";quiet:true;padding:desktop.textSize*0.65;onActiveFocusChanged:if(activeFocus)desktop.revealDock(this);text:qsTr("Devices & apps");textSize:desktop.textSize;onClicked:desktop.launcherRequested()}
                 WorldButton {objectName:"messagesTab";iconApp:"inbox";visible:campaign.world.contactsAvailable;quiet:true;padding:desktop.textSize*0.65;onActiveFocusChanged:if(activeFocus)desktop.revealDock(this);text:qsTr("Messages");textSize:desktop.textSize;onClicked:desktop.openApp("people","messages","tablet")}
                 WorldButton {objectName:"personalLifeTab";iconApp:"leadership";visible:!!campaign.world.personalLife.cash;quiet:true;padding:desktop.textSize*0.65;onActiveFocusChanged:if(activeFocus)desktop.revealDock(this);text:qsTr("My life");textSize:desktop.textSize;onClicked:desktop.openApp("leadership","personal","tablet")}
                 WorldButton {objectName:"headquartersTab";iconApp:"facilities";quiet:true;padding:desktop.textSize*0.65;onActiveFocusChanged:if(activeFocus)desktop.revealDock(this);text:qsTr("Headquarters");textSize:desktop.textSize;onClicked:desktop.openApp("facilities","","laptop")}
-                WorldButton {objectName:"labTab";iconApp:"lab";quiet:true;padding:desktop.textSize*0.65;onActiveFocusChanged:if(activeFocus)desktop.revealDock(this);text:qsTr("Lab");textSize:desktop.textSize;onClicked:desktop.openApp("lab","research","laptop")}
-                WorldButton {objectName:"inboxTab";iconApp:"inbox";quiet:true;padding:desktop.textSize*0.65;onActiveFocusChanged:if(activeFocus)desktop.revealDock(this);text:qsTr("News & decisions");textSize:desktop.textSize;onClicked:desktop.journalRequested()}
                 WorldButton {objectName:"mapTab";iconApp:"society";quiet:true;padding:desktop.textSize*0.65;onActiveFocusChanged:if(activeFocus)desktop.revealDock(this);text:qsTr("Map");textSize:desktop.textSize;checked:desktop.place==="map";onClicked:desktop.showMap(desktop.nav.scale || "hq")}
-                WorldButton {objectName:"devicesButton";iconApp:"devices";quiet:true;padding:desktop.textSize*0.65;onActiveFocusChanged:if(activeFocus)desktop.revealDock(this);text:qsTr("Devices & apps");textSize:desktop.textSize;onClicked:desktop.launcherRequested()}
+            }
+        }
+        }
+    }
+    }
+    Loader {
+        id: storyPage
+        objectName: "headquartersStoryPage"
+        active: desktop.visible && desktop.atDesk && (desktop.showLetter || !!desktop.openedEdition || !!desktop.meetingPerson.id)
+        anchors.fill: parent
+        focus: active
+        sourceComponent: Component {
+            DeskStory {
+                textSize: desktop.textSize
+                decision: desktop.showLetter
+                colleague: decision ? ({}) : desktop.meetingPerson
+                edition: desktop.openedEdition || ({})
+                onEditionRequested: edition => desktop.readEdition(edition)
+                onResearchRequested: id => {
+                    desktop.openedEdition = null
+                    campaign.world.setDraft("research/tree", id)
+                    desktop.openApp("lab", "research", "laptop")
+                }
+                onDatasetRequested: id => {
+                    desktop.openedEdition = null
+                    desktop.openApp("lab", "data", "laptop")
+                    campaign.management.dataOffers.filterText = ""
+                    campaign.management.dataOffers.selectedId = id
+                }
+                onChoiceRequested: id => {
+                    if (colleague.id) {
+                        campaign.world.socialize(colleague.id,id,campaign.world.reviewToken)
+                        return
+                    }
+                    desktop.openedEdition = null
+                    desktop.awaitingOutcome = campaign.requiredStoryKey.split("/")[0]
+                    campaign.choose(id)
+                }
+                onClosed: {
+                    if (decision) desktop.deferredStory = campaign.requiredStoryKey
+                    desktop.openedEdition = null
+                    desktop.visitor = ""
+                }
             }
         }
     }

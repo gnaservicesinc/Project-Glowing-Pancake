@@ -358,13 +358,34 @@ int main() {
             auto loan_s=paid;loan_s.choices["ug_funding"]="loans";
             const auto paid_cp=make(paid);
             const auto loan_cp=make(loan_s);
-            require(loan_cp.world.simulation.accounts->debts.size()==1 &&
-                    loan_cp.world.simulation.accounts->debts.front().id==content::student_debt_id &&
-                    loan_cp.world.simulation.accounts->debts.front().principal==core::Cents{8'500'000} &&
-                    loan_cp.world.simulation.cash==paid_cp.world.simulation.cash,
-                    "Student loans must create $85,000 in debt with zero extra startup cash.");
-            require(persistence::decode_save(program,persistence::encode_save(program,loan_cp)).checkpoint==loan_cp,
-                    "Student debt checkpoint must reload identically.");
+            const auto& school_loan=*loan_cp.world.simulation.succession->personal_life->student_loan;
+            require(loan_cp.world.simulation.accounts->debts.empty() && school_loan.principal==core::Cents{8'500'000} &&
+                    loan_cp.world.simulation.cash==paid_cp.world.simulation.cash &&
+                    loan_cp.world.simulation.accounts->postings==paid_cp.world.simulation.accounts->postings,
+                    "Student borrowing must be personal and leave the company cash book untouched.");
+            require(core::student_payoff(school_loan,school_loan.drawn_on)==school_loan.principal &&
+                    persistence::decode_save(program,persistence::encode_save(program,loan_cp)).checkpoint==loan_cp,
+                    "Personal borrowing must disclose the principal on opening and reload exactly.");
+            auto january=school_loan;
+            january.drawn_on=core::parse_iso_date("2016-01-01");
+            require(core::student_payoff(january,core::parse_iso_date("2016-02-01"))==core::Cents{8'538'250} &&
+                    core::student_payoff(january,core::parse_iso_date("2016-03-01"))==core::Cents{8'576'500},
+                    "Simple interest must accrue once per calendar month, including leap February.");
+            runtime::Runtime tuition{program,loan_cp};
+            require(tuition.prepare_opening(loan_cp.world.simulation.revision).accepted(),"Prepare the indebted founder");
+            const auto opening_accounts=*tuition.current_state().world.simulation.accounts;
+            const auto savings=tuition.current_state().world.simulation.succession->personal_cash;
+            const auto repay=core::ManagePersonalLife{core::PayStudentLoan{}};
+            auto pay=tuition.submit({tuition.current_state().world.simulation.revision,repay});
+            require(pay.accepted(),pay.explanation.c_str());
+            const auto settled=tuition.checkpoint();
+            require(settled.world.simulation.succession->personal_cash==core::checked_unit_subtract(savings,school_loan.principal) &&
+                    *settled.world.simulation.accounts==opening_accounts &&
+                    settled.world.simulation.succession->personal_life->student_loan->paid_on==settled.world.simulation.date &&
+                    persistence::decode_save(program,persistence::encode_save(program,settled)).checkpoint==settled,
+                    "Pay tuition once from founder savings and preserve every corporate posting.");
+            require(!tuition.submit({settled.world.simulation.revision,repay}).accepted() && tuition.checkpoint()==settled,
+                    "Repaying a paid student loan must be a no-op.");
 
             auto phd=school_defaults("political","rich",seed_elem);
             phd.researcher="founder";phd.choices["grad_choice"]="college";phd.choices["ug_funding"]="family_paid";phd.choices["grad_school"]="phd_ml";

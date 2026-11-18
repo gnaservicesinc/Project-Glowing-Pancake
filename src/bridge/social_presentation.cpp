@@ -6,6 +6,40 @@
 #include <set>
 namespace pgp::bridge {
 namespace {QString q(const std::string& value){return QString::fromStdString(value);}}
+QVariantMap WorldController::deskColleague() const {
+    if(!snapshot_ || !atHeadquarters()) return {};
+    const auto& world=snapshot_->checkpoint.world;
+    const auto& s=world.simulation;
+    if(!core::social_rules(s) || !s.infrastructure || !s.infrastructure->workplace ||
+       !s.infrastructure->workplace->headquarters) return {};
+    std::vector<const core::PersonProfile*> present;
+    for(const auto& employee:s.management->people->employees) {
+        const auto& profile=employee.terms.profile;
+        if(!employee.departed_on && employee.ready_on<=s.date && profile.role!="Founder / researcher" &&
+           core::assigned_hq_desk(s,profile.id)) present.push_back(&profile);
+    }
+    if(present.empty()) return {};
+    const auto days=static_cast<std::size_t>(s.date.value()-world.scope_created.value());
+    return deskPerson(q(present[days % present.size()]->id));
+}
+QVariantMap WorldController::deskPerson(QString id) const {
+    if(!snapshot_ || !atHeadquarters()) return {};
+    const auto& s=snapshot_->checkpoint.world.simulation;
+    if(!core::social_rules(s) || !core::assigned_hq_desk(s,id.toStdString())) return {};
+    const auto& employees=s.management->people->employees;
+    const auto employee=std::ranges::find_if(employees,[&](const auto& row) {
+        return !row.departed_on && row.ready_on<=s.date && q(row.terms.profile.id)==id &&
+               row.terms.profile.role!="Founder / researcher";
+    });
+    if(employee==employees.end()) return {};
+    const auto& profile=employee->terms.profile;
+    auto card=person(id,s.date);
+    const auto* bond=core::social_link(s,"founder",profile.id);
+    card["spokeToday"]=bond && bond->last_invited==s.date;
+    card["memory"]=bond?q(bond->memory):QString{};
+    card["blocker"]=q(core::social_blocker(s,profile.id));
+    return card;
+}
 QVariantMap WorldController::relationships() const {
     if(!snapshot_)return {};const auto& s=snapshot_->checkpoint.world.simulation;const auto* rules=core::social_rules(s);if(!rules)return {};
     const auto& social=*s.management->people->social;QVariantList people,nodes,edges;

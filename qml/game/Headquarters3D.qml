@@ -149,6 +149,31 @@ View3D {
         position: Qt.vector3d(((parentDesk ? parentDesk.x : modelData.x)+spanX/2)*100-scene.columns*50,0,((parentDesk ? parentDesk.y : modelData.y)+spanY/2)*100-scene.rows*50)
         eulerRotation.y: (parentDesk ? parentDesk.rotated : modelData.rotated) ? 90 : 0
         Block {visible:scene.selectedItem===furnishing.modelData.id || scene.hoverItem===furnishing.modelData.id;y:2;size:Qt.vector3d(furnishing.spanX*100-6,2,furnishing.spanY*100-6);tint:scene.selectedItem===furnishing.modelData.id?"#efc389":"#98c9cc";equipmentId:furnishing.modelData.id}
+        Repeater3D {
+            model: !scene.editing && furnishing.modelData.personPortrait ? 1 : 0
+            Model {
+                property int equipmentId: furnishing.modelData.id
+                pickable: true
+                position: Qt.vector3d(0,109,53)
+                eulerRotation: Qt.vector3d(-20,40-furnishing.eulerRotation.y,0)
+                scale: Qt.vector3d(0.56,0.56,1)
+                source: "#Rectangle"
+                materials: PrincipledMaterial {
+                    lighting: PrincipledMaterial.NoLighting
+                    cullMode: Material.NoCulling
+                    alphaMode: PrincipledMaterial.Mask
+                    alphaCutoff: 0.22
+                    baseColorMap: Texture {
+                        sourceItem: Image {
+                            width: 128; height: 128
+                            source: furnishing.modelData.personPortrait
+                            sourceSize: Qt.size(128,128)
+                            fillMode: Image.PreserveAspectFit
+                        }
+                    }
+                }
+            }
+        }
         Node {
             visible: furnishing.modelData.kind==="desk"
             Block {position:Qt.vector3d(-60,3,-32);size:Qt.vector3d(14,6,65);tint:"#243b46";equipmentId:furnishing.modelData.id}

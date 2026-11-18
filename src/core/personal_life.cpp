@@ -55,6 +55,23 @@ const PersonalLifeCatalog& personal_life_catalog(const SimulationState& state) {
         invalid("This campaign has no personal property catalog.");
     return *state.management->catalog.succession->personal_life;
 }
+Cents student_payoff(const PersonalStudentLoan& loan,OrdinalDay morning) {
+    if(morning<loan.drawn_on || (loan.paid_on && morning>*loan.paid_on)) return Cents{0};
+    const auto start=from_ordinal(loan.drawn_on), end=from_ordinal(morning);
+    const auto interest=[&](unsigned days,unsigned month_days) {
+        return Cents{static_cast<std::int64_t>(mul_div_floor(static_cast<std::uint64_t>(loan.principal.value()),
+            static_cast<std::uint64_t>(loan.monthly_interest.value())*days,10000ULL*month_days).quotient)};
+    };
+    const int months=(end.year-start.year)*12+static_cast<int>(end.month)-static_cast<int>(start.month);
+    const auto first_length=days_in_month(start.year,start.month);
+    if(!months) return checked_unit_add(loan.principal,interest(end.day-start.day,first_length));
+    const auto whole=interest(1,1).value();
+    const auto full_months=mul_div_floor(static_cast<std::uint64_t>(whole),static_cast<unsigned>(months-1),1).quotient;
+    const auto partial=checked_unit_add(interest(first_length-start.day+1,first_length),
+                                        interest(end.day-1,days_in_month(end.year,end.month)));
+    return checked_unit_add(checked_unit_add(loan.principal,Cents{static_cast<std::int64_t>(full_months)}),partial);
+}
+
 Cents personal_resale(Cents price,BasisPoints resale) {
     return Cents{static_cast<std::int64_t>(mul_div_floor(static_cast<std::uint64_t>(price.value()),static_cast<std::uint64_t>(resale.value()),10000).quotient)};
 }
@@ -160,6 +177,10 @@ void manage_personal_life(SimulationState& state,const PersonalLifeAction& actio
             book_personal_event(state,request);
         } else if constexpr(std::is_same_v<Action,CancelPersonalEvent>) {
             cancel_personal_event(state,request.event);
+        } else if constexpr(std::is_same_v<Action,PayStudentLoan>) {
+            if(!owned.student_loan || owned.student_loan->paid_on) invalid("You have no outstanding student loan.");
+            spend(state,student_payoff(*owned.student_loan,state.date));
+            owned.student_loan->paid_on=state.date;
         } else {
             if(owned.unpaid.value()==0) invalid("You have no unpaid personal upkeep.");
             spend(state,owned.unpaid);
@@ -182,6 +203,11 @@ PersonalValuation personal_valuation(const SimulationState& state,OrdinalDay bef
     if(!state.succession || !state.succession->personal_life) return result;
     const auto& owned=*state.succession->personal_life;
     const auto& catalog=personal_life_catalog(state);
+    if(const auto& loan=owned.student_loan;loan && loan->drawn_on<before) {
+        if(loan->paid_on && *loan->paid_on<before)
+            result.spent=checked_unit_add(result.spent,student_payoff(*loan,*loan->paid_on));
+        else result.liabilities=student_payoff(*loan,std::min(before,state.date));
+    }
     for(const auto& property:owned.properties) {
         if(property.purchased_on>=before) continue;
         const auto& offer=find(catalog.properties,property.offer);
@@ -254,7 +280,16 @@ void validate_personal_life(const SimulationState& state,bool deep) {
         if(item.property && !personal_placement_blocker(state,{item.id,item.property,item.x,item.y,item.rotated}).empty())
             invalid("A personal furnishing has an invalid placement.");
     }
+    Cents private_debt{0};
+    if(const auto& loan=owned.student_loan) {
+        if(loan->principal.value()<=0 || loan->principal.value()>100000000000LL ||
+           loan->monthly_interest.value()<0 || loan->monthly_interest.value()>10000 ||
+           !valid_date(loan->drawn_on) || loan->due<=loan->drawn_on ||
+           (loan->paid_on && (!valid_date(*loan->paid_on) || *loan->paid_on<loan->drawn_on)))
+            invalid("Invalid personal student loan terms or payment date.");
+        if(!loan->paid_on) private_debt=student_payoff(*loan,state.date);
+    }
     const auto totals=personal_valuation(state,OrdinalDay{state.date.value()+1});
-    if(totals.spent!=owned.spent || totals.liabilities!=owned.unpaid) invalid("Personal spending must match purchases, sales and paid upkeep.");
+    if(totals.spent!=owned.spent || totals.liabilities!=checked_unit_add(owned.unpaid,private_debt)) invalid("Personal spending must match purchases, sales and paid upkeep.");
 }
 }

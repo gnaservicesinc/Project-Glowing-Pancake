@@ -152,7 +152,7 @@ ApplicationWindow {
                     id: query
                     objectName: "librarySearch"
                     Layout.fillWidth: true
-                    placeholderText: qsTr("Search event titles or story text")
+                    placeholderText: qsTr("Search dialogue, choices, people or headlines")
                     Accessible.name: qsTr("Search events")
                     onTextEdited: window.updateFilter()
                     Keys.onDownPressed: { library.forceActiveFocus(); if (library.currentIndex < 0) library.currentIndex = 0 }
@@ -165,6 +165,8 @@ ApplicationWindow {
                     model: [
                         { label: qsTr("All events"), value: "events" },
                         { label: qsTr("Company events"), value: "flow" },
+                        { label: qsTr("Player decisions"), value: "decisions" },
+                        { label: qsTr("News stories"), value: "news" },
                         { label: qsTr("Childhood scenes"), value: "chapter" },
                         { label: qsTr("Scenarios"), value: "scenario" },
                         { label: qsTr("All game content"), value: "" }

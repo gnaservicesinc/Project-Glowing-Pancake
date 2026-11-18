@@ -38,6 +38,29 @@ int main(){using namespace pgp;try {
     network.founder_traits={"Social: introverted","Temperament: deliberate","Interest: music"};
     for(auto& e:roster)if(e.terms.profile.role!="Founder / researcher")e.terms.profile.traits={"Social: outgoing","Temperament: impulsive","Interest: games","Upbringing: poor"};
     network.known_traits.clear();network.links.clear();network.last_outing.reset();
+    {
+        auto free_break=social;
+        auto& worker=*std::ranges::find_if(free_break.management->people->employees,[&](const auto& e){return e.terms.profile.id==ids[0];});
+        worker.terms.profile.traits={"Social: outgoing","Temperament: deliberate","Interest: music"};
+        const auto opening_cash=free_break.cash;
+        const auto reaction=[&](const char* activity) {
+            auto day=free_break;
+            core::socialize(day,{ids[0],activity});
+            check(day.cash==opening_cash,"A workplace conversation must be free");
+            return *core::social_link(day,"founder",ids[0]);
+        };
+        const auto chat=reaction("chat"),listen=reaction("listen"),music=reaction("hobby");
+        check(chat.memory!=listen.memory && music.memory.find("beat")!=std::string::npos,
+              "A person's activity, temperament and interests must reach their response.");
+        worker.terms.profile.traits[0]="Social: introverted";
+        const auto quiet_chat=reaction("chat");
+        const auto compare_chat=[&](const char* style) {
+            worker.terms.profile.traits[0]=style;
+            return reaction("chat").affinity-reaction("listen").affinity;
+        };
+        check(quiet_chat.memory!=chat.memory && compare_chat("Social: outgoing")>compare_chat("Social: introverted"),
+              "The same invitation must produce different speech and relative rapport depending on the person.");
+    }
     for(int week=0;week<170;++week) {
         social.date=core::advance_days(social.date,core::Days{7});core::prepare_social(social);
         core::socialize(social,{ids[0],"listen"});
