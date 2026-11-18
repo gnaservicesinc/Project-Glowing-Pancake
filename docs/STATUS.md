@@ -7,11 +7,16 @@ Updated 2026-11-18
 The latest 2026-11-18 human feedback selects the
 [device, company and research redesign](DEVICE_RESEARCH_REDESIGN.md).
 This is a design/implementation plan; F-08A–F-08F remain unimplemented.
-It requires inherited CEO missions/bylaws and actual control to change them,
+It now requires removal of the dedicated Alder opening and its related events,
+complete removal of “The missing zero,” and a one-screen playtester biography,
+starting-condition setup and direct start page with freely editable values.
+It also requires inherited CEO missions/bylaws and actual control to change them,
 real device-specific app workspaces and detached windows, usable graphical
 applications, source/processing-based data with creative production and PoC
 research, and a broad research frontier that cannot be completed.
 Existing rendered checks do not establish acceptance of the current interface.
+The removal requirements supersede the historical opening/event descriptions
+below; no runtime removal or setup-page implementation is claimed by this plan.
 
 **The initial skeleton phase is complete and closed for human feedback.**
 

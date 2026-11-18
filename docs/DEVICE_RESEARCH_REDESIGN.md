@@ -27,21 +27,63 @@ institutional funding can support continued work. These are interacting
 strategies, not a mandatory checklist or a fixed date at which every lab must
 become a commercial platform.
 
-## 1. Joining an existing company
+## 1. Opening cleanup, playtester setup and company authority
 
-“Start at Alder Research” currently selects an authored biography, Robin Ibarra,
-and an appointment as CEO of a staffed existing lab. It is a normal career
-opening, not God mode or a testing scenario. Rename the entry to **Join Alder
-Research as CEO** and put the explanation beside the choice, rather than only
-in a tooltip. State that the biography is prepared and that creating one's own
-protagonist remains another route.
+### Remove the authored shortcut and its related events
+
+Delete the dedicated Alder Research/Robin Ibarra prepared opening, including
+every version of its start/join/CEO shortcut, rather than relabeling or moving
+it. Remove its related authored opening events and follow-ups, associated
+triggers, messages, scripted handoffs and dedicated assets/definitions. Audit
+menus, localization, guides, smoke checks and content references so they no
+longer expose or depend on that path. Do not retain it as a playtester preset
+or a renamed scenario.
+
+Remove **“The missing zero” entirely**, including its event chain, choices,
+delayed follow-ups, newspaper outcomes and linked archive/dataset handoff.
+The previous proposal to clarify or rewrite this story is withdrawn. Audit
+dependent references and checks so removal leaves no dangling triggers or
+story-only requirements. Reusable research, data and event mechanics remain
+independent of these removed stories.
+
+### One-screen bio setup and start page for playtesters
+
+Add a single setup-and-start page under Playtest Environment. A tester can set
+the protagonist's biography and starting conditions however they like, then
+start directly in the configured game. No prologue, multi-step wizard, job-offer
+story or fixed authored protagonist is required. All configuration and its
+review stay on that page, with clearly organized editable sections and a
+prominent **Start playtest** action.
+
+Expose the supported starting state: identity, appearance, age/date, background,
+traits, skills/stats, personal/company funds and obligations, company identity,
+legal form, mission/bylaws, employment/ownership/board control, people and
+relationships, location/premises, equipment/devices, compute, research,
+datasets, models, products and relevant industry conditions. Let testers set
+values directly rather than being restricted to biography-earned eligibility,
+normal progression or a handful of locked presets. Useful defaults and reset
+controls help get started; all defaults remain editable.
+
+Validate structural consistency and explain any incompatible combination on
+the same page without discarding edits. Construct the actual configured state,
+including real resources, ownership and dependencies, rather than cosmetic
+labels or unexplained bonuses. Start paused, preserve the setup draft, and
+verify fresh save/reload of the resulting campaign. Use the existing isolated
+playtest storage and tools; the page belongs in ordinary Release playtest
+builds and is excluded from distribution builds under the existing policy.
+
+### Ordinary existing-company employment
+
+The general career route of accepting employment at an existing company still
+uses the following authority rules. It does not reintroduce the removed
+prepared opening or its event chains.
 
 An appointment is employment under existing company terms. Present an
 appointment letter with the lab's purpose, legal form, existing bylaws, owners,
 board, delegated authority, compensation, offered equity, cash, payroll,
 facilities, current work and commitments. Accept, decline or review the
 agreement; do not expose a formation form that lets an applicant rewrite it.
-Apply the same rule to custom protagonists accepting an existing lab's offer.
+Apply this rule whenever a protagonist accepts an existing lab's offer.
 
 The company owns its funds and equipment. The protagonist retains their own
 savings and receives their actual contractual salary/equity. A title does not
@@ -173,12 +215,10 @@ what blocks this attempt and how the selected team affects it. A person row
 needs adequate height for its reason; an unavailable worker's explanation must
 not sit over another worker's button.
 
-Stories need the same clarity. “The missing zero” concerns a passenger count:
-an archive scan says 108 and a transcription says 18. Introduce Nell as the
-editor asking the lab to help verify the number, explain why the lab's methods
-are relevant, introduce Gus as the person holding the original ticket records,
-and explain what accepting the investigation commits. Do not require the player
-to infer all of that from unexplained names and a metaphor about a headline.
+Any retained stories must establish the participants, their connection to the
+lab, the reason for the request and what accepting it commits. This clarity
+requirement does not authorize rewriting or replacing the stories marked for
+removal in section 1.
 
 ## 4. Data is obtained for a reason
 
@@ -304,10 +344,12 @@ lineage. Preserve those foundations.
 
 The important gaps observed in source are:
 
-- The prepared appointment is labeled as an unexplained start shortcut.
-  `HomeStart.qml` still offers a mission selector for a hired CEO; the bridge
-  treats mission as editable unless a cofounder sets it. Existing bylaws are
-  not presented as a complete inherited appointment agreement.
+- The dedicated prepared opening and its related event chains need removal,
+  with the playtester setup page providing freely configurable direct starts.
+  For ordinary career appointments, `HomeStart.qml` still offers a mission
+  selector for a hired CEO; the bridge treats mission as editable unless a
+  cofounder sets it. Existing bylaws are not presented as a complete inherited
+  appointment agreement.
 - `DeviceHome.qml` routes icons into the shared surface in `Main.qml`.
   `WorldController::devices()` collapses available equipment by kind, and
   `resolve_app_device()` returns a kind. Navigation holds one app/device, while
@@ -328,7 +370,7 @@ screens remain reachable or an engineering scenario passes.
 
 | Milestone | Result to build | Acceptance path |
 | --- | --- | --- |
-| F-08A · Appointment and authority | Clear career entry, inherited institutional terms, enforced control rules and survivable reversal consequences | Accept a prepared and a custom-character appointment; inspect existing terms; refuse an unauthorized rewrite without mutation; obtain actual control and enact a consequential reversal; found a separate company with chosen terms |
+| F-08A · Opening cleanup, playtester setup and authority | Remove the dedicated prepared opening and its related events, remove the rejected newsroom event entirely, add one-screen configurable bio/setup/start, and enforce inherited company authority | Verify every shortcut variant and removed event/follow-up is absent with no dangling references; configure contrasting biographies and arbitrary supported starting conditions on one page; start paused and reload the exact state; verify invalid combinations preserve edits; accept an ordinary career appointment with inherited terms, refuse unauthorized rewrites, and enact a survivable reversal after obtaining actual control |
 | F-08B · Physical device workspaces | Stable device identities, independent app sessions, menu-bar access to direct management tools and detached native device windows | Open Research on one computer and Accounts on another; switch apps independently; save/reload unfinished work; power off one device; resume its workspace after recovery; dock/undock without lost work or duplicate commands |
 | F-08C · Usable research app | App-specific project/graph/inspector flow, expanded tree window and plain-language explanations | Find a topic, compare paths, inspect missing requirements, choose qualified workers and start real funded work; use compact/high-text layouts with no overlapping worker controls; preserve graph position through switching and reload |
 | F-08D · Source and processing simulation | Named acquisitions, processing lineage, creative staffing and data-dependent research/PoC outcomes | Research a data-free topic without a corpus; supply data only to a project that needs it; obtain and clean a source; hire creatives and observe paid slow output/skill effects; produce, inspect and reload a real PoC model |

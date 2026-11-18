@@ -8,7 +8,14 @@ The 2026-11-18 playtest feedback and clarification select
 [devices, inherited companies and an unfinished research frontier](DEVICE_RESEARCH_REDESIGN.md).
 This newer direction supersedes conflicting older founding/interface/data/tree
 assumptions. Existing-company appointments inherit mission and bylaws; rewriting
-them requires actual control and creates survivable consequences. Applications
+them requires actual control and creates survivable consequences. The follow-up
+withdraws the proposed rename of the dedicated Alder prepared opening: remove
+all versions of that shortcut and its related events instead. Remove “The
+missing zero” entirely, including its follow-ups and linked story handoffs;
+the earlier rewrite proposal is superseded. Add a one-screen freely configurable
+playtester biography, starting-condition setup and direct start page. This
+playtest configuration can bypass ordinary progression/eligibility while
+preserving structurally consistent simulation state. Applications
 inhabit the protagonist's actual devices with independent saved workspaces and
 windowed popouts; direct management tools remain accessible through the menu
 bar. Data is needed for training and explicitly data-dependent research, with

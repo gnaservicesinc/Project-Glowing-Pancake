@@ -11,12 +11,16 @@ that review.
 
 The 2026-11-18 [device and research redesign](DEVICE_RESEARCH_REDESIGN.md)
 records the latest selected feedback. **F-08A–F-08F are planned, not implemented**:
+removal of the dedicated Alder opening and its related events, complete removal
+of “The missing zero,” one-screen freely configurable playtester bio/setup/start,
 inherited CEO terms and control, physical device/app workspaces and popouts,
 usable research applications, source/processing/creative data and PoC models,
 an unfinished research frontier, and the wider app/industry integration.
 The implementation order and end-to-end acceptance paths are in that plan.
 Earlier interface completion statements describe engineering coverage; the
 current human feedback reopens usability and these simulation contracts.
+The removals above supersede the historical opening/event implementation
+summary below; they are planned changes and have not yet changed game content.
 
 Implemented the staffed Alder Research opening, trait-driven desk conversations,
 a branching newsroom investigation and an earned public reading. The industry
