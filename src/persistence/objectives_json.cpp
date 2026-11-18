@@ -8,7 +8,7 @@ template<> struct Extension<core::ObjectiveKind> {
 };
 template<> struct Extension<runtime::CampaignEndCause> {
     static constexpr auto key=runtime::campaign_end_key;
-    static constexpr std::size_t count=8;
+    static constexpr std::size_t count=11;
 };
 template<> struct Extension<runtime::ObjectiveMode> {
     static constexpr auto key=runtime::objective_mode_key;
@@ -76,13 +76,21 @@ template<> struct Extension<runtime::CareerResearch> {
 };
 template<> struct Extension<runtime::ResearchAppointment> {
     static constexpr auto maximum_rows=runtime::career_appointment_limit;
-    static void fields(auto& r,auto f) {f("employer",r.employer);f("accepted_on",r.accepted_on);f("projects",r.projects);}
+    static void fields(auto& r,auto f) {f("employer",r.employer);f("accepted_on",r.accepted_on);f("projects",r.projects);f("organization_name",r.organization_name,true);}
+};
+template<> struct Extension<runtime::CareerTransition> {
+    static constexpr std::size_t maximum_rows=32;
+    static void fields(auto& r,auto f) {
+        f("kind",r.kind);f("source",r.source);f("response",r.response);f("notice",r.notice);
+        f("deadline",r.deadline);f("consideration",r.consideration);f("personal_proceeds",r.personal_proceeds);
+        f("decided_on",r.decided_on);
+    }
 };
 template<> struct Extension<runtime::ObjectivesState> {
     static void fields(auto& r,auto f) {
         f("deadline",r.deadline);f("selections",r.selections);f("months",r.months);f("breaches",r.breaches);f("race",r.race);
         f("end",r.end);f("mode",r.mode);f("observer_day",r.observer_day);f("observer_paused",r.observer_paused);
-        f("career",r.career,true);
+        f("career",r.career,true);f("transitions",r.transitions,true);
     }
 };
 }

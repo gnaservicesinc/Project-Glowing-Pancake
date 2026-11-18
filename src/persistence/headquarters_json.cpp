@@ -11,7 +11,7 @@ template<class T,class F> void visit(T& r,F&& f) {
         f("id",r.id);f("kind",r.kind);f("market",r.market);f("plan",r.plan);f("lessor",r.lessor);f("address",r.address);f("width",r.width);f("depth",r.depth);f("rooms",r.rooms);
         f("rent",r.rent);f("deposit",r.deposit);f("entered_on",r.entered_on);f("left_on",r.left_on);f("construction",r.construction);
     } else if constexpr(std::is_same_v<V,core::HQEquipment>) {
-        f("id",r.id);f("offer",r.offer);f("person",r.person);f("ordered_on",r.ordered_on);f("delivered_on",r.delivered_on);f("paid",r.paid);f("inherited",r.inherited);f("powered",r.powered);f("rotated",r.rotated);f("premises",r.premises);f("mount",r.mount);f("x",r.x);f("y",r.y);
+        f("id",r.id);f("offer",r.offer);f("person",r.person);f("ordered_on",r.ordered_on);f("delivered_on",r.delivered_on);f("paid",r.paid);f("inherited",r.inherited);f("powered",r.powered);f("rotated",r.rotated);f("premises",r.premises);f("mount",r.mount);f("x",r.x);f("y",r.y);f("playtest_delivery",r.playtest_delivery,true);
     } else if constexpr(std::is_same_v<V,core::HQLand>) {f("id",r.id);f("market",r.market);f("plan",r.plan);f("purchased_on",r.purchased_on);f("paid",r.paid);}
     else if constexpr(std::is_same_v<V,core::HQConstruction>) {
         f("id",r.id);f("land",r.land);f("contractor",r.contractor);f("width",r.width);f("depth",r.depth);f("rooms",r.rooms);f("signed_on",r.signed_on);f("promised_on",r.promised_on);f("finish_on",r.finish_on);

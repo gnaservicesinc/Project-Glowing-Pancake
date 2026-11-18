@@ -10,7 +10,7 @@
     "music.weitblick": "9da14349e75eaa6e799a45522c2c8cb00046372efefd2a6121caf1959b10140b"
   },
   "content_schema": 1,
-  "content_version": "0.79.0-dev.1",
+  "content_version": "0.80.0-dev.1",
   "currency_basis": "constant_2014_cents",
   "definitions": [
     {
@@ -78409,6 +78409,20 @@
                 "rent_cents_per_square_metre": 3800,
                 "state": "US-WA",
                 "street": "90 Rainier Court"
+              },
+              {
+                "agent": "USCIF Logistics",
+                "city": "Travis AFB",
+                "deposit_months": 2,
+                "early_exit_months": 2,
+                "id": "travis",
+                "land_cents_per_square_metre": 100000,
+                "landlord": "Federal Facilities Office",
+                "minimum_lease_days": 365,
+                "monthly_land_tax_cents_per_square_metre": 15,
+                "rent_cents_per_square_metre": 4000,
+                "state": "US-CA",
+                "street": "Civilian Administration Building"
               }
             ],
             "maximum_edge": 40,
@@ -80810,7 +80824,9 @@
             "company.century.roster.international.4": "bengaluru",
             "company.century.roster.international.5": "tokyo",
             "company.century.roster.international.6": "sao_paulo",
-            "company.public_research_fellowship": "los_angeles"
+            "company.public_research_fellowship": "los_angeles",
+            "company.restart": "los_angeles",
+            "company.uscif": "travis"
           },
           "industry_team_target": 10,
           "international_headquarters": [
@@ -83187,7 +83203,7 @@
         "research.compute.batched_serving"
       ],
       "resilience": "resilience.domestic",
-      "revision": 51,
+      "revision": 52,
       "rivals": [
         {
           "capacity_milli_CU_per_day": 380000,
@@ -84154,6 +84170,102 @@
           "staff": 4,
           "start_after_days": 0,
           "training_milli_CU_per_day": 100000,
+          "training_work_milli_CU": 7200000,
+          "warning_lead_days": 0
+        },
+        {
+          "capacity_milli_CU_per_day": 120000,
+          "cash_cents": 900000000,
+          "data_id": "data.licensed_documents",
+          "id": "company.restart",
+          "monthly_lease_cents": 900000,
+          "monthly_payroll_cents": 1800000,
+          "name": "New laboratory",
+          "planning": {
+            "group": "restart",
+            "leader": "Founding Board",
+            "price_ceiling_cents": 150,
+            "price_floor_cents": 50,
+            "priorities": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "publish_results": false,
+            "recipes": [
+              "recipe.efficient",
+              "recipe.document_baseline"
+            ],
+            "region": "US",
+            "research": [],
+            "reserve_floor_cents": 5000000,
+            "runway_months": 2,
+            "services": [
+              "product.document_specialist"
+            ],
+            "slot": 1
+          },
+          "player_deployment_threshold": 0,
+          "recipe_id": "recipe.document_baseline",
+          "seed": 32646,
+          "staff": 4,
+          "start_after_days": 0,
+          "training_milli_CU_per_day": 100000,
+          "training_work_milli_CU": 7200000,
+          "warning_lead_days": 0
+        },
+        {
+          "capacity_milli_CU_per_day": 90000,
+          "cash_cents": 10000000000,
+          "data_id": "data.licensed_documents",
+          "id": "company.uscif",
+          "monthly_lease_cents": 900000,
+          "monthly_payroll_cents": 1800000,
+          "name": "United States Computerized Intelligence Force",
+          "planning": {
+            "group": "uscif",
+            "leader": "Civilian Administration",
+            "price_ceiling_cents": 150,
+            "price_floor_cents": 50,
+            "priorities": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "publish_results": false,
+            "recipes": [
+              "recipe.efficient",
+              "recipe.document_baseline"
+            ],
+            "region": "US",
+            "research": [],
+            "reserve_floor_cents": 5000000,
+            "runway_months": 2,
+            "services": [
+              "product.document_specialist"
+            ],
+            "slot": 1
+          },
+          "player_deployment_threshold": 0,
+          "recipe_id": "recipe.document_baseline",
+          "seed": 32647,
+          "staff": 4,
+          "start_after_days": 0,
+          "training_milli_CU_per_day": 90000,
           "training_work_milli_CU": 7200000,
           "warning_lead_days": 0
         }

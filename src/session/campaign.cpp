@@ -188,6 +188,12 @@ OperationResult Campaign::prepare_opening(std::uint64_t expected_revision) {
     return result;
 }
 #if !PGP_DISTRIBUTION
+OperationResult Campaign::editPlaytestPerson(std::uint64_t revision,std::string_view person,const std::vector<std::string>& traits,const std::array<int,5>& stats) {
+    return operate([&](auto& candidate){return candidate.editPlaytestPerson(revision,person,traits,stats);},false);
+}
+OperationResult Campaign::usePlaytestTool(std::uint64_t revision,std::string_view tool,std::string_view topic) {
+    return operate([&](auto& candidate){return candidate.usePlaytestTool(revision,tool,topic);},false);
+}
 OperationResult Campaign::editPlaytestFounder(std::uint64_t expected_revision,
                                               std::vector<std::string> traits,bool genius) {
     return operate([&](auto& candidate) {
@@ -204,6 +210,7 @@ OperationResult Campaign::submit(const core::Command& command) {
         std::holds_alternative<core::EndWithPostmortem>(command.action) ||
         std::holds_alternative<core::ContinueAfterEnding>(command.action) ||
         std::holds_alternative<core::AcceptResearchAppointment>(command.action) ||
+        std::holds_alternative<core::DecideCareerTransition>(command.action) ||
         std::holds_alternative<core::DirectCareerResearch>(command.action) ||
         std::holds_alternative<core::PublishCareerResearch>(command.action) ||
         std::holds_alternative<core::ConsumeReservation>(command.action) ||

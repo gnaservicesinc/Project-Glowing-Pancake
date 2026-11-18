@@ -5,6 +5,93 @@ std::optional<PeoplePlan> plan_individual_hire(const core::SimulationState& s,co
     using namespace core;
     if(!s.management || !s.management->people || !s.management->catalog.people->recruitment || !s.infrastructure || !s.infrastructure->workplace || !s.infrastructure->workplace->headquarters)return {};
     const auto& rules=*s.management->catalog.people;const auto& people=*s.management->people;const auto& hq=*s.infrastructure->workplace->headquarters;
+    const auto affordable=[&](Cents immediate,Cents monthly=Cents{0}){
+        return usable>=checked_unit_add(runway,checked_unit_add(immediate,Cents{mul_div_round_half_up(static_cast<std::uint64_t>(monthly.value()),2,1)}));
+    };
+    const auto& hq_rules=*s.infrastructure->catalog.workplace->headquarters;
+    const auto& offers=hq_rules.equipment;
+    const auto kind=[&](const HQEquipment& item)->std::string_view {const auto offer=std::ranges::find(offers,item.offer,&HQEquipmentOffer::id);return offer==offers.end()?std::string_view{}:std::string_view{offer->kind};};
+    const auto upgrade_hq=[&]() -> std::optional<PeoplePlan> {
+        if(hq.premises.size()>=64) return {};
+        const auto& premises=current_headquarters(s);
+        const int cur_area=premises.width*premises.depth;
+        for(const auto& b:hq.construction) {
+            if(b.completed_on && b.id!=premises.construction && b.width*b.depth>cur_area) {
+                try {
+                    const auto q=preview_hq_move(s,MoveToOwnedHQ{b.id});
+                    if(affordable(checked_unit_add(q.price,q.exit_fee),q.monthly))
+                        return PeoplePlan{"equip_workstation","move_hq",ManageHeadquarters{MoveToOwnedHQ{b.id}}};
+                } catch(...) {}
+            }
+        }
+        if(hq.construction.empty() && !hq.land.empty() && !hq_rules.contractors.empty()) {
+            const auto& lot=hq.land.back();
+            const auto plot=std::ranges::find(hq_rules.plans,lot.plan,&HQPlan::id);
+            if(plot!=hq_rules.plans.end() && plot->width*plot->depth>cur_area && lot.market==premises.market) {
+                BuildHQ build{lot.id,hq_rules.contractors.front().id,plot->width,plot->depth,plot->rooms};
+                try {
+                    const auto q=preview_hq_build(s,build);
+                    if(q.ready_on<s.end_date && affordable(q.maximum,q.monthly))
+                        return PeoplePlan{"equip_workstation","build_hq",ManageHeadquarters{std::move(build)}};
+                } catch(...) {}
+            }
+        }
+        const HQPlan* best=nullptr;
+        for(const auto& plan:hq_rules.plans) {
+            if(plan.id==premises.plan || plan.width*plan.depth<=cur_area) continue;
+            if(!best || plan.width*plan.depth<best->width*best->depth) best=&plan;
+        }
+        if(best) {
+            try {
+                const auto q=preview_hq_lease(s,LeaseHQ{premises.market,best->id});
+                if(affordable(checked_unit_add(q.price,q.exit_fee),q.monthly))
+                    return PeoplePlan{"equip_workstation",best->id,ManageHeadquarters{LeaseHQ{premises.market,best->id}}};
+            } catch(...) {}
+        }
+        return {};
+    };
+    const auto equip_existing=[&](std::uint32_t desk_id) -> std::optional<PeoplePlan> {
+        for(const auto& item:hq.items)if(item.offer=="desktop" && item.person.empty() && !item.premises && !item.mount) {
+            if(item.delivered_on>s.date) return {};
+            PlaceHQEquipment place{item.id,desk_id,0,0,false};
+            if(hq_placement_blocker(s,place).empty()) return PeoplePlan{"equip_workstation",std::to_string(item.id),ManageHeadquarters{place}};
+        }
+        const auto computer=std::ranges::find(offers,std::string{"desktop"},&HQEquipmentOffer::id);
+        if(computer!=offers.end() && hq.items.size()<hq_rules.maximum_items && affordable(computer->price))
+            return PeoplePlan{"buy_workstation","desktop",ManageHeadquarters{BuyHQEquipment{"desktop"}}};
+        return {};
+    };
+    const auto place_or_grow_desk=[&]() -> std::optional<PeoplePlan> {
+        const auto& premises=current_headquarters(s);
+        for(const auto& item:hq.items)if(kind(item)=="desk" && !item.premises && item.person.empty()) {
+            if(item.delivered_on>s.date) return {};
+            for(int y=0;y<premises.depth;++y)for(int x=0;x<premises.width;++x) {
+                PlaceHQEquipment place{item.id,0,x,y,false};
+                if(hq_placement_blocker(s,place).empty()) return PeoplePlan{"equip_workstation",std::to_string(item.id),ManageHeadquarters{place}};
+            }
+            return upgrade_hq();
+        }
+        return {};
+    };
+    for(const auto& e:people.employees) {
+        if(e.departed_on) continue;
+        const std::string key=e.terms.profile.role=="Founder / researcher"?std::string{"founder"}:e.terms.profile.id;
+        if(hq_workstation_ready(s,key)) continue;
+        if(const auto desk_id=assigned_hq_desk(s,key)) {
+            if(auto plan=equip_existing(desk_id)) return plan;
+            return {};
+        }
+        for(const auto& item:hq.items)if(kind(item)=="desk" && item.person.empty() && item.premises==current_headquarters(s).id && item.delivered_on<=s.date) {
+            if(hq_desk_ready(s,item.id)) return PeoplePlan{"equip_workstation",key,ManageHeadquarters{AssignHQDesk{item.id,key}}};
+            if(auto plan=equip_existing(item.id)) return plan;
+            return {};
+        }
+        if(auto plan=place_or_grow_desk()) return plan;
+        const auto model=std::ranges::find(offers,std::string{"desk"},&HQEquipmentOffer::id);
+        if(model!=offers.end() && hq.items.size()<hq_rules.maximum_items && affordable(model->price))
+            return PeoplePlan{"buy_workstation","desk",ManageHeadquarters{BuyHQEquipment{"desk"}}};
+        return {};
+    }
     const auto current=std::ranges::count_if(people.employees,[](const auto& e){return !e.departed_on;});
     if(static_cast<std::uint32_t>(current)>=rules.industry_team_target || people.employees.size()>=rules.maximum_hq ||
        std::ranges::any_of(people.employees,[&](const auto& e){return !e.departed_on && e.ready_on>s.date;}))return {};
@@ -19,15 +106,10 @@ std::optional<PeoplePlan> plan_individual_hire(const core::SimulationState& s,co
     const auto status=recruitment_status(*candidate,s.date);const auto workload=capacity_report(*s.capacity);
     if(status=="available" && workload.available_staff>workload.assigned_staff+1)return {};
     if(status=="waiting")return {};
-    const auto affordable=[&](Cents immediate,Cents monthly=Cents{0}){
-        return usable>=checked_unit_add(runway,checked_unit_add(immediate,Cents{mul_div_round_half_up(static_cast<std::uint64_t>(monthly.value()),2,1)}));
-    };
     Cents salary=candidate->salary,signing=candidate->signing;
     if(status=="counter") {const auto& counter=candidate->recruitment->offers.back();salary=counter.counter_salary;signing=counter.counter_signing;}
     if(status=="agreed") {const auto terms=agreed_employment(*candidate);salary=terms.first;signing=terms.second;}
     if(!affordable(signing,salary))return {};
-    const auto& offers=s.infrastructure->catalog.workplace->headquarters->equipment;
-    const auto kind=[&](const HQEquipment& item)->std::string_view {const auto offer=std::ranges::find(offers,item.offer,&HQEquipmentOffer::id);return offer==offers.end()?std::string_view{}:std::string_view{offer->kind};};
     const HQEquipment* desk=nullptr;
     for(const auto& item:hq.items)if(kind(item)=="desk" && item.person.empty() && item.premises==current_headquarters(s).id && item.delivered_on<=s.date) {
         if(hq_desk_ready(s,item.id)){desk=&item;break;}
@@ -44,19 +126,12 @@ std::optional<PeoplePlan> plan_individual_hire(const core::SimulationState& s,co
             PlaceHQEquipment place{item.id,desk->id,0,0,false};if(hq_placement_blocker(s,place).empty())return PeoplePlan{"equip_workstation",std::to_string(item.id),ManageHeadquarters{place}};
         }
         const auto computer=std::ranges::find(offers,std::string{"desktop"},&HQEquipmentOffer::id);
-        if(computer!=offers.end() && affordable(computer->price, salary))return PeoplePlan{"buy_workstation","desktop",ManageHeadquarters{BuyHQEquipment{"desktop"}}};
+        if(computer!=offers.end() && hq.items.size()<hq_rules.maximum_items && affordable(computer->price, salary))return PeoplePlan{"buy_workstation","desktop",ManageHeadquarters{BuyHQEquipment{"desktop"}}};
         return {};
     }
-    for(const auto& item:hq.items)if(kind(item)=="desk" && !item.premises && item.person.empty()) {
-        if(item.delivered_on>s.date)return {};
-        const auto& premises=current_headquarters(s);
-        for(int y=0;y<premises.depth;++y)for(int x=0;x<premises.width;++x) {
-            PlaceHQEquipment place{item.id,0,x,y,false};if(hq_placement_blocker(s,place).empty())return PeoplePlan{"equip_workstation",std::to_string(item.id),ManageHeadquarters{place}};
-        }
-        return {};
-    }
+    if(auto plan=place_or_grow_desk()) return plan;
     const auto model=std::ranges::find(offers,std::string{"desk"},&HQEquipmentOffer::id);
-    if(model!=offers.end() && affordable(model->price,salary))return PeoplePlan{"buy_workstation","desk",ManageHeadquarters{BuyHQEquipment{"desk"}}};
+    if(model!=offers.end() && hq.items.size()<hq_rules.maximum_items && affordable(model->price,salary))return PeoplePlan{"buy_workstation","desk",ManageHeadquarters{BuyHQEquipment{"desk"}}};
     return {};
 }
 }

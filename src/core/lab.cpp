@@ -65,7 +65,7 @@ bool knowledge_on(const LabState& state, const CapacityState& capacity, std::str
     return std::any_of(state.research.begin(), state.research.end(), [&](const auto& row) {
         if (row.research_id != id || !row.completed) return false;
         const auto& work = find(capacity.projects, row.project_id);
-        return work.stopped_on && *work.stopped_on < day;
+        return project_result_on(work,day);
     });
 }
 void require_day(const LabState& state, OrdinalDay day) {
@@ -466,7 +466,7 @@ MilliCU research_work(const LabResearch& node, MilliCUPerDay rate, std::uint32_t
 }
 bool experiment_failed(const LabState& state, const CapacityState& capacity, const LabResearch& node,
                        const CapacityProject& work, bool has_result) {
-    if (work.status != ProjectStatus::completed || !node.setback || has_result ||
+    if (work.status != ProjectStatus::completed || work.playtest_completed || !node.setback || has_result ||
         knowledge_on(state, capacity, node.setback->safeguard, work.starts_on)) return false;
     // One stable sample for the first settled result of this topic. Cancelled attempts
     // and evaluations cannot change it. The stream origin is already saved.
@@ -708,7 +708,7 @@ void validate_lab(const LabState& state, const CapacityState& capacity, const Ac
         auto& prior = history[node.id];
         if (prior.successes >= node.repeat_limit) invalid("Research exceeded its authored repetition limit");
         if (prior.latest && (!prior.latest->stopped_on || *prior.latest->stopped_on > work.starts_on ||
-            (prior.latest->status == ProjectStatus::completed && *prior.latest->stopped_on == work.starts_on)))
+            (prior.latest->status == ProjectStatus::completed && !project_result_on(*prior.latest,work.starts_on))))
             invalid("Research retry precedes the settled end of its previous attempt");
         const auto attempt = ++prior.attempts;
         const auto credit=insight_on(state,node.id,work.starts_on);

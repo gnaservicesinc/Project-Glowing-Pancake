@@ -23,8 +23,15 @@ struct CareerResearchOption {
 [[nodiscard]] std::vector<CareerResearchOption> career_research_options(const WorldState&,const CompiledProgram&);
 [[nodiscard]] core::Cents career_salary_received(const WorldState&);
 [[nodiscard]] const core::RecurringObligation* career_payroll(const RivalCompany&);
-void accept_research_appointment(WorldState&,const CompiledProgram&,std::string_view employer);
+void accept_research_appointment(WorldState&,const CompiledProgram&,std::string_view employer,std::string name={});
 void direct_career_research(WorldState&,const CompiledProgram&,std::string_view topic);
 void publish_career_research(WorldState&,std::string_view topic);
+void review_career_transition(WorldState&,const CompiledProgram&,std::optional<core::OrdinalDay>);
+void decide_career_transition(WorldState&,const CompiledProgram&,const core::DecideCareerTransition&);
+void validate_career_transition(const WorldState&,const CompiledProgram&,bool deep);
+[[nodiscard]] bool pending_career_transition(const WorldState&);
+[[nodiscard]] bool acquisition_interest(const WorldState&,const CompiledProgram&);
+[[nodiscard]] bool career_entry_definition(const content::RivalDefinition&);
+[[nodiscard]] bool career_entry_open(const WorldState&,const content::RivalDefinition&);
 void validate_career(const WorldState&,const CompiledProgram&,bool deep);
 }

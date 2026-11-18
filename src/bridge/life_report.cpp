@@ -78,6 +78,14 @@ QVariantMap lifeReport(const runtime::Checkpoint& checkpoint,const runtime::Comp
         case runtime::CampaignEndCause::institutional_control:
             company_record.push_back(QStringLiteral("The founder lost the last right to direct the company. Its ownership and obligations remain in the record."));
             break;
+        case runtime::CampaignEndCause::dismissal:
+            company_record.push_back(QStringLiteral("The board replaced the founder as chief executive after missed commitments and a cash shortfall."));break;
+        case runtime::CampaignEndCause::acquisition:
+            company_record.push_back(QStringLiteral("%1 bought the company for %2. The founder received %3.")
+                .arg(text(runtime::rival_definition(program,world.objectives->end->source).name),
+                     money(world.objectives->transitions.back().consideration),money(world.objectives->transitions.back().personal_proceeds)));break;
+        case runtime::CampaignEndCause::uscif:
+            company_record.push_back(QStringLiteral("A fictional federal intervention followed withheld independent AGI evidence and sustained regulator mistrust."));break;
         case runtime::CampaignEndCause::final_order:
             company_record.push_back(QStringLiteral("An enforceable federal order ended the company's operations on %1.")
                 .arg(date(world.objectives->end->day)));
@@ -197,7 +205,11 @@ QVariantMap lifeReport(const runtime::Checkpoint& checkpoint,const runtime::Comp
     if(world.objectives && world.objectives->career) {
         for(const auto& job:*world.objectives->career) {
             const auto& employer=runtime::rival_definition(program,job.employer);
-            career.push_back((employer.planning->group=="fellowship"?
+            if(employer.planning->group=="restart")
+                career.push_back(QStringLiteral("Founded %1 on %2.").arg(text(job.organization_name),date(job.accepted_on)));
+            else if(employer.planning->group=="uscif")
+                career.push_back(QStringLiteral("Appointed Civilian Administrator of USCIF on %1.").arg(date(job.accepted_on)));
+            else career.push_back((employer.planning->group=="fellowship"?
                 QStringLiteral("On %1, %2 accepted an endowed research appointment at %3."):
                 QStringLiteral("On %1, %2 joined %3 to direct research.")).arg(date(job.accepted_on),name,text(employer.name)));
             for(const auto& project:job.projects) if(project.published_on) {

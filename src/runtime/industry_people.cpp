@@ -1,3 +1,4 @@
+#include <pgp/runtime/career.hpp>
 #include <pgp/runtime/competition.hpp>
 #include <pgp/runtime/runtime.hpp>
 #include <algorithm>
@@ -8,7 +9,8 @@ template<class Visit>void visit_people(const WorldState& world,const CompiledPro
     if(!world.competition)return;
     for(const auto& rival:world.competition->companies) {
         const auto& s=rival.simulation;if(!s.management || !s.management->people || !s.infrastructure || !s.infrastructure->workplace || !s.infrastructure->workplace->headquarters)continue;
-        const auto& name=rival_definition(program,rival.definition_id).name;
+        const auto* appointment=career_appointment(world,rival.definition_id);
+        const auto& name=appointment && !appointment->organization_name.empty()?appointment->organization_name:rival_definition(program,rival.definition_id).name;
         for(const auto& e:s.management->people->employees)if(e.terms.profile.role!="Founder / researcher") {
             const auto* location=&core::current_headquarters(s);
             if(e.departed_on)for(const auto& premises:s.infrastructure->workplace->headquarters->premises)

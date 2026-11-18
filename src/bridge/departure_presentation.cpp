@@ -36,6 +36,10 @@ QVariantMap departureArticle(const core::SimulationState& state,const core::Depa
         if(claim=="delivery") response=QObject::tr("The statement says the company met every customer start date. Missed starts in the contract register: %1.")
             .arg(release.evidence->missed_starts);
         if(claim=="publication_commitment") response=QObject::tr("The statement denies any executive departure over publication. The company has already recorded one.");
+        if(claim=="safety_record") response=QObject::tr("The statement claims a spotless deployment safety record. The risk register shows %1 disclosed service incident(s).")
+            .arg(release.evidence->service_incidents);
+        if(claim=="workforce_trust") response=QObject::tr("The statement describes unified workplace backing. Personnel records show %1 resignation(s) before the announcement.")
+            .arg(release.evidence->workforce_resignations);
     } else if(assessment=="supported") {
         headline=QObject::tr("Founder announces handover to %1").arg(text(person.name));
         response=QObject::tr("The claim is supported by the dated company record.");
@@ -52,6 +56,24 @@ QVariantMap departureArticle(const core::SimulationState& state,const core::Depa
         response=QObject::tr("%1 comes from outside the company. %2 The board approved the handover to the chief executive office.")
             .arg(text(person.name),text(outside->background))+QStringLiteral("\n\n")+response;
         focus=QStringLiteral("outside_successor");
+    } else if(person.id.starts_with("internal.")) {
+        headline=person.internal_surprise
+            ?QObject::tr("Company stuns observers by naming %1 as internal successor").arg(text(person.name))
+            :QObject::tr("Company promotes insider %1 to chief executive").arg(text(person.name));
+        response=QObject::tr("%1 rises from within the workplace (%2). %3")
+            .arg(text(person.name),text(person.internal_role),text(person.priorities))+QStringLiteral("\n\n")+response;
+        focus=QStringLiteral("internal_successor");
+    }
+    if(release.evidence && (release.evidence->service_incidents>0 || release.evidence->workforce_resignations>0)) {
+        QStringList items;
+        if(release.evidence->service_incidents>0)
+            items<<QObject::tr("%1 deployment incident(s)").arg(release.evidence->service_incidents);
+        if(release.evidence->workforce_resignations>0)
+            items<<QObject::tr("%1 employee resignation(s)").arg(release.evidence->workforce_resignations);
+        headline=QObject::tr("Public controversy shadows founder's resignation");
+        response=QObject::tr("Unresolved company controversies (%1) dominate coverage of the departure statement.")
+            .arg(items.join(QObject::tr(" and ")))+QStringLiteral("\n\n")+response;
+        focus=QStringLiteral("public_controversy");
     }
     if(release.evidence && release.evidence->public_dispute && state.management && state.management->governance) {
         const auto& governance=*state.management->governance;
@@ -60,9 +82,11 @@ QVariantMap departureArticle(const core::SimulationState& state,const core::Depa
             const auto& executives=state.management->catalog.governance->executives;
             const auto executive=std::ranges::find(executives,dispute->subject,&core::ExecutiveCandidate::id);
             const auto name=executive==executives.end()?QObject::tr("An executive"):text(executive->name);
-            headline=QObject::tr("Publication dispute follows founder’s resignation");
-            response=QObject::tr("%1 left on %2 after a publication commitment went unmet. That departure shapes how reporters read the founder’s statement.")
-                .arg(name,text(core::iso_date(*dispute->resolved_on)))+QStringLiteral("\n\n")+response;
+            headline=dispute->kind=="publication"
+                ?QObject::tr("Publication dispute follows founder’s resignation")
+                :QObject::tr("Public governance dispute follows founder’s resignation");
+            response=QObject::tr("%1 left on %2 after a %3 dispute went unresolved. That departure shapes how reporters read the founder’s statement.")
+                .arg(name,text(core::iso_date(*dispute->resolved_on)),text(dispute->kind))+QStringLiteral("\n\n")+response;
             focus=QStringLiteral("public_dispute");
         }
     }
@@ -84,6 +108,9 @@ QVariantMap departureArticle(const core::SimulationState& state,const core::Depa
             .arg(money(record.cash),money(record.debt),money(record.profit)).arg(record.publications);
         facts+=QObject::tr("\nCustomer contracts that reached term end: %1 · missed start dates: %2")
             .arg(record.completed_contracts).arg(record.missed_starts);
+        if(record.service_incidents>0 || record.workforce_resignations>0)
+            facts+=QObject::tr("\nDisclosed service incidents: %1 · employee resignations: %2")
+                .arg(record.service_incidents).arg(record.workforce_resignations);
     }
     return {{"headline",headline},{"statement",statement.join(QStringLiteral("\n\n"))},{"response",response},
         {"facts",facts},{"assessment",text(assessment)},{"focus",focus},{"successor",text(person.name)},{"date",text(core::iso_date(release.day))}};

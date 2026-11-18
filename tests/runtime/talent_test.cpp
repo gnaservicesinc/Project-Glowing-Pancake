@@ -140,5 +140,61 @@ int main(){using namespace pgp;try{
     const auto all_in_company=runtime::begin_scenario(program,"scenario.founder_campaign","US-CA",core::ObjectiveSelection{core::ObjectiveKind::survival,{}},choice_options);
     check(all_in_company.world.simulation.succession->personal_cash==core::Cents{0},"Investing all savings remains a valid player choice");
     check(!core::person_has_skill(all_in_company.world.simulation,"founder","programming"),"Genius alone does not confer Programming");
+    {
+        const auto talent_company=runtime::begin_scenario(program,"scenario.founder_campaign","US-CA",core::ObjectiveSelection{core::ObjectiveKind::survival,{}},options);
+        auto spec=talent_company.world.simulation;
+        auto& hq=*spec.infrastructure->workplace->headquarters;
+        if(!core::hq_workstation_ready(spec,"founder")) {
+            core::manage_headquarters(spec,core::BuyHQEquipment{"desk"},core::Cents{0});
+            const auto desk_id=hq.items.back().id;
+            hq.items.back().playtest_delivery=true;hq.items.back().delivered_on=spec.date;
+            core::manage_headquarters(spec,core::BuyHQEquipment{"desktop"},core::Cents{0});
+            const auto pc_id=hq.items.back().id;
+            hq.items.back().playtest_delivery=true;hq.items.back().delivered_on=spec.date;
+            const auto& premises=core::current_headquarters(spec);
+            bool placed=false;
+            for(int y=0;y<premises.depth && !placed;++y) for(int x=0;x<premises.width && !placed;++x) {
+                core::PlaceHQEquipment p{desk_id,0,x,y,false};
+                if(core::hq_placement_blocker(spec,p).empty()) {core::manage_headquarters(spec,p,core::Cents{0});placed=true;}
+            }
+            check(placed,"Founder starter HQ must accept a desk placement.");
+            core::manage_headquarters(spec,core::PlaceHQEquipment{pc_id,desk_id,0,0,false},core::Cents{0});
+            core::manage_headquarters(spec,core::AssignHQDesk{desk_id,"founder"},core::Cents{0});
+        }
+        core::SoftwareDesign design;design.brief="coding";design.name="Specialist Suite";design.workers={"founder"};
+        spec.management->people->talent->founder_skills={"programming","architecture"};
+        const auto base=core::software_quote(spec,design);
+        check(base.blocker.empty(),base.blocker.c_str());
+        spec.management->people->talent->founder_skills={"programming","architecture","robotics"};
+        const auto hw=core::software_quote(spec,design);
+        check(hw.capability==std::clamp(base.capability+4,0,100) && hw.reliability==std::clamp(base.reliability+2,0,100),
+              "Robotics/hardware skills must improve capability (+4) and coding reliability (+2).");
+        spec.management->people->talent->founder_skills={"programming","architecture","software_security"};
+        const auto sec=core::software_quote(spec,design);
+        check(sec.reliability==std::clamp(base.reliability+4,0,100),
+              "Security/networking skills must improve software reliability (+4).");
+        spec.management->people->talent->founder_skills={"programming","architecture","comedy"};
+        const auto spirit=core::software_quote(spec,design);
+        check(spirit.usability==std::clamp(base.usability+4,0,100),
+              "Spirit/creative skills must improve software usability (+4).");
+        spec.management->people->talent->founder_skills={"programming","architecture","accounting"};
+        const auto ops=core::software_quote(spec,design);
+        check(ops.usability==std::clamp(base.usability+2,0,100) && ops.reliability==std::clamp(base.reliability+2,0,100) &&
+              ops.fee.value()==base.fee.value()*95/100,
+              "Business/operations skills must boost usability (+2), reliability (+2) and discount setup fee by 5%.");
+        auto first_worker=spec.management->people->employees.front();
+        first_worker.terms.profile.id="emp.first";first_worker.terms.profile.role="Researcher";
+        first_worker.terms.profile.skills={"programming"};first_worker.ready_on=spec.date;
+        first_worker.departed_on.reset();
+        auto coworker=first_worker;
+        coworker.terms.profile.id="emp.spirit";coworker.terms.profile.role="Researcher";
+        coworker.terms.profile.skills={"programming"};coworker.ready_on=spec.date;
+        spec.management->people->employees.push_back(first_worker);
+        spec.management->people->employees.push_back(coworker);
+        const int mood_before=core::workplace_moods(spec).at("emp.first").score;
+        spec.management->people->employees.back().terms.profile.skills={"programming","empathy"};
+        const int mood_after=core::workplace_moods(spec).at("emp.first").score;
+        check(mood_after==std::min(100,mood_before+2),"Active coworker spirit skill must grant +2 coworker mood bonus.");
+    }
     std::cout<<"Talent: qualified applicants, childhood skill, real tuition, dates, software work, power pause/resume, architecture gate, refinement and exact save passed.\n";
 }catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}}

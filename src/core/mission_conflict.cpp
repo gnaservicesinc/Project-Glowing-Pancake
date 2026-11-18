@@ -51,6 +51,16 @@ std::string_view committed_company_mission(const SimulationState& state) {
     return people.mission;
 }
 
+NonprofitReaction nonprofit_reaction(const SimulationState& state,OrdinalDay day) {
+    if(!nonprofit_organization(state) || !state.management || !state.management->people) return {};
+    if(committed_company_mission(state)=="commercial") return {-4,BasisPoints{0},0};
+    const auto publications=state.lab?std::ranges::count_if(state.lab->publications,[day](const auto& publication) {
+        return publication.day<=day;
+    }):0;
+    const auto follow_through=static_cast<int>(std::min<decltype(publications)>(publications,4));
+    return {2+follow_through,BasisPoints{200+75*follow_through},500U+125U*static_cast<unsigned>(follow_through)};
+}
+
 const MissionConcern* mission_concern(const SimulationState& state,std::string_view person) {
     if(!mission_conflict_rules(state) || !state.management->people->social->mission_conflict)return nullptr;
     const auto& concerns=state.management->people->social->mission_conflict->concerns;

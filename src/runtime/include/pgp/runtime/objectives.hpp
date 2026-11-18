@@ -36,7 +36,7 @@ struct SurvivalEvidence {
     core::MilliCU paid_wholesale{0}, funded_research{0};
     auto operator<=>(const SurvivalEvidence&) const = default;
 };
-enum class CampaignEndCause { deadline, asi_race, insolvency, institutional_control, final_order, catastrophe, postmortem, retirement };
+enum class CampaignEndCause { deadline, asi_race, insolvency, institutional_control, final_order, catastrophe, postmortem, retirement, dismissal, acquisition, uscif };
 struct CampaignEnd {
     core::OrdinalDay day{0};
     CampaignEndCause cause = CampaignEndCause::deadline;
@@ -57,9 +57,17 @@ struct ResearchAppointment {
     std::string employer;
     core::OrdinalDay accepted_on{0};
     std::vector<CareerResearch> projects;
+    std::string organization_name{};
     auto operator<=>(const ResearchAppointment&) const = default;
 };
 inline constexpr std::size_t career_appointment_limit=21, career_project_limit=128;
+struct CareerTransition {
+    std::string kind,source,response;
+    core::OrdinalDay notice{0},deadline{0};
+    core::Cents consideration{0},personal_proceeds{0};
+    std::optional<core::OrdinalDay> decided_on{};
+    auto operator<=>(const CareerTransition&) const = default;
+};
 struct ObjectivesState {
     core::OrdinalDay deadline{0};
     std::vector<ObjectiveSelectionEvent> selections;
@@ -72,6 +80,7 @@ struct ObjectivesState {
     std::optional<core::OrdinalDay> observer_day;
     bool observer_paused = true;
     std::optional<std::vector<ResearchAppointment>> career{};
+    std::vector<CareerTransition> transitions;
     auto operator<=>(const ObjectivesState&) const = default;
 };
 inline constexpr std::size_t objective_selection_limit = 128;

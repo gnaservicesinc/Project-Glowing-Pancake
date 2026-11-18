@@ -67,11 +67,14 @@ preserves original files. Settings persists display, audio, text and motion choi
 Development saves have no compatibility guarantee. Open **Playtest Environment
 → God mode** from the main menu to start or resume a separate playtest campaign.
 After starting a founder campaign, return to Playtest Environment in that window
-and choose **Edit founder traits**. Enter one trait per line and toggle **Actual
-Genius** to test its effects. Each window's **Reset local data** clears that
-mode's saves, autosaves, setup and navigation drafts, cached rules and settings.
-**Content Studio** opens the repository editor and remembers the chosen checkout.
-Both tools are available in ordinary Release playtest builds.
+to open the person editor (**Edit person traits & stats…**) for the founder or
+other named people (traits, **Actual Genius**, and evaluation stats) or run
+playtest tools (**Refill resources**, **Deliver orders now**, and **Complete
+research now**, also available directly in the Research Tree). Each window's
+**Reset local data** clears that mode's saves, autosaves, setup and navigation
+drafts, cached rules and settings. **Content Studio** opens the repository editor
+and remembers the chosen checkout. Both tools are available in ordinary Release
+playtest builds.
 Escape during play pauses into the menu. In the full-screen main menu, Escape
 opens the exit confirmation. **Exit Full Screen** returns to the menu in a
 window and saves that display mode. **Settings** can restore full screen.

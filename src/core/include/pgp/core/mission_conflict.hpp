@@ -1,5 +1,6 @@
 #pragma once
 #include <pgp/core/calendar.hpp>
+#include <pgp/core/units.hpp>
 #include <map>
 #include <optional>
 #include <string>
@@ -36,6 +37,13 @@ struct MissionConflictState {
     std::map<std::string,MissionConcern,std::less<>> concerns;
     auto operator<=>(const MissionConflictState&) const=default;
 };
+
+struct NonprofitReaction {
+    int goodwill = 0;
+    BasisPoints awareness{0};
+    std::uint32_t salary_discount_bp = 0;
+};
+[[nodiscard]] NonprofitReaction nonprofit_reaction(const SimulationState&, OrdinalDay);
 
 struct ChangeCompanyMission {std::string mission;};
 struct RespondToMissionConcern {std::string person;std::string mediator;};

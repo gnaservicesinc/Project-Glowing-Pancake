@@ -79,6 +79,7 @@ struct HardwareOrder {
     std::optional<OrdinalDay> commissioned_on,retired_on;
     Cents paid{0},depreciated{0},resale{0};
     std::uint64_t energy_remainder=0;
+    bool playtest_delivery=false;
     auto operator<=>(const HardwareOrder&) const = default;
 };
 struct SiteOperatorHire {

@@ -5,7 +5,7 @@
 namespace pgp::core {
 using namespace succession_detail;
 namespace {
-DepartureEvidence evidence_at(const SimulationState& s,OrdinalDay day,std::size_t cursor) {
+DepartureEvidence evidence_at(const SimulationState& s,OrdinalDay day,std::size_t cursor,const SuccessionPlan& plan) {
     const auto report=accounts_report_at(*s.accounts,cursor);
     const auto published=s.lab?std::ranges::count_if(s.lab->publications,[&](const auto& publication){return publication.day<day;}):0;
     DepartureEvidence result{report.cash,report.profit,report.debt,static_cast<std::uint32_t>(published)};
@@ -14,14 +14,24 @@ DepartureEvidence evidence_at(const SimulationState& s,OrdinalDay day,std::size_
         if(contract.status==ContractStatus::completed) ++result.completed_contracts;
         if(contract.status==ContractStatus::missed && *contract.stopped_on<day) ++result.missed_starts;
     }
-    // Corporate responses settle on the prepared morning. A completed
-    // publication dispute is public; a private concern is not evidence.
+    // Corporate responses settle on the prepared morning. Any completed
+    // executive/board departure dispute is public; private concerns are not.
     const CorporateDispute* latest=nullptr;
     if(s.management && s.management->governance) for(const auto& dispute:s.management->governance->disputes)
-        if(dispute.kind=="publication" && dispute.status==CorporateDisputeStatus::departed &&
+        if(dispute.status==CorporateDisputeStatus::departed &&
             dispute.resolved_on && *dispute.resolved_on<=day &&
             (!latest || std::tie(dispute.resolved_on,dispute.id)>std::tie(latest->resolved_on,latest->id))) latest=&dispute;
     if(latest) result.public_dispute=latest->id;
+    if(s.deployments && s.deployments->risk) {
+        for(const auto& incident:s.deployments->risk->incidents)
+            if(incident.discovered_on<=day) ++result.service_incidents;
+    }
+    if(s.management && s.management->people) {
+        for(const auto& employee:s.management->people->employees)
+            if(employee.resigned && employee.departed_on && *employee.departed_on<=day) ++result.workforce_resignations;
+    }
+    if(plan.candidate.starts_with("internal."))
+        result.surprise_internal_successor=leadership_candidate(s,plan.candidate,plan.proposed_on).internal_surprise;
     return result;
 }
 }
@@ -49,7 +59,7 @@ DepartureRelease preview_founder_departure(const SimulationState& s,const Announ
     if(catalog.departure->press) {
         release.reason=request.reason.empty()?catalog.departure->press->reasons.front().id:request.reason;
         (void)departure_reason(catalog,release.reason);
-        release.evidence=evidence_at(s,s.date,s.accounts->postings.size());
+        release.evidence=evidence_at(s,s.date,s.accounts->postings.size(),plan);
     } else if(!request.reason.empty()) invalid("This charter has no resignation reasons.");
     return release;
 }
@@ -65,6 +75,8 @@ std::string departure_assessment(const SimulationState& s,const DepartureRelease
         return record.completed_contracts?"supported":"unsubstantiated";
     }
     if(*message.claim=="publication_commitment") return record.public_dispute?"challenged":"supported";
+    if(*message.claim=="safety_record") return record.service_incidents?"challenged":"supported";
+    if(*message.claim=="workforce_trust") return record.workforce_resignations?"challenged":"supported";
     invalid("This departure claim has no evidence rule.");
 }
 void announce_founder_departure(SimulationState& s,const AnnounceFounderDeparture& request,Cents protected_cash) {
@@ -91,7 +103,7 @@ void validate_founder_departure(const SimulationState& s) {
         const auto& press=succession_catalog(s).departure->press;
         if(press) {
             (void)departure_reason(succession_catalog(s),r.reason);
-            if(r.evidence!=evidence_at(s,r.day,static_cast<std::size_t>(r.posting_cursor)))
+            if(r.evidence!=evidence_at(s,r.day,static_cast<std::size_t>(r.posting_cursor),p))
                 invalid("Resignation coverage differs from the announcement's dated company record.");
         } else if(r.evidence || !r.reason.empty()) invalid("Resignation evidence needs the authored press rules.");
         if(r.posting_cursor && s.accounts->postings[r.posting_cursor-1].day>r.day)

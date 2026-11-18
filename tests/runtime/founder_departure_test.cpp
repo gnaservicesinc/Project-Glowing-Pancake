@@ -250,6 +250,207 @@ int main() {
         const auto old=runtime::compile_collection(legacy,registry);
         runtime::Runtime old_game{old,runtime::begin_scenario(old,"scenario.founder_campaign","US-CA",ObjectiveSelection{ObjectiveKind::survival,{}},options)};
         check(old_game.prepare_opening(state(old_game).revision).accepted() && !state(old_game).succession->releases,"Legacy charters must retain their original save shape.");exact(old_game);
+        {
+            auto ext_source=source;
+            auto& ext_dep=*std::get<content::ScenarioDefinition>(ext_source.definitions.at("scenario.founder_campaign").data).management->succession->departure;
+            if(!ext_dep.messages.empty()) {
+                auto safety_msg=ext_dep.messages.front();
+                safety_msg.id="safety_brief";
+                safety_msg.claim=std::string{"safety_record"};
+                auto trust_msg=ext_dep.messages.front();
+                trust_msg.id="team_brief";
+                trust_msg.claim=std::string{"workforce_trust"};
+                while(ext_dep.messages.size()>6) ext_dep.messages.pop_back();
+                ext_dep.messages.push_back(safety_msg);
+                ext_dep.messages.push_back(trust_msg);
+            }
+            const auto ext_prog=runtime::compile_collection(ext_source,registry);
+            runtime::Runtime ig{ext_prog,runtime::begin_scenario(ext_prog,"scenario.founder_campaign","US-CA",ObjectiveSelection{ObjectiveKind::survival,{}},options)};
+            check(ig.prepare_opening(state(ig).revision).accepted(),"Extended departure scenario must open cleanly.");
+            const auto do_cmd=[&](core::CommandAction cmd){
+                const auto res=ig.submit({state(ig).revision,std::move(cmd)});
+                check(res.accepted(),res.explanation.c_str());
+            };
+            const auto prepare_day=[&](){
+                for(int pass=0;pass<8;++pass) {
+                    const auto& rt_state=ig.current_state().runtime;
+                    if(rt_state.prepared_day!=state(ig).date) {
+                        const auto prep=ig.prepare_opening(state(ig).revision);
+                        check(prep.accepted(),prep.explanation.c_str());
+                    }
+                    const auto& pres=ig.current_state().runtime.presentations;
+                    const auto it=std::ranges::find_if(pres,[](const auto& p){return !p.resolved && !p.choices.empty();});
+                    if(it==pres.end()) break;
+                    const auto ch=ig.choose(state(ig).revision,it->id,it->choices.front().id);
+                    check(ch.accepted(),ch.explanation.c_str());
+                }
+            };
+            const auto step_ig=[&](int days){
+                for(int d=0;d<days;++d) {
+                    prepare_day();
+                    const auto& sim=state(ig);
+                    if(sim.liquidity) if(const auto w=core::liquidity_report(*sim.liquidity).pending_warning) do_cmd(core::AcknowledgeLiquidityWarning{*w});
+                    if(sim.management) {
+                        const auto notices=sim.management->notices;
+                        for(const auto& n:notices) if(n.required && !n.acknowledged) do_cmd(core::AcknowledgeManagementNotice{n.id});
+                    }
+                    if(const auto sn=core::required_succession_notice(sim)) do_cmd(core::AcknowledgeSuccession{sn->id});
+                    do_cmd(core::AdvanceDay{});
+                    prepare_day();
+                }
+            };
+            do_cmd(core::ManageHeadquarters{core::BuyHQEquipment{"desk"}});
+            do_cmd(core::ManageHeadquarters{core::BuyHQEquipment{"desktop"}});
+            std::uint32_t desk_id=0,pc_id=0;
+            for(const auto& item:state(ig).infrastructure->workplace->headquarters->items) {
+                if(item.offer=="desk" && !item.premises && item.person.empty()) desk_id=item.id;
+                if(item.offer=="desktop" && !item.premises && !item.mount) pc_id=item.id;
+            }
+            for(int wait=0;wait<10;++wait) {
+                bool ready=true;
+                for(const auto& item:state(ig).infrastructure->workplace->headquarters->items)
+                    if((item.id==desk_id || item.id==pc_id) && item.delivered_on>state(ig).date) ready=false;
+                if(ready) break;
+                step_ig(1);
+            }
+            const auto& hq_prem=core::current_headquarters(state(ig));
+            bool desk_placed=false;
+            for(int y=0;y<hq_prem.depth && !desk_placed;++y) for(int x=0;x<hq_prem.width && !desk_placed;++x) {
+                core::PlaceHQEquipment p{desk_id,0,x,y,false};
+                if(core::hq_placement_blocker(state(ig),p).empty()) {do_cmd(core::ManageHeadquarters{p});desk_placed=true;}
+            }
+            check(desk_placed,"Founder starter HQ must fit an employee desk.");
+            do_cmd(core::ManageHeadquarters{core::PlaceHQEquipment{pc_id,desk_id,0,0,false}});
+
+            const auto& cat=core::succession_catalog(state(ig));
+            std::string chosen_id;
+            for(int wait=0;wait<45 && chosen_id.empty();++wait) {
+                for(const auto& app:state(ig).management->people->applicants) {
+                    const int age=core::from_ordinal(state(ig).date).year-app.profile.birth_year;
+                    if(core::recruitment_status(app,state(ig).date)=="available" &&
+                       age>=18 && age<=static_cast<int>(cat.maximum_candidate_age)) {
+                        chosen_id=app.profile.id;
+                        do_cmd(core::ManageRecruitment{core::ProposeEmployment{chosen_id,app.salary,app.signing}});
+                        break;
+                    }
+                }
+                if(chosen_id.empty()) step_ig(1);
+            }
+            check(!chosen_id.empty(),"Extended departure scenario must produce an age-eligible applicant for internal hiring.");
+            for(int wait=0;wait<15;++wait) {
+                const auto it=std::ranges::find_if(state(ig).management->people->applicants,[&](const auto& a){return a.profile.id==chosen_id;});
+                check(it!=state(ig).management->people->applicants.end(),"Pending applicant disappeared.");
+                const auto st=core::recruitment_status(*it,state(ig).date);
+                if(st=="agreed") break;
+                if(st=="counter") {do_cmd(core::ManageRecruitment{core::AcceptEmploymentCounter{chosen_id}});break;}
+                step_ig(1);
+            }
+            do_cmd(core::HireEmployee{chosen_id,desk_id});
+            for(int wait=0;wait<90;++wait) {
+                const auto it=std::ranges::find_if(state(ig).management->people->employees,[&](const auto& e){return e.terms.profile.id==chosen_id;});
+                if(it!=state(ig).management->people->employees.end() && it->ready_on<=state(ig).date) break;
+                step_ig(1);
+            }
+            {
+                const auto it=std::ranges::find_if(state(ig).management->people->employees,[&](const auto& e){return e.terms.profile.id==chosen_id;});
+                check(it!=state(ig).management->people->employees.end() && it->ready_on<=state(ig).date && !it->departed_on,
+                      "Hired internal candidate must finish onboarding before nomination.");
+            }
+
+            const std::string internal_id="internal."+chosen_id;
+            const auto internal_cands=core::leadership_candidates(state(ig),state(ig).date);
+            check(std::ranges::any_of(internal_cands,[&](const auto& c){return c.id==internal_id;}),
+                  "Ready non-founder employees must appear as internal leadership candidates.");
+            const auto internal_cand=core::leadership_candidate(state(ig),internal_id,state(ig).date);
+            check(internal_cand.portrait.has_value() && !internal_cand.internal_role.empty(),
+                  "Internal leadership candidate must preserve employee portrait and role.");
+
+            auto surprise_sim=state(ig);
+            for(auto& e:surprise_sim.management->people->employees)
+                if(e.terms.profile.id==chosen_id) {e.terms.profile.experience=2;e.terms.profile.role="Operations specialist";}
+            const auto surprised=core::leadership_candidate(surprise_sim,internal_id,surprise_sim.date);
+            check(surprised.internal_surprise && surprised.internal_effect==std::array<std::int32_t,6>{-120,80,0,180,-60,40},
+                  "Inexperienced or non-research internal promotions must flag internal_surprise and surprise effects.");
+
+            std::string supply=state(ig).capacity->sources.front().id;
+            std::int64_t best_spare=0;
+            for(const auto& src:state(ig).capacity->sources) {
+                auto spare=core::company_capacity(src).value();
+                for(const auto& work:state(ig).capacity->projects)
+                    if(work.status==core::ProjectStatus::active && work.source_id==src.id)
+                        spare=std::max<std::int64_t>(0,spare-work.requested.value());
+                if(spare>best_spare) {best_spare=spare;supply=src.id;}
+            }
+            check(best_spare>0,"Extended departure scenario must have spare compute for leadership transition.");
+            const auto needed_daily=core::MilliCUPerDay{std::min(best_spare,
+                std::max<std::int64_t>(1,(cat.transition_work.value()+cat.transition_days.value()-1)/cat.transition_days.value()))};
+            const auto total_work=std::max(cat.transition_work.value(),core::integrate(needed_daily,cat.transition_days).value());
+            const auto min_days=(total_work+needed_daily.value()-1)/needed_daily.value();
+            const auto handover_day=core::advance_days(state(ig).date,Days{std::max({cat.transition_days.value(),cat.vote_window.value()+2,min_days})});
+            do_cmd(core::ProposeSuccession{internal_id,handover_day,false,{supply,needed_daily,1}});
+            const auto plan_id=state(ig).succession->plans.back().id;
+            do_cmd(core::VoteSuccession{plan_id,true});
+            step_ig(1);
+
+            {
+                auto cont_sim=state(ig);
+                const std::string reason_id=cat.departure && cat.departure->press && !cat.departure->press->reasons.empty()
+                    ? cat.departure->press->reasons.front().id : std::string{};
+                core::AnnounceFounderDeparture clean_safety{plan_id,"safety_brief",reason_id};
+                const auto clean_safety_rel=core::preview_founder_departure(cont_sim,clean_safety);
+                check(core::departure_assessment(cont_sim,clean_safety_rel)=="supported",
+                      "safety_record claim must be supported before any service incident.");
+                core::AnnounceFounderDeparture clean_trust{plan_id,"team_brief",reason_id};
+                const auto clean_trust_rel=core::preview_founder_departure(cont_sim,clean_trust);
+                check(core::departure_assessment(cont_sim,clean_trust_rel)=="supported",
+                      "workforce_trust claim must be supported before workforce resignations.");
+
+                auto resigned_sim=cont_sim;
+                core::resign_employee(resigned_sim,chosen_id);
+                const auto trust_rel=core::preview_founder_departure(resigned_sim,clean_trust);
+                check(trust_rel.evidence && trust_rel.evidence->workforce_resignations>=1 &&
+                      core::departure_assessment(resigned_sim,trust_rel)=="challenged",
+                      "Employee resignation must record workforce_resignations and challenge workforce_trust claims.");
+
+                if(cont_sim.deployments) {
+                    auto inc_sim=cont_sim;
+                    if(!inc_sim.deployments->risk) inc_sim.deployments->risk.emplace();
+                    inc_sim.deployments->risk->incidents.push_back(core::DeploymentIncident{"inc.test","proj.test",0,inc_sim.date,{},{}});
+                    const auto safety_rel=core::preview_founder_departure(inc_sim,clean_safety);
+                    check(safety_rel.evidence && safety_rel.evidence->service_incidents>=1 &&
+                          core::departure_assessment(inc_sim,safety_rel)=="challenged",
+                          "Disclosed deployment incident must record service_incidents and challenge safety_record claims.");
+                }
+                if(cont_sim.management->governance) {
+                    auto disp_sim=cont_sim;
+                    disp_sim.management->governance->disputes.push_back(core::CorporateDispute{
+                        "disp.test","exec.departed","publication",disp_sim.date,disp_sim.date,
+                        core::CorporateDisputeStatus::departed,disp_sim.date,false,disp_sim.cash,0,0,{},{}});
+                    const auto disp_rel=core::preview_founder_departure(disp_sim,clean_safety);
+                    check(disp_rel.evidence && disp_rel.evidence->public_dispute && *disp_rel.evidence->public_dispute=="disp.test",
+                          "Non-CEO departed governance disputes must surface in DepartureEvidence::public_dispute.");
+                }
+            }
+
+            const int days_to_handover=static_cast<int>(handover_day.value()-state(ig).date.value());
+            for(int d=0;d<days_to_handover+1;++d) {
+                step_ig(1);
+                const auto it=std::ranges::find_if(state(ig).management->people->employees,[&](const auto& e){return e.terms.profile.id==chosen_id;});
+                if(it!=state(ig).management->people->employees.end() && it->departed_on)
+                    throw std::runtime_error("Internal nominee unexpectedly departed on day offset "+std::to_string(d));
+            }
+            check(state(ig).succession->terms.back().person==internal_id &&
+                  state(ig).succession->terms.back().portrait.has_value(),
+                  "Approved internal candidate nomination must execute cleanly at handover with employee portrait.");
+            if(state(ig).succession->releases) {
+                const auto& reasons=cat.departure->press->reasons;
+                if(!reasons.empty() && !cat.departure->messages.empty()) {
+                    do_cmd(core::AnnounceFounderDeparture{plan_id,"safety_brief",reasons.front().id});
+                    check(state(ig).succession->releases->back().evidence.has_value(),"Founder departure release must capture controversy and internal-succession evidence.");
+                }
+            }
+            exact(ig);
+        }
         std::cout<<"Outside appointment, charter ballots, dated resignation claims, audience effects, paid handover, continuing life and exact persistence passed\n";
     }catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}
 }

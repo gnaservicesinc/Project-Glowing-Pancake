@@ -167,9 +167,10 @@ Registered event facts are `company.founder_close_friends` and
 `company.known_close_relationships`. Arbitrary relationship effects and general
 person skill queries still need the later event-authoring extension.
 
-The remaining stage-4 HQ behavior and stages 5–8 remain required work, along
-with broader person preferences/event vocabulary. Romance/families/rivalry repair,
-infrastructure/data puzzles, career re-entry and USCIF are unfinished. Geographic networking delivery is described below.
+The remaining stage-4 HQ behavior and later design puzzles remain required work,
+along with broader person preferences/event vocabulary. (Romance/families/rivalry
+repair, career re-entry and USCIF were subsequently implemented in later
+checkpoints; geographic networking delivery is described below.)
 
 
 ## Major-company HQ progress
@@ -396,10 +397,10 @@ are inspected; the latter keeps all preference options together. Native setup se
 only mature friendship and a repeatable consent stream, not relationship results.
 
 This is partial stage 5. Biological/adoptive/foster/step families, aging children
-and ordinary recruitment, concrete betrayal/HR/repair/frenemies, broader skill
-and trait effects, major-HQ property growth, further puzzles, career re-entry and
-USCIF remain selected work. It does not close F-06 or establish human balance or
-release qualification.
+and ordinary recruitment, concrete betrayal/HR/repair/frenemies, specialist
+skill/trait effects, major-HQ property growth, infrastructure puzzles, career
+transitions, career re-entry and USCIF are implemented. This does not close F-06
+or establish human balance or release qualification.
 
 
 ## Family and recommended-candidate milestone · 2026-11-11
@@ -483,5 +484,5 @@ shows distance and affected occupants. Routes are derived from the saved floor
 plan and equipment positions.
 
 Remaining specialist skill effects, major-HQ property growth, infrastructure
-puzzles, career re-entry and USCIF remain selected work. The full plan
-and F-06 stay active.
+puzzles, career re-entry and USCIF are now implemented. The full plan
+and F-06 stay active pending human balance and release qualification.

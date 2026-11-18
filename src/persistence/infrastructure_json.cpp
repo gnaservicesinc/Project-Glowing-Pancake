@@ -17,7 +17,7 @@ template<class T,class F> void visit(T& row,F&& f) {
         f("electricity_remainder",row.electricity_remainder);f("water_charge_remainder",row.water_charge_remainder);f("water_remainder",row.water_remainder);f("emissions_remainder",row.emissions_remainder);
         f("last_energy_wh",row.last_energy_wh);f("last_water_ml",row.last_water_ml);f("last_emissions_grams",row.last_emissions_grams);f("last_utility_cost_cents",row.last_utility_cost);
     } else if constexpr (std::is_same_v<V,core::HardwareOrder>) {
-        f("id",row.id);f("site_id",row.site_id);f("family_id",row.family_id);f("source_id",row.source_id);f("ordered_on",row.ordered_on);f("delivered_on",row.delivered_on);f("commissioned_on",row.commissioned_on);f("retired_on",row.retired_on);f("paid_cents",row.paid);f("depreciated_cents",row.depreciated);f("resale_cents",row.resale);f("energy_remainder",row.energy_remainder);
+        f("id",row.id);f("site_id",row.site_id);f("family_id",row.family_id);f("source_id",row.source_id);f("ordered_on",row.ordered_on);f("delivered_on",row.delivered_on);f("commissioned_on",row.commissioned_on);f("retired_on",row.retired_on);f("paid_cents",row.paid);f("depreciated_cents",row.depreciated);f("resale_cents",row.resale);f("energy_remainder",row.energy_remainder);f("playtest_delivery",row.playtest_delivery);
     } else if constexpr (std::is_same_v<V,core::SiteOperatorHire>) {
         f("id",row.id);f("site_id",row.site_id);f("people",row.people);f("ordered_on",row.ordered_on);f("starts_on",row.starts_on);
     } else if constexpr (std::is_same_v<V,core::SitePowerLimit>) {f("day",row.day);f("watts",row.watts);}

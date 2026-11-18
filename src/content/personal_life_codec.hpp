@@ -26,7 +26,7 @@ template<class T,class F> void fields(T& row,F f) {
     } else if constexpr(std::is_same_v<V,core::PersonalDecor>) {
         f("id",row.id);f("offer",row.offer);f("purchased_on",row.purchased_on);f("delivered_on",row.delivered_on);
         f("property",row.property);f("x",row.x);f("y",row.y);f("rotated",row.rotated);
-        f("sold_on",row.sold_on);
+        f("sold_on",row.sold_on);f("playtest_delivery",row.playtest_delivery);
     } else if constexpr(std::is_same_v<V,core::PersonalBill>) {
         f("id",row.id);f("property",row.property);f("charged_on",row.charged_on);f("amount_cents",row.amount);f("paid_on",row.paid_on);
     } else if constexpr(std::is_same_v<V,core::PersonalEventRules>) {

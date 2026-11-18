@@ -1005,6 +1005,17 @@ ApplicationWindow {
                         }
                     }
                     Panel {
+                        visible: !campaign.welcome && window.room !== "objectives" &&
+                            (!!campaign.objectives.careerTransition.kind || (window.room === "office" && !!campaign.objectives.careerTransition.canRequest))
+                        contentItem: ColumnLayout {
+                            Heading { text: campaign.objectives.careerTransition.title || qsTr("Acquisition") }
+                            Action {
+                                text: campaign.objectives.careerTransition.kind ? qsTr("Review career decision") : qsTr("Explore a sale")
+                                onClicked: window.openNewspaper()
+                            }
+                        }
+                    }
+                    Panel {
                         visible: !campaign.welcome && campaign.objectives.ended && window.room !== "objectives"
                         contentItem: ColumnLayout {
                             Heading { text: campaign.objectives.careerAvailable ? qsTr("Your next chapter") : qsTr("Campaign outcome recorded") }

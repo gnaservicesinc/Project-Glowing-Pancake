@@ -113,7 +113,7 @@ struct EmployeeMood {
     int score=50, pay=0, company_prestige=0, ceo_prestige=0, role=0, coworkers=0, amenities=0, temperament_effect=0, gatherings=0;
     std::string temperament;
     std::vector<std::string> accessible_amenities;
-    int founder_audience=0,friendships=0,office_walk=0;
+    int founder_audience=0,friendships=0,office_walk=0,nonprofit_goodwill=0;
 };
 [[nodiscard]] std::map<std::string,EmployeeMood> workplace_moods(const SimulationState&);
 struct EmploymentOffer {
@@ -127,6 +127,7 @@ struct Recruitment {
     Cents ask_salary{0},ask_signing{0},minimum_salary{0},minimum_signing{0};
     std::vector<EmploymentOffer> offers;
     std::optional<OrdinalDay> agreed_on,withdrawn_on,hired_on;
+    std::uint32_t mission_discount_bp=0;
     auto operator<=>(const Recruitment&) const = default;
 };
 struct ApplicantRecommendation {
@@ -140,6 +141,7 @@ struct Applicant {
     BasisPoints evaluation_credit{0};
     std::optional<Recruitment> recruitment{};
     std::optional<ApplicantRecommendation> recommendation{};
+    std::optional<std::uint32_t> playtest_original_evaluation{};
     auto operator<=>(const Applicant&) const = default;
 };
 struct Employee {
@@ -245,7 +247,7 @@ void hire_employee(SimulationState&,std::string_view,Cents protected_cash,std::u
 void set_recruiting_terms(SimulationState&,const SetRecruitingTerms&);
 void withdraw_people(SimulationState&);
 void validate_recruitment_rules(const RecruitmentRules&);
-void initialize_recruitment(Applicant&,const RecruitmentRules&,class SplitMix64&);
+void initialize_recruitment(Applicant&,const RecruitmentRules&,class SplitMix64&,std::uint32_t mission_discount_bp=0);
 void manage_recruitment(SimulationState&,const RecruitmentAction&);
 void prepare_recruitment(SimulationState&);
 void validate_recruitment(const Applicant&,const SimulationState&,bool hired);

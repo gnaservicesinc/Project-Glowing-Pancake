@@ -40,11 +40,23 @@ std::vector<ResearchWorker> research_workers(const SimulationState &state, std::
         const auto desk_identity =
             person.role == "Founder / researcher" ? std::string_view{"founder"} : std::string_view{person.id};
         ResearchWorker worker{person.id, person.name, {}, person.research};
+        const bool genius_programmer = person.role == "Founder / researcher" &&
+            state.management->people->talent->founder_genius &&
+            person_has_skill(state, person.id, "programming");
+        const bool hardware_specialist =
+            (person.role == "Founder / researcher" &&
+             state.management->people->talent->founder_genius &&
+             person_has_skill(state, person.id, "soldering")) ||
+            person_has_skill(state, person.id, "cpu_design") ||
+            person_has_skill(state, person.id, "gpu_design") ||
+            person_has_skill(state, person.id, "pcb_design") ||
+            person_has_skill(state, person.id, "silicon_manufacturing") ||
+            person_has_skill(state, person.id, "electronics_manufacturing");
         if (employee.ready_on > state.date)
             worker.unavailable = "Onboarding until " + iso_date(employee.ready_on);
-        else if (talent_rules(state) && !person_has_skill(state,person.id,"ml_research") &&
-            !(person.role=="Founder / researcher" && state.management->people->talent->founder_genius && person_has_skill(state,person.id,"programming")))
-            worker.unavailable = "Needs ML Research, or Programming plus Actual Genius";
+        else if (talent_rules(state) && !person_has_skill(state, person.id, "ml_research") &&
+                 !genius_programmer && !hardware_specialist)
+            worker.unavailable = "Needs ML Research, hardware engineering, or Programming/Soldering plus Actual Genius";
         else if (talent_rules(state) && !software_worker_blocker(state,person.id,except_project).empty())
             worker.unavailable = software_worker_blocker(state,person.id,except_project);
         else if (manager && manager->person == person.id)
@@ -78,6 +90,7 @@ std::string research_workplace_blocker(const SimulationState &state, std::string
     if (plan.researchers.empty() || plan.researchers.size() != plan.staff || plan.researchers.size() > 32)
         return "Choose at least one named researcher for this work.";
     const auto workers = research_workers(state, except_project);
+    const auto equipment = research_equipment(state, topic);
     std::set<std::string_view> unique;
     for (const auto &id : plan.researchers) {
         if (!unique.insert(id).second)
@@ -87,6 +100,16 @@ std::string research_workplace_blocker(const SimulationState &state, std::string
             return "An assigned researcher is no longer available at this company.";
         if (!worker->unavailable.empty())
             return worker->name + ": " + worker->unavailable + ".";
+        if (talent_rules(state)) {
+            const auto emp = std::ranges::find_if(state.management->people->employees,
+                [&](const auto &e) { return e.terms.profile.id == id; });
+            const bool genius_programmer = emp != state.management->people->employees.end() &&
+                emp->terms.profile.role == "Founder / researcher" &&
+                state.management->people->talent->founder_genius &&
+                person_has_skill(state, id, "programming");
+            if (!person_has_skill(state, id, "ml_research") && !genius_programmer && equipment.empty())
+                return worker->name + ": Soldering or hardware qualification applies to equipment-backed hardware research.";
+        }
     }
     if(except_project.empty()) {
         const auto threshold=research_creativity_threshold(*state.lab,*state.capacity,topic,state.date);
@@ -94,7 +117,6 @@ std::string research_workplace_blocker(const SimulationState &state, std::string
         if(threshold==UINT32_MAX) return "Complete the required technology levels and prerequisites.";
         if(team.creativity<threshold) return "Team creativity is "+std::to_string(team.creativity)+" distinct traits; this research needs "+std::to_string(threshold)+". Add new perspectives or complete more prerequisites.";
     }
-    const auto equipment = research_equipment(state, topic);
     if (!hq_has_lab_equipment(state, equipment)) {
         const auto &offers = state.infrastructure->catalog.workplace->headquarters->equipment;
         std::string description;

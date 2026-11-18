@@ -53,6 +53,7 @@ struct BuildFromBlueprint {std::string blueprint,id,name,state;};
 struct BlueprintQuote {
     Cents construction{0},hardware{0},recruitment{0},total{0},monthly{0};
     OrdinalDay built_on{0},grid_on{0},delivery_on{0},operators_on{0};
+    int network_score=0,cooling_score=0,redundancy_score=0,puzzle_score=0;
 };
 void validate_workplace_rules(const WorkplaceRules&);
 void initialize_workplace(SimulationState&,std::string office,bool nonresearch_founder);

@@ -31,6 +31,7 @@ QVariantMap moodRow(const core::EmployeeMood& mood) {
     if(mood.office_walk) add(QObject::tr("Walking route to desk"),mood.office_walk);
     add(QObject::tr("Temperament"),mood.temperament_effect);
     add(QObject::tr("Recent hosted gatherings"),mood.gatherings);
+    if(mood.nonprofit_goodwill) add(QObject::tr("Reaction to the nonprofit mission"),mood.nonprofit_goodwill);
     if(mood.founder_audience) add(QObject::tr("Reaction to the founder’s gender"),mood.founder_audience);
     QStringList amenities;
     for(const auto& name:mood.accessible_amenities) amenities.push_back(q(name));

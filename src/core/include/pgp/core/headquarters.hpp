@@ -84,6 +84,7 @@ struct HQEquipment {
     bool inherited=false,powered=true,rotated=false;
     std::uint32_t premises=0,mount=0;
     int x=0,y=0;
+    bool playtest_delivery=false;
     auto operator<=>(const HQEquipment&) const = default;
 };
 struct HQLand {
@@ -169,8 +170,16 @@ struct HQTraffic {
     std::vector<HQDeskWalk> desks;
     auto operator<=>(const HQTraffic&) const = default;
 };
+struct HQInfrastructurePuzzle {
+    int score=0;
+    int active_racks=0,total_watts=0,hall_isolated_racks=0,thermal_crowding=0,utility_proximity=0,power_margin=0,redundancy_bonus=0;
+    int capability_bonus=0,reliability_bonus=0,mood_bonus=0;
+    std::string summary;
+    auto operator<=>(const HQInfrastructurePuzzle&) const = default;
+};
 [[nodiscard]] HQAccess hq_access(int width,int depth,std::span<const HQRoom> rooms);
 [[nodiscard]] HQTraffic hq_traffic(const SimulationState&,const PlaceHQEquipment* preview=nullptr);
+[[nodiscard]] HQInfrastructurePuzzle hq_infrastructure_puzzle(const SimulationState&,const PlaceHQEquipment* preview=nullptr);
 void validate_headquarters_rules(const HeadquartersRules&);
 void validate_hq_plan(int width,int depth,const std::vector<HQRoom>&,int maximum_edge);
 void initialize_headquarters(SimulationState&,std::uint64_t seed,std::string_view home_family="");

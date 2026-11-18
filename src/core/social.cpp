@@ -50,6 +50,13 @@ SocialLink& link(SimulationState& s,std::string_view a,std::string_view b) {
     if(rows.size()>=8192)invalid("The social circle has reached its supported limit.");
     rows.push_back({first,second,0,0,s.date,s.date,{},"Met at headquarters",first=="founder" || second=="founder"});return rows.back();
 }
+int person_age(const SimulationState& s,std::string_view id) {
+    const int year=from_ordinal(s.date).year;
+    if(const auto* other=peer(s,id)) return year-other->profile.birth_year;
+    if(const auto* e=employee(s,id)) return year-e->terms.profile.birth_year;
+    if(id=="founder" && s.succession) return year-succession_catalog(s).founder_birth_year;
+    return 0;
+}
 int fit(const SimulationState& s,std::string_view a,std::string_view b) {
     const auto& r=*social_rules(s);const auto& left=traits(s,a);const auto& right=traits(s,b);
     int shared=0,friction=0;
@@ -57,7 +64,10 @@ int fit(const SimulationState& s,std::string_view a,std::string_view b) {
         if(std::ranges::find(right,t)!=right.end())++shared;
         else if(t.starts_with("Social: ") || t.starts_with("Temperament: "))++friction;
     }
-    return shared*r.shared_gain-friction*r.friction;
+    int bonus=0;
+    if(talent_rules(s) && person_has_skill(s,a,"skateboarding") && person_has_skill(s,b,"skateboarding"))
+        bonus=skateboarding_respect_bonus(person_age(s,a),person_age(s,b));
+    return shared*r.shared_gain+bonus-friction*r.friction;
 }
 void reveal(SimulationState& s,const SocialLink& bond) {
     if(bond.first!="founder" && bond.second!="founder")return;
@@ -231,7 +241,10 @@ void socialize(SimulationState& s,const Socialize& action) {
     if(action.activity=="listen") {if(person_has_skill(s,"founder","empathy"))gain+=r.shared_gain;memory="Listened and made room for a different point of view";}
     if(action.activity=="hobby") {
         bool shared=false;for(const auto& t:traits(s,"founder"))if(t.starts_with("Interest: ") && std::ranges::find(traits(s,id),t)!=traits(s,id).end())shared=true;
-        if(shared)gain+=r.weekly_gain;memory=shared?"Spent time on a shared interest":"Tried something new together";
+        if(shared)gain+=r.weekly_gain;
+        if(talent_rules(s) && (person_has_skill(s,"founder","skateboarding") || person_has_skill(s,id,"skateboarding")))
+            gain+=skateboarding_respect_bonus(person_age(s,"founder"),person_age(s,id));
+        memory=shared?"Spent time on a shared interest":"Tried something new together";
     }
     int ceiling=1000;bool fit_enabled=true;
     if(external(s,id) || former(s,id)) {

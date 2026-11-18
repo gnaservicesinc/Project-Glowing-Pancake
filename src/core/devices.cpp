@@ -103,7 +103,7 @@ void validate_devices(const SimulationState& s,bool deep) {
     std::set<std::string> initial;
     for(std::size_t i=0;i<rows.size();++i) {
         const auto& d=rows[i];const auto& model=offer(s,d.offer);
-        if(d.id!=i+1 || d.ordered_on<w.starts_on || d.ordered_on>s.date || d.ready_on!=advance_days(d.ordered_on,d.included?Days{0}:model.delivery) || d.ready_on>=s.end_date ||
+        if(d.id!=i+1 || d.ordered_on<w.starts_on || d.ordered_on>s.date || (d.ready_on<(d.playtest_delivery?d.ordered_on:advance_days(d.ordered_on,d.included?Days{0}:model.delivery)) || d.ready_on>advance_days(d.ordered_on,d.included?Days{0}:model.delivery) || (d.playtest_delivery && (d.included || d.ready_on>s.date))) || d.ready_on>=s.end_date ||
             (d.retired_on && (*d.retired_on<d.ready_on || *d.retired_on>s.date || d.powered)) || d.services.size()>128)
             invalid("Device ownership, delivery, retirement or service dates are inconsistent.");
         if(d.included) {

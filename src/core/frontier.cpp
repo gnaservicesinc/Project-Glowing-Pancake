@@ -101,7 +101,7 @@ bool research_known(const SimulationState& state, std::string_view id, OrdinalDa
     return std::ranges::any_of(state.lab->research,[&](const auto& run) {
         if (run.research_id != id || !run.completed) return false;
         const auto& work = require_named(state.capacity->projects,run.project_id);
-        return work.stopped_on && *work.stopped_on < day;
+        return project_result_on(work,day);
     });
 }
 struct TrialRequirements {

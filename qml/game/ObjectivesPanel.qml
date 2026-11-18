@@ -15,7 +15,46 @@ ColumnLayout {
         onRestored: value => panel.choosing = value
         onReset: panel.choosing = false
     }
+    component CareerAction: WorldButton {
+        Layout.maximumWidth: panel.width
+        font.pixelSize: panel.textSize
+        enabled: !campaign.busy && campaign.paused
+    }
+    readonly property var transition: panel.visible ? desk.careerTransition : ({})
     spacing: 10
+    ColumnLayout {
+        Layout.fillWidth: true
+        visible: !!panel.transition.kind || !!panel.transition.canRequest
+        Label {
+            visible: !!panel.transition.title
+            text: panel.transition.title || ""
+            font.bold: true
+            font.pixelSize: panel.textSize
+        }
+        Label {
+            visible: !!panel.transition.detail
+            text: panel.transition.detail || ""
+            Layout.fillWidth: true
+            font.pixelSize: panel.textSize
+            wrapMode: Text.Wrap
+            textFormat: Text.PlainText
+        }
+        Repeater {
+            model: panel.transition.canRequest ? [{id:"request_acquisition", label:qsTr("Request acquisition terms")}] :
+                panel.transition.kind === "dismissal" ? [{id:"remedy",label:qsTr("Ask the board to reconsider")},{id:"accept",label:qsTr("Accept the handover")}] :
+                panel.transition.kind === "acquisition" ? [{id:"accept",label:qsTr("Review sale")},{id:"decline",label:qsTr("Decline offer")}] :
+                panel.transition.kind === "uscif" ? [{id:"disclose",label:qsTr("Review disclosure")},{id:"negotiate",label:qsTr("Review negotiations")},
+                    {id:"assurance",label:qsTr("Review public assurance")},{id:"accept",label:qsTr("Accept intervention")}] : []
+            WorldButton {
+                required property var modelData
+                text: modelData.label
+                textSize: panel.textSize
+                Layout.maximumWidth: panel.width
+                enabled: campaign.paused && !campaign.busy
+                onClicked: panel.desk.reviewTransition(modelData.id, "")
+            }
+        }
+    }
     function focusRetrospective() {
         if (careerDesk.visible) {
             careerHeading.forceActiveFocus(Qt.OtherFocusReason)
@@ -36,11 +75,7 @@ ColumnLayout {
             textFormat: Text.PlainText
             font.pixelSize: panel.textSize
         }
-        component CareerAction: WorldButton {
-            Layout.maximumWidth: careerDesk.width
-            font.pixelSize: panel.textSize
-            enabled: !campaign.busy && campaign.paused
-        }
+
         CareerCopy {
             id: careerHeading
             objectName: "careerHeading"
@@ -65,11 +100,24 @@ ColumnLayout {
             text: jobs.currentIndex >= 0 ? jobs.model[jobs.currentIndex].detail : ""
             visible: jobs.visible && text.length > 0
         }
+        TextField {
+            id: newCompanyName
+            visible: jobs.currentIndex >= 0 && jobs.model[jobs.currentIndex].kind === "restart"
+            Layout.fillWidth: true
+            maximumLength: 80
+            font.pixelSize: panel.textSize
+            placeholderText: qsTr("New company name")
+            Accessible.name: placeholderText
+        }
         CareerAction {
             objectName: "reviewCareerAppointment"
             visible: jobs.currentIndex >= 0
             text: qsTr("Review appointment")
-            onClicked: panel.desk.reviewCareer("accept", jobs.model[jobs.currentIndex].id)
+            enabled: !campaign.busy && campaign.paused && (!newCompanyName.visible || newCompanyName.text.trim().length >= 3)
+            onClicked: {
+                if (newCompanyName.visible) panel.desk.reviewTransition("found", newCompanyName.text)
+                else panel.desk.reviewCareer("accept", jobs.model[jobs.currentIndex].id)
+            }
         }
         CareerAction {
             objectName: "reviewCareerSearch"
@@ -132,32 +180,34 @@ ColumnLayout {
                 }
             }
         }
-        GameDialog {
-            id: careerReview
-            modal: true
-            title: qsTr("Review career decision")
-            width: Math.min(620, (Overlay.overlay ? Overlay.overlay.width : 650) - 32)
-            anchors.centerIn: Overlay.overlay
-            visible: careerDesk.visible && panel.desk.reviewText.length > 0
-            contentItem: ScrollView {
-                implicitHeight: Math.min(reviewCopy.implicitHeight + 8, (Overlay.overlay ? Overlay.overlay.height : 480) * 0.48)
-                contentWidth: availableWidth
-                clip: true
-                Label {
-                    id: reviewCopy
-                    width: parent.width
-                    text: panel.desk.reviewText
-                    wrapMode: Text.Wrap
-                    font.pixelSize: panel.textSize
-                }
-            }
-            footer: DialogButtonBox {
-                CareerAction { objectName: "confirmCareerAction"; text: qsTr("Confirm"); onClicked: panel.desk.confirm() }
-                CareerAction { text: qsTr("Back"); onClicked: panel.desk.clearReview() }
-            }
-            onClosed: panel.desk.clearReview()
-        }
+
     }
+    GameDialog {
+        id: careerReview
+        modal: true
+        title: qsTr("Review career decision")
+        width: Math.min(620, (Overlay.overlay ? Overlay.overlay.width : 650) - 32)
+        anchors.centerIn: Overlay.overlay
+        visible: panel.visible && panel.desk.reviewText.length > 0
+        contentItem: ScrollView {
+            implicitHeight: Math.min(reviewCopy.implicitHeight + 8, (Overlay.overlay ? Overlay.overlay.height : 480) * 0.48)
+            contentWidth: availableWidth
+            clip: true
+            Label {
+                id: reviewCopy
+                width: parent.width
+                text: panel.desk.reviewText
+                wrapMode: Text.Wrap
+                font.pixelSize: panel.textSize
+            }
+        }
+        footer: DialogButtonBox {
+            CareerAction { objectName: "confirmCareerAction"; text: qsTr("Confirm"); onClicked: panel.desk.confirm() }
+            CareerAction { text: qsTr("Back"); onClicked: panel.desk.clearReview() }
+        }
+        onClosed: panel.desk.clearReview()
+    }
+
     LifeReport {
         id: edition
         Layout.fillWidth: true

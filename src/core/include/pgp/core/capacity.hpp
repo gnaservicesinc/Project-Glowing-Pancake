@@ -66,6 +66,7 @@ struct CapacityProject {
     std::string specialist_id{};
     // Research can require both experimental compute and separate person-days.
     std::uint32_t required_staff_days=0,completed_staff_days=0;
+    bool playtest_completed=false;
     auto operator<=>(const CapacityProject&) const = default;
 };
 struct SourceDayUsage {
@@ -150,6 +151,7 @@ void remove_staff_capacity(CapacityState& state,OrdinalDay day,std::string id,st
 [[nodiscard]] std::uint32_t opening_staff_count(const CapacityState& state);
 [[nodiscard]] std::uint32_t available_staff_on(const CapacityState& state, OrdinalDay day);
 void add_capacity_source(CapacityState& state, OrdinalDay day, CapacitySource source);
+[[nodiscard]] bool project_result_on(const CapacityProject&,OrdinalDay);
 void cancel_project(CapacityState& state, OrdinalDay day, std::string_view project_id);
 void pause_project(CapacityState& state,OrdinalDay day,std::string_view project_id);
 void resume_project(CapacityState& state,OrdinalDay day,std::string_view project_id);

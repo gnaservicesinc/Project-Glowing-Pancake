@@ -94,6 +94,7 @@ void prepare_employee_study(SimulationState&);
 void validate_employee_study(const SimulationState&,bool deep);
 void validate_talent_rules(const TalentRules&);
 const TalentRules* talent_rules(const SimulationState&);
+[[nodiscard]] int skateboarding_respect_bonus(int actor_age,int peer_age) noexcept;
 bool has_skill(const PersonProfile&,std::string_view);
 bool person_has_skill(const SimulationState&,std::string_view,std::string_view);
 std::vector<std::string> person_skills(const SimulationState&,std::string_view);

@@ -354,6 +354,97 @@ HQTraffic hq_traffic(const SimulationState& s,const PlaceHQEquipment* preview) {
     }
     return result;
 }
+HQInfrastructurePuzzle hq_infrastructure_puzzle(const SimulationState& s,const PlaceHQEquipment* preview) {
+    HQInfrastructurePuzzle result;
+    if(!enabled(s) || !s.infrastructure->workplace->headquarters) return result;
+    if(preview) {
+        const auto blocker=hq_placement_blocker(s,*preview);
+        if(!blocker.empty()) throw std::invalid_argument(blocker);
+    }
+    const auto& p=current_headquarters(s);
+    const auto room_of=[&](int x,int y) -> int {
+        for(std::size_t idx=0;idx<p.rooms.size();++idx) {
+            const auto& r=p.rooms[idx];
+            if(x>=r.x && y>=r.y && x<r.x+r.width && y<r.y+r.depth) return static_cast<int>(idx);
+        }
+        return -1;
+    };
+    struct PuzzleFixture {
+        const HQEquipment* item;
+        const HQEquipmentOffer* model;
+        int x=0,y=0,w=0,d=0,room=-1;
+    };
+    std::vector<PuzzleFixture> active_racks,desks,benches;
+    int energy_benches=0;
+    std::uint64_t watts=0;
+    for(const auto& entry_item:hq(s).items) {
+        if(entry_item.delivered_on>s.date) continue;
+        const bool moving=preview && preview->item==entry_item.id;
+        const auto mount=moving?preview->mount:entry_item.mount;
+        const bool on_floor=mount==0 && (moving || entry_item.premises==p.id);
+        const bool on_desk=mount!=0 && (moving || entry_item.premises==p.id);
+        if(!on_floor && !on_desk) continue;
+        const auto& e=offer(s,entry_item);
+        if(entry_item.powered) watts+=static_cast<std::uint64_t>(e.watts);
+        if(!on_floor) continue;
+        const bool rotated=moving?preview->rotated:entry_item.rotated;
+        const int x=moving?preview->x:entry_item.x,y=moving?preview->y:entry_item.y;
+        const int w=rotated?e.depth:e.width,d=rotated?e.width:e.depth;
+        const PuzzleFixture f{&entry_item,&e,x,y,w,d,room_of(x,y)};
+        if(e.kind=="rack" && entry_item.powered) active_racks.push_back(f);
+        else if(e.kind=="desk") desks.push_back(f);
+        else if(e.kind=="bench" || e.id=="energy") {
+            benches.push_back(f);
+            if(entry_item.powered && e.id=="energy") ++energy_benches;
+        }
+    }
+    result.total_watts=static_cast<int>(watts);
+    result.active_racks=static_cast<int>(active_racks.size());
+    if(active_racks.empty()) {
+        result.summary="Place a powered server rack to configure HQ infrastructure topology.";
+        return result;
+    }
+    const auto work_rooms=std::ranges::count_if(p.rooms,[](const HQRoom& room){return !room.passage;});
+    const auto gap=[](const PuzzleFixture& a,const PuzzleFixture& b) {
+        const int dx=std::max({0,b.x-(a.x+a.w),a.x-(b.x+b.w)});
+        const int dy=std::max({0,b.y-(a.y+a.d),a.y-(b.y+b.d)});
+        return dx+dy;
+    };
+    for(std::size_t idx=0;idx<active_racks.size();++idx) {
+        const auto& rack=active_racks[idx];
+        const bool isolated=work_rooms>=2 && rack.room>=0 &&
+            std::ranges::none_of(desks,[&](const PuzzleFixture& desk){return desk.room==rack.room;});
+        if(isolated) ++result.hall_isolated_racks;
+        for(std::size_t next=idx+1;next<active_racks.size();++next)
+            if(gap(rack,active_racks[next])==0) ++result.thermal_crowding;
+        for(const auto& desk:desks)
+            if(desk.room==rack.room && gap(rack,desk)<=1) ++result.thermal_crowding;
+        if(std::ranges::any_of(benches,[&](const PuzzleFixture& bench){return bench.item->powered && gap(rack,bench)<=4;}))
+            ++result.utility_proximity;
+    }
+    const int circuit_budget=(p.kind=="home"?12000:24000)+energy_benches*6000;
+    if(result.total_watts<=circuit_budget) {
+        result.power_margin=std::clamp((circuit_budget-result.total_watts)/2000,1,10);
+    } else {
+        result.power_margin=-std::max(1,(result.total_watts-circuit_budget+1999)/2000);
+    }
+    if(result.active_racks>=2 && result.thermal_crowding==0 && result.power_margin>0)
+        result.redundancy_bonus=std::min(15,result.active_racks*5)+std::min(10,result.hall_isolated_racks*5);
+    result.score=std::clamp(40+std::min(20,result.hall_isolated_racks*10)+std::min(15,result.utility_proximity*5)+
+        result.redundancy_bonus+result.power_margin*2-result.thermal_crowding*15,0,100);
+    if(result.thermal_crowding>0 || result.power_margin<0) {
+        result.capability_bonus=-std::min(6,result.thermal_crowding*2+(result.power_margin<0?2:0));
+        result.reliability_bonus=-std::min(8,result.thermal_crowding*3+(result.power_margin<0?3:0));
+        result.mood_bonus=-std::min(4,result.thermal_crowding*2);
+    } else if(result.active_racks>=2) {
+        result.capability_bonus=std::clamp((result.score-45)/10,1,5);
+        result.reliability_bonus=std::clamp((result.score-40)/8,1,7);
+        result.mood_bonus=result.hall_isolated_racks==result.active_racks && result.score>=65?2:(result.score>=55?1:0);
+    }
+    result.summary="Infrastructure puzzle "+std::to_string(result.score)+"/100 · "+std::to_string(result.active_racks)+
+        " active racks · "+std::to_string(result.total_watts)+" W"+(result.thermal_crowding?" · thermal crowding":"");
+    return result;
+}
 void validate_hq_plan(int width,int depth,const std::vector<HQRoom>& rooms,int maximum_edge) {
     if(width<3 || depth<3 || width>maximum_edge || depth>maximum_edge || rooms.empty() || rooms.size()>16) invalid("Choose a floor plan within the plot, with one to sixteen rooms.");
     std::vector<bool> covered(static_cast<std::size_t>(width*depth));
@@ -655,7 +746,7 @@ void validate_headquarters(const SimulationState& s,bool deep) {
     for(std::size_t n=0;n<h.items.size();++n) {
         const auto& i=h.items[n];
         if(i.inherited && (s.infrastructure->workplace->opening_office=="home" || i.ordered_on!=s.infrastructure->workplace->starts_on || i.id>2*opening_people)) invalid("Inherited furnishings must come from the actual opening company.");const auto& e=offer(s,i);
-        if(i.id!=n+1 || i.ordered_on<s.infrastructure->workplace->starts_on || i.ordered_on>s.date || i.delivered_on!=advance_days(i.ordered_on,i.inherited?Days{0}:e.delivery) || i.paid!=(i.inherited?Cents{0}:e.price)) invalid("Equipment ownership, price or delivery changed.");
+        if(i.id!=n+1 || i.ordered_on<s.infrastructure->workplace->starts_on || i.ordered_on>s.date || (i.delivered_on<(i.playtest_delivery?i.ordered_on:advance_days(i.ordered_on,i.inherited?Days{0}:e.delivery)) || i.delivered_on>advance_days(i.ordered_on,i.inherited?Days{0}:e.delivery) || (i.playtest_delivery && (i.inherited || i.delivered_on>s.date))) || i.paid!=(i.inherited?Cents{0}:e.price)) invalid("Equipment ownership, price or delivery changed.");
         if(!i.person.empty()) {
             if(hq_portable(e.kind)) {
                 if(!laptop_people.insert(i.person).second || i.delivered_on>s.date) invalid("A person can hold one delivered company laptop.");

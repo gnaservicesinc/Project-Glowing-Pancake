@@ -248,7 +248,7 @@ void validate_personal_life(const SimulationState& state,bool deep) {
     std::size_t item_id=0;
     for(const auto& item:owned.decor) {
         const auto& offer=find(catalog.decor,item.offer);
-        if(item.id!=++item_id || !valid_date(item.purchased_on) || item.delivered_on!=advance_days(item.purchased_on,offer.delivery) || item.delivered_on>=state.end_date ||
+        if(item.id!=++item_id || !valid_date(item.purchased_on) || (item.delivered_on<(item.playtest_delivery?item.purchased_on:advance_days(item.purchased_on,offer.delivery)) || item.delivered_on>advance_days(item.purchased_on,offer.delivery) || (item.playtest_delivery && item.delivered_on>state.date)) || item.delivered_on>=state.end_date ||
             (item.sold_on && (!valid_date(*item.sold_on) || *item.sold_on<item.delivered_on || item.property)) ||
             (!item.property && (item.x || item.y || item.rotated))) invalid("Invalid personal furnishing history.");
         if(item.property && !personal_placement_blocker(state,{item.id,item.property,item.x,item.y,item.rotated}).empty())

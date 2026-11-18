@@ -16,6 +16,12 @@ include(cmake/AppleToolchain.cmake)
 include(cmake/VersionIdentity.cmake)
 # CMake's VERSION field accepts the numeric core, never a SemVer suffix.
 project(ProjectGlowingPancake VERSION "${PGP_VERSION_GAME_NUMERIC}" LANGUAGES CXX)
+if(APPLE)
+    if(NOT CMAKE_OBJCXX_COMPILER AND CMAKE_CXX_COMPILER)
+        set(CMAKE_OBJCXX_COMPILER "${CMAKE_CXX_COMPILER}" CACHE FILEPATH "Selected Objective-C++ compiler" FORCE)
+    endif()
+    enable_language(OBJCXX)
+endif()
 
 if(PGP_DISTRIBUTION)
     if((CMAKE_CONFIGURATION_TYPES AND NOT CMAKE_CONFIGURATION_TYPES STREQUAL "Release") OR

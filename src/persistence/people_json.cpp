@@ -39,11 +39,12 @@ Json recruitment(const core::Recruitment& n) {
         {"submitted_on",o.submitted_on.value()},{"respond_on",o.respond_on.value()},{"expires_on",o.expires_on.value()},{"reply",o.reply}});
     const auto date=[](auto value){return value?Json(value->value()):Json(nullptr);};
     return {{"ask_salary",n.ask_salary.value()},{"ask_signing",n.ask_signing.value()},{"minimum_salary",n.minimum_salary.value()},{"minimum_signing",n.minimum_signing.value()},
-        {"offers",std::move(offers)},{"agreed_on",date(n.agreed_on)},{"withdrawn_on",date(n.withdrawn_on)},{"hired_on",date(n.hired_on)}};
+        {"mission_discount_bp",n.mission_discount_bp},{"offers",std::move(offers)},{"agreed_on",date(n.agreed_on)},{"withdrawn_on",date(n.withdrawn_on)},{"hired_on",date(n.hired_on)}};
 }
 core::Recruitment parse_recruitment(const Json& j) {
-    fields(j,"recruitment",{"ask_salary","ask_signing","minimum_salary","minimum_signing","offers","agreed_on","withdrawn_on","hired_on"});
+    fields(j,"recruitment",{"ask_salary","ask_signing","minimum_salary","minimum_signing","offers","agreed_on","withdrawn_on","hired_on"},{"mission_discount_bp"});
     core::Recruitment n;
+    if(j.contains("mission_discount_bp")) n.mission_discount_bp=static_cast<std::uint32_t>(u64(j.at("mission_discount_bp"),"mission discount",1000));
     n.ask_salary=core::Cents{i64(j.at("ask_salary"),"ask_salary")};n.ask_signing=core::Cents{i64(j.at("ask_signing"),"ask_signing")};
     n.minimum_salary=core::Cents{i64(j.at("minimum_salary"),"minimum_salary")};n.minimum_signing=core::Cents{i64(j.at("minimum_signing"),"minimum_signing")};
     const auto date=[&](const char* key)->std::optional<core::OrdinalDay>{return j.at(key).is_null()?std::nullopt:std::optional{core::OrdinalDay{i64(j.at(key),key)}};};
@@ -54,11 +55,13 @@ core::Recruitment parse_recruitment(const Json& j) {
             core::OrdinalDay{i64(o.at("submitted_on"),"submitted_on")},core::OrdinalDay{i64(o.at("respond_on"),"respond_on")},core::OrdinalDay{i64(o.at("expires_on"),"expires_on")},text(o.at("reply"),"reply",16)});
     }return n;
 }
-Json applicant(const core::Applicant& a) {return {{"profile",profile(a.profile)},{"salary",a.salary.value()},{"signing",a.signing.value()},{"evaluation_credit",a.evaluation_credit.value()},{"recruitment",a.recruitment?recruitment(*a.recruitment):Json(nullptr)},{"recommendation",a.recommendation?Json{{"person",a.recommendation->person},{"name",a.recommendation->name},{"kind",a.recommendation->kind},{"received_on",a.recommendation->received_on.value()}}:Json(nullptr)}};}
+Json applicant(const core::Applicant& a) {return {{"profile",profile(a.profile)},{"salary",a.salary.value()},{"signing",a.signing.value()},{"evaluation_credit",a.evaluation_credit.value()},{"recruitment",a.recruitment?recruitment(*a.recruitment):Json(nullptr)},{"playtest_original_evaluation",a.playtest_original_evaluation?Json(*a.playtest_original_evaluation):Json(nullptr)},{"recommendation",a.recommendation?Json{{"person",a.recommendation->person},{"name",a.recommendation->name},{"kind",a.recommendation->kind},{"received_on",a.recommendation->received_on.value()}}:Json(nullptr)}};}
 core::Applicant parse_applicant(const Json& j) {
-    fields(j,"applicant",{"profile","salary","signing","evaluation_credit","recruitment","recommendation"});
+    fields(j,"applicant",{"profile","salary","signing","evaluation_credit","recruitment","recommendation"},{"playtest_original_evaluation"});
     core::Applicant result{parse_profile(j.at("profile")),core::Cents{i64(j.at("salary"),"salary")},core::Cents{i64(j.at("signing"),"signing")},core::BasisPoints{i64(j.at("evaluation_credit"),"evaluation_credit")},
         j.at("recruitment").is_null()?std::nullopt:std::optional{parse_recruitment(j.at("recruitment"))}};
+    if(j.contains("playtest_original_evaluation") && !j.at("playtest_original_evaluation").is_null())
+        result.playtest_original_evaluation=static_cast<std::uint32_t>(u64(j.at("playtest_original_evaluation"),"original evaluation",100));
     if(const auto& rec=j.at("recommendation");!rec.is_null()){fields(rec,"recommendation",{"person","name","kind","received_on"});result.recommendation=core::ApplicantRecommendation{text(rec.at("person"),"referrer",160),text(rec.at("name"),"referrer name",128),text(rec.at("kind"),"recommendation",16),core::OrdinalDay{i64(rec.at("received_on"),"recommendation date")}};}
     return result;
 }

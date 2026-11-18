@@ -41,7 +41,8 @@ void validate_succession_catalog(const SuccessionCatalog& c) {
             label(m.id,48);label(m.title);label(m.copy,2048);
             if(!messages.insert(m.id).second || m.fee.value()<0 || m.fee.value()>10000000) invalid("Departure messages need distinct IDs and bounded fees.");
             if(m.claim && (!rules.press || (*m.claim!="profit" && *m.claim!="research" &&
-                *m.claim!="delivery" && *m.claim!="publication_commitment")))
+                *m.claim!="delivery" && *m.claim!="publication_commitment" &&
+                *m.claim!="safety_record" && *m.claim!="workforce_trust")))
                 invalid("Departure claims need a supported fact check and press rules.");
             for(auto v:m.completed_effect) if(v < -1000 || v > 1000) invalid("Departure audience effects must be bounded.");
         }
@@ -59,6 +60,7 @@ void validate_succession_catalog(const SuccessionCatalog& c) {
     for(const auto& track:c.tracks) {
         label(track.id,48);label(track.priorities,512);
         if(track.id=="asi" || track.id.starts_with("asi.") || track.id=="outside" || track.id.starts_with("outside.") ||
+            track.id=="internal" || track.id.starts_with("internal.") ||
             !ids.insert(track.id).second || track.first_birth_year<1800 || track.first_birth_year>9000 || track.names.empty() || track.names.size()>8 ||
             track.cohort_years<10 || track.cohort_years>c.maximum_candidate_age-c.minimum_candidate_age+1 ||
             track.signing_cost.value()<0 || track.signing_cost.value()>100000000 || track.monthly_salary.value()<=0 || track.monthly_salary.value()>10000000)
@@ -107,7 +109,8 @@ void validate_succession(const SimulationState& s,bool deep) {
         ? s.infrastructure->workplace->starts_on
         : s.accounts->starts_on;
     validate_succession_opening(c,formation_day,s.end_date);
-    Cents paid=c.personal_cash;std::vector<Cents> cash_prefix{Cents{0}};cash_prefix.reserve(s.accounts->postings.size()+1);
+    if(actor.playtest_cash.value()<0) invalid("God mode personal funding cannot be negative.");
+    Cents paid=checked_unit_add(checked_unit_add(c.personal_cash,actor.playtest_cash),actor.sale_proceeds);std::vector<Cents> cash_prefix{Cents{0}};cash_prefix.reserve(s.accounts->postings.size()+1);
     for(const auto& posting:s.accounts->postings) {
         if(founder_payment(posting)) paid=checked_unit_add(paid,posting.amount);
         auto cash=cash_prefix.back();
@@ -145,7 +148,9 @@ void validate_succession(const SimulationState& s,bool deep) {
                 if(p.status!=SuccessionStatus::activated || p.candidate!=term.person || p.incumbent+1!=term.id || p.finished_on!=term.starts_on || term.caretaker || p.asi!=term.asi)
                     invalid("The executive term differs from its approved handover.");
             } else {
-                if(!term.caretaker || (i && term.starts_on!=actor.terms[i-1].due_on)) invalid("An unplanned appointment bypassed the charter's caretaker boundary.");
+                if(!term.caretaker || (term.extraordinary_handover.empty() && i && term.starts_on!=actor.terms[i-1].due_on) ||
+                   (!term.extraordinary_handover.empty() && (i!=1 ||
+                    (term.extraordinary_handover!="dismissal" && term.extraordinary_handover!="acquisition" && term.extraordinary_handover!="uscif")))) invalid("An unplanned appointment bypassed the charter's caretaker boundary.");
                 auto chosen=eligible.begin();
                 if(i) chosen=std::ranges::find_if(eligible,[&](const auto& p){return p.id!=actor.terms[i-1].person;});
                 if(chosen==eligible.end()) chosen=eligible.begin();

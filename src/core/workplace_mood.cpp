@@ -66,6 +66,7 @@ std::map<std::string, EmployeeMood> workplace_moods(const SimulationState& state
 
     const auto* manager = operations_manager_on(state, state.date);
     const auto traffic=hq_traffic(state);
+    const auto hq_puzzle=hq_infrastructure_puzzle(state);
     const int amenity_cap=static_cast<int>(mood.amenity_cap);
     int amenity_points = 0;
     std::vector<std::string> amenity_names;
@@ -77,6 +78,19 @@ std::map<std::string, EmployeeMood> workplace_moods(const SimulationState& state
     }
     amenity_points = std::min(amenity_points, amenity_cap);
     const auto gathering_points=personal_event_moods(state);
+    const auto nonprofit=nonprofit_reaction(state,state.date);
+    bool team_spirit = false;
+    if (talent_rules(state)) {
+        constexpr std::array<std::string_view, 7> spirit_skills{
+            "comedy", "music_playing", "music_composition", "empathy", "psychology", "nursing", "medicine"
+        };
+        const auto has_spirit = [&](std::string_view pid) {
+            return std::ranges::any_of(spirit_skills, [&](std::string_view sk) { return person_has_skill(state, pid, sk); });
+        };
+        team_spirit = has_spirit("founder") || std::ranges::any_of(workers, [&](const Worker& w) {
+            return has_spirit(w.employee->terms.profile.id);
+        });
+    }
 
     for (const auto& worker : workers) {
         const auto& employee = *worker.employee;
@@ -91,6 +105,8 @@ std::map<std::string, EmployeeMood> workplace_moods(const SimulationState& state
         report.company_prestige = prestige_points(company_reputation, mood.company_prestige);
         report.ceo_prestige = prestige_points(ceo_reputation, mood.ceo_prestige);
         const auto role_weight = static_cast<int>(mood.role);
+        if(person.preferred_mission!="commercial")
+            report.nonprofit_goodwill=nonprofit.goodwill<0 || person.preferred_mission==committed_company_mission(state)?nonprofit.goodwill:0;
         report.role = person.preferred_mission == committed_company_mission(state) ? role_weight / 2 : -role_weight / 2;
         if (manager && manager->person == person.id) {
             report.role += person.role == "Software engineer" ? role_weight / 2 : -role_weight / 2;
@@ -127,7 +143,8 @@ std::map<std::string, EmployeeMood> workplace_moods(const SimulationState& state
         }
         report.score = std::clamp(50 + report.pay + report.company_prestige + report.ceo_prestige +
             report.role + report.coworkers + report.amenities + report.office_walk + report.temperament_effect +
-            report.gatherings + report.founder_audience + report.friendships, 0, 100);
+            report.gatherings + report.founder_audience + report.friendships + report.nonprofit_goodwill +
+            (team_spirit ? 2 : 0) + hq_puzzle.mood_bonus, 0, 100);
         results.emplace(person.id, std::move(report));
     }
     return results;

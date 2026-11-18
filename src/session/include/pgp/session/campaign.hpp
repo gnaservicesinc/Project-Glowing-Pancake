@@ -43,6 +43,8 @@ public:
     [[nodiscard]] OperationResult prepare_opening(std::uint64_t expected_revision);
     [[nodiscard]] OperationResult submit(const core::Command& command);
 #if !PGP_DISTRIBUTION
+    [[nodiscard]] OperationResult editPlaytestPerson(std::uint64_t,std::string_view,const std::vector<std::string>&,const std::array<int,5>&);
+    [[nodiscard]] OperationResult usePlaytestTool(std::uint64_t,std::string_view,std::string_view);
     [[nodiscard]] OperationResult editPlaytestFounder(std::uint64_t expected_revision,
                                                      std::vector<std::string> traits,bool genius);
 #endif

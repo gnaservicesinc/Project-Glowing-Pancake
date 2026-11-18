@@ -1,11 +1,14 @@
 #include <pgp/runtime/scenario.hpp>
+#include <pgp/runtime/rival_policy.hpp>
 #include <pgp/persistence/save.hpp>
 #include <pgp/persistence/sha256.hpp>
 #include "../content/slice_fixture.hpp"
 #include <nlohmann/json.hpp>
 #include <algorithm>
+#include <cmath>
 #include <fstream>
 #include <iostream>
+#include <limits>
 
 namespace {
 using namespace pgp;using Json=nlohmann::json;unsigned checks=0;
@@ -178,6 +181,94 @@ void budgeted_actions_and_reload() {
     step(resumed, 7);
     check(resumed.checkpoint() == game.checkpoint(), "Reloaded packed history changed the next weekly decision");
 }
+void rival_policy_hooks() {
+    const auto program=compile(compact());
+    auto game=begin(program);
+    const auto opening_ambition=runtime::rival_ambition(game.current_state().world,game.current_state().world.competition->companies.front());
+    check(!opening_ambition.achieved() && opening_ambition.reward()<5.0F,"Opening rival ambition must require ASI, control and secondary goal.");
+    struct HookState {
+        std::vector<runtime::RivalLearningSample> samples;
+        bool return_illegal=true;
+    } state;
+    const auto record=[](const runtime::RivalLearningSample& sample,void* ctx) {
+        static_cast<HookState*>(ctx)->samples.push_back(sample);
+    };
+    const auto select=[](const runtime::RivalLearningSample& sample,void* ctx) -> std::size_t {
+        auto* hook=static_cast<HookState*>(ctx);
+        if(hook->return_illegal) {hook->return_illegal=false;return runtime::rival_policy_actions-1;}
+        return (sample.legal & 1U)?0U:static_cast<std::size_t>(sample.teacher);
+    };
+    runtime::set_rival_policy_recorder(record,&state);
+    runtime::set_rival_policy_selector(select,&state);
+    check(runtime::rival_policy_enabled(),"Rival policy hooks must report enabled when registered.");
+    step(game,7);
+    runtime::set_rival_policy_recorder(nullptr,nullptr);
+    runtime::set_rival_policy_selector(nullptr,nullptr);
+    check(!runtime::rival_policy_enabled() && !state.samples.empty() &&
+        (state.samples.front().legal & (1U<<state.samples.front().teacher))!=0 &&
+        (state.samples.front().legal & 1U)!=0,
+        "Weekly rival planning must emit valid legal-masked learning samples and restore cleanly on unregister.");
+
+    check(runtime::rival_policy_param_count==4192,"Rival policy network must expose 4,192 parameters.");
+    check(runtime::rival_policy_metal_available(),"Apple Metal MPSGraph policy backend must be available on macOS.");
+    auto w_cpu=runtime::initialize_rival_policy_weights(42);
+    check(runtime::rival_policy_weights_valid(w_cpu),"Initialized rival policy weights must be finite.");
+    const auto logits=runtime::evaluate_rival_policy_logits(w_cpu,state.samples.front().features);
+    check(std::ranges::all_of(logits,[](float v){return std::isfinite(v);}),"Policy forward logits must be finite.");
+    const auto chosen=runtime::select_rival_policy_with_weights(w_cpu,state.samples.front());
+    check((state.samples.front().legal & (1U<<chosen))!=0,"Weighted selector must pick a legal rival action.");
+
+    auto w_metal=w_cpu;
+    runtime::RivalPolicyOptimizerState opt_cpu{},opt_metal{};
+    runtime::RivalPolicyTrainingConfig cfg{};
+    cfg.learning_rate=5e-3F;
+    const auto m_cpu=runtime::train_rival_policy_step_cpu(w_cpu,opt_cpu,state.samples,cfg);
+    const auto m_metal=runtime::train_rival_policy_step_metal(w_metal,opt_metal,state.samples,cfg);
+    check(m_cpu.backend==runtime::RivalPolicyBackend::cpu && m_metal.backend==runtime::RivalPolicyBackend::metal_mpsgraph &&
+          opt_cpu.step==1 && opt_metal.step==1 &&
+          std::abs(m_cpu.loss-m_metal.loss)<1e-4F && std::abs(m_cpu.grad_norm-m_metal.grad_norm)<1e-4F,
+          "CPU reference and native MPSGraph step metrics must match within 1e-4.");
+    float max_param_delta=0.0F;
+    const auto check_diff=[&](const auto& a,const auto& b){
+        for(std::size_t i=0;i<a.size();++i) max_param_delta=std::max(max_param_delta,std::abs(a[i]-b[i]));
+    };
+    check_diff(w_cpu.w1,w_metal.w1);check_diff(w_cpu.b1,w_metal.b1);
+    check_diff(w_cpu.w2,w_metal.w2);check_diff(w_cpu.b2,w_metal.b2);
+    check_diff(opt_cpu.m.w1,opt_metal.m.w1);check_diff(opt_cpu.v.w1,opt_metal.v.w1);
+    check(max_param_delta<1e-4F,"CPU reference and native MPSGraph AdamW weights/moments must match within 1e-4.");
+
+    float first_loss=m_metal.loss,last_loss=m_metal.loss,first_acc=m_metal.accuracy,last_acc=m_metal.accuracy;
+    for(int it=0;it<40;++it) {
+        const auto m=runtime::train_rival_policy_step(w_metal,opt_metal,state.samples,cfg);
+        last_loss=m.loss;last_acc=m.accuracy;
+    }
+    check(last_loss<first_loss && last_acc>=first_acc && runtime::rival_policy_weights_valid(w_metal),
+          "Multi-step native MPSGraph training must decrease masked cross-entropy loss while keeping finite weights.");
+
+    auto bad_samples=state.samples;
+    bad_samples.front().features[0]=std::numeric_limits<float>::quiet_NaN();
+    const auto prev_step=opt_metal.step;const auto prev_w0=w_metal.w1[0];
+    bool caught_nan=false;
+    try {(void)runtime::train_rival_policy_step_metal(w_metal,opt_metal,bad_samples,cfg);}
+    catch(const std::exception&) {caught_nan=true;}
+    check(caught_nan && opt_metal.step==prev_step && w_metal.w1[0]==prev_w0,
+          "Non-finite training inputs must fail atomically without mutating policy weights or optimizer state.");
+
+    const auto ckpt=runtime::serialize_rival_policy_checkpoint(w_metal,&opt_metal);
+    runtime::RivalPolicyWeights w_loaded{};runtime::RivalPolicyOptimizerState opt_loaded{};
+    runtime::deserialize_rival_policy_checkpoint(ckpt,w_loaded,&opt_loaded);
+    check(w_loaded==w_metal && opt_loaded==opt_metal,"Policy checkpoint roundtrip must preserve weights and optimizer state identically.");
+    auto corrupt=ckpt;corrupt.back()^=0x5AU;bool caught_corrupt=false;
+    try {(void)runtime::deserialize_rival_policy_checkpoint(corrupt,w_loaded,&opt_loaded);}
+    catch(const std::exception&) {caught_corrupt=true;}
+    check(caught_corrupt,"Corrupted policy checkpoint checksum must be rejected.");
+
+    runtime::set_rival_policy_weights(&w_metal);
+    check(runtime::rival_policy_enabled(),"Setting native rival policy weights must enable the weighted policy selector.");
+    step(game,7);
+    runtime::set_rival_policy_weights(nullptr);
+    check(!runtime::rival_policy_enabled(),"Clearing native rival policy weights must cleanly restore teacher planning.");
+}
 void research_diffusion() {
     auto document=compact();auto& selected=scenario(document);selected["competition"]["domestic"]=1;
     auto& receiver=selected["rivals"][0];receiver["start_after_days"]=35;receiver["planning"]["research"]=Json::array({"research.held_out_evaluation"});receiver["planning"]["priorities"][1]=1000;
@@ -210,6 +301,6 @@ void insolvency_and_catchup() {
 }
 }
 int main() {
-    try {single_customer();industry_rounding_context();roster_and_entry();private_information();budgeted_actions_and_reload();research_diffusion();insolvency_and_catchup();std::cout<<checks<<" competition checks passed\n";return 0;}
+    try {single_customer();industry_rounding_context();roster_and_entry();private_information();budgeted_actions_and_reload();research_diffusion();insolvency_and_catchup();rival_policy_hooks();std::cout<<checks<<" competition checks passed\n";return 0;}
     catch(const std::exception& error) {std::cerr<<error.what()<<'\n';return 1;}
 }

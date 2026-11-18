@@ -191,7 +191,9 @@ int main(int argc,char** argv) {
             runtime::career_open(departure) && departure.competition->companies.empty(),
             "An enforceable closure must open re-entry even when no rival has entered.");
         const auto fellowship_offer=runtime::research_job_offers(departure,federal_program);
-        check(fellowship_offer.size()==1 && fellowship_offer.front().fellowship,"The endowment must provide a funded fallback immediately.");
+        check(fellowship_offer.size()==2 && fellowship_offer.front().employer=="company.public_research_fellowship" &&
+            fellowship_offer.front().fellowship && fellowship_offer.back().employer=="company.restart",
+            "The endowment must provide a funded fallback immediately.");
         if(argc==3 && std::string_view(argv[1])=="--fellowship-smoke-fixture") {
             const auto folder=std::filesystem::path(argv[2]);
             std::ofstream content{folder/"fellowship-content.json"};
@@ -313,6 +315,189 @@ int main(int argc,char** argv) {
         const auto voluntary=bridge::lifeReport(obituary,installed);
         check(!voluntary.value("obituary").toBool() && voluntary.value("headline").toString()=="Alex Vale looks back at 19",
             "Voluntarily ending after resignation must report the current age without an obituary.");
-        std::cout<<"Paid lab and fellowship careers, federal closure, exact reload and dated newspaper checks passed.\n";
+
+        bridge::FoundingController modest_form{installed.collection,std::filesystem::path{temporary.path().toStdString()}/"founding_modest.json"};
+        modest_form.setField("family","middle");
+        modest_form.setField("route","bootstrap");
+        bridge::complete_formative_fixture(modest_form);
+        auto acq_options=options;
+        acq_options.founding=modest_form.selection();
+        runtime::Runtime acq{installed,runtime::begin_scenario(installed,"scenario.founder_campaign","US-CA",{},acq_options)};
+        check(acq.prepare_opening(acq.current_state().world.simulation.revision).accepted(),"Transition fixture opening prepares.");
+        const auto acq_commit=[&](core::CommandAction action) {
+            const auto res=acq.submit({acq.current_state().world.simulation.revision,std::move(action)});
+            if(!res.accepted()) throw std::runtime_error(res.explanation);
+        };
+        for(int i=0;i<16;++i) {
+            const auto& rows=acq.current_state().runtime.presentations;
+            const auto pending=std::ranges::find_if(rows,[](const auto& row){return !row.resolved && !row.choices.empty();});
+            if(pending==rows.end()) break;
+            check(acq.choose(acq.current_state().world.simulation.revision,pending->id,pending->choices.back().id).accepted(),
+                "Resolve pending opening presentation.");
+        }
+        acq_commit(core::AdvanceDay{});
+        const auto operating_before_sale=acq.current_state();
+
+        // 1. Company Acquisition + ObjectivesController + New Company Formation (company.restart)
+        check(runtime::acquisition_interest(acq.current_state().world,installed),
+            "An operating founder company with modest net assets should attract an acquisition offer.");
+        auto trans_ctrl_snap=std::make_shared<bridge::CampaignSnapshot>();
+        trans_ctrl_snap->checkpoint=acq.current_state();
+        bridge::ObjectivesController trans_ctrl;
+        trans_ctrl.update(trans_ctrl_snap,installed,true);
+        check(trans_ctrl.careerTransition().value("canRequest").toBool(),"ObjectivesController must surface acquisition interest.");
+
+        acq_commit(core::DecideCareerTransition{"request_acquisition",{}});
+        check(runtime::pending_career_transition(acq.current_state().world) &&
+            acq.current_state().world.objectives->transitions.back().kind=="acquisition",
+            "Requesting acquisition must record a pending acquisition offer.");
+        acq_commit(core::DecideCareerTransition{"decline",{}});
+        check(!runtime::pending_career_transition(acq.current_state().world) && !acq.current_state().world.objectives->end,
+            "Declining an acquisition must clear the notice and keep operating.");
+
+        acq_commit(core::DecideCareerTransition{"request_acquisition",{}});
+        const auto pending_sale=acq.current_state().world.objectives->transitions.back();
+        const auto buyer_before=std::ranges::find(acq.current_state().world.competition->companies,
+            pending_sale.source,&runtime::RivalCompany::definition_id);
+        check(buyer_before!=acq.current_state().world.competition->companies.end(),"Buyer company must be present.");
+        const auto buyer_cash_before=buyer_before->simulation.cash;
+        const auto personal_cash_before=acq.current_state().world.simulation.succession->personal_cash;
+        acq_commit(core::DecideCareerTransition{"accept",{}});
+        const auto& sold=acq.current_state();
+        check(sold.world.objectives->end && sold.world.objectives->end->cause==runtime::CampaignEndCause::acquisition &&
+            sold.world.simulation.management->governance->capital.back().kind=="acquired" &&
+            sold.world.simulation.succession->sale_proceeds.value()>0 &&
+            sold.world.simulation.succession->personal_cash==core::checked_unit_add(personal_cash_before,sold.world.simulation.succession->sale_proceeds) &&
+            runtime::can_continue_career(sold.world),
+            "Accepting an acquisition must transfer equity, pay founder proceeds and open next chapters.");
+        const auto buyer_after=std::ranges::find(sold.world.competition->companies,
+            pending_sale.source,&runtime::RivalCompany::definition_id);
+        check(buyer_after->simulation.cash==core::checked_unit_subtract(buyer_cash_before,pending_sale.consideration),
+            "Buyer cash must be debited by the acquisition consideration.");
+        check(persistence::decode_save(installed,persistence::encode_save(installed,sold)).checkpoint==sold,
+            "Acquired company save must reload identically.");
+        {
+            auto forged_sale=sold;
+            forged_sale.world.simulation.succession->sale_proceeds=core::Cents{1};
+            bool sale_rejected=false;
+            try {runtime::validate_checkpoint(installed,forged_sale);} catch(const std::invalid_argument&) {sale_rejected=true;}
+            check(sale_rejected,"Tampered acquisition sale proceeds must be rejected.");
+        }
+        const auto acq_report=bridge::lifeReport(sold,installed);
+        check(acq_report.value("articles").toList().front().toMap().value("paragraphs").toStringList().join("\n").contains("bought the company"),
+            "Life report must chronicle the company acquisition.");
+
+        // New company formation (company.restart)
+        check(!acq.submit({sold.world.simulation.revision,core::AcceptResearchAppointment{"company.restart","A"}}).accepted(),
+            "New company names shorter than 3 bytes must be rejected.");
+        acq_commit(core::AcceptResearchAppointment{"company.restart","Cedar Labs"});
+        const auto& restarted=acq.current_state();
+        check(restarted.world.objectives->career && restarted.world.objectives->career->back().organization_name=="Cedar Labs" &&
+            runtime::career_employer(restarted.world) && runtime::career_employer(restarted.world)->definition_id=="company.restart",
+            "New company formation must open company.restart with the chosen name.");
+        trans_ctrl_snap->checkpoint=restarted;
+        trans_ctrl.update(trans_ctrl_snap,installed,true);
+        check(trans_ctrl.career().value("title").toString().contains("Cedar Labs"),
+            "ObjectivesController must display the newly formed company name.");
+        const auto restart_report=bridge::lifeReport(restarted,installed);
+        check(restart_report.value("articles").toList().back().toMap().value("title").toString().isEmpty()==false &&
+            std::ranges::any_of(restart_report.value("articles").toList(),[](const auto& a){
+                return a.toMap().value("id")=="career" &&
+                    a.toMap().value("paragraphs").toStringList().join("\n").contains("Founded Cedar Labs");
+            }),
+            "Life report must name the newly founded company.");
+        check(persistence::decode_save(installed,persistence::encode_save(installed,restarted)).checkpoint==restarted,
+            "Newly founded company appointment must reload identically.");
+
+        // 2. Board Dismissal (CampaignEndCause::dismissal)
+        auto dis=operating_before_sale.world;
+        for(auto& holding:dis.simulation.accounts->holdings) {
+            if(holding.holder==dis.simulation.succession->founder_holder) holding.shares=core::BasisPoints{4500};
+        }
+        dis.simulation.accounts->holdings.push_back({"seed_investor",core::BasisPoints{5500},false});
+        dis.simulation.cash=core::Cents{1000000};
+        dis.simulation.management->catalog.governance->board.push_back(
+            {"board.seed","Seed investor",2,false,core::Cents{20000000},core::BasisPoints{1200}});
+        dis.simulation.management->governance->disputes.push_back(
+            {"fixture.dispute.1","executive.research","publication",dis.simulation.date,
+             core::advance_days(dis.simulation.date,core::Days{21}),core::CorporateDisputeStatus::departed,dis.simulation.date,
+             false,core::Cents{0},0,0,{},{}});
+        dis.simulation.management->governance->disputes.push_back(
+            {"fixture.dispute.2","corporate.runway_debt","covenant",dis.simulation.date,
+             core::advance_days(dis.simulation.date,core::Days{21}),core::CorporateDisputeStatus::accelerated,dis.simulation.date,
+             false,core::Cents{0},0,0,{},{}});
+        runtime::review_career_transition(dis,installed,dis.simulation.date);
+        check(runtime::pending_career_transition(dis) && dis.objectives->transitions.back().kind=="dismissal",
+            "Diluted shares, non-player board majority, low cash and repeated disputes must trigger dismissal review.");
+        {
+            auto dis_remedy=dis;
+            dis_remedy.simulation.cash=core::Cents{20000000};
+            runtime::decide_career_transition(dis_remedy,installed,{"remedy",{}});
+            check(!runtime::pending_career_transition(dis_remedy) && !dis_remedy.objectives->end &&
+                dis_remedy.objectives->transitions.back().response=="retained",
+                "Sufficient cash remedy must retain the founder without ending the campaign.");
+        }
+        runtime::decide_career_transition(dis,installed,{"accept",{}});
+        check(dis.objectives->end && dis.objectives->end->cause==runtime::CampaignEndCause::dismissal &&
+            core::founder_role(*dis.simulation.succession)==core::FounderRole::trust &&
+            runtime::can_continue_career(dis),
+            "Accepting dismissal must replace the executive while preserving founder trust and career continuation.");
+        runtime::validate_career_transition(dis,installed,true);
+        auto dis_cp=operating_before_sale;
+        dis_cp.world=dis;
+        const auto dis_report=bridge::lifeReport(dis_cp,installed);
+        check(dis_report.value("articles").toList().front().toMap().value("paragraphs").toStringList().join("\n")
+            .contains("replaced the founder as chief executive"),
+            "Life report must describe the board dismissal.");
+
+        // 3. USCIF Civilian Administrator (CampaignEndCause::uscif & company.uscif)
+        auto uscif_cp=operating_before_sale;
+        auto& uw=uscif_cp.world;
+        const auto agi_day=core::OrdinalDay{uw.simulation.date.value()-65};
+        const auto agi_start=core::OrdinalDay{agi_day.value()-core::frontier_assessment_span.value()};
+        uw.simulation.frontier->systems.push_back({1,"Frontier prototype",agi_start,{1}});
+        core::FrontierScores agi_scores{9000,9000,9000,9000,9000,9000,8500,9000,8500,8500,7000};
+        for(std::size_t idx=0;idx<3;++idx) {
+            const auto obs=idx==0?agi_start:idx==1?core::advance_days(agi_start,core::Days{30}):agi_day;
+            uw.simulation.frontier->trials.push_back({idx+1,1,core::FrontierTrialKind::assessment,
+                uw.simulation.frontier->catalog.panels.at(idx).id,"frontier.trial/"+std::to_string(idx+1),
+                agi_start,core::FrontierResult{obs,agi_scores,10000,core::BasisPoints{0},true}});
+        }
+        const auto case_due=core::advance_days(agi_start,uw.authority->catalog.response_window);
+        uw.authority->cases.push_back({1,1,0,core::PublicCaseKind::promise,"region.us",agi_start,case_due,{},{},case_due,{},{},false});
+        runtime::review_career_transition(uw,installed,uw.simulation.date);
+        check(runtime::pending_career_transition(uw) && uw.objectives->transitions.back().kind=="uscif",
+            "Undisclosed private AGI combined with an unresolved US dispute and low confidence must trigger USCIF review.");
+        {
+            auto uw_neg=uw;
+            core::SocietyMonth recovery_month;
+            recovery_month.month_end=core::OrdinalDay{uw.simulation.date.value()-1};
+            recovery_month.audiences={6000,6000,6000,6000,7000,6000};
+            uw_neg.society->months.push_back(recovery_month);
+            runtime::decide_career_transition(uw_neg,installed,{"negotiate",{}});
+            check(!runtime::pending_career_transition(uw_neg) && !uw_neg.objectives->end,
+                "Recovered regulator confidence must resolve the USCIF notice via negotiation.");
+        }
+        runtime::decide_career_transition(uw,installed,{"accept",{}});
+        check(uw.objectives->end && uw.objectives->end->cause==runtime::CampaignEndCause::uscif &&
+            runtime::can_continue_career(uw),
+            "Accepting USCIF intervention must end private leadership cleanly.");
+        const auto uscif_offers=runtime::research_job_offers(uw,installed);
+        check(!uscif_offers.empty() && uscif_offers.front().employer=="company.uscif",
+            "company.uscif must appear as the featured offer after USCIF intervention.");
+        runtime::accept_research_appointment(uw,installed,"company.uscif");
+        const auto* uscif_emp=runtime::career_employer(uw);
+        check(uscif_emp && uscif_emp->definition_id=="company.uscif" && !uscif_emp->simulation.accounts->taxes.has_value() &&
+            uscif_emp->simulation.infrastructure->workplace->headquarters->premises.front().market=="travis",
+            "USCIF appointment must station the player at Travis AFB without corporate income tax.");
+        runtime::validate_career_transition(uw,installed,true);
+        runtime::validate_career(uw,installed,false);
+        const auto uscif_report=bridge::lifeReport(uscif_cp,installed);
+        check(std::ranges::any_of(uscif_report.value("articles").toList(),[](const auto& a){
+            return a.toMap().value("id")=="career" &&
+                a.toMap().value("paragraphs").toStringList().join("\n").contains("Appointed Civilian Administrator of USCIF");
+        }),"Life report must document the USCIF Civilian Administrator appointment.");
+
+        std::cout<<"Paid lab, fellowship, dismissal, acquisition, restart and USCIF career checks passed.\n";
     } catch(const std::exception& error) {std::cerr<<error.what()<<'\n';return 1;}
 }

@@ -88,6 +88,9 @@ public:
 #if !PGP_DISTRIBUTION
     Q_INVOKABLE void resetLocalData();
     Q_INVOKABLE void deleteCurrentGame();
+    Q_INVOKABLE QVariantList playtestPeople() const;
+    Q_INVOKABLE void editPlaytestPerson(QString person,const QStringList& traits,int experience,int research,int engineering,int evaluation,int missionFit);
+    Q_INVOKABLE void usePlaytestTool(QString tool,QString topic={});
     Q_INVOKABLE QVariantMap playtestFounder() const;
     Q_INVOKABLE void editPlaytestFounder(const QStringList& traits,bool genius);
 #endif

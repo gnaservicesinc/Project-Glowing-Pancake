@@ -37,6 +37,12 @@ GovernanceModels governance_models(const runtime::Checkpoint& checkpoint,const r
     };
     result.ownership=nonprofit?tr("The endowment belongs to the institution and its mission. The founder and donors receive no private ownership. Gifts add institutional funds without selling shares or increasing personal wealth.\n"):
         tr("Fully diluted ownership totals 100.00%. Unallocated option pool: %1. Unvested grants are reserved inside the existing pool. Vesting moves earned ownership; it creates no cash or second allocation.\n").arg(percent(core::unallocated_option_pool(s)));
+    if(nonprofit) {
+        const auto reaction=core::nonprofit_reaction(s,s.date);
+        result.ownership+=reaction.goodwill<0?
+            tr("A commercial mission has withdrawn the nonprofit’s public attention and concerns mission-aligned staff.\n"):
+            tr("Income-tax exempt. Public-service and science customers receive %1 free awareness. Open publications increase goodwill. Aligned applicants can accept lower pay.\n").arg(percent(reaction.awareness));
+    }
     for (const auto& h:s.accounts->holdings) {
         if(nonprofit)continue;
         QString label=text(h.holder);

@@ -150,6 +150,56 @@ int main() {
         edited.world.developer_playtest=true;
         check(persistence::decode_save(program,persistence::encode_save(program,edited)).checkpoint==edited,
               "Existing projects retain their original research team evidence after an edit.");
+        {
+            auto pt_init=game.current_state();
+            pt_init.world.developer_playtest=true;
+            runtime::Runtime playtest{program,pt_init};
+            const auto& ps=[&]() -> const core::SimulationState& {return playtest.current_state().world.simulation;};
+            const auto researcher_id=ps().management->people->employees.front().terms.profile.id;
+            const auto prior_traits=ps().management->people->employees.front().terms.profile.traits;
+            check(!playtest.editPlaytestPerson(ps().revision,researcher_id,{"Interest: film"},{1,101,85,80,75}).accepted(),
+                  "Out-of-bounds stat in editPlaytestPerson must be rejected.");
+            check(!playtest.editPlaytestPerson(ps().revision,researcher_id,{"Duplicate","Duplicate"},{1,90,85,80,75}).accepted(),
+                  "Duplicate trait in editPlaytestPerson must be rejected.");
+            check(playtest.editPlaytestPerson(ps().revision,researcher_id,{"Interest: film","Social: outgoing"},{1,90,85,80,75}).accepted(),
+                  "God mode person trait and stat edit must succeed.");
+            check(ps().lab->research.back().original_traits.at(researcher_id)==prior_traits &&
+                  ps().management->people->employees.front().terms.profile.research==90,
+                  "editPlaytestPerson must update stats/traits and preserve pre-edit research traits.");
+            const auto applicant_id=ps().management->people->applicants.front().profile.id;
+            check(playtest.editPlaytestPerson(ps().revision,applicant_id,{"Social: outgoing"},{1,70,70,95,70}).accepted(),
+                  "God mode applicant edit must succeed.");
+            const auto& modified_app=*std::ranges::find_if(ps().management->people->applicants,
+                [&](const auto& a){return a.profile.id==applicant_id;});
+            check(modified_app.profile.evaluation==95 &&
+                  modified_app.evaluation_credit.value()==ps().management->catalog.people->maximum_evaluation_credit.value()*95/100,
+                  "Editing an applicant must recalculate evaluation credit.");
+            check(playtest.usePlaytestTool(ps().revision,"resources",{}).accepted() &&
+                  playtest.current_state().world.playtest_unlimited &&
+                  ps().cash.value()>=50'000'000'000'000LL &&
+                  ps().succession->personal_cash.value()>=50'000'000'000'000LL &&
+                  std::ranges::find(ps().capacity->sources,"playtest.compute",&core::CapacitySource::id)!=ps().capacity->sources.end(),
+                  "God mode resources tool must fund company/personal cash and open playtest compute.");
+            check(playtest.submit({ps().revision,core::BuyPersonalDevice{"tablet"}}).accepted(),
+                  "Ordering a device succeeds with playtest funds.");
+            check(playtest.usePlaytestTool(ps().revision,"delivery",{}).accepted() &&
+                  ps().infrastructure->workplace->devices->records.back().ready_on==ps().date &&
+                  ps().infrastructure->workplace->devices->records.back().playtest_delivery,
+                  "God mode instant delivery must deliver pending devices immediately.");
+            check(playtest.usePlaytestTool(ps().revision,"research",topic).accepted() &&
+                  ps().lab->research.back().completed &&
+                  ps().capacity->projects.back().playtest_completed &&
+                  core::project_result_on(ps().capacity->projects.back(),ps().date),
+                  "God mode instant research completion must mark the active project completed and usable the same day.");
+            const auto saved_pt=persistence::encode_save(program,playtest.current_state());
+            check(persistence::decode_save(program,saved_pt).checkpoint==playtest.current_state(),
+                  "Full God mode edits, resources, delivery and research completion must reload identically.");
+            auto tampered_pt=playtest.current_state();
+            tampered_pt.world.developer_playtest=false;
+            bool rejected_pt=false;
+            try {runtime::validate_checkpoint(program,tampered_pt);} catch(const std::invalid_argument&) {rejected_pt=true;}
+            check(rejected_pt,"Playtest state in a non-playtest save must be rejected.");
+        }
 #endif
         {
             auto tol_sim=after;

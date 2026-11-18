@@ -65,5 +65,58 @@ int main(){using namespace pgp;try{
     const auto& company=game.current_state().world.competition->companies.front().simulation;
     const auto worker=std::ranges::find_if(company.management->people->employees,[&](const auto& e){return e.terms.profile.id==person;});check(worker->ready_on<=company.date,"Hired employee becomes productive on the actual date");
     check(std::ranges::any_of(company.accounts->postings,[&](const auto& posting){return posting.key==person && posting.credit==core::Account::cash && posting.amount==worker->terms.signing;}),"Signing payment leaves actual company cash");
+    {
+        auto grow_cp=game.current_state();
+        auto& rival=grow_cp.world.competition->companies.front().simulation;
+        const auto& start_hq=core::current_headquarters(rival);
+        const int start_area=start_hq.width*start_hq.depth;
+        const std::size_t start_premises=rival.infrastructure->workplace->headquarters->premises.size();
+        for(int y=0;y<start_hq.depth;++y) for(int x=0;x<start_hq.width;++x) {
+            core::manage_headquarters(rival,core::BuyHQEquipment{"desk"},core::Cents{0});
+            const auto id=rival.infrastructure->workplace->headquarters->items.back().id;
+            rival.infrastructure->workplace->headquarters->items.back().playtest_delivery=true;
+            rival.infrastructure->workplace->headquarters->items.back().delivered_on=rival.date;
+            core::PlaceHQEquipment place{id,0,x,y,false};
+            if(core::hq_placement_blocker(rival,place).empty())
+                core::manage_headquarters(rival,place,core::Cents{0});
+        }
+        std::string extra_offer;
+        for(const auto& offer:rival.infrastructure->catalog.workplace->headquarters->equipment)
+            if(!core::hq_desk_device(offer.kind) && offer.width>0 && offer.depth>0) {extra_offer=offer.id;break;}
+        check(!extra_offer.empty(),"Rival HQ equipment catalog must include floor equipment.");
+        core::manage_headquarters(rival,core::BuyHQEquipment{extra_offer},core::Cents{0});
+        rival.infrastructure->workplace->headquarters->items.back().playtest_delivery=true;
+        rival.infrastructure->workplace->headquarters->items.back().delivered_on=rival.date;
+        const int wait_days=std::max(70,static_cast<int>(grow_cp.world.competition->setup->review_interval.value())*6);
+        runtime::Runtime grow_game{program,grow_cp};
+        for(int d=0;d<wait_days;++d) {
+            const auto& ws=grow_game.current_state().world;
+            const auto& cur_rival=ws.competition->companies.front().simulation;
+            const auto& cur_hq=core::current_headquarters(cur_rival);
+            if(cur_rival.infrastructure->workplace->headquarters->premises.size()>start_premises &&
+               cur_hq.width*cur_hq.depth>start_area) break;
+            if(ws.simulation.liquidity) if(const auto w=core::liquidity_report(*ws.simulation.liquidity).pending_warning)
+                check(grow_game.submit({ws.simulation.revision,core::AcknowledgeLiquidityWarning{*w}}).accepted(),"Acknowledge liquidity warning.");
+            if(ws.simulation.management) {
+                const auto notices=ws.simulation.management->notices;
+                for(const auto& n:notices) if(n.required && !n.acknowledged)
+                    check(grow_game.submit({ws.simulation.revision,core::AcknowledgeManagementNotice{n.id}}).accepted(),"Acknowledge notice.");
+            }
+            check(grow_game.submit({ws.simulation.revision,core::AdvanceDay{}}).accepted(),"Advance day during rival HQ expansion.");
+        }
+        const auto& after_rival=grow_game.current_state().world.competition->companies.front().simulation;
+        const auto& after_hq=core::current_headquarters(after_rival);
+        if(!(after_rival.infrastructure->workplace->headquarters->premises.size()>start_premises &&
+             after_hq.width*after_hq.depth>start_area)) {
+            const auto& comp=grow_game.current_state().world.competition->companies.front();
+            const std::string last_act=comp.planning->decisions.empty()?std::string{"none"}:
+                (comp.planning->decisions.back().action+":"+comp.planning->decisions.back().subject);
+            throw std::runtime_error("Rival HQ expansion did not trigger: premises="+
+                std::to_string(after_rival.infrastructure->workplace->headquarters->premises.size())+
+                " start="+std::to_string(start_premises)+" area="+std::to_string(after_hq.width*after_hq.depth)+
+                " start_area="+std::to_string(start_area)+" cash="+std::to_string(after_rival.cash.value())+
+                " last="+last_act);
+        }
+    }
     std::cout<<"World hiring: six overseas regions, real rosters/costs, weekly offers, paid workstation, signed hire, onboarding and exact continuation passed.\n";
 }catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}}

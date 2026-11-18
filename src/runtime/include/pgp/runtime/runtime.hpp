@@ -66,6 +66,7 @@ struct WorldState {
     std::optional<core::RomanceState> romance{};
     std::optional<core::FamilyState> family{};
     bool developer_playtest = false;
+    bool playtest_unlimited = false;
     auto operator<=>(const WorldState&) const = default;
 };
 
@@ -335,6 +336,8 @@ public:
     [[nodiscard]] RuntimeResult publishCollaboration(std::uint64_t expected_revision,std::string_view id);
     [[nodiscard]] RuntimeResult transferSubsidiaryFunds(std::uint64_t expected_revision,std::string_view target,core::Cents amount,bool funding);
 #if !PGP_DISTRIBUTION
+    [[nodiscard]] RuntimeResult editPlaytestPerson(std::uint64_t,std::string_view,const std::vector<std::string>&,const std::array<int,5>&);
+    [[nodiscard]] RuntimeResult usePlaytestTool(std::uint64_t,std::string_view,std::string_view);
     [[nodiscard]] RuntimeResult editPlaytestFounder(std::uint64_t expected_revision,
                                                    std::vector<std::string> traits, bool genius);
 #endif

@@ -174,6 +174,7 @@ void close_public_reporting_day(SimulationState&);
 [[nodiscard]] BasisPoints unallocated_option_pool(const SimulationState&);
 [[nodiscard]] std::vector<BoardMember> current_board(const SimulationState&);
 [[nodiscard]] std::vector<EquityHolding> corporate_holdings_before(const SimulationState&,OrdinalDay);
+void transfer_to_acquirer(SimulationState&,std::string buyer,Cents consideration,Cents founder_proceeds,std::string key);
 void company_equity(SimulationState&,std::string investor,Cents proceeds,BasisPoints acquired,std::string key,bool assets=false);
 void negotiate_corporate_finance(SimulationState&,std::string_view,bool from_contact=false);
 void appoint_executive(SimulationState&,std::string_view,bool hybrid,Cents protected_cash);

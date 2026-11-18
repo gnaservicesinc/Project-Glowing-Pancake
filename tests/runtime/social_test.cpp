@@ -78,5 +78,33 @@ int main(){using namespace pgp;try {
         check(persistence::decode_save(program,persistence::encode_save(program,risk_cp)).checkpoint==risk_cp,
               "Calculated Risk Taker and hostile_peers roundtrip cleanly.");
     }
+    {
+        check(core::skateboarding_respect_bonus(0,25)==2 && core::skateboarding_respect_bonus(24,26)==2 &&
+              core::skateboarding_respect_bonus(32,35)==3 && core::skateboarding_respect_bonus(42,35)==4 &&
+              core::skateboarding_respect_bonus(36,24)==4,
+              "skateboarding_respect_bonus must return bounded [1,4] age-sensitive bonuses.");
+        auto setup_skate=[&](bool founder_skates,bool peer_skates) {
+            auto cp=game.current_state();auto& s=cp.world.simulation;
+            s.management->people->social->links.clear();
+            s.management->people->social->last_outing.reset();
+            auto peer=s.management->people->employees.front();
+            peer.terms.profile.id="emp.skater";peer.terms.profile.role="Researcher";
+            peer.terms.profile.birth_year=core::from_ordinal(s.date).year-25;
+            peer.terms.profile.traits={};peer.terms.profile.skills.clear();
+            if(peer_skates) peer.terms.profile.skills.push_back("skateboarding");
+            peer.ready_on=s.date;peer.departed_on.reset();
+            s.management->people->employees.push_back(peer);
+            s.management->people->social->founder_traits={};
+            s.management->people->talent->founder_skills.clear();
+            if(founder_skates) s.management->people->talent->founder_skills.push_back("skateboarding");
+            core::socialize(s,core::Socialize{"emp.skater","hobby"});
+            return core::social_link(s,"founder","emp.skater")->affinity;
+        };
+        const int none=setup_skate(false,false);
+        const int one=setup_skate(true,false);
+        const int both=setup_skate(true,true);
+        check(one>none && (both-one)>=(one-none),
+              "Skateboarding must boost hobby meetups and add social fit when both skateboard.");
+    }
     std::cout<<"Social: private/public knowledge, interaction limits, opposing traits, multiple best friends, morale, loss of contact and exact continuation passed.\n";
 }catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}}

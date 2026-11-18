@@ -1,4 +1,6 @@
 #include <pgp/runtime/scenario.hpp>
+#include <pgp/runtime/authority.hpp>
+#include <pgp/core/mission_conflict.hpp>
 #include <pgp/persistence/save.hpp>
 #include <algorithm>
 #include <iostream>
@@ -41,6 +43,25 @@ int main() {
         const auto request=[&](const std::string& person){apply(game,command(core::RequestContactFunding{person,"tablet",0}));};
         check(game.prepare_opening(state().revision).accepted(),"Prepare the nonprofit opening.");
         check(core::nonprofit_organization(state()) && state().management->catalog.governance->contact_finance->offers.size()==2,"Nonprofits must retain donor programs and remove private equity rounds.");
+        const auto opening_reaction=core::nonprofit_reaction(state(),state().date);
+        check(opening_reaction.goodwill==2 && opening_reaction.awareness==core::BasisPoints{200} &&
+            opening_reaction.salary_discount_bp==500,
+            "Opening nonprofit must grant goodwill mood bonus, 200bp awareness bonus and 500bp salary discount.");
+        {
+            auto check_market=state();
+            check_market.market->products.push_back({"product.document_classification","serving",core::Cents{10},true});
+            core::MarketSegment public_seg;
+            public_seg.id="segment.us.public_services";
+            public_seg.region_id="region.us";
+            public_seg.daily_tasks=1000;
+            public_seg.daily_budget=core::Cents{100000};
+            public_seg.outside_utility=300;
+            public_seg.preferences.push_back({"product.document_classification",1000,core::Cents{100},0,true});
+            check_market.market->segments.push_back(std::move(public_seg));
+            const auto influences=runtime::regional_market_conditions(game.current_state().world,check_market,check_market.date);
+            check(!influences.empty() && std::ranges::any_of(influences,[](const auto& edge){return edge.awareness>=core::BasisPoints{200};}),
+                "Nonprofits must receive free market awareness on public-service and science segments.");
+        }
         refuse(game,core::InvestEquity{"outsider",core::Cents{1000000},core::BasisPoints{100},"nonprofit.test"});
         refuse(game,core::ProposePoolExpansion{core::BasisPoints{100}});
         refuse(game,core::NegotiateCorporateFinance{"corporate.open_field_gift"});
@@ -98,6 +119,20 @@ int main() {
         };
         apply(game,core::StartResearch{"research.reproducible_tooling",allocation});finish(state().lab->research.back().project_id);
         apply(game,core::PublishResearch{"research.reproducible_tooling"});
+        const auto published_reaction=core::nonprofit_reaction(state(),state().date);
+        check(published_reaction.goodwill==3 && published_reaction.awareness==core::BasisPoints{275} &&
+            published_reaction.salary_discount_bp==625,
+            "Publishing open research must increase nonprofit goodwill, awareness and salary discount.");
+        {
+            auto pivoted=state();
+            pivoted.management->people->mission="commercial";
+            if(pivoted.management->people->social && pivoted.management->people->social->mission_conflict)
+                pivoted.management->people->social->mission_conflict->mission="commercial";
+            const auto pivot_reaction=core::nonprofit_reaction(pivoted,pivoted.date);
+            check(pivot_reaction.goodwill==-4 && pivot_reaction.awareness==core::BasisPoints{0} &&
+                pivot_reaction.salary_discount_bp==0,
+                "Pivoting a nonprofit to commercial mission must apply -4 goodwill penalty and remove bonuses.");
+        }
         apply(game,core::StartResearch{"research.held_out_evaluation",allocation});finish(state().lab->research.back().project_id);
         apply(game,core::BuyData{"data.civic_forms_open"});
         apply(game,core::StartTraining{{"gift-model","recipe.document_baseline",{}, {"data.civic_forms_open"},allocation.source_id,allocation.daily_compute,1,core::MilliCU{60000}}});

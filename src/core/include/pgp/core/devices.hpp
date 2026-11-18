@@ -20,6 +20,7 @@ struct PersonalDevice {
     OrdinalDay ordered_on{0},ready_on{0};bool included=false,powered=true;
     std::optional<OrdinalDay> retired_on;
     std::vector<DeviceService> services;
+    bool playtest_delivery=false;
     auto operator<=>(const PersonalDevice&) const = default;
 };
 struct DeviceInventory {std::vector<PersonalDevice> records;auto operator<=>(const DeviceInventory&) const = default;};

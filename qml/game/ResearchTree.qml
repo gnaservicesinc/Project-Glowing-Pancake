@@ -222,6 +222,14 @@ GridLayout {
             spacing: 8
             WorldButton { objectName: "reviewNextInnovation"; visible: !!tree.selected.completed && !!tree.selected.nextInnovation; text: qsTr("Review next innovation"); textSize: tree.textSize; onClicked: tree.select(tree.selected.nextInnovation, true) }
             WorldButton { visible: !!tree.selected.active; text: qsTr("Pause project"); textSize: tree.textSize; enabled: tree.editable; onClicked: campaign.projectPause(tree.selected.project) }
+            WorldButton {
+                objectName: "completePlaytestResearch"
+                visible: typeof godMode !== "undefined" && godMode && (!!tree.selected.active || !!tree.selected.paused)
+                text: qsTr("Complete research now")
+                textSize: tree.textSize
+                enabled: tree.editable && !campaign.busy
+                onClicked: campaign.usePlaytestTool("research", tree.selectedId)
+            }
             WorldButton { visible: !!tree.selected.paused; text: qsTr("Resume project"); textSize: tree.textSize; enabled: tree.editable && !tree.selected.hold; onClicked: campaign.projectResume(tree.selected.project) }
             WorldButton { visible: !!tree.selected.active || !!tree.selected.paused; text: qsTr("Cancel remaining work"); textSize: tree.textSize; enabled: tree.editable; onClicked: campaign.projectCancel(tree.selected.project) }
             WorldButton { visible: !!tree.selected.knowledge && !tree.selected.published; text: qsTr("Publish result"); textSize: tree.textSize; enabled: tree.editable; onClicked: campaign.management.publishResearch(tree.selectedId) }

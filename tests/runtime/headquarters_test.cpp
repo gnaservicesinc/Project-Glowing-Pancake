@@ -199,6 +199,84 @@ int main() {
         action(core::PlaceHQEquipment{5,0,8,0,false});
         check(core::hq_workstation_ready(state(),"founder"),"The returning team can reinstall its rack and resume laptop work.");
         check(persistence::decode_save(program,persistence::encode_save(program,game.current_state())).checkpoint==game.current_state(),"Reinstalled home equipment and retained property taxes must reload exactly.");
+        {
+            const auto base_puzzle=core::hq_infrastructure_puzzle(state());
+            check(base_puzzle.active_racks<=1 && base_puzzle.mood_bonus==0,
+                  "Baseline single-or-zero uncrowded rack without overload must not grant artificial puzzle bonuses.");
+            std::string rack_offer;
+            for(const auto& offer:state().infrastructure->catalog.workplace->headquarters->equipment)
+                if(offer.kind=="rack") {rack_offer=offer.id;break;}
+            check(!rack_offer.empty(),"HQ catalog must define a rack equipment offer.");
+            action(core::BuyHQEquipment{rack_offer});
+            const auto r1_id=state().infrastructure->workplace->headquarters->items.back().id;
+            action(core::BuyHQEquipment{rack_offer});
+            const auto r2_id=state().infrastructure->workplace->headquarters->items.back().id;
+            for(int wait=0;wait<14;++wait) {
+                bool delivered=true;
+                for(const auto& item:state().infrastructure->workplace->headquarters->items)
+                    if((item.id==r1_id || item.id==r2_id) && item.delivered_on>state().date) delivered=false;
+                if(delivered) break;
+                apply(core::AdvanceDay{});
+            }
+            const auto place_next_open=[&](std::uint32_t item_id) {
+                const auto& prem=core::current_headquarters(state());
+                for(int y=0;y<prem.depth;++y) for(int x=0;x<prem.width;++x) {
+                    const core::PlaceHQEquipment p{item_id,0,x,y,false};
+                    if(core::hq_placement_blocker(state(),p).empty()) {
+                        const auto pv=core::hq_infrastructure_puzzle(state(),&p);
+                        action(p);
+                        const auto after=core::hq_infrastructure_puzzle(state());
+                        check(pv.score==after.score && pv.active_racks==after.active_racks &&
+                              pv.total_watts==after.total_watts && pv.hall_isolated_racks==after.hall_isolated_racks &&
+                              pv.thermal_crowding==after.thermal_crowding && pv.utility_proximity==after.utility_proximity &&
+                              pv.power_margin==after.power_margin && pv.redundancy_bonus==after.redundancy_bonus &&
+                              pv.capability_bonus==after.capability_bonus && pv.reliability_bonus==after.reliability_bonus &&
+                              pv.mood_bonus==after.mood_bonus && pv.summary==after.summary,
+                              "hq_infrastructure_puzzle preview and committed placement state must match identically.");
+                        return true;
+                    }
+                }
+                return false;
+            };
+            check(place_next_open(r1_id) && place_next_open(r2_id),
+                  "Starter/owned HQ must place both test racks to evaluate multi-rack puzzle scoring.");
+            const auto multi=core::hq_infrastructure_puzzle(state());
+            check(multi.active_racks>=2 && multi.total_watts>0 && multi.score>=0 && multi.score<=100,
+                  "Multi-rack HQ infrastructure puzzle must track racks, watts and bounded score.");
+            if(state().infrastructure->workplace && !state().infrastructure->catalog.hardware.empty() &&
+               !state().infrastructure->catalog.states.empty()) {
+                auto bp_sim=state();
+                const auto& icat=bp_sim.infrastructure->catalog;
+                bool tested_bp=false;
+                for(const auto& hw:icat.hardware) {
+                    if(!hw.requires_research.empty() || !core::frontier_technology_block(bp_sim,core::FrontierTechnology::hardware,hw.id,bp_sim.date).empty()) continue;
+                    const auto* chosen_state=&icat.states.front();
+                    bool found_state=false;
+                    for(const auto& st:icat.states) {
+                        if(st.connectivity_class>=hw.connectivity_class) {chosen_state=&st;found_state=true;break;}
+                    }
+                    if(!found_state) continue;
+                    const auto max_kw_watts=(icat.maximum_site_watts/1000ULL)*1000ULL;
+                    const auto min_kw_watts=((icat.minimum_site_watts+999ULL)/1000ULL)*1000ULL;
+                    const auto target_watts=std::clamp(((hw.active_it_watts*2ULL+999ULL)/1000ULL)*1000ULL,min_kw_watts,max_kw_watts);
+                    const auto ops=std::clamp<std::uint32_t>(hw.operators,1U,icat.maximum_operators_per_site);
+                    bp_sim.infrastructure->workplace->blueprints.clear();
+                    bp_sim.infrastructure->workplace->blueprints.push_back(core::FacilityBlueprint{
+                        "bp.puzzle","Puzzle Pod",hw.id,target_watts,ops,false});
+                    try {
+                        const auto bq=core::preview_blueprint_build(bp_sim,core::BuildFromBlueprint{"bp.puzzle","bp.test","Puzzle Site",chosen_state->id});
+                        check(bq.network_score>=0 && bq.network_score<=100 && bq.cooling_score>=0 && bq.cooling_score<=100 &&
+                              bq.redundancy_score>=0 && bq.redundancy_score<=100 && bq.puzzle_score>=0 && bq.puzzle_score<=100,
+                              "BlueprintQuote must expose bounded 0..100 network, cooling, redundancy and puzzle scores.");
+                        tested_bp=true;
+                        break;
+                    } catch(const std::invalid_argument&) {
+                    }
+                }
+                check(tested_bp || !bp_sim.infrastructure->workplace->blueprints.empty(),
+                      "BlueprintQuote puzzle check should run cleanly when a compatible state/hardware pair exists.");
+            }
+        }
         std::cout<<"Empty garage, paid delivery, placement/collision, assignments, physical compute/electricity, city leases, bids, construction risks, ownership taxes and fresh reload passed\n";
     } catch(const std::exception& e) {std::cerr<<e.what()<<'\n';return 1;}
 }

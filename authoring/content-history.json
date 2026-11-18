@@ -109175,6 +109175,45 @@
         "prepared_headquarters": 24,
         "scenarios": 8
       }
+    },
+    {
+      "changed_definitions": [
+        {
+          "after_hash": "f860089a02f1c77687f82ad5bd7acb7160af25e42f26655a9e43bb3c9c649b61",
+          "before_hash": "8243fce8dc8d7cbc0695de77693d514c9846ebec4e7bca59bd823b5ed2615eb7",
+          "change": "changed",
+          "id": "scenario.founder_campaign",
+          "kind": "scenario",
+          "old_revision": 51,
+          "revision": 52
+        }
+      ],
+      "changed_text_keys": [],
+      "collection_hash": "f79e69073f883220ba5b2cd9d4d604afc98015fc0160c9e37c6f548371879cb3",
+      "compatibility": {
+        "content_schema": 1,
+        "save_format": 1,
+        "simulation_rules": 1
+      },
+      "content_version": "0.80.0-dev.1",
+      "game_version_at_finalization": "0.0.0-dev",
+      "generation": 84,
+      "minimum_game_change": "minor",
+      "previous_content_version": "0.79.0-dev.1",
+      "previous_snapshot": "authoring/snapshots/000083.collection.json",
+      "purpose": "internal-playtest",
+      "required_game_version": "0.1.0-dev.1",
+      "save_policy": "reject-prior-content",
+      "snapshot": "authoring/snapshots/000084.collection.json",
+      "summary": "Add funded company formation and the fictional federal administration career",
+      "target": "data/runtime/first-playable.json",
+      "validation": {
+        "compiler": "shared-game-runtime",
+        "exact_prepared_save_roundtrips": 24,
+        "lints": [],
+        "prepared_headquarters": 24,
+        "scenarios": 8
+      }
     }
   ],
   "format": 1

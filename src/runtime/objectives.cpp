@@ -8,7 +8,7 @@ namespace pgp::runtime {
 using namespace core;
 namespace {
 using namespace objective_detail;
-constexpr std::array<std::string_view,8> end_keys{"deadline","asi_race","insolvency","institutional_control","final_order","catastrophe","postmortem","retirement"};
+constexpr std::array<std::string_view,11> end_keys{"deadline","asi_race","insolvency","institutional_control","final_order","catastrophe","postmortem","retirement","dismissal","acquisition","uscif"};
 constexpr std::array<std::string_view,5> mode_keys{"scored","sandbox","observer","freeplay","retrospective"};
 std::size_t index(ObjectiveKind kind) {
     const auto i=static_cast<std::size_t>(kind);
@@ -219,7 +219,7 @@ void objective_detail::finish(WorldState& world,CampaignEndCause cause,std::stri
     end.posting_cursor=accounts.postings.size();
     const auto settled=accounts.closed_through;
     if(settled) end.obligations=recorded_exposure(accounts,accounts.postings.size(),*settled);
-    if(actual_failure(cause)) world.facts.at("company.is_operating")=false;
+    if(actual_failure(cause) || cause==CampaignEndCause::uscif) world.facts.at("company.is_operating")=false;
     world.simulation.paused=true;
 }
 void settle_objectives(WorldState& world,std::optional<OrdinalDay> settled,const CompiledProgram& program) {
@@ -247,6 +247,8 @@ void settle_objectives(WorldState& world,std::optional<OrdinalDay> settled,const
         finish(world,CampaignEndCause::deadline);
         o.end->profit=terminal_profit(world,charter(world,program));o.end->survival=terminal_survival(world);return;
     }
+    if(o.mode==ObjectiveMode::retrospective) review_career_transition(world,program,settled);
+    if(o.end) return;
     if(!retains_control(world)) {
         finish(world,CampaignEndCause::institutional_control);return;
     }
@@ -377,6 +379,7 @@ void validate_objectives(const WorldState& world,const CompiledProgram& program,
     if(required_objective_review(world) && !state.paused) invalid("An unreviewed objective breach must keep the campaign paused.");
     if(!o.end && (state.phase==DayPhase::finished || state.phase==DayPhase::closed || !retains_control(world)))
         invalid("The scored company has an unrecorded ending.");
+    validate_career_transition(world,program,deep);
     if(!deep) return;
     if(o.observer_day) (void)from_ordinal(*o.observer_day);
     for(std::size_t i=0;i<o.selections.size();++i) {

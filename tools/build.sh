@@ -46,7 +46,7 @@ run_tests=0
 clean=0
 qt_root="${QT_ROOT:-}"
 jobs="${CMAKE_BUILD_PARALLEL_LEVEL:-11}"
-load_average=11
+load_average="${CMAKE_BUILD_PARALLEL_LEVEL:-11}"
 
 while (($#)); do
     case "$1" in

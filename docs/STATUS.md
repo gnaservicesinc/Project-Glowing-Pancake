@@ -10,7 +10,7 @@ The user accepted the current core as the starting point for the next phase
 and directed the initial implementation pass to wrap up. The gameplay
 checkpoint was `d1f2bd3`, with internal content 0.29.0-dev.1. The current
 content, including the expanded school introduction, is
-**0.79.0-dev.1**, generation **83**.
+**0.80.0-dev.1**, generation **84**.
 
 ## Campaign journal and founder walkthrough
 
@@ -155,29 +155,37 @@ research by keyboard at 650×480 with 200% text, then reopened the saved appoint
 and project in a second process. Content finalization passed 24 prepared-opening
 save roundtrips.
 
-Dedicated board dismissal, acquisition, new company formation and USCIF
-routes remain selected work, along with broader public controversies,
-surprising internal appointments, nonprofit reactions and native rival training.
+Dedicated board dismissal (`dismissal` with workforce-ally or cash-floor remedy),
+company acquisition (`acquisition` with buyer payment and founder sale
+proceeds), new company formation (`company.restart`) and the USCIF Civilian
+Administrator route (`uscif` / `company.uscif` at Travis AFB, tax-exempt) are
+now implemented alongside nonprofit goodwill/awareness/salary-discount reactions
+(and `-4` commercial-pivot goodwill penalties) and native rival policy
+observation, ambition/reward evaluation and teacher/selector hooks. Broader
+public controversies, surprising internal appointments and end-to-end native
+MPSGraph policy training are now implemented (`pgp-founder-departure-test` and
+`pgp-competition-test` verify both CPU and Metal GPU training parity).
 
 The Release development edition has two main menu entries. Content Studio
 launches the repository editor and remembers the selected checkout. Playtest
 Environment launches God mode and contains the local-data reset. God mode has
-its own window, settings and marked campaign saves. The founder trait editor
-updates the active relationship traits and the Actual Genius ability. Existing
-research retains its starting team evidence. Person stats, other people's
-traits, unlimited resources, instant delivery and instant research remain
-open. `--enable-distribution` uses a separate Release build and excludes the
+its own window, settings and marked campaign saves. The person editor updates
+the founder's or any generated person's traits, Actual Genius ability and
+evaluation stats, and playtest tools provide unlimited resource refill,
+instant order delivery and instant research completion (also reachable from the
+Research Tree). Existing research retains its starting team evidence.
+`--enable-distribution` uses a separate Release build and excludes the
 editor targets, both menus, their QML
 resource and callable development APIs. Studio's library accepts the current
 checkout's full collection index. Mac checks cover both binaries, Debug and
 multi-configuration rejection, the Studio library, and both development menus
 at 650×480 with 200% text.
 
-The God mode walkthrough rejects an ordinary save, checks the editor at
-650×480 with 200% text, applies a trait replacement and activates Actual
-Genius. A fresh process resumes both changes. Resetting the ordinary game
-leaves that playtest save intact. Focused tests also cover the recorded
-research team and mixed-mode overwrite refusal.
+The God mode walkthrough rejects an ordinary save, checks the editor and tools at
+650×480 with 200% text, applies trait/stat edits and resource refills and
+commits durably across reload. Resetting the ordinary game leaves that playtest
+save intact. Focused tests cover the recorded research team, mixed-mode
+overwrite refusal and God mode tool refusal in distribution/non-playtest runs.
 
 ## People and software foundation · F-06
 
@@ -392,8 +400,8 @@ Placement previews show reachable desks and walkable area. Assigned desk
 routes reveal congested doorways and narrow aisles. Blocked or lengthy walks
 affect mood, and amenities help employees who can reach them from their desks.
 
-Infrastructure puzzles, specialist skill effects, major-HQ property
-expansion, career transitions and USCIF remain required work.
+Infrastructure puzzles, remaining specialist skill effects and major-HQ property
+expansion are now implemented (alongside career transitions and USCIF).
 
 This is an implementation checkpoint, not completion of F-06. Existing human
 review and platform/release gates remain open.

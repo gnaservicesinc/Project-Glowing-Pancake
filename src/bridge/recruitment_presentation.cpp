@@ -62,6 +62,9 @@ QVariantMap WorldController::recruitmentOffer(QString id) const {
         summary = tr("This application has ended. No employment or payroll was created.");
     else if (status == "expired")
         summary = tr("The terms expired without a signed hire. No employment or payroll was created.");
+    if(n.mission_discount_bp)
+        summary += tr("\nThis applicant lowered their salary expectation by %1% to support the nonprofit mission.")
+            .arg(QLocale().toString(static_cast<double>(n.mission_discount_bp)/100));
     for (const auto &o : n.offers) {
         QString detail =
             tr("%1 · your offer %2/month + %3 signing").arg(date(o.submitted_on), money(o.salary), money(o.signing));

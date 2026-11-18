@@ -153,6 +153,10 @@ bool project_disrupted(const CapacityProject& row,OrdinalDay day) { return in_in
 BasisPoints staff_output_factor(const CapacityState& state) {
     return state.workload?staff_output_factor(state.workload->rules,state.workload->strain):BasisPoints{10000};
 }
+bool project_result_on(const CapacityProject& project,OrdinalDay day) {
+    return project.status==ProjectStatus::completed && project.stopped_on &&
+        (*project.stopped_on<day || (project.playtest_completed && *project.stopped_on==day));
+}
 void validate_capacity(const CapacityState& state) {
     if(state.workload) validate_staff_workload(state.workload->rules);
     BasisPoints strain{0};
@@ -278,6 +282,9 @@ void validate_capacity(const CapacityState& state) {
         if((row.required_staff_days>0 && row.kind!=ProjectKind::research && row.kind!=ProjectKind::software) || row.required_staff_days>1'000'000 ||
             row.completed_staff_days>row.required_staff_days)
             invalid("Only research supports a bounded independent staff-day budget");
+        if(row.playtest_completed && (row.kind!=ProjectKind::research || row.status!=ProjectStatus::completed ||
+            !row.id.starts_with("lab/research/")))
+            invalid("Only Lab research can have an instant playtest result");
         const bool open_pause=!row.pauses.empty() && !row.pauses.back().ends_before;
         if(open_pause!=(row.status==ProjectStatus::paused)) invalid("Project status differs from its open pause interval");
         switch (row.status) {
@@ -348,7 +355,7 @@ void validate_capacity(const CapacityState& state) {
             const auto& row = *found->second;
             auto& total = totals[row.id];
             if (day.day < row.starts_on || (row.stopped_on && (day.day > *row.stopped_on ||
-                (row.status == ProjectStatus::cancelled && day.day == *row.stopped_on))) ||
+                ((row.status == ProjectStatus::cancelled || row.playtest_completed) && day.day == *row.stopped_on))) ||
                 paused_on(row,day.day) ||
                 (project_disrupted(row,day.day) && (used.work.value()!=0 || used.useful_tasks!=0 || used.failed_tasks!=0)) ||
                 used.assigned_staff != row.staff || used.work.value()>row.requested.value() ||
@@ -408,7 +415,7 @@ void validate_capacity(const CapacityState& state) {
         auto through = state.closed_through;
         if (row.stopped_on) {
             auto stop = *row.stopped_on;
-            if (row.status == ProjectStatus::cancelled) stop = OrdinalDay{checked_subtract(stop.value(), 1)};
+            if (row.status == ProjectStatus::cancelled || row.playtest_completed) stop = OrdinalDay{checked_subtract(stop.value(), 1)};
             if (!through || stop < *through) through = stop;
         }
         auto expected_days = through && *through >= row.starts_on ?
@@ -417,9 +424,11 @@ void validate_capacity(const CapacityState& state) {
             const auto end=std::min(pause.ends_before.value_or(advance_days(*through,Days{1})),advance_days(*through,Days{1}));
             if(end>pause.starts_on) expected_days-=static_cast<std::uint64_t>(end.value()-pause.starts_on.value());
         }
-        if (total.work != row.completed_work || total.tasks != row.useful_tasks || total.days != expected_days ||
-            research_staff_credit(row,total.days)!=row.completed_staff_days ||
-            (row.status == ProjectStatus::completed && (!total.last_day || *total.last_day != *row.stopped_on)))
+        const bool matches_work = row.playtest_completed ?
+            total.work < row.total_work || research_staff_credit(row,total.days)<row.required_staff_days :
+            total.work == row.completed_work && research_staff_credit(row,total.days)==row.completed_staff_days &&
+            (row.status != ProjectStatus::completed || (total.last_day && *total.last_day == *row.stopped_on));
+        if (!matches_work || total.tasks != row.useful_tasks || total.days != expected_days)
             invalid("Project totals or lifecycle cursor differ from complete committed work history");
     }
 }

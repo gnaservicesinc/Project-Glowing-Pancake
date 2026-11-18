@@ -453,7 +453,7 @@ CommandResult Simulation::submit_impl(const Command& command,bool outer_transact
             }
             if constexpr (std::is_same_v<Action, SelectCampaignObjectives> || std::is_same_v<Action, AcknowledgeObjectiveBreach> ||
                           std::is_same_v<Action, FinishFounderRun> || std::is_same_v<Action, EndWithPostmortem> || std::is_same_v<Action, ContinueAfterEnding> ||
-                          std::is_same_v<Action, AcceptResearchAppointment> || std::is_same_v<Action, DirectCareerResearch> || std::is_same_v<Action, PublishCareerResearch>) {
+                          std::is_same_v<Action, AcceptResearchAppointment> || std::is_same_v<Action, DirectCareerResearch> || std::is_same_v<Action, PublishCareerResearch> || std::is_same_v<Action, DecideCareerTransition>) {
                 refuse(CommandReason::invalid_argument,"Campaign objectives and career actions belong to the shared world transaction.");
             } else if constexpr (std::is_same_v<Action, ReserveFunds>) {
                 if (!valid_text(action.name) || action.amount.value() <= 0) {

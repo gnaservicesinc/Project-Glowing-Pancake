@@ -155,6 +155,17 @@ QVariantList SuccessionController::candidatesAt(QString day) const {
                 }
                 detail=tr("Born %1. %2\n%3").arg(QString::number(person.birth_year),text(outside->background),detail);
                 if(!reactions.isEmpty()) detail+=tr("\nReputation change on appointment (points out of 100)\n%1").arg(reactions.join(QStringLiteral(" · ")));
+            } else if(person.id.starts_with("internal.")) {
+                label=person.internal_surprise
+                    ?tr("%1 · Surprising internal candidate (%2)").arg(text(person.name),text(person.internal_role))
+                    :tr("%1 · Internal candidate (%2)").arg(text(person.name),text(person.internal_role));
+                QStringList reactions;
+                for(std::size_t i=0;i<person.internal_effect.size();++i) {
+                    const auto effect=person.internal_effect[i];
+                    if(effect) reactions<<tr("%1 %2%3").arg(text(society_audience_name(i)),effect>0?QStringLiteral("+"):QString{},
+                        QString::number(effect/100.0,'f',2));
+                }
+                if(!reactions.isEmpty()) detail+=tr("\nReputation change on appointment (points out of 100)\n%1").arg(reactions.join(QStringLiteral(" · ")));
             }
             if(person.asi) detail+=tr("\nASI established %1. Independent control bound %2/100. Mandate %3 years.")
                 .arg(date(person.asi->qualified_on),QString::number(person.asi->control/100.0,'f',2)).arg(catalog.asi->maximum_term_years);

@@ -448,10 +448,38 @@ void schedule_playtest_founder_smoke(QQuickWindow& window,pgp::bridge::CampaignC
             ++state->phase;
             return;
         }
-        default:
+        case 5: {
             if(campaign.revision()==state->revision || founder.value("traits").toStringList()!=expected ||
-               !founder.value("genius").toBool() || campaign.storageBlocked()) {fail("playtest edits did not commit");return;}
-            pass("God mode founder traits passed compact editing, rejection and durable commit.");
+               !founder.value("genius").toBool() || campaign.storageBlocked()) {fail("playtest founder edits did not commit");return;}
+            QMetaObject::invokeMethod(&window,"openMainMenu");
+            if(!press("playtestEnvironmentButton")) {fail("reopen playtest dialog");return;}
+            state->revision=campaign.revision();
+            if(!press("playtestTool_resources")) {fail("trigger unlimited resources");return;}
+            ++state->phase;
+            return;
+        }
+        case 6: {
+            if(!world.playtest_unlimited || campaign.revision()==state->revision) {fail("unlimited resources did not commit");return;}
+            if(!press("playtestPersonButton")) {fail("open person editor");return;}
+            ++state->phase;
+            return;
+        }
+        case 7: {
+            auto* traits_field=item("playtestPersonTraits");
+            auto* apply=item("savePlaytestPerson");
+            if(!traits_field || !apply || !apply->isVisible() ||
+               apply->mapToScene(QPointF{}).y()+apply->height()>window.height()) {
+                fail("compact person editor layout");return;
+            }
+            traits_field->setProperty("text",expected.join("\n"));
+            state->revision=campaign.revision();
+            if(!press("savePlaytestPerson")) {fail("apply person traits");return;}
+            ++state->phase;
+            return;
+        }
+        default:
+            if(campaign.revision()==state->revision || campaign.storageBlocked()) {fail("playtest person edits did not commit");return;}
+            pass("God mode founder/person traits and unlimited resources passed compact editing, rejection and durable commit.");
         }
     });
     timer->start();

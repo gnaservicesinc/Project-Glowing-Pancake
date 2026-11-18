@@ -53,18 +53,30 @@ Insolvency, loss of institutional control and enforceable closure orders open a
 career desk with paid research appointments. If operating labs lack a funded
 opening, the Public Methods Fellowship supplies an endowed research role. The
 desk uses the employer's payroll, compute and named team, and records published
-work in the founder's biography. Board dismissal, acquisition, new company
-formation and the USCIF route still need their dedicated transitions.
-Broader public controversies and surprising internal appointments remain selected work.
-Sorting and efficient serving now have finite innovation paths. Required levels,
-actual project costs and dated serving compute effects use the ordinary research
-and deployment commands. Rival profiles can pursue batched inference.
+work in the founder's biography. Dedicated board dismissal (`dismissal` with
+workforce-ally or cash-floor remedy), company acquisition (`acquisition` with
+buyer payment and founder proceeds), new company formation (`company.restart`),
+and the USCIF Civilian Administrator route (`uscif` / `company.uscif` at Travis
+AFB, tax-exempt) are now implemented. Broader public controversies (non-CEO
+departed governance disputes, service incidents, workforce resignations and
+`"safety_record"`/`"workforce_trust"` claims) and surprising internal employee
+appointments (`"internal.<id>"` nominees with portraits, roles and audience
+reactions) are now implemented. Sorting and efficient
+serving now have finite innovation paths. Required levels, actual project costs
+and dated serving compute effects use the ordinary research and deployment
+commands. Rival profiles can pursue batched inference.
 
 Release distribution gating and the repository Content Studio launcher are
 implemented. Playtest Environment opens an isolated God mode campaign with
-saved founder trait and genius editing. Editing other people and stats,
-unlimited resources, instant deliveries and instant research remain selected
-work, alongside nonprofit reactions and native rival learning.
+editing for the founder or any generated person's traits, Actual Genius and
+evaluation stats, plus unlimited resource refill, instant order delivery and
+instant research completion. Nonprofit goodwill, public-service/science market
+awareness, applicant salary discounts (and `-4` commercial-pivot goodwill
+penalties), as well as native rival policy observation, ambition/reward
+evaluation and teacher/selector hooks are implemented; end-to-end native
+MPSGraph policy weight training (CPU reference and Objective-C++ Apple Metal
+`MPSGraph` auto-diff + decoupled AdamW optimizer with checkpoint serialization
+and live weighted policy selection) is now implemented.
 
 ## Selected people/software expansion (F-06, in progress)
 
@@ -124,9 +136,13 @@ Arranging headquarters now previews entrance-to-desk routes, crowded tiles and
 amenity access. Walking distance, obstructions and reachable amenities affect
 the assigned employee's mood.
 
-Next: remaining specialist skill effects, major-HQ property growth,
-infrastructure design puzzles, career re-entry and
-the fictional USCIF branch. These remain selected, unfinished work; this does not close F-06.
+Specialist skill effects (Soldering + Actual Genius hardware research, software
+suite discipline bonuses, coworker spirit mood bonus and age-sensitive
+skateboarding fit/hobby bonuses), major-HQ property growth (`MoveToOwnedHQ`,
+`BuildHQ`, `LeaseHQ` expansion and equipment re-placement) and infrastructure
+design puzzles (`HQInfrastructurePuzzle`, `BlueprintQuote` puzzle scores and
+software/mood coupling) are now implemented; human balance and release
+qualification remain open so this does not close F-06.
 
 ## Selected immersive redesign (F-05, in progress)
 

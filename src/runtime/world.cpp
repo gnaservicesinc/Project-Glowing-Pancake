@@ -411,6 +411,16 @@ void validate_checkpoint_with_simulation(const CompiledProgram& program, const C
             invalid("A company without deployment risk advanced its unowned stream");
     };
     validate_risk_seed(world.simulation,world.root_seed);
+    const auto& company=world.simulation;
+    if(!world.developer_playtest) {
+        const bool altered_capacity=company.capacity &&
+            (std::ranges::any_of(company.capacity->sources,[](const auto& source){return source.id=="playtest.compute";}) ||
+             std::ranges::any_of(company.capacity->projects,[](const auto& work){return work.playtest_completed;}));
+        const bool altered_funds=company.accounts && validate_core_simulation &&
+            std::ranges::any_of(company.accounts->postings,[](const auto& posting){return posting.key.starts_with("playtest.capital/");});
+        if(world.playtest_unlimited || altered_capacity || altered_funds || (company.succession && company.succession->playtest_cash.value()!=0))
+            invalid("God mode resources and completed work require a playtest campaign.");
+    }
     if (world.competition && !world.competition->setup)
         for (const auto& rival:world.competition->companies)
             validate_risk_seed(rival.simulation,rival_definition(program,rival.definition_id).seed);
@@ -644,8 +654,8 @@ void validate_checkpoint_with_simulation(const CompiledProgram& program, const C
                     invalid("Saved business offer catalog differs from its scenario");
                 std::vector<std::string> expected,actual;
                 for (const auto& rival:scenario->rivals) if (!competition || content::selected_rival(rival,*competition)) expected.push_back(rival.id);
-                if(const auto* fellowship=career_fellowship(world,program);fellowship && career_appointment(world,fellowship->id))
-                    expected.push_back(fellowship->id);
+                if(world.objectives && world.objectives->career) for(const auto& job:*world.objectives->career)
+                    if(career_entry_definition(rival_definition(program,job.employer))) expected.push_back(job.employer);
                 if (world.competition) for (const auto& rival:world.competition->companies) actual.push_back(rival.definition_id);
                 if (expected!=actual || (!competition && scenario->rivals.empty() && world.competition) ||
                     (competition && (!world.competition || world.competition->setup!=competition))) invalid("Saved rival roster/settings differ from their scenario");

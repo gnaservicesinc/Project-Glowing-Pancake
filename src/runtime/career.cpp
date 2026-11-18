@@ -22,9 +22,11 @@ const RivalCompany* employer_for(const WorldState& world,std::string_view id) {
     return found==companies.end()?nullptr:&*found;
 }
 RecurringObligation salary(const WorldState& world,const content::RivalDefinition& definition,OrdinalDay day) {
+    const auto& role=definition.planning->group;
     const auto monthly=Cents{definition.monthly_payroll.value()/definition.staff};
+    const std::string title=role=="uscif"?"Civilian Administrator":role=="restart"?"Founding director":"Research appointment";
     return {std::string(salary_id),monthly,day,world.objectives->deadline,
-        "Research appointment: "+world.identity->founder_name};
+        title+": "+world.identity->founder_name};
 }
 Cents reserve(const SimulationState& employer,const content::RivalPlanning& policy,Cents extra=Cents{0}) {
     auto monthly=extra;
@@ -52,12 +54,25 @@ bool can_continue_career(const WorldState& world) {
     switch(world.objectives->end->cause) {
     case CampaignEndCause::insolvency: return world.simulation.phase==DayPhase::closed;
     case CampaignEndCause::institutional_control:
+    case CampaignEndCause::dismissal:
+    case CampaignEndCause::acquisition:
+    case CampaignEndCause::uscif:
     case CampaignEndCause::final_order: return world.simulation.phase==DayPhase::work_ready;
     default: return false;
     }
 }
 bool career_open(const WorldState& world) {
     return can_continue_career(world) && campaign_day(world)<world.objectives->deadline;
+}
+bool career_entry_definition(const content::RivalDefinition& definition) {
+    if(!definition.planning) return false;
+    const auto& group=definition.planning->group;
+    return group=="fellowship" || group=="restart" || group=="uscif";
+}
+bool career_entry_open(const WorldState& world,const content::RivalDefinition& definition) {
+    if(!career_open(world) || !career_entry_definition(definition) || employer_for(world,definition.id)) return false;
+    if(definition.planning->group=="uscif") return world.objectives->end->cause==CampaignEndCause::uscif;
+    return true;
 }
 const content::RivalDefinition* career_fellowship(const WorldState& world,const CompiledProgram& program) {
     const auto* definition=program.collection.find(world.scenario_id);
@@ -90,6 +105,10 @@ std::vector<ResearchJobOffer> research_job_offers(const WorldState& world,const 
     if(world.objectives->career && world.objectives->career->size()>=career_appointment_limit) return {};
     const auto day=campaign_day(world);
     std::vector<ResearchJobOffer> offers;
+    const auto& scenario=std::get<content::ScenarioDefinition>(program.collection.find(world.scenario_id)->data);
+    for(const auto& definition:scenario.rivals) if(career_entry_open(world,definition) && definition.planning->group=="uscif")
+        offers.push_back({definition.id,definition.name,salary(world,definition,day).monthly_amount,true});
+    bool has_employer=false;
     for(const auto& employer:world.competition->companies) {
         if(!active(employer,day) || !employer.parent_company.empty() || !employer.simulation.management->people) continue;
         const auto& company=employer.simulation;
@@ -98,14 +117,18 @@ std::vector<ResearchJobOffer> research_job_offers(const WorldState& world,const 
         const auto& definition=rival_definition(program,employer.definition_id);
         const auto monthly=salary(world,definition,day).monthly_amount;
         if(monthly.value()>0 && uncommitted_cash(company)>=reserve(company,*definition.planning,monthly) &&
-            std::ranges::any_of(research_workers(company),[](const auto& worker){return worker.unavailable.empty();}))
+            std::ranges::any_of(research_workers(company),[](const auto& worker){return worker.unavailable.empty();})) {
             offers.push_back({definition.id,definition.name,monthly});
+            has_employer=true;
+        }
     }
-    if(offers.empty()) {
+    if(!has_employer) {
         const auto* fellowship=career_fellowship(world,program);
         if(fellowship && !employer_for(world,fellowship->id))
             offers.push_back({fellowship->id,fellowship->name,salary(world,*fellowship,day).monthly_amount,true});
     }
+    for(const auto& definition:scenario.rivals) if(career_entry_open(world,definition) && definition.planning->group=="restart")
+        offers.push_back({definition.id,definition.name,salary(world,definition,day).monthly_amount,true});
     return offers;
 }
 std::vector<CareerResearchOption> career_research_options(const WorldState& world,const CompiledProgram& program) {
@@ -204,7 +227,7 @@ std::vector<CareerResearchOption> career_research_options(const WorldState& worl
     });
     return result;
 }
-void accept_research_appointment(WorldState& world,const CompiledProgram& program,std::string_view id) {
+void accept_research_appointment(WorldState& world,const CompiledProgram& program,std::string_view id,std::string name) {
     const auto offers=research_job_offers(world,program);
     const auto offer=std::ranges::find(offers,id,&ResearchJobOffer::employer);
     if(offer==offers.end())
@@ -213,6 +236,10 @@ void accept_research_appointment(WorldState& world,const CompiledProgram& progra
     if(!history) history.emplace();
     const auto day=campaign_day(world);
     const auto& definition=rival_definition(program,id);
+    if(definition.planning->group=="restart") {
+        if(name.size()<3 || name.size()>80 || std::ranges::any_of(name,[](unsigned char ch){return ch<32;}))
+            throw std::invalid_argument("Enter a company name of 3 to 80 bytes.");
+    } else if(!name.empty()) throw std::invalid_argument("Only a new company can choose its name.");
     auto& companies=world.competition->companies;
     if(offer->fellowship) {
         RivalCompany employer;
@@ -229,7 +256,7 @@ void accept_research_appointment(WorldState& world,const CompiledProgram& progra
     }
     auto& employer=*std::ranges::find(companies,id,&RivalCompany::definition_id);
     add_recurring(*employer.simulation.accounts,salary(world,definition,day));
-    history->push_back({std::string(id),day,{}});
+    history->push_back({std::string(id),day,{},std::move(name)});
     world.objectives->observer_day=day;
     world.objectives->observer_paused=true;
     if(offer->fellowship) competition_detail::review_rival(world,program,employer);
@@ -304,8 +331,11 @@ void validate_career(const WorldState& world,const CompiledProgram& program,bool
             job.projects.size()>career_project_limit) invalid();
         previous=employer;
         const auto& state=employer->simulation;
+        const auto& definition=rival_definition(program,job.employer);
+        if((definition.planning->group=="restart")!=(!job.organization_name.empty()) || job.organization_name.size()>80 ||
+           (definition.planning->group=="uscif" && objectives.end->cause!=CampaignEndCause::uscif)) invalid();
         const auto* bill=career_payroll(*employer);
-        if(!bill || *bill!=salary(world,rival_definition(program,job.employer),job.accepted_on)) invalid();
+        if(!bill || *bill!=salary(world,definition,job.accepted_on)) invalid();
         if(!deep) continue;
         std::set<std::string_view> projects;
         auto earliest=job.accepted_on;

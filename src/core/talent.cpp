@@ -1,4 +1,5 @@
 #include <pgp/core/talent.hpp>
+#include <pgp/core/headquarters.hpp>
 #include <pgp/core/simulation.hpp>
 #include <algorithm>
 #include <set>
@@ -39,6 +40,12 @@ bool active_work(const SimulationState& s,std::string_view project) {
 }
 const TalentRules* talent_rules(const SimulationState& s) {
     return s.management && s.management->people && s.management->catalog.people && s.management->catalog.people->talent?&*s.management->catalog.people->talent:nullptr;
+}
+int skateboarding_respect_bonus(int actor_age,int peer_age) noexcept {
+    if(actor_age<=0 || peer_age<=0) return 2;
+    int bonus=actor_age>=40?4:actor_age>=30?3:2;
+    if(peer_age<30 && actor_age>=35) bonus=4;
+    return std::clamp(bonus,1,4);
 }
 void validate_talent_rules(const TalentRules& r) {
     if(r.skills.empty() || r.skills.size()>96 || r.software.empty() || r.software.size()>12 || r.roles.size()>24 || r.market_bonus_max_bp<0 || r.market_bonus_max_bp>2000 || r.extra_skills<0 || r.extra_skills>4 ||
@@ -117,12 +124,31 @@ SoftwareQuote software_quote(const SimulationState& s,const SoftwareDesign& d,st
         if(d.navigation!="sidebar" && d.navigation!="top" && d.navigation!="command")invalid("Choose sidebar, top navigation or command-first navigation.");
         if(d.focus!="balanced" && d.focus!="usability" && d.focus!="reliability" && d.focus!="capability")invalid("Choose a development focus.");
         if(d.workers.empty() || d.workers.size()>8)invalid("Assign one to eight people with computers.");
-        bool programmer=false,architect=false,designer=false;int engineering=0;
+        bool programmer=false,architect=false,designer=false;
+        bool robotics_hw=false,security_net=false,spirit_art=false,business_ops=false;
+        int engineering=0;
         std::set<std::string> unique;
         for(const auto& id:d.workers) {
             if(!unique.insert(canonical_person(s,id)).second)invalid("Each person may fill only one team place.");
             const auto why=software_worker_blocker(s,id,except);if(!why.empty())invalid(why);
             programmer|=person_has_skill(s,id,"programming");architect|=person_has_skill(s,id,"architecture");designer|=person_has_skill(s,id,"ui_design");
+            robotics_hw|=person_has_skill(s,id,"robotics") || person_has_skill(s,id,"soldering") ||
+                person_has_skill(s,id,"cpu_design") || person_has_skill(s,id,"gpu_design") ||
+                person_has_skill(s,id,"pcb_design") || person_has_skill(s,id,"silicon_manufacturing") ||
+                person_has_skill(s,id,"electronics_manufacturing");
+            security_net|=person_has_skill(s,id,"software_security") || person_has_skill(s,id,"networking") ||
+                person_has_skill(s,id,"network_security") || person_has_skill(s,id,"model_security") ||
+                person_has_skill(s,id,"red_team");
+            spirit_art|=person_has_skill(s,id,"comedy") || person_has_skill(s,id,"music_playing") ||
+                person_has_skill(s,id,"music_composition") || person_has_skill(s,id,"music_mixing") ||
+                person_has_skill(s,id,"drawing") || person_has_skill(s,id,"painting") ||
+                person_has_skill(s,id,"sculpture") || person_has_skill(s,id,"digital_art") ||
+                person_has_skill(s,id,"film") || person_has_skill(s,id,"empathy") ||
+                person_has_skill(s,id,"psychology") || person_has_skill(s,id,"sociology");
+            business_ops|=person_has_skill(s,id,"public_relations") || person_has_skill(s,id,"public_speaking") ||
+                person_has_skill(s,id,"government_affairs") || person_has_skill(s,id,"ethics") ||
+                person_has_skill(s,id,"policy") || person_has_skill(s,id,"accounting") ||
+                person_has_skill(s,id,"law") || person_has_skill(s,id,"physical_security");
             engineering+=static_cast<int>(employee(s,id)->terms.profile.engineering);
         }
         if(!d.ai_source.empty()) {
@@ -144,9 +170,24 @@ SoftwareQuote software_quote(const SimulationState& s,const SoftwareDesign& d,st
             q.reliability+=d.focus=="reliability"?r.focus_bonus:-r.focus_penalty;
             q.capability+=d.focus=="capability"?r.focus_bonus:-r.focus_penalty;
         }
+        if(robotics_hw) {
+            q.capability+=4;
+            if(d.brief=="work" || d.brief=="megaclient" || d.brief=="coding")q.reliability+=2;
+        }
+        if(security_net)q.reliability+=4;
+        if(spirit_art)q.usability+=4;
+        if(business_ops) {q.reliability+=2;q.usability+=2;}
+        if(const auto hq_puzzle=hq_infrastructure_puzzle(s);hq_puzzle.capability_bonus || hq_puzzle.reliability_bonus) {
+            q.capability+=hq_puzzle.capability_bonus;
+            q.reliability+=hq_puzzle.reliability_bonus;
+        }
+        q.usability=std::clamp(q.usability,0,100);
+        q.reliability=std::clamp(q.reliability,0,100);
+        q.capability=std::clamp(q.capability,0,100);
         q.staff_days=brief.work_days*(brief.advanced?2:1);
         if(q.ai_level)q.staff_days=std::max(7,q.staff_days*r.ai_work_percent/100);
         q.fee=Cents{brief.setup_cents};
+        if(business_ops && q.fee.value()>0)q.fee=Cents{q.fee.value()*95/100};
         if(d.previous) {
             const auto& previous=find(s.management->people->talent->software,d.previous);
             if(!previous.released_on || previous.design.brief!=d.brief)invalid("Refinement needs a released design of the same software type.");

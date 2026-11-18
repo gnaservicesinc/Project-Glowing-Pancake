@@ -62,7 +62,7 @@ void validate_infrastructure(const SimulationState& s,bool deep) {
     for (const auto& h:i.hardware) {
         const auto& owned=site(s,h.site_id);const auto& f=family(s,h);
         if (!identifier(h.id) || !ids.insert(h.id).second || !sources.insert(h.source_id).second || h.source_id!="owned/"+h.id || !dated(h.ordered_on) || h.ordered_on<owned.ordered_on ||
-            (owned.closed_on && h.ordered_on>*owned.closed_on) || h.delivered_on!=advance_days(h.ordered_on,f.delivery_lead) || h.delivered_on>=s.end_date || h.paid!=f.purchase_cost ||
+            (owned.closed_on && h.ordered_on>*owned.closed_on) || (h.delivered_on<(h.playtest_delivery?h.ordered_on:advance_days(h.ordered_on,f.delivery_lead)) || h.delivered_on>advance_days(h.ordered_on,f.delivery_lead) || (h.playtest_delivery && h.delivered_on>s.date)) || h.delivered_on>=s.end_date || h.paid!=f.purchase_cost ||
             !end_valid(h.retired_on,h.ordered_on) || (owned.closed_on && (!h.retired_on || *h.retired_on>*owned.closed_on)) || profile(s,owned).connectivity_class<f.connectivity_class ||
             h.energy_remainder>=static_cast<std::uint64_t>(f.capacity.value())*1000) invalid("Owned hardware differs from its finite purchase, physical identity, compatibility or delivery");
         for (const auto& research:f.requires_research) {

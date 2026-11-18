@@ -55,6 +55,7 @@ struct PersonalDecor {
     int x=0,y=0;
     bool rotated=false;
     std::optional<OrdinalDay> sold_on{};
+    bool playtest_delivery=false;
     auto operator<=>(const PersonalDecor&) const = default;
 };
 struct PersonalBill {

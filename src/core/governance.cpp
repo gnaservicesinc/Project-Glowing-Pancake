@@ -81,6 +81,14 @@ void apply_capital(std::vector<EquityHolding>& h,std::vector<OptionGrant>& grant
         if (e.shares.value()==0 || (e.kind=="pool" && e.shares>c.maximum_pool_expansion)) invalid("Corporate dilution has invalid terms");
         for (auto& g:grants) g.unvested=BasisPoints{mul_div_floor(static_cast<std::uint64_t>(g.unvested.value()),static_cast<std::uint64_t>(10000-e.shares.value()),10000).quotient};
         dilute_holdings(h,e.kind=="pool"?pool_id(h):e.subject,e.shares);
+    } else if(e.kind=="acquired") {
+        if(e.shares!=BasisPoints{10000} || e.consideration.value()<=0 || !e.subject.starts_with("parent/") ||
+           shares_of(h,"institution_endowment").value()>0 ||
+           std::ranges::any_of(h,[](const auto& holding){return holding.holder.starts_with("parent/");}))
+            invalid("An acquisition needs a buyer and the complete seller cap table.");
+        for(auto& g:grants) g.unvested=BasisPoints{0};
+        for(auto& holding:h) holding.shares=BasisPoints{0};
+        h.push_back({e.subject,e.shares,false});
     } else if(e.kind=="donation") {
         if(e.shares.value()!=0 || e.consideration.value()<=0 || shares_of(h,"institution_endowment")!=BasisPoints{10000})
             invalid("A nonprofit gift must leave the institutional endowment intact.");
@@ -193,6 +201,13 @@ std::vector<BoardMember> current_board(const SimulationState& s) {
         if (f.board_seat) rows.push_back(financing_director(rules,f));
     }
     return charter_board(s,succession_board(s,std::move(rows),s.succession?s.succession->controls.size():0),s.management->governance->charters.size());
+}
+void transfer_to_acquirer(SimulationState& s,std::string buyer,Cents consideration,Cents founder_proceeds,std::string key) {
+    if(!s.succession || founder_proceeds.value()<0 || founder_proceeds>consideration || s.succession->sale_proceeds.value()!=0)
+        invalid("The founder’s sale proceeds differ from the acquisition terms.");
+    record_capital(s,{"acquired","parent/"+buyer,std::move(key),s.date,BasisPoints{10000},consideration});
+    s.succession->sale_proceeds=founder_proceeds;
+    s.succession->personal_cash=checked_unit_add(s.succession->personal_cash,founder_proceeds);
 }
 void company_equity(SimulationState& s,std::string investor,Cents proceeds,BasisPoints acquired,std::string key,bool assets) {
     if (!s.accounts) invalid("Equity requires company accounts");

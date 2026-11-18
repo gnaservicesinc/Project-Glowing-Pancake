@@ -113,6 +113,16 @@ BlueprintQuote preview_blueprint_build(const SimulationState& s,const BuildFromB
     q.total=checked_unit_add(checked_unit_add(q.construction,q.hardware),q.recruitment);
     q.monthly=checked_unit_add(checked_unit_add(state.monthly_property,state.monthly_overhead),checked_unit_add(hardware.monthly_maintenance,multiply(state.operator_monthly,b.operators)));
     q.built_on=site.built_on;q.grid_on=site.grid_on;q.delivery_on=advance_days(s.date,hardware.delivery_lead);q.operators_on=advance_days(s.date,state.operator_hire_lead);
+    const auto connectivity_gap=static_cast<int>(state.connectivity_class-hardware.connectivity_class);
+    q.network_score=std::clamp(20+std::min(15,connectivity_gap*7),0,35);
+    const auto chosen_pue=b.evaporative?state.water_pue_milli:state.air_pue_milli;
+    const int pue_points=std::clamp(25-static_cast<int>(chosen_pue>1000?(chosen_pue-1000)/25:0),5,25);
+    const int headroom_points=std::clamp(static_cast<int>((site.it_watts-hardware.active_it_watts)*10/std::max<std::uint64_t>(1,hardware.active_it_watts)),0,10);
+    q.cooling_score=std::clamp(pue_points+headroom_points,0,35);
+    const int op_points=std::min(15,static_cast<int>(b.operators-hardware.operators)*8);
+    const int reserve_points=(site.it_watts*5>=hardware.active_it_watts*6?10:site.it_watts*10>=hardware.active_it_watts*11?5:0)+(b.operators>1 || state.grid_grams_per_kwh<=250?5:0);
+    q.redundancy_score=std::clamp(op_points+reserve_points,0,30);
+    q.puzzle_score=std::clamp(q.network_score+q.cooling_score+q.redundancy_score,0,100);
     return q;
 }
 void build_from_blueprint(SimulationState& s,const BuildFromBlueprint& request,Cents protected_cash) {

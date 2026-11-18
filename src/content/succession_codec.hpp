@@ -42,6 +42,8 @@ template<class T,class F> void fields(T& r,F field) {
     } else if constexpr(std::is_same_v<V,core::DepartureEvidence>) {
         field("cash_cents",r.cash);field("profit_cents",r.profit);field("debt_cents",r.debt);field("publications",r.publications);
         field("completed_contracts",r.completed_contracts);field("missed_starts",r.missed_starts);field("public_dispute",r.public_dispute,true);
+        field("service_incidents",r.service_incidents,true);field("workforce_resignations",r.workforce_resignations,true);
+        field("surprise_internal_successor",r.surprise_internal_successor,true);
     } else if constexpr(std::is_same_v<V,core::DepartureRelease>) {
         field("plan",r.plan);field("posting_cursor",r.posting_cursor);field("message",r.message);field("day",r.day);
         field("reason",r.reason,true);field("evidence",r.evidence,true);
@@ -51,7 +53,7 @@ template<class T,class F> void fields(T& r,F field) {
     } else if constexpr(std::is_same_v<V,core::LeadershipTerm>) {
         field("id",r.id);field("plan",r.plan);field("person",r.person);field("name",r.name);field("birth_year",r.birth_year);
         field("starts_on",r.starts_on);field("due_on",r.due_on);field("ended_on",r.ended_on);field("caretaker",r.caretaker);field("portrait",r.portrait,true);
-        field("asi",r.asi,true);
+        field("asi",r.asi,true);field("extraordinary_handover",r.extraordinary_handover,true);
     } else if constexpr(std::is_same_v<V,core::PortraitRecipe>) {
         field("kit",r.kit);field("parts",r.parts);field("style",r.style,true);
     } else if constexpr(std::is_same_v<V,core::LeadershipControl>) {
@@ -72,7 +74,7 @@ template<class T,class F> void fields(T& r,F field) {
         field("founder_holder",r.founder_holder);field("personal_cash_cents",r.personal_cash);field("posting_cursor",r.posting_cursor);
         field("terms",r.terms);field("controls",r.controls);field("plans",r.plans);field("notices",r.notices);
         field("founder_name",r.founder_name,true);field("releases",r.releases,true);
-        field("personal_life",r.personal_life,true);
+        field("personal_life",r.personal_life,true);field("playtest_cash",r.playtest_cash,true);field("sale_proceeds",r.sale_proceeds,true);
     } else personal_life_codec::fields(r,field);
 }
 }

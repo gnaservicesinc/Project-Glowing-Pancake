@@ -63,6 +63,7 @@ Json capacity_json(const core::CapacityState& state, bool packed) {
         {"tasks_per_day",project.tasks_per_day},{"inference_milli_CU_per_task",project.inference_milli_CU_per_task.value()},
         {"useful_tasks",project.useful_tasks},{"monthly_support_cost_cents",project.monthly_support_cost.value()},
             {"cause",project.cause}});
+        if(project.playtest_completed) projects.back()["playtest_completed"]=true;
         if(project.required_staff_days) {
             projects.back()["required_staff_days"]=project.required_staff_days;
             projects.back()["completed_staff_days"]=project.completed_staff_days;
@@ -162,7 +163,7 @@ core::CapacityState parse_capacity(const Json& value, bool packed) {
     for (const auto& project:projects) {
         fields(project,"capacity/project",{"id","source_id","kind","status","starts_on","stopped_on","requested_milli_CU_per_day",
             "staff","minimum_memory_mib","interconnect","total_work_milli_CU","completed_work_milli_CU","tasks_per_day",
-            "inference_milli_CU_per_task","useful_tasks","monthly_support_cost_cents","cause"},{"customer_inference","pauses","disruptions","specialist_id","required_staff_days","completed_staff_days"});
+            "inference_milli_CU_per_task","useful_tasks","monthly_support_cost_cents","cause"},{"customer_inference","pauses","disruptions","specialist_id","required_staff_days","completed_staff_days","playtest_completed"});
         result.projects.push_back({label(project.at("id")),text(project.at("source_id"),"capacity/source_id",100,true),
             parse_enum<core::ProjectKind>(project.at("kind"),project_names),
             parse_enum<core::ProjectStatus>(project.at("status"),status_names),day(project.at("starts_on")),
@@ -174,6 +175,7 @@ core::CapacityState parse_capacity(const Json& value, bool packed) {
             core::Cents{i64(project.at("monthly_support_cost_cents"),"capacity/project/monthly_support_cost_cents")},
             label(project.at("cause")), project.contains("customer_inference") &&
                 boolean(project.at("customer_inference"),"capacity/customer_inference")});
+        if(project.contains("playtest_completed")) result.projects.back().playtest_completed=boolean(project.at("playtest_completed"),"playtest completion");
         if(project.contains("required_staff_days")!=project.contains("completed_staff_days"))
             invalid("capacity/project","Research staff days need both the requirement and progress");
         if(project.contains("required_staff_days")) {

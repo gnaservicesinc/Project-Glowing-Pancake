@@ -43,7 +43,11 @@ Applicant applicant(SimulationState& s,bool opening,std::string_view role_overri
     const auto salary=Cents{mul_div_round_half_up(static_cast<std::uint64_t>(r.monthly_salary.value()),static_cast<std::uint64_t>(p.offered_pay.value()),10000)};
     Applicant result{person,opening?Cents{0}:salary,opening?Cents{0}:r.signing_cost,
         BasisPoints{r.maximum_evaluation_credit.value()*person.evaluation/100},{}};
-    if(!opening && r.recruitment) initialize_recruitment(result,*r.recruitment,rng);
+    if(!opening && r.recruitment) {
+        const auto discount=person.preferred_mission==committed_company_mission(s)?
+            nonprofit_reaction(s,s.date).salary_discount_bp:0U;
+        initialize_recruitment(result,*r.recruitment,rng,discount);
+    }
     for(const auto& group:r.trait_groups) result.profile.traits.push_back(group[draw(rng,static_cast<std::uint32_t>(group.size()))]);
     if(r.talent) {
         person.orientation=std::array{"straight","gay_or_lesbian","bisexual","pansexual","asexual","demisexual"}[draw(rng,6)];
@@ -275,7 +279,8 @@ void validate_people(const SimulationState& s,bool deep) {
     const auto check=[&](const Applicant& a){
         if(a.recommendation){const auto& rec=*a.recommendation;if(rec.person.empty() || rec.person.size()>160 || rec.name.empty() || rec.name.size()>128 || (rec.kind!="friend" && rec.kind!="family") || rec.received_on!=a.profile.applied_on)invalid("Recommended candidates need a saved source and application date.");}
         profile_valid(a.profile,s.date);if(r.romance.has_value()!=a.profile.romantic.has_value())invalid("Romantic identity and rules must agree.");if(!ids.insert(a.profile.id).second || a.salary<Cents{0} || a.salary>Cents{r.recruitment?30000000:15000000} ||
-        a.signing<Cents{0} || a.signing>Cents{r.signing_cost.value()*(r.recruitment?r.recruitment->maximum_signing_multiple:1)} || a.evaluation_credit!=BasisPoints{r.maximum_evaluation_credit.value()*a.profile.evaluation/100}) invalid("Applicant identity, pay or evaluation evidence changed.");};
+        a.signing<Cents{0} || a.signing>Cents{r.signing_cost.value()*(r.recruitment?r.recruitment->maximum_signing_multiple:1)} || a.evaluation_credit!=BasisPoints{r.maximum_evaluation_credit.value()*a.playtest_original_evaluation.value_or(a.profile.evaluation)/100} ||
+        a.playtest_original_evaluation.value_or(0)>100) invalid("Applicant identity, pay or evaluation evidence changed.");};
     for(const auto& a:p.applicants) {check(a);if(r.recruitment.has_value()!=a.recruitment.has_value()) invalid("Current applicants need their compensation discussions.");validate_recruitment(a,s,false);}
     for(const auto& a:p.queued_applicants){check(a);if(!r.recruitment || !a.recruitment || !a.recruitment->offers.empty())invalid("Queued applications must await their first review.");validate_recruitment(a,s,false);}
     const auto known=[&](const auto& offer) {

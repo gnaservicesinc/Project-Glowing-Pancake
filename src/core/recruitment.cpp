@@ -48,15 +48,16 @@ void validate_recruitment_rules(const RecruitmentRules &r) {
         r.maximum_signing_multiple > 10)
         invalid("Recruiting needs bounded response dates, negotiation rounds and compensation ranges.");
 }
-void initialize_recruitment(Applicant &a, const RecruitmentRules &r, SplitMix64 &random) {
+void initialize_recruitment(Applicant &a, const RecruitmentRules &r, SplitMix64 &random, std::uint32_t mission_discount_bp) {
     const auto strongest = std::max({a.profile.research, a.profile.engineering, a.profile.evaluation});
     a.salary = scale(a.salary, r.minimum_ask + (r.maximum_ask - r.minimum_ask) * strongest / 100);
+    a.salary = scale(a.salary, 10000 - mission_discount_bp);
     const auto preference = [&] {
         return r.minimum_acceptance +
                static_cast<std::uint32_t>(random.bounded(r.maximum_acceptance - r.minimum_acceptance + 1));
     };
     a.recruitment =
-        Recruitment{a.salary, a.signing, scale(a.salary, preference()), scale(a.signing, preference()), {}, {}, {}, {}};
+        Recruitment{a.salary, a.signing, scale(a.salary, preference()), scale(a.signing, preference()), {}, {}, {}, {}, mission_discount_bp};
 }
 std::string recruitment_status(const Applicant &a, OrdinalDay day) {
     if (!a.recruitment)
@@ -152,7 +153,9 @@ void validate_recruitment(const Applicant &a, const SimulationState &s, bool hir
     const auto &n = *a.recruitment;
     const auto &r = *people.recruitment;
     const auto base = people.monthly_salary;
-    if (n.offers.size() > r.maximum_rounds || n.ask_salary < scale(scale(base, 7500), r.minimum_ask) ||
+    if (n.mission_discount_bp > 1000 || (n.mission_discount_bp && !nonprofit_organization(s)) ||
+        n.offers.size() > r.maximum_rounds ||
+        n.ask_salary < scale(scale(scale(base, 7500), r.minimum_ask), 10000 - n.mission_discount_bp) ||
         n.ask_salary > scale(scale(base, 15000), r.maximum_ask) || n.ask_signing != people.signing_cost ||
         n.minimum_salary < scale(n.ask_salary, r.minimum_acceptance) ||
         n.minimum_salary > scale(n.ask_salary, r.maximum_acceptance) ||

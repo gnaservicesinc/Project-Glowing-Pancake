@@ -37,6 +37,8 @@ struct DepartureEvidence {
     std::uint32_t publications=0;
     std::uint32_t completed_contracts=0,missed_starts=0;
     std::optional<std::string> public_dispute{};
+    std::uint32_t service_incidents=0,workforce_resignations=0;
+    bool surprise_internal_successor=false;
     auto operator<=>(const DepartureEvidence&) const = default;
 };
 struct DepartureRelease {
@@ -97,6 +99,10 @@ struct LeadershipCandidate {
     int birth_year=0;
     Cents signing_cost{0},monthly_salary{0};
     std::optional<AsiLeadershipEvidence> asi{};
+    std::optional<PortraitRecipe> portrait{};
+    std::string internal_role{};
+    bool internal_surprise=false;
+    std::array<std::int32_t,6> internal_effect{};
     auto operator<=>(const LeadershipCandidate&) const = default;
 };
 struct LeadershipTerm {
@@ -108,6 +114,7 @@ struct LeadershipTerm {
     bool caretaker=false;
     std::optional<PortraitRecipe> portrait{};
     std::optional<AsiLeadershipEvidence> asi{};
+    std::string extraordinary_handover{};
     auto operator<=>(const LeadershipTerm&) const = default;
 };
 struct LeadershipControl {
@@ -150,6 +157,7 @@ struct SuccessionState {
     std::optional<std::string> founder_name{};
     std::optional<std::vector<DepartureRelease>> releases;
     std::optional<PersonalLifeState> personal_life{};
+    Cents playtest_cash{0},sale_proceeds{0};
     auto operator<=>(const SuccessionState&) const = default;
 };
 struct ProposeSuccession { std::string candidate;OrdinalDay handover_on{0};bool retain_chair=false;LabAllocation allocation; };
@@ -163,6 +171,7 @@ void validate_succession_catalog(const SuccessionCatalog&);
 void validate_succession_opening(const SuccessionCatalog&,OrdinalDay start,OrdinalDay end);
 void initialize_succession(SimulationState&, std::optional<std::string> founder_name = {});
 void prepare_succession(SimulationState&);
+void replace_founder_executive(SimulationState&,std::string_view reason);
 void validate_succession(const SimulationState&,bool deep=true);
 [[nodiscard]] const SuccessionCatalog& succession_catalog(const SimulationState&);
 [[nodiscard]] const OutsideLeadershipCandidate* outside_leadership_candidate(const SuccessionCatalog&,std::string_view);

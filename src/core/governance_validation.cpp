@@ -138,6 +138,10 @@ void validate_governance(const SimulationState& s,bool deep) {
                 const auto& terms=find(management.catalog.financing,e.key.substr(10));
                 if (terms.term.value()!=0 || e.shares!=terms.acquired || e.subject!="investor/"+terms.id || e.consideration!=terms.proceeds) invalid("Fixed equity journal changed the accepted offer");
             }
+        } else if(e.kind=="acquired") {
+            if(!e.key.starts_with("career.sale/") || !s.succession ||
+               std::ranges::none_of(s.succession->terms,[&](const auto& term){return term.extraordinary_handover=="acquisition" && term.starts_on==e.day;}))
+                invalid("Transferred ownership needs its recorded acquisition handover.");
         } else if(e.kind=="donation") {
             if(!e.key.starts_with("corporate/") || e.shares.value()!=0 || e.consideration.value()<=0 || !corporate_posts.insert(e.key).second)
                 invalid("A nonprofit gift needs distinct non-diluting contribution evidence.");
@@ -155,7 +159,7 @@ void validate_governance(const SimulationState& s,bool deep) {
         apply_capital(holdings,grants,g.appointments,c,e);
     }
     if (holdings!=s.accounts->holdings || grants!=g.grants) invalid("Fully diluted ownership differs from conserving capital history");
-    for (const auto& p:s.accounts->postings) if (p.credit==Account::equity && p.key!="opening" && !p.key.starts_with("flow.transfer:") &&
+    for (const auto& p:s.accounts->postings) if (p.credit==Account::equity && p.key!="opening" && !p.key.starts_with("flow.transfer:") && !p.key.starts_with("playtest.capital/") &&
         (p.debit==Account::cash || p.debit==Account::assets) && !corporate_posts.contains(p.key)) invalid("An ownership issue bypassed corporate capital history");
     for (const auto& a:g.appointments) if (a.hybrid) {
         const auto& grant=find(g.grants,a.candidate);

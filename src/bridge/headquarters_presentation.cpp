@@ -73,6 +73,14 @@ QVariantMap trafficRow(const core::HQTraffic& walk) {
         {"summary",QObject::tr("%1/%2 desks reachable · %3/%4 m² walkable from the entrance")
             .arg(reachable).arg(walk.desks.size()).arg(walk.reachable_tiles).arg(walk.open_tiles)}};
 }
+QVariantMap puzzleRow(const core::HQInfrastructurePuzzle& puzzle) {
+    return {{"score",puzzle.score},{"activeRacks",puzzle.active_racks},{"totalWatts",puzzle.total_watts},
+        {"hallIsolatedRacks",puzzle.hall_isolated_racks},{"thermalCrowding",puzzle.thermal_crowding},
+        {"utilityProximity",puzzle.utility_proximity},{"powerMargin",puzzle.power_margin},
+        {"redundancyBonus",puzzle.redundancy_bonus},{"capabilityBonus",puzzle.capability_bonus},
+        {"reliabilityBonus",puzzle.reliability_bonus},{"moodBonus",puzzle.mood_bonus},
+        {"summary",q(puzzle.summary)}};
+}
 }
 QVariantMap WorldController::headquarters() const {
     if(!available(snapshot_)) return {};
@@ -115,6 +123,7 @@ QVariantMap WorldController::headquarters() const {
     }
     for(const auto& n:h.notices) notices.push_back(QVariantMap{{"date",date(n.day)},{"text",q(n.text)}});
     return {{"flooring",floorFinish(p.kind,p.plan)},{"title",p.kind=="home"?q(home.plan.name):q(find(r.plans,p.plan).name)},{"width",p.width},{"depth",p.depth},{"rooms",roomRows},{"items",items},{"kind",q(p.kind)},{"address",q(p.address)},{"city",q(city.city)},{"market",q(p.market)},{"landlord",q(p.lessor)},{"trafficEnabled",r.traffic.has_value()},
+        {"infrastructurePuzzle",puzzleRow(core::hq_infrastructure_puzzle(s))},
         {"access",floorAccess(core::hq_access(p.width,p.depth,p.rooms))},
         {"rent",money(p.rent)},{"deposit",money(p.deposit)},{"notices",notices},{"summary",tr("%1 · %2\n%3 × %4 m · %5 desks, %6 assigned\n%7\nSecurity deposit held: %8")
             .arg(q(p.address),q(city.city)).arg(p.width).arg(p.depth).arg(core::furnished_hq_desks(s)).arg(core::assigned_hq_desks(s))
@@ -283,7 +292,8 @@ QVariantMap WorldController::hqPlacement(int item,int x,int y,bool rotated,int t
     const auto why=core::hq_placement_blocker(s,placement);
     return {{"valid",why.empty()},{"reason",why.empty()?tr("Click to place · R rotates · right-click cancels"):q(why)},
         {"x",x},{"y",y},{"width",width},{"depth",depth},{"mount",mount},{"rotated",rotated},{"revision",reviewToken()},
-        {"traffic",why.empty() && !mount?trafficRow(core::hq_traffic(s,&placement)):QVariantMap{}}};
+        {"traffic",why.empty() && !mount?trafficRow(core::hq_traffic(s,&placement)):QVariantMap{}},
+        {"infrastructurePuzzle",why.empty()?puzzleRow(core::hq_infrastructure_puzzle(s,&placement)):QVariantMap{}}};
 }
 void WorldController::assignHQLaptop(int item,QString person,QString revision) {if(hqReview(revision) && item>0) emit actionRequested(core::ManageHeadquarters{core::AssignHQLaptop{static_cast<std::uint32_t>(item),person.toStdString()}});}
 void WorldController::placeHQEquipment(int item,int x,int y,bool rotated,int mount,QString revision) {if(hqReview(revision) && item>0 && mount>=0) emit actionRequested(core::ManageHeadquarters{core::PlaceHQEquipment{static_cast<std::uint32_t>(item),static_cast<std::uint32_t>(mount),x,y,rotated}});}

@@ -7,6 +7,29 @@ bool eligible_human_age(const SuccessionCatalog& c,int birth_year,int handover_y
     const auto age=handover_year-birth_year;
     return age>=static_cast<int>(c.minimum_candidate_age) && age<=static_cast<int>(c.maximum_candidate_age);
 }
+bool eligible_internal_age(const SuccessionCatalog& c,int birth_year,int handover_year) {
+    const auto age=handover_year-birth_year;
+    return age>=18 && age<=static_cast<int>(c.maximum_candidate_age);
+}
+bool surprising_internal_pick(const SuccessionCatalog& c,const Employee& e,int age) {
+    return age<static_cast<int>(c.minimum_candidate_age) || e.terms.profile.experience<5 ||
+        (e.terms.profile.role!="Researcher" && e.terms.profile.role!="Research scientist" &&
+         e.terms.profile.role!="Software engineer" && e.terms.profile.role!="Infrastructure engineer");
+}
+LeadershipCandidate internal_candidate(const SuccessionCatalog& c,const Employee& e,OrdinalDay as_of) {
+    const int age=from_ordinal(as_of).year-e.terms.profile.birth_year;
+    const bool surprise=surprising_internal_pick(c,e,age);
+    const std::string headline="Internal promotion from "+e.terms.profile.role+" ("+
+        std::to_string(e.terms.profile.experience)+" years experience). "+
+        (surprise?"An unexpected internal appointment that energizes staff while drawing institutional scrutiny.":
+            "A seasoned internal leader backed by company teams.");
+    const std::array<std::int32_t,6> effect=surprise
+        ?std::array<std::int32_t,6>{-120,80,0,180,-60,40}
+        :std::array<std::int32_t,6>{50,100,50,150,0,50};
+    return {"internal."+e.terms.profile.id,e.terms.profile.name,headline,e.terms.profile.birth_year,
+        Cents{0},std::max(e.terms.salary,c.founder_salary),{},e.terms.profile.portrait,
+        e.terms.profile.role,surprise,effect};
+}
 }
 namespace succession_detail {
 OrdinalDay term_due(const SuccessionCatalog& c,int birth,OrdinalDay start,bool caretaker,bool asi) {
@@ -45,7 +68,11 @@ void check_proposal(const SimulationState& s,const ProposeSuccession& p,OrdinalD
         advance_days(proposed,c.vote_window)>=p.handover_on)
         invalid("Allow the disclosed transition work and board window before the incumbent's retirement deadline.");
     const auto candidate=leadership_candidate(s,p.candidate,proposed);
-    if((!candidate.asi && !eligible_human_age(c,candidate.birth_year,from_ordinal(p.handover_on).year)) || candidate.id==prior.person)
+    const bool valid_age=candidate.asi.has_value() ||
+        (candidate.id.starts_with("internal.")
+            ?eligible_internal_age(c,candidate.birth_year,from_ordinal(p.handover_on).year)
+            :eligible_human_age(c,candidate.birth_year,from_ordinal(p.handover_on).year));
+    if(!valid_age || candidate.id==prior.person)
         invalid("Choose a different eligible successor for the actual handover date.");
     if(p.retain_chair && (prior.person!="founder" ||
         p.handover_on>=year_day(c.founder_birth_year+static_cast<int>(c.chair_retirement_age))))
@@ -87,7 +114,7 @@ void appoint(SimulationState& s,const LeadershipCandidate& candidate,bool careta
     LeadershipTerm term{actor.terms.size()+1,plan,candidate.id,candidate.name,candidate.birth_year,s.date,
         term_due(succession_catalog(s),candidate.birth_year,s.date,caretaker,candidate.asi.has_value()),{},caretaker};
     term.asi=candidate.asi;
-    if(candidate.id!="founder" && !candidate.asi) term.portrait=make_portrait(0,"leadership/"+candidate.id);
+    if(candidate.id!="founder" && !candidate.asi) term.portrait=candidate.portrait?*candidate.portrait:make_portrait(0,"leadership/"+candidate.id);
     actor.terms.push_back(term);
     if(candidate.monthly_salary.value()>0) add_recurring(*s.accounts,{salary_id(term),candidate.monthly_salary,s.date,{},
         (candidate.asi?"AI executive hosted operation and human oversight: ":"Agreed chief executive salary: ")+candidate.name});
@@ -138,6 +165,20 @@ LeadershipCandidate leadership_candidate(const SimulationState& s,std::string_vi
     const auto& catalog=succession_catalog(s);
     if(const auto* outside=outside_leadership_candidate(catalog,id))
         return {outside->id,outside->name,outside->priorities,outside->birth_year,outside->signing_cost,outside->monthly_salary};
+    if(id.starts_with("internal.")) {
+        if(!s.management || !s.management->people) succession_detail::invalid("No workplace roster is available for internal succession.");
+        const auto check_day=as_of.value_or(s.date);
+        const auto emp_id=id.substr(9);
+        for(const auto& e:s.management->people->employees) {
+            if(e.terms.profile.id!=emp_id || e.terms.profile.role=="Founder / researcher") continue;
+            if(e.ready_on>check_day || (e.departed_on && *e.departed_on<=check_day))
+                succession_detail::invalid("This internal employee was not active at the nomination date.");
+            if(!eligible_internal_age(catalog,e.terms.profile.birth_year,from_ordinal(check_day).year))
+                succession_detail::invalid("This internal employee is outside the eligible age range.");
+            return internal_candidate(catalog,e,check_day);
+        }
+        succession_detail::invalid("Choose a current workplace employee for internal succession.");
+    }
     if(!id.starts_with("asi.")) return leadership_candidate(catalog,id);
     if(!catalog.asi || !s.frontier) succession_detail::invalid("This charter has no established ASI leadership route.");
     std::uint64_t system=0;const auto token=id.substr(4);const auto parsed=std::from_chars(token.data(),token.data()+token.size(),system);
@@ -154,6 +195,11 @@ LeadershipCandidate leadership_candidate(const SimulationState& s,std::string_vi
 std::vector<LeadershipCandidate> leadership_candidates(const SimulationState& s,OrdinalDay day) {
     const auto& catalog=succession_catalog(s);auto result=leadership_candidates(catalog,day);
     const auto year=from_ordinal(day).year;
+    if(s.management && s.management->people) for(const auto& e:s.management->people->employees) {
+        if(e.terms.profile.role=="Founder / researcher" || e.ready_on>day || (e.departed_on && *e.departed_on<=day)) continue;
+        if(eligible_internal_age(catalog,e.terms.profile.birth_year,year))
+            result.push_back(internal_candidate(catalog,e,day));
+    }
     if(catalog.outside_candidates) for(const auto& outside:*catalog.outside_candidates) {
         if(eligible_human_age(catalog,outside.birth_year,year))
             result.push_back(leadership_candidate(s,outside.id,day));
@@ -270,6 +316,19 @@ void acknowledge_succession(SimulationState& s,std::uint64_t id) {
         succession_detail::invalid("Choose an unread leadership notice.");
     s.succession->notices[id-1].acknowledged=true;
 }
+void replace_founder_executive(SimulationState& s,std::string_view reason) {
+    if(!s.succession || founder_role(*s.succession)!=FounderRole::executive ||
+       (reason!="dismissal" && reason!="acquisition" && reason!="uscif"))
+        succession_detail::invalid("The founding executive has no eligible forced handover.");
+    auto& actor=*s.succession;
+    for(auto& plan:actor.plans) if(plan.status==SuccessionStatus::proposed || plan.status==SuccessionStatus::approved)
+        stop_plan(s,plan,SuccessionStatus::obsolete);
+    const auto candidates=leadership_candidates(succession_catalog(s),s.date);
+    if(candidates.empty()) succession_detail::invalid("The board has no eligible interim executive.");
+    appoint(s,candidates.front(),true,0,FounderRole::trust);
+    actor.terms.back().extraordinary_handover=reason;
+    s.paused=true;
+}
 void prepare_succession(SimulationState& s) {
     if(!s.succession) return;
     using namespace succession_detail;
@@ -289,7 +348,15 @@ void prepare_succession(SimulationState& s) {
         }
         if(s.date<p.handover_on) continue;
         const auto person=leadership_candidate(s,p.candidate,p.proposed_on);
-        if(!person.asi && !eligible_human_age(c,person.birth_year,from_ordinal(s.date).year)) {
+        const bool internal_active=!p.candidate.starts_with("internal.") || (s.management && s.management->people &&
+            std::ranges::any_of(s.management->people->employees,[&](const auto& e){
+                return "internal."+e.terms.profile.id==p.candidate && e.ready_on<=s.date && (!e.departed_on || *e.departed_on>s.date);
+            }));
+        const bool valid_age=person.asi.has_value() ||
+            (p.candidate.starts_with("internal.")
+                ?eligible_internal_age(c,person.birth_year,from_ordinal(s.date).year)
+                :eligible_human_age(c,person.birth_year,from_ordinal(s.date).year));
+        if(!internal_active || !valid_age) {
             stop_plan(s,p,SuccessionStatus::obsolete);notice(s,"transition_stopped",actor.terms.back().id,p.id,actor.terms.back().due_on);continue;
         }
         if(named(s.capacity->projects,p.project).status==ProjectStatus::completed && s.date<=actor.terms.back().due_on) {

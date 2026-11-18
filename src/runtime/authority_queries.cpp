@@ -203,7 +203,10 @@ std::vector<PublicIdentityEvent> public_identity_events(const WorldState& w,Ordi
     for(const auto& p:a.promises) if(p.met_on) add(1,*p.met_on,std::to_string(p.id),"Fulfilled a documented public commitment");
     for(const auto& c:a.cases) if(c.disclosed_on) add(c.kind==PublicCaseKind::promise?2:c.kind==PublicCaseKind::resistance?5:6,*c.disclosed_on,std::to_string(c.id),"A documented issue passed its response deadline without an effective remedy");
     if(w.simulation.management && w.simulation.management->governance) for(const auto& c:w.simulation.management->governance->disputes)
-        if(c.kind=="publication" && c.status==CorporateDisputeStatus::departed && c.resolved_on) add(3,*c.resolved_on,c.subject,"An executive departed after an unfulfilled publication commitment and failed response path");
+        if(c.status==CorporateDisputeStatus::departed && c.resolved_on)
+            add(3,*c.resolved_on,c.subject,c.kind=="publication"
+                ?"An executive departed after an unfulfilled publication commitment and failed response path"
+                :"An executive departed after an unresolved "+c.kind+" dispute");
     for(const auto& m:a.mandates) if(authority_offer(a.catalog,m.offer).kind==AuthorityKind::coercive) add(4,m.applied_on,m.region,"Funded an abstract coercive institution");
     if(w.simulation.succession) {
         const auto& catalog=succession_catalog(w.simulation);
@@ -211,6 +214,14 @@ std::vector<PublicIdentityEvent> public_identity_events(const WorldState& w,Ordi
             if(term.starts_on>day) continue;
             if(const auto* outside=outside_leadership_candidate(catalog,term.person))
                 result.push_back({7,term.starts_on,term.name,"Appointed an outside chief executive",outside->appointment_effect});
+            else if(term.person.starts_with("internal.")) {
+                const auto proposed=term.plan && term.plan<=w.simulation.succession->plans.size()
+                    ?w.simulation.succession->plans[term.plan-1].proposed_on:term.starts_on;
+                const auto candidate=leadership_candidate(w.simulation,term.person,proposed);
+                result.push_back({7,term.starts_on,term.name,
+                    candidate.internal_surprise?"Appointed a surprising internal chief executive":"Appointed an internal chief executive",
+                    candidate.internal_effect});
+            }
         }
     }
     if(w.simulation.succession && w.simulation.succession->releases) {
@@ -223,6 +234,12 @@ std::vector<PublicIdentityEvent> public_identity_events(const WorldState& w,Ordi
             const auto assessment=departure_assessment(w.simulation,release);
             if(rules.press && assessment=="challenged")
                 result.push_back({7,release.day,subject,"Reporters challenged a resignation claim using the company record",rules.press->challenged_effect});
+            if(release.evidence && release.evidence->service_incidents>0)
+                result.push_back({7,release.day,subject,"Disclosed deployment incidents dominated resignation coverage",
+                    std::array<std::int32_t,society_audiences>{-120,-60,-180,-40,-150,-100}});
+            if(release.evidence && release.evidence->workforce_resignations>0)
+                result.push_back({7,release.day,subject,"Employee resignations overshadowed the founder's departure statement",
+                    std::array<std::int32_t,society_audiences>{-90,-100,-30,-180,-40,-60}});
             if(p.asi && succession_catalog(w.simulation).asi) {
                 const auto& ai=*succession_catalog(w.simulation).asi;
                 result.push_back({7,release.day,subject,"Announced an approved ASI succession",ai.appointment_effect});
@@ -296,6 +313,20 @@ bool institutional_delivery_allowed(const WorldState& w,const SimulationState& s
 MarketInfluences regional_market_conditions(const WorldState& w,const SimulationState& seller,OrdinalDay day) {
     auto result=society_market_conditions(w,seller,day);
     if(!seller.market) return result;
+    const auto goodwill=core::nonprofit_reaction(seller,day).awareness;
+    if(goodwill.value()>0 && w.society) for(const auto& segment:seller.market->segments) {
+        const auto& public_groups=w.society->catalog.public_services;
+        const auto& science_groups=w.society->catalog.science;
+        if(std::ranges::find(public_groups,segment.id)==public_groups.end() &&
+           std::ranges::find(science_groups,segment.id)==science_groups.end()) continue;
+        for(const auto& preference:segment.preferences) {
+            const auto* product=named(seller.market->products,preference.product_id);
+            if(!product || !product->available) continue;
+            auto row=std::ranges::find_if(result,[&](const auto& edge){return edge.product_id==product->id && edge.segment_id==segment.id;});
+            if(row==result.end()) result.push_back({product->id,segment.id,goodwill,true,true});
+            else row->awareness=BasisPoints{std::min<std::int64_t>(3000,row->awareness.value()+goodwill.value())};
+        }
+    }
     if(core::talent_rules(seller))for(const auto& product:seller.market->products) {
         const auto bonus=core::software_market_bonus(seller,product.channel,day);if(bonus.value()==0)continue;
         for(const auto& segment:seller.market->segments) {

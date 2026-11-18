@@ -61,6 +61,10 @@ QString loss_cause(const WorldState& w,const CompiledProgram& program,const Camp
         return {};
     case CampaignEndCause::catastrophe:return text(*program.collection.message(end.source));
     case CampaignEndCause::retirement:return QStringLiteral("The founder retired after a public, funded handover. The successor, company obligations and retained ownership are preserved. You can start a new company or follow this one in the sandbox. Century distinctions remain unfinished.");
+    case CampaignEndCause::dismissal:return QStringLiteral("The board replaced the founder as chief executive. Shares and the founder trust’s remaining rights are preserved.");
+    case CampaignEndCause::acquisition:return QStringLiteral("%1 acquired the company. The signed price and founder’s personal proceeds are recorded.")
+        .arg(institution(end.source,w,program));
+    case CampaignEndCause::uscif:return QStringLiteral("The fictional federal intervention ended private leadership and opened the Civilian Administrator appointment.");
     case CampaignEndCause::postmortem:return text(objective_breach_explanation(w,*objective_kind(end.source)));
     }
     return {};
@@ -113,18 +117,40 @@ bool ObjectivesController::retrospective() const {
 }
 QVariantMap ObjectivesController::report() const {return retrospective()?lifeReport(snapshot_->checkpoint,*program_):QVariantMap{};}
 bool ObjectivesController::careerAvailable() const {return available() && career_open(world());}
+QVariantMap ObjectivesController::careerTransition() const {
+    if(!available() || !retrospective() || ended()) return {};
+    if(!pending_career_transition(world())) return {{"canRequest",acquisition_interest(world(),*program_)}};
+    const auto& row=objectives().transitions.back();
+    if(row.kind=="dismissal") return {{"kind","dismissal"},{"title",tr("Board confidence review")},
+        {"detail",tr("The board can replace the chief executive after repeated missed commitments and a cash shortfall. Bring cash back above the leadership reserve or ask employees who trust you to support your mandate.")}};
+    if(row.kind=="uscif") return {{"kind","uscif"},{"title",tr("Federal intervention notice")},
+        {"detail",tr("Alternate history. Sustained regulator mistrust and undisclosed independent AGI triggered a review. File independent testimony, satisfy a public assurance, rebuild regulator confidence, or accept the intervention and review a Civilian Administrator appointment.")}};
+    return {{"kind","acquisition"},{"title",tr("Acquisition offer")},{"detail",tr("%1 offers %2 in cash for the entire company. Payment goes to selling shareholders. An interim executive takes office and you can choose your next chapter.")
+        .arg(institution(row.source,world(),*program_),money(row.consideration))}};
+}
 QVariantMap ObjectivesController::career() const {
     if(!careerAvailable()) return {};
     const auto* employer=career_employer(world());
     QVariantList jobs,options,projects;
-    for(const auto& job:research_job_offers(world(),*program_))
+    for(const auto& job:research_job_offers(world(),*program_)) {
+        const auto& group=rival_definition(*program_,job.employer).planning->group;
+        if(group=="restart" || group=="uscif") {
+            jobs.push_back(QVariantMap{{"id",text(job.employer)},{"label",group=="restart"?tr("Form a new company"):tr("Civilian Administrator · USCIF")},
+                {"kind",text(group)},{"detail",group=="restart"?tr("A new sponsor funds a separate lab, staff and compute. Choose the company name. Your biography and personal assets carry forward."):
+                    tr("Lead a publicly funded lab with a capped compute budget. The fictional USCIF mandate prioritizes independent findings and civilian science.")}});
+            continue;
+        }
         jobs.push_back(QVariantMap{{"id",text(job.employer)},{"label",text(job.name)},
             {"detail",(job.fellowship?
                 tr("%1 per month in 2014 dollars. The fellowship endowment pays your salary and funds an equipped team for public research."):
                 tr("%1 per month in 2014 dollars. Direct the lab's research and choose when to publish your results.")).arg(money(job.salary))}});
+    }
     QString title=tr("Find a research appointment"),detail;
     if(employer) {
-        title=tr("Research desk at %1").arg(text(rival_definition(*program_,employer->definition_id).name));
+        const auto& definition=rival_definition(*program_,employer->definition_id);
+        const auto& job=objectives().career->back();
+        title=definition.planning->group=="uscif"?tr("Civilian Administrator · USCIF"):
+            tr("Research desk at %1").arg(text(job.organization_name.empty()?definition.name:job.organization_name));
         detail=tr("%1 per month · %2 paid across appointments. Research uses the employer's budget and team.")
             .arg(money(career_payroll(*employer)->monthly_amount),money(career_salary_received(world())));
         const auto topicName=[&](std::string_view id) {
@@ -346,12 +372,36 @@ void ObjectivesController::reviewContinue() {
     stage(core::ContinueAfterEnding{},failure?QStringLiteral("Continue as an observer. Rivals and regional outcomes advance while this institution stays frozen."):
         QStringLiteral("Continue in a custom sandbox. Keep the scored result and play beyond it without further objective endings."));
 }
+void ObjectivesController::reviewTransition(QString action,QString detail) {
+    if(!available() || !retrospective()) return;
+    if(action=="found") {
+        const auto offers=research_job_offers(world(),*program_);
+        const auto offer=std::ranges::find(offers,std::string_view{"company.restart"},&ResearchJobOffer::employer);
+        if(offer!=offers.end()) stage(core::AcceptResearchAppointment{offer->employer,detail.trimmed().toStdString()},
+            tr("Register %1 as a separately funded company with its own payroll, equipped research team and ledger.").arg(detail.trimmed()));
+        return;
+    }
+    if(action=="request_acquisition" && acquisition_interest(world(),*program_)) {
+        stage(core::DecideCareerTransition{action.toStdString(),{}},tr("Request a cash offer from an operating buyer. Review the terms before agreeing to sell."));
+        return;
+    }
+    if(!pending_career_transition(world())) return;
+    const auto description=action=="accept"?tr("Accept the recorded transition and review the next chapter."):
+        action=="decline"?tr("Decline this offer and continue operating the company."):
+        action=="remedy"?tr("Ask the board to reconsider using current finances and employee support."):
+        tr("Ask regulators to review the evidence now on the record.");
+    stage(core::DecideCareerTransition{action.toStdString(),{}},description);
+}
 void ObjectivesController::reviewCareer(QString action,QString id) {
     if(!available() || !career_open(world())) return;
     if(action=="accept") {
         const auto offers=research_job_offers(world(),*program_);
         const auto offer=std::ranges::find(offers,id.toStdString(),&ResearchJobOffer::employer);
-        if(offer!=offers.end()) stage(core::AcceptResearchAppointment{offer->employer},
+        if(offer!=offers.end() && id==QStringLiteral("company.uscif")) {
+            stage(core::AcceptResearchAppointment{offer->employer,{}},tr("Accept the paid Civilian Administrator appointment and direct its funded civilian research program."));
+            return;
+        }
+        if(offer!=offers.end() && id!=QStringLiteral("company.restart")) stage(core::AcceptResearchAppointment{offer->employer,{}},
             (offer->fellowship?
                 tr("Accept a research fellowship at %1 for %2 per month. Its endowment pays the salary, equipped staff and compute. Direct research and choose when to publish the findings."):
                 tr("Join %1 as research director at %2 per month. You can commit its spare staff and compute to research and publish the results."))

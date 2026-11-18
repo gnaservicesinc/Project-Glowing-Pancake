@@ -216,5 +216,7 @@ autocurricula experiments.
 5. Build the native policy environment and measured graph baseline, then train
    and compare the rival population. Integrate validated policies into gameplay.
 
-The existing infrastructure puzzles, specialist effects and remaining
-people/software work remain part of the active goal.
+Infrastructure puzzles (`HQInfrastructurePuzzle`, `BlueprintQuote`), specialist
+effects, major-HQ property growth, broader departure controversies, surprising
+internal nominations and native Metal `MPSGraph` policy training are implemented;
+human playtesting and release qualification remain part of the active goal.

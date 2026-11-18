@@ -36,7 +36,8 @@ struct AcknowledgeObjectiveBreach { ObjectiveKind objective; };
 struct EndWithPostmortem {};
 struct FinishFounderRun {};
 struct ContinueAfterEnding {};
-struct AcceptResearchAppointment { std::string employer; };
+struct DecideCareerTransition {std::string choice,detail;};
+struct AcceptResearchAppointment { std::string employer;std::string organization_name{}; };
 struct DirectCareerResearch { std::string topic; };
 struct PublishCareerResearch { std::string topic; };
 

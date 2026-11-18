@@ -1325,7 +1325,7 @@ void validate_references(const Collection& collection, const Registry& registry)
                             for (const auto& id:rival.planning->research) if (std::none_of(catalog.research.begin(),catalog.research.end(),[&](const auto& row){return row.id==id;})) fail("rivals",path,"Rival research priority is not in this scenario");
                             for (const auto& id:rival.planning->recipes) if (std::none_of(catalog.recipes.begin(),catalog.recipes.end(),[&](const auto& row){return row.id==id;})) fail("rivals",path,"Rival recipe priority is not in this scenario");
                             for (const auto& id:rival.planning->services) if (std::none_of(services.begin(),services.end(),[&](const auto& row){return row.product.id==id;})) fail("rivals",path,"Rival service priority is not in this scenario");
-                            if(rival.planning->group=="fellowship" &&
+                            if((rival.planning->group=="fellowship" || rival.planning->group=="restart" || rival.planning->group=="uscif") &&
                                (!scenario_definition->founding || !scenario_definition->objectives ||
                                 !scenario_definition->lab->research_workplaces ||
                                 !scenario_definition->management->people ||

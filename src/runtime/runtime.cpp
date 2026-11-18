@@ -10,6 +10,7 @@
 #include "competition_internal.hpp"
 #include "group_bindings.hpp"
 #include "objectives_internal.hpp"
+#include "playtest.hpp"
 
 #include <algorithm>
 #include <functional>
@@ -758,13 +759,20 @@ RuntimeResult Runtime::submit(const core::Command& command) {
     if (command.expected_revision != checkpoint_.world.simulation.revision)
         return {RuntimeReason::stale_revision, checkpoint_.world.simulation.revision, "The command's observed revision is stale.", {}, {}};
     const auto& action=command.action;
+    if(const auto* decision=std::get_if<core::DecideCareerTransition>(&action))
+        return transaction(program_,checkpoint_,command.expected_revision,[&](auto& next,auto& result,auto&,bool&) {
+            try {
+                decide_career_transition(next.world,program_,*decision);
+                result.explanation="The next career decision is recorded.";
+            } catch(const std::invalid_argument& error) {fail(RuntimeReason::effect_rejected,error.what());}
+        });
     if(std::holds_alternative<core::AcceptResearchAppointment>(action) ||
        std::holds_alternative<core::DirectCareerResearch>(action) ||
        std::holds_alternative<core::PublishCareerResearch>(action))
         return transaction(program_,checkpoint_,command.expected_revision,[&](auto& next,auto& result,auto&,bool&) {
             try {
                 if(const auto* job=std::get_if<core::AcceptResearchAppointment>(&action)) {
-                    accept_research_appointment(next.world,program_,job->employer);
+                    accept_research_appointment(next.world,program_,job->employer,job->organization_name);
                     result.explanation="The lab has added the research appointment to its payroll.";
                 } else if(const auto* research=std::get_if<core::DirectCareerResearch>(&action)) {
                     direct_career_research(next.world,program_,research->topic);
@@ -872,6 +880,8 @@ RuntimeResult Runtime::submit(const core::Command& command) {
         if (!pause_only && !core_choice && !device_power &&
             (has_choice(next.runtime) || next.runtime.prepared_day != next.world.simulation.date))
             fail(RuntimeReason::morning_not_ready, "Resolve required content choices and prepare the morning before work.");
+        if(std::holds_alternative<core::AdvanceDay>(command.action) && pending_career_transition(next.world))
+            fail(RuntimeReason::morning_not_ready,"Review the pending career decision before advancing.");
         if(std::holds_alternative<core::AdvanceDay>(command.action) && required_public_case(next.world))
             fail(RuntimeReason::morning_not_ready,"Review and acknowledge the public dispute notice before advancing.");
         std::string contact_region;
@@ -970,6 +980,10 @@ RuntimeResult Runtime::submit(const core::Command& command) {
             fail(RuntimeReason::effect_rejected, outcome.explanation);
         }
         next.world.simulation = std::move(core_state).release_checkpoint();
+#if !PGP_DISTRIBUTION
+        if(next.world.playtest_unlimited && next.world.simulation.phase==core::DayPhase::work_ready)
+            refill_playtest_resources(next.world);
+#endif
         if(std::holds_alternative<core::ManageHeadquarters>(action) && next.world.simulation.infrastructure) {
             const auto& base=next.world.simulation.infrastructure->executive_base;
             next.world.state_id=base=="US-CA"?"state.us_ca":base=="US-TX"?"state.us_tx":"state.us_wa";
@@ -1081,6 +1095,37 @@ RuntimeResult Runtime::transferSubsidiaryFunds(std::uint64_t expected_revision,s
     });
 }
 #if !PGP_DISTRIBUTION
+RuntimeResult Runtime::editPlaytestPerson(std::uint64_t revision,std::string_view person,const std::vector<std::string>& traits,const std::array<int,5>& stats) {
+    return transaction(program_,checkpoint_,revision,[&](auto& next,auto& result,auto&,auto&) {
+        try {
+            validate_playtest_morning(next);
+            edit_playtest_person(next.world,person,traits,stats);
+            next.world.simulation.paused=true;
+            result.explanation="Person updated for this playtest.";
+        } catch(const std::invalid_argument& error) {fail(RuntimeReason::effect_rejected,error.what());}
+    });
+}
+RuntimeResult Runtime::usePlaytestTool(std::uint64_t revision,std::string_view tool,std::string_view topic) {
+    return transaction(program_,checkpoint_,revision,[&](auto& next,auto& result,auto& steps,auto&) {
+        try {
+            validate_playtest_morning(next);
+            if(tool=="resources") {
+                refill_playtest_resources(next.world);
+                next.world.playtest_unlimited=true;
+                result.explanation="Unlimited funding and playtest compute are available.";
+            } else if(tool=="delivery") {
+                deliver_playtest_orders(next.world);
+                result.explanation="Outstanding equipment and furnishing orders have arrived.";
+            } else if(tool=="research") {
+                complete_playtest_research(next.world,topic);
+                result.explanation="The project completed and released its reserved staff and compute.";
+            } else fail(RuntimeReason::effect_rejected,"Choose a God mode action.");
+            next.world.simulation.paused=true;
+            prepare(next,program_,result,steps,trace_mode_);
+            (void)review_frontier_world(next);
+        } catch(const std::invalid_argument& error) {fail(RuntimeReason::effect_rejected,error.what());}
+    });
+}
 RuntimeResult Runtime::editPlaytestFounder(std::uint64_t expected_revision,
                                          std::vector<std::string> traits, bool genius) {
     const auto revision=checkpoint_.world.simulation.revision;

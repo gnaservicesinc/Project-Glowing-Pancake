@@ -17,6 +17,7 @@ class ObjectivesController final : public QObject {
     Q_PROPERTY(QVariantMap career READ career NOTIFY changed)
     Q_PROPERTY(bool careerAvailable READ careerAvailable NOTIFY changed)
     Q_PROPERTY(bool editable READ editable NOTIFY changed)
+    Q_PROPERTY(QVariantMap careerTransition READ careerTransition NOTIFY changed)
     Q_PROPERTY(bool ended READ ended NOTIFY changed)
     Q_PROPERTY(bool observer READ observer NOTIFY changed)
     Q_PROPERTY(bool canContinue READ canContinue NOTIFY changed)
@@ -38,6 +39,7 @@ public:
     [[nodiscard]] QVariantMap report() const;
     [[nodiscard]] QVariantMap career() const;
     [[nodiscard]] bool careerAvailable() const;
+    [[nodiscard]] QVariantMap careerTransition() const;
     [[nodiscard]] bool editable() const;
     [[nodiscard]] bool ended() const;
     [[nodiscard]] bool observer() const;
@@ -57,6 +59,7 @@ public:
     Q_INVOKABLE void reviewEnd();
     Q_INVOKABLE void reviewContinue();
     Q_INVOKABLE void reviewCareer(QString action,QString id);
+    Q_INVOKABLE void reviewTransition(QString action,QString detail);
     Q_INVOKABLE void confirm();
     Q_INVOKABLE void clearReview();
 signals:

@@ -1,5 +1,6 @@
 #include "competition_internal.hpp"
 #include <pgp/runtime/career.hpp>
+#include <pgp/runtime/rival_policy.hpp>
 #include "competition_people.hpp"
 #include <pgp/runtime/society.hpp>
 #include <pgp/core/workplace_research.hpp>
@@ -224,11 +225,30 @@ std::vector<Candidate> candidates(const RivalCompany& rival,const content::Rival
             if(completed(lab,topic) || !requires_met(lab,node.all_of) || (!node.any_of.empty() && std::ranges::none_of(node.any_of,[&](const auto& id){return completed(lab,id);})))continue;
             for(const auto& equipment:research_equipment(s,topic))needed.insert(equipment);
         }
+        bool unplaced_blocked=false;
         for(const auto& item:hq.items)if(!item.premises && item.delivered_on<=s.date) {
+            const auto offer_it=std::ranges::find(s.infrastructure->catalog.workplace->headquarters->equipment,item.offer,&HQEquipmentOffer::id);
+            if(offer_it!=s.infrastructure->catalog.workplace->headquarters->equipment.end() && hq_desk_device(offer_it->kind)) continue;
             bool found=false;
             for(int y=0;y<premises.depth && !found;++y)for(int x=0;x<premises.width && !found;++x) {
                 PlaceHQEquipment placement{item.id,0,x,y,false};
                 if(hq_placement_blocker(s,placement).empty()){offer(8,"place",std::to_string(item.id),160,ManageHeadquarters{placement});found=true;}
+            }
+            if(!found) unplaced_blocked=true;
+        }
+        if(unplaced_blocked && hq.premises.size()<64) {
+            const auto& hq_rules=*s.infrastructure->catalog.workplace->headquarters;
+            const HQPlan* best=nullptr;
+            for(const auto& plan:hq_rules.plans) {
+                if(plan.id==premises.plan || plan.width*plan.depth<=premises.width*premises.depth) continue;
+                if(!best || plan.width*plan.depth<best->width*best->depth) best=&plan;
+            }
+            if(best) {
+                try {
+                    const auto q=preview_hq_lease(s,LeaseHQ{premises.market,best->id});
+                    if(affordable(checked_unit_add(q.price,q.exit_fee),q.monthly))
+                        offer(8,"place",best->id,170,ManageHeadquarters{LeaseHQ{premises.market,best->id}});
+                } catch(...) {}
             }
         }
         for(const auto& id:needed)if(std::ranges::none_of(hq.items,[&](const auto& item){return item.offer==id;})) {
@@ -367,8 +387,9 @@ SimulationState opening_rival(const WorldState& world,const CompiledProgram& pro
     // Only explicitly authored major HQs receive individual simulation.
     if(headquarters_market.empty())state.management->catalog.people.reset();
     if (authored.management->staff_workload) state.capacity->workload=StaffWorkload{*authored.management->staff_workload};
-    if (authored.management->corporate_tax) state.accounts->taxes=CorporateTaxes{*authored.management->corporate_tax,day};
+    if (authored.management->corporate_tax && definition.planning->group!="uscif") state.accounts->taxes=CorporateTaxes{*authored.management->corporate_tax,day};
     state.management->catalog.governance.reset();
+    if(definition.planning->group=="uscif") state.management->catalog.corporate_tax.reset();
     state.management->catalog.scoring.founder="founder";
     if(state.management->catalog.succession) state.management->catalog.succession->founder_name=definition.planning->leader;
     initialize_succession(state);
@@ -393,7 +414,7 @@ SimulationState opening_rival(const WorldState& world,const CompiledProgram& pro
         // The ordinary opening helper picks the first market in this state.
         std::rotate(markets.begin(),selected,selected+1);
         state.infrastructure=std::move(infrastructure);initialize_workplace(state,"leased",false);
-        const bool fellowship=definition.planning->group=="fellowship";
+        const bool fellowship=career_entry_definition(definition);
         initialize_people(state,rival_seed(world,definition),"","",false,0,
             fellowship?"public benefit":"research",fellowship?"Researcher":"");
         initialize_headquarters(state,rival_seed(world,definition));
@@ -418,17 +439,34 @@ void review_rival(WorldState& world,const CompiledProgram& program,RivalCompany&
     SplitMix64 stream{before};const auto draw=stream.next();rival.simulation.random[stream_index]=stream.state();
     const auto observation=observe(world,rival.simulation.date,draw);
     const bool player_research=career_employer(world)==&rival;
-    const bool fellowship=definition.planning->group=="fellowship";
+    const bool fellowship=career_entry_definition(definition);
     const auto collaboration=player_research || fellowship?std::string{}:plan_research_collaboration(world,program,rival.definition_id);
     auto actions=collaboration.empty() && !fellowship?candidates(rival,definition,observation,draw,world.simulation.civic ? &*world.simulation.civic : nullptr,
         world.society?&*world.society:nullptr,world.competition->setup->review_interval,player_research):std::vector<Candidate>{};
     RivalDecision decision{rival.simulation.date,"wait","","Conserve runway; no feasible action met the company's resource and reserve limits.",false,before,stream.state(),observation};
-    if(fellowship) decision.explanation="The endowment funds the founder's research program.";
+    if(fellowship) decision.explanation="The institution is reserving its resources for the founder’s program.";
     if(!collaboration.empty()){decision.action="collaborate";decision.subject=collaboration;decision.explanation="A trusted industry connection arranged funded joint research, with named staff and compute committed at both labs.";decision.accepted=true;rival.attempted=true;}
     else if (!actions.empty()) {
-        auto selected=std::move(actions.front());decision.action=std::move(selected.action);decision.subject=std::move(selected.subject);
+        auto selected_index=std::size_t{0};
+        if(rival_policy_enabled()) {
+            const auto teacher=rival_action_slot(actions.front().action);
+            RivalLearningSample sample{rival_policy_observation(world,rival,observation),static_cast<std::uint16_t>(teacher),1U};
+            for(const auto& candidate:actions) {
+                const auto slot=rival_action_slot(candidate.action);
+                if(slot<rival_policy_actions) sample.legal|=1U<<slot;
+            }
+            const auto chosen=select_rival_policy_action(sample);
+            if(chosen==0) selected_index=actions.size();
+            else {
+                const auto selected=std::ranges::find_if(actions,[&](const auto& row){return rival_action_slot(row.action)==chosen;});
+                if(selected!=actions.end()) selected_index=static_cast<std::size_t>(selected-actions.begin());
+            }
+        }
+        if(selected_index<actions.size()) {
+        auto selected=std::move(actions[selected_index]);decision.action=std::move(selected.action);decision.subject=std::move(selected.subject);
         decision.accepted=submit(rival,std::move(selected.command),&decision.explanation);
         rival.attempted=true;
+        }
     }
     plan.decisions.push_back(std::move(decision));plan.next_review=advance_days(plan.next_review,world.competition->setup->review_interval);
 }

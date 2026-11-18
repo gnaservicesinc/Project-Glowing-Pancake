@@ -156,6 +156,37 @@ int main() {
         refuse(core::StartResearch{specialized, local}, "evaluation station");
         hq(core::PlaceHQEquipment{4, 0, 0, 3, false});
         apply(core::StartResearch{specialized, local});
+        {
+            const std::string active_project = state().lab->research.back().project_id;
+            auto hw = state();
+            std::string founder_id = "founder";
+            for (const auto &emp : hw.management->people->employees)
+                if (emp.terms.profile.role == "Founder / researcher") {founder_id = emp.terms.profile.id; break;}
+            auto alloc = local;
+            alloc.staff = 1;
+            alloc.researchers = {founder_id};
+            hw.management->people->talent->founder_genius = true;
+            hw.management->people->talent->founder_skills = {"soldering"};
+            const auto workers = core::research_workers(hw, active_project);
+            const auto founder_w = std::ranges::find(workers, founder_id, &core::ResearchWorker::id);
+            if (founder_w == workers.end() || !founder_w->unavailable.empty())
+                throw std::runtime_error("Soldering plus Actual Genius must qualify for hardware lab work: " +
+                                         (founder_w == workers.end() ? std::string{"missing founder"} : founder_w->unavailable));
+            if (!core::research_workplace_blocker(hw, specialized, alloc, active_project).empty())
+                throw std::runtime_error("Soldering plus Actual Genius must be unblocked when required lab equipment is placed.");
+            if (core::research_equipment(hw, batched).empty() &&
+                core::research_workplace_blocker(hw, batched, alloc, active_project).empty())
+                throw std::runtime_error("Soldering plus Actual Genius must not qualify for non-equipment theory research.");
+            auto missing_eq = hw;
+            for (auto &item : missing_eq.infrastructure->workplace->headquarters->items)
+                if (item.offer == "evaluation") item.premises = 0;
+            if (core::research_workplace_blocker(missing_eq, specialized, alloc, active_project).empty())
+                throw std::runtime_error("Hardware specialist qualification must still enforce placed HQ equipment prerequisites.");
+            hw.management->people->talent->founder_genius = false;
+            hw.management->people->talent->founder_skills = {"cpu_design"};
+            if (!core::research_workplace_blocker(hw, specialized, alloc, active_project).empty())
+                throw std::runtime_error("Hardware engineering skill (cpu_design) must qualify when equipment is placed.");
+        }
         exact_save();
         std::cout << "Named labor, prerequisites, equipment, paid compute, independent work budgets, power loss and "
                      "innovation fees, equipment, strict level prerequisites, dated serving savings and fresh saves passed\n";
