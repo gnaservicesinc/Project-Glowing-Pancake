@@ -4,6 +4,20 @@ Baseline 1.3 · 2026-11-07
 
 ## Source authority
 
+The 2026-11-18 playtest feedback and clarification select
+[devices, inherited companies and an unfinished research frontier](DEVICE_RESEARCH_REDESIGN.md).
+This newer direction supersedes conflicting older founding/interface/data/tree
+assumptions. Existing-company appointments inherit mission and bylaws; rewriting
+them requires actual control and creates survivable consequences. Applications
+inhabit the protagonist's actual devices with independent saved workspaces and
+windowed popouts; direct management tools remain accessible through the menu
+bar. Data is needed for training and explicitly data-dependent research, with
+source, processing, rights and creative production represented separately.
+Research can produce PoC models and shapes product possibilities. The tree is
+not intended to be completed. “More complex backend” means a richer local
+simulation and state model; the offline/no-server boundary still applies.
+These are selected design requirements, not a claim of completed implementation.
+
 The latest 2026-11-07 request selects the new campaign/opening direction and
 authorizes reviewing, revising and expanding the technology proposals. The
 user clarified that the campaign ends at 118, with optional post-game play.

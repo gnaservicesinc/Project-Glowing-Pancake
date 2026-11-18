@@ -9,6 +9,15 @@ that review.
 
 ## Qt playability feedback
 
+The 2026-11-18 [device and research redesign](DEVICE_RESEARCH_REDESIGN.md)
+records the latest selected feedback. **F-08A–F-08F are planned, not implemented**:
+inherited CEO terms and control, physical device/app workspaces and popouts,
+usable research applications, source/processing/creative data and PoC models,
+an unfinished research frontier, and the wider app/industry integration.
+The implementation order and end-to-end acceptance paths are in that plan.
+Earlier interface completion statements describe engineering coverage; the
+current human feedback reopens usability and these simulation contracts.
+
 Implemented the staffed Alder Research opening, trait-driven desk conversations,
 a branching newsroom investigation and an earned public reading. The industry
 wire carries actual rival activity. Content Studio supports editing throughout

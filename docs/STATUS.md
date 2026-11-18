@@ -4,6 +4,15 @@ Updated 2026-11-18
 
 ## Implementation progress
 
+The latest 2026-11-18 human feedback selects the
+[device, company and research redesign](DEVICE_RESEARCH_REDESIGN.md).
+This is a design/implementation plan; F-08A–F-08F remain unimplemented.
+It requires inherited CEO missions/bylaws and actual control to change them,
+real device-specific app workspaces and detached windows, usable graphical
+applications, source/processing-based data with creative production and PoC
+research, and a broad research frontier that cannot be completed.
+Existing rendered checks do not establish acceptance of the current interface.
+
 **The initial skeleton phase is complete and closed for human feedback.**
 
 The user accepted the current core as the starting point for the next phase
