@@ -236,7 +236,7 @@ QVariantList ManagementController::researchGraph() const {
         const auto pacing=core::research_pacing(lab,*s.capacity,topic.id,s.date);
         const bool missing=pacing.missing_groups!=0;
         const bool locked =
-            pacing.threshold==UINT32_MAX ||
+            pacing.threshold==UINT32_MAX || !core::research_followup_blocker(lab, *s.capacity, topic, s.date).empty() ||
             !core::frontier_technology_block(s, core::FrontierTechnology::research, topic.id, s.date).empty();
         QString status = locked ? QStringLiteral("locked") : missing ? QStringLiteral("creative") : QStringLiteral("ready");
         const bool licensed_active = has_access(lab, *s.capacity, topic.id, s.date) && results(lab, topic.id) == 0;
@@ -308,8 +308,10 @@ QVariantMap ManagementController::researchTopic(QString id) const {
     const bool active = work && work->status == core::ProjectStatus::active;
     const bool paused = work && work->status == core::ProjectStatus::paused;
     const bool completed = results(*s.lab, topic->id) >= topic->repeat_limit;
-    const bool licensed_active = has_access(*s.lab, *s.capacity, topic->id, s.date) && !completed;
-    QString why;
+    const bool licensed_active = std::ranges::any_of(s.lab->tech_licenses, [&](const auto& license) {
+        return license.research_id == topic->id && license.active_on <= s.date && s.date < license.expires_on;
+    });
+    QString why = q(core::research_followup_blocker(*s.lab, *s.capacity, *topic, s.date));
     if (!technology.empty())
         why = q(technology);
     else if (core::research_creativity_threshold(*s.lab,*s.capacity,topic->id,s.date)==UINT32_MAX) {
@@ -364,6 +366,9 @@ QVariantMap ManagementController::researchTopic(QString id) const {
             .arg(q(terms->name)).arg(static_cast<double>(amount.value())/100.0));
     }
     const auto &te = topic->technical_effect;
+    if (te.observation_interval_days)
+        effects.push_back(tr("First-wave gains are listed below. Follow-ups use a new %1-day observation window. Wave two adds a quarter of the first gain, wave three a ninth. Completed waves: %2.")
+            .arg(te.observation_interval_days).arg(results(*s.lab, topic->id)));
     if (te.data_efficiency_bp > 0)
         effects.push_back(tr("Data efficiency · +%1% sample effectiveness during model training").arg(static_cast<double>(te.data_efficiency_bp)/100.0, 0, 'f', 1));
     if (te.compute_efficiency_bp > 0)

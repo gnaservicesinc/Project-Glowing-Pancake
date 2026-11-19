@@ -1,6 +1,6 @@
 # Devices, inherited companies and an unfinished research frontier
 
-Mac implementation · F-08A–F-08F · content 0.84.0-dev.1, generation 88. Independent player review remains open.
+Mac implementation · F-08A–F-08F · content 0.85.0-dev.1, generation 89. Independent player review remains open.
 
 This records the user's current playtest feedback and their clarification that
 the technology tree cannot be finished and is not meant to be finished. It
@@ -343,7 +343,9 @@ design requirement.
 | Physical devices | Each available phone, tablet, laptop or HQ machine has its own apps and drafts. Docking and popping out use the same saved device identity. Direct management is also available from the main window. |
 | Research | The graph and list share selection, filters and project details. A proposal names its team, capacity, datasets and costs. A changed company revision requires another confirmation. |
 | Data and models | Acquisitions, processing and paid creative work produce distinct corpora. Required domains, quality and unique records constrain experiments. Proof-of-concept models carry source lineage into production work. |
-| Technologies and licensing | The founder scenario offers 138 research topics with alternatives, efficiency effects and bounded refinements. Licensing has a price, integration period and expiration. |
+| Technologies and licensing | The founder scenario offers 141 research topics with alternatives, efficiency effects and bounded refinements. Licensing has a price, integration period and expiration. |
 | Company and industry | Device apps expose data, training, deployment and accounts. Publications and deployed services advance the observed industry stage. |
+
+Three optional field studies follow sampling panels, hardware replacement and service drift. Each starts with an empirical result. Later waves need a qualifying dataset delivered after the previous result and at least 3,652 days between observations. The first wave gives 360 basis points in its specialty. The next two add 90 and 40. The twelfth wave requires at least 40,172 days from the first result, longer than the founder scenario from 2015 through 2096, even with unlimited staffing and compute. Each study stands on its own and ordinary research can continue between waves.
 
 Independent player sessions and balance across founding strategies remain in the [backlog](BACKLOG.md).

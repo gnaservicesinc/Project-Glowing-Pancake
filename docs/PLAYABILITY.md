@@ -11,6 +11,8 @@ For a direct start, open **Playtest Environment → Custom playtest setup & star
 3. In **Models**, choose a recipe and balance source weights against sample coverage. Train the model and evaluate it. Some research produces an early demonstration model that can seed later production training.
 4. In **Products**, review evidence and commercial rights before deploying. In **Accounts**, select a spending category to inspect its ledger entries. Personal education debt belongs in **My life**.
 
+Longitudinal sampling, hardware turnover and service drift studies show when the next observation window opens. Acquire or produce a qualifying dataset after the previous result, then return to the same topic. Each follow-up gives a smaller improvement to future models.
+
 Each physical device remembers its open apps, drafts and research selection. Use **Desktop** to switch apps and **Pop out** to move a device to a separate window. Direct management is available from the main window. A failed or powered-off device keeps its workspace.
 
 ## Design activities

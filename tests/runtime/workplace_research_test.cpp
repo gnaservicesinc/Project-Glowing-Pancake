@@ -1,3 +1,4 @@
+#include <pgp/core/research_data.hpp>
 #include <pgp/core/workplace_research.hpp>
 #include <pgp/persistence/save.hpp>
 #include <pgp/runtime/scenario.hpp>
@@ -227,6 +228,45 @@ int main() {
             for (int n = 0; n < 25 && project(state().lab->research.back().project_id).status == core::ProjectStatus::active; ++n)
                 advance(1);
             check(state().lab->research.back().completed, "Data-dependent research completes once qualifying dataset is supplied.");
+
+            {
+                runtime::Runtime panel{program, game.current_state()};
+                const auto snapshot = [&]() -> const auto& { return panel.current_state().world.simulation; };
+                const auto act = [&](core::CommandAction action) {
+                    return panel.submit({snapshot().revision, std::move(action)});
+                };
+                const std::string id = "research.data.longitudinal_sampling";
+                check(act(core::StartResearch{id, empirical_alloc}).accepted(), "A qualified panel can collect its first wave.");
+                for (int n = 0; n < 30 && !snapshot().lab->research.back().completed; ++n)
+                    check(act(core::AdvanceDay{}).accepted(), "Observation research progresses with real staff and compute.");
+                const auto& world = snapshot();
+                const auto& lab = *world.lab;
+                const auto& cap = *world.capacity;
+                const auto& topic = *std::ranges::find(lab.catalog.research, id, &core::LabResearch::id);
+                check(lab.research.back().completed, "The first panel produces a settled result.");
+                const auto& work = *std::ranges::find(cap.projects, lab.research.back().project_id, &core::CapacityProject::id);
+                const auto interval = topic.technical_effect.observation_interval_days;
+                const auto opens = core::advance_days(*work.stopped_on, core::Days{interval});
+                check(interval && core::advance_days(scenario.starts_on, core::Days{interval * (topic.repeat_limit - 1)}) > scenario.ends_before,
+                      "Even immediate results and unlimited hiring cannot exhaust the study in one founder campaign.");
+                check(!core::research_followup_blocker(lab, cap, topic, core::advance_days(*work.stopped_on, core::Days{interval-1})).empty() &&
+                      core::research_followup_blocker(lab, cap, topic, opens).empty(), "Follow-up window opens on its exact date.");
+                check(!core::research_data_blocker(lab, cap, opens, topic, empirical_alloc.data_ids).empty(),
+                      "A second wave must bring new source material.");
+                check(core::research_effect_waves(lab, cap, topic, work.starts_on) == 0 &&
+                      core::research_effect_waves(lab, cap, topic, world.date) == 1 &&
+                      core::cumulative_research_effect(360, 3) == 490, "Historical research gains respect dates and diminish per wave.");
+                const auto saved = panel.current_state();
+                check(!act(core::StartResearch{id, empirical_alloc}).accepted() && panel.current_state() == saved,
+                      "An early follow-up cannot reserve staff, compute or cash.");
+                check(persistence::decode_save(program, persistence::encode_save(program, saved)).checkpoint == saved,
+                      "Observation windows and results survive a fresh save.");
+                check(act(core::BuyData{"data.company_internal_logs"}).accepted(), "Acquire a later field sample.");
+                const auto& later = snapshot();
+                const auto& followup = *std::ranges::find(later.lab->catalog.research, id, &core::LabResearch::id);
+                check(core::research_data_blocker(*later.lab, *later.capacity, opens, followup, {"data.company_internal_logs"}).empty(),
+                      "A sample delivered after the first result qualifies for the next wave.");
+            }
 
             // 3. Six data acquisition paths + Dataset Processing (volume vs quality, non-laundering of rights/provenance/controversy):
             apply(core::BuyData{"data.torrent_shadow_archive"});

@@ -10,7 +10,7 @@
     "music.weitblick": "9da14349e75eaa6e799a45522c2c8cb00046372efefd2a6121caf1959b10140b"
   },
   "content_schema": 1,
-  "content_version": "0.84.0-dev.1",
+  "content_version": "0.85.0-dev.1",
   "currency_basis": "constant_2014_cents",
   "definitions": [
     {
@@ -15428,6 +15428,30 @@
       "work_milli_CU": 105000
     },
     {
+      "cash_cents": 0,
+      "data_requirement": {
+        "minimum_quality_bp": 5000,
+        "minimum_unique_units": 50000,
+        "required": true
+      },
+      "id": "research.compute.fleet_turnover",
+      "kind": "research",
+      "prerequisites": {
+        "all_of": [
+          "research.compute.fallback_routing"
+        ],
+        "any_of": []
+      },
+      "repeat_limit": 12,
+      "revision": 1,
+      "staff_days": 14,
+      "technical_effect": {
+        "compute_efficiency_bp": 360,
+        "observation_interval_days": 3652
+      },
+      "work_milli_CU": 120000
+    },
+    {
       "cash_cents": 660000,
       "id": "research.compute.flexible_duty",
       "kind": "research",
@@ -15887,6 +15911,30 @@
         "data_efficiency_bp": 200
       },
       "work_milli_CU": 45000
+    },
+    {
+      "cash_cents": 0,
+      "data_requirement": {
+        "minimum_quality_bp": 5000,
+        "minimum_unique_units": 50000,
+        "required": true
+      },
+      "id": "research.data.longitudinal_sampling",
+      "kind": "research",
+      "prerequisites": {
+        "all_of": [
+          "research.data.empirical_scaling_laws"
+        ],
+        "any_of": []
+      },
+      "repeat_limit": 12,
+      "revision": 1,
+      "staff_days": 9,
+      "technical_effect": {
+        "data_efficiency_bp": 360,
+        "observation_interval_days": 3652
+      },
+      "work_milli_CU": 120000
     },
     {
       "cash_cents": 0,
@@ -17408,6 +17456,30 @@
         "robustness_bonus_bp": 600
       },
       "work_milli_CU": 210000
+    },
+    {
+      "cash_cents": 0,
+      "data_requirement": {
+        "minimum_quality_bp": 5000,
+        "minimum_unique_units": 50000,
+        "required": true
+      },
+      "id": "research.safety.service_drift",
+      "kind": "research",
+      "prerequisites": {
+        "all_of": [
+          "research.data.shift_watch"
+        ],
+        "any_of": []
+      },
+      "repeat_limit": 12,
+      "revision": 1,
+      "staff_days": 12,
+      "technical_effect": {
+        "observation_interval_days": 3652,
+        "robustness_bonus_bp": 360
+      },
+      "work_milli_CU": 120000
     },
     {
       "cash_cents": 0,
@@ -86328,6 +86400,7 @@
         "research.compute.deadline_batching",
         "research.compute.fabric_qos",
         "research.compute.fallback_routing",
+        "research.compute.fleet_turnover",
         "research.compute.flexible_duty",
         "research.compute.fused_attention_kernels",
         "research.compute.idle_replica_parking",
@@ -86356,6 +86429,7 @@
         "research.data.grid_normalization",
         "research.data.information_theoretic_pruning",
         "research.data.label_disagreement",
+        "research.data.longitudinal_sampling",
         "research.data.multilingual_alignment",
         "research.data.partition_audit",
         "research.data.provenance_watermarking",
@@ -86448,13 +86522,14 @@
         "research.safety.formal_tool_sandboxing",
         "research.safety.mechanistic_circuit_tracing",
         "research.safety.scalable_debate_oversight",
+        "research.safety.service_drift",
         "research.safety.unlearning_and_redaction",
         "research.safety.verification_refinement_1",
         "research.sequence_modeling",
         "research.workflow_verification"
       ],
       "resilience": "resilience.domestic",
-      "revision": 56,
+      "revision": 57,
       "rivals": [
         {
           "capacity_milli_CU_per_day": 380000,
@@ -107156,6 +107231,8 @@
     "research.compute.fabric_qos.title": "Shared fabric scheduling",
     "research.compute.fallback_routing.detail": "Send queued work to a second serving path when a replica goes offline and measure successful completions.",
     "research.compute.fallback_routing.title": "Service fallback routing",
+    "research.compute.fleet_turnover.detail": "Compare the same service across successive generations of field hardware. Learn which workload placements still save compute after a fleet replacement. Each follow-up needs a qualifying dataset delivered after the last wave.",
+    "research.compute.fleet_turnover.title": "Hardware turnover trials",
     "research.compute.flexible_duty.detail": "Unlocks the variable load and continuous duty racks.",
     "research.compute.flexible_duty.title": "Flexible duty scheduling",
     "research.compute.fused_attention_kernels.detail": "Keeps intermediate activations in SRAM to eliminate HBM bandwidth bottlenecks.",
@@ -107212,6 +107289,8 @@
     "research.data.information_theoretic_pruning.title": "Information-Theoretic Sample Pruning",
     "research.data.label_disagreement.detail": "Spend the review budget on records where annotators disagree. A smaller sample can then cover more of the hard cases.",
     "research.data.label_disagreement.title": "Disagreement sampling",
+    "research.data.longitudinal_sampling.detail": "Follow a document panel across collection waves. Measure which examples stay informative as language and readership change. Each follow-up needs a qualifying dataset delivered after the last wave.",
+    "research.data.longitudinal_sampling.title": "Longitudinal sampling panels",
     "research.data.multilingual_alignment.detail": "Aligns technical and civic terminology across regional document collections.",
     "research.data.multilingual_alignment.title": "Cross-Lingual Parallel Curation",
     "research.data.partition_audit.detail": "Trace a sample to its originating archive before assigning partitions.",
@@ -107384,6 +107463,8 @@
     "research.safety.mechanistic_circuit_tracing.title": "Mechanistic Feature & Circuit Tracing",
     "research.safety.scalable_debate_oversight.detail": "Pairs competing verifier models to expose subtle flaws in complex code and policy drafts.",
     "research.safety.scalable_debate_oversight.title": "Scalable Cross-Examination Oversight",
+    "research.safety.service_drift.detail": "Repeat the original evaluation against later field records. Use the recurring failure cases to improve the robustness of future models. Each follow-up needs a qualifying dataset delivered after the last wave.",
+    "research.safety.service_drift.title": "Long-term service drift",
     "research.safety.unlearning_and_redaction.detail": "Excises specific disputed or hazardous capabilities without degrading general task performance.",
     "research.safety.unlearning_and_redaction.title": "Targeted Concept Unlearning & Redaction",
     "research.safety.verification_refinement_1.detail": "Expanded property-based invariant fuzzing for deployed services.",

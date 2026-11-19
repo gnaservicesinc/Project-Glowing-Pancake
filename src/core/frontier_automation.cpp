@@ -143,6 +143,10 @@ bool run_research(SimulationState& state, std::size_t index, Cents protected_cas
         program.waiting="This topic already has work in progress.";
         return false;
     }
+    if (auto blocked = research_followup_blocker(*state.lab, *state.capacity, node, state.date); !blocked.empty()) {
+        program.waiting = std::move(blocked);
+        return false;
+    }
     if (auto blocked=frontier_technology_block(state,FrontierTechnology::research,node.id,state.date); !blocked.empty()) {
         program.waiting=std::move(blocked);
         return false;

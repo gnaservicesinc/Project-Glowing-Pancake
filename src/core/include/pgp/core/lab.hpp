@@ -84,6 +84,7 @@ struct ResearchTechnicalEffect {
     std::string deployment_setting_unlock{};
     std::string refinement_family{};
     std::uint32_t diminishing_tier = 0;
+    std::uint32_t observation_interval_days = 0;
     auto operator<=>(const ResearchTechnicalEffect&) const = default;
 };
 struct TechLicenseOffer {
@@ -456,6 +457,9 @@ void validate_lab(const LabState& state, const CapacityState& capacity, const Ac
 [[nodiscard]] LabProfile model_capability(const LabCatalog& catalog, const LabModel& model,
     std::span<const GeneratedDataset> generated={},std::span<const DataAcquisition> acquired={},
     std::span<const ProcessedDataset> processed={},std::span<const CreativeProductionJob> creative={});
+[[nodiscard]] std::string research_followup_blocker(const LabState&, const CapacityState&, const LabResearch&, OrdinalDay);
+[[nodiscard]] std::uint32_t research_effect_waves(const LabState&, const CapacityState&, const LabResearch&, OrdinalDay);
+[[nodiscard]] std::uint32_t cumulative_research_effect(std::uint32_t first_wave, std::uint32_t waves);
 [[nodiscard]] bool has_research_access(const LabState& state, const CapacityState& capacity, std::string_view research_id, OrdinalDay day);
 [[nodiscard]] std::pair<std::uint32_t, std::uint32_t> research_efficiency_bonuses(const LabState& state, const CapacityState& capacity, OrdinalDay day);
 [[nodiscard]] DataProcessingPreview preview_data_processing(const LabState& state, const CapacityState& capacity, const ProcessDataset& request);

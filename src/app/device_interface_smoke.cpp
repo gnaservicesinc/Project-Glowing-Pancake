@@ -194,15 +194,20 @@ void schedule_device_interface_smoke(QQuickWindow &window, pgp::bridge::Campaign
                 if (candidate->isVisible() && candidate->objectName().startsWith("detachedDeviceWindow_"))
                     native = qobject_cast<QQuickWindow*>(candidate);
             if (!native || !visible_item(native->contentItem(), "dataAppRoot")) { fail("Native window hosts the live corpus library"); return; }
-            const auto before = native;
             auto* tab = visible_item(native->contentItem(), "deviceTab_lab");
             if (!tab) { fail("Open research from detached switcher"); return; }
             tab->forceActiveFocus(Qt::TabFocusReason);
             QTest::keyClick(native, Qt::Key_Space);
-            if (!before->close() && activeApp("laptop") != "lab") { fail("Detached application selection"); return; }
+            if (activeApp("laptop") != "lab") { fail("Detached application selection"); return; }
+            native->close();
+            window.requestActivate();
             break;
         }
         case 14:
+            if (QGuiApplication::focusWindow() != &window) {
+                window.requestActivate();
+                return;
+            }
             if (activeApp("laptop") != "lab" || !item("technologyGraph")) { fail("Docked research resumes in the popup"); return; }
             if (!press("researchPopOutTree")) { fail("Expand the selected research tree"); return; }
             break;

@@ -118,7 +118,8 @@ std::string research_workplace_blocker(const SimulationState &state, std::string
         if(threshold==UINT32_MAX) return "Complete the required technology levels and prerequisites.";
         if(team.creativity<threshold) return "Team creativity is "+std::to_string(team.creativity)+" distinct traits; this research needs "+std::to_string(threshold)+". Add new perspectives or complete more prerequisites.";
         const auto node=std::ranges::find(state.lab->catalog.research,topic,&LabResearch::id);
-        if(node!=state.lab->catalog.research.end() && node->data_requirement.required) {
+        if(node!=state.lab->catalog.research.end()) {
+            if (const auto why = research_followup_blocker(*state.lab, *state.capacity, *node, state.date); !why.empty()) return why;
             if (const auto why = research_data_blocker(*state.lab, *state.capacity, state.date, *node, plan.data_ids); !why.empty()) return why;
         }
     }

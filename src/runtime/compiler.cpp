@@ -319,6 +319,7 @@ Json definition_json(const Definition& definition, const std::string& key) {
             if (!te.modality_unlock.empty()) tej["modality_unlock"] = te.modality_unlock;
             if (!te.deployment_setting_unlock.empty()) tej["deployment_setting_unlock"] = te.deployment_setting_unlock;
             if (!te.refinement_family.empty()) tej["refinement_family"] = te.refinement_family;
+            if (te.observation_interval_days) tej["observation_interval_days"] = te.observation_interval_days;
             if (te.diminishing_tier) tej["diminishing_tier"] = te.diminishing_tier;
             result["technical_effect"] = std::move(tej);
         }

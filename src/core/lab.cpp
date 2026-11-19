@@ -292,13 +292,41 @@ bool has_research_access(const LabState& state, const CapacityState& capacity, s
     return knowledge_on(state, capacity, research_id, day) || licensed_tech_on(state, research_id, day);
 }
 
+std::string research_followup_blocker(const LabState& lab, const CapacityState& capacity, const LabResearch& topic, OrdinalDay day) {
+    const auto interval = topic.technical_effect.observation_interval_days;
+    if (!interval) return {};
+    for (auto it = lab.research.rbegin(); it != lab.research.rend(); ++it) {
+        if (it->research_id != topic.id || !it->completed) continue;
+        const auto& work = find(capacity.projects, it->project_id);
+        const auto ready = advance_days(work.stopped_on.value(), Days{interval});
+        if (day < ready) return "The next observation window opens on " + iso_date(ready) + ".";
+        break;
+    }
+    return {};
+}
+
+std::uint32_t research_effect_waves(const LabState& lab, const CapacityState& capacity, const LabResearch& topic, OrdinalDay day) {
+    if (!topic.technical_effect.observation_interval_days)
+        return has_research_access(lab, capacity, topic.id, day) ? 1U : 0U;
+    const auto waves = std::ranges::count_if(lab.research, [&](const auto& run) {
+        return run.research_id == topic.id && run.completed && project_result_on(find(capacity.projects, run.project_id), day);
+    });
+    return std::max(static_cast<std::uint32_t>(waves), licensed_tech_on(lab, topic.id, day) ? 1U : 0U);
+}
+
+std::uint32_t cumulative_research_effect(std::uint32_t first_wave, std::uint32_t waves) {
+    std::uint32_t total = 0;
+    for (std::uint32_t i = 1; i <= waves; ++i) total += first_wave / (i * i);
+    return total;
+}
+
 std::pair<std::uint32_t, std::uint32_t> research_efficiency_bonuses(const LabState& state, const CapacityState& capacity, OrdinalDay day) {
     std::uint32_t data_bp = 0, compute_bp = 0;
     for (const auto& topic : state.catalog.research) {
         if (topic.technical_effect.data_efficiency_bp == 0 && topic.technical_effect.compute_efficiency_bp == 0) continue;
-        if (!has_research_access(state, capacity, topic.id, day)) continue;
-        data_bp = std::min<std::uint32_t>(4500, data_bp + topic.technical_effect.data_efficiency_bp);
-        compute_bp = std::min<std::uint32_t>(4000, compute_bp + topic.technical_effect.compute_efficiency_bp);
+        const auto waves = research_effect_waves(state, capacity, topic, day);
+        data_bp = std::min<std::uint32_t>(4500, data_bp + cumulative_research_effect(topic.technical_effect.data_efficiency_bp, waves));
+        compute_bp = std::min<std::uint32_t>(4000, compute_bp + cumulative_research_effect(topic.technical_effect.compute_efficiency_bp, waves));
     }
     return {data_bp, compute_bp};
 }
@@ -382,6 +410,9 @@ void validate_lab_catalog(const LabCatalog& catalog) {
             label(node.poc_spec.method_label);
             (void)find(catalog.recipes, node.poc_spec.recipe_id);
         }
+        const auto interval = node.technical_effect.observation_interval_days;
+        if (interval > 36525 || (interval && node.repeat_limit < 2))
+            invalid("Observation windows require a bounded repeatable study");
         if (node.technical_effect.data_efficiency_bp > 2500 || node.technical_effect.compute_efficiency_bp > 2500 ||
             node.technical_effect.latency_bonus_bp > 2000 || node.technical_effect.robustness_bonus_bp > 2000 ||
             node.technical_effect.diminishing_tier > 6)
@@ -630,15 +661,26 @@ std::string research_data_blocker(const LabState& state, const CapacityState& ca
     if (!topic.data_requirement.required) return {};
     if (ids.empty() || ids.size() > 16) return "Select one to sixteen owned datasets for this empirical topic.";
     std::set<std::string_view> distinct;
+    std::optional<OrdinalDay> prior_wave;
+    if (topic.technical_effect.observation_interval_days) {
+        for (const auto& run : state.research) {
+            if (run.research_id != topic.id || !run.completed) continue;
+            const auto& work = find(capacity.projects, run.project_id);
+            if (work.stopped_on && *work.stopped_on < day) prior_wave = work.stopped_on;
+        }
+    }
+    bool has_new_data = !prior_wave;
     std::uint64_t units = 0;
     for (const auto& id : ids) {
         if (!distinct.insert(id).second) return "Each dataset can contribute only once.";
         const auto date = data_available_on(state, capacity, id);
         if (!date || *date > day) return "Selected research data must be owned and delivered.";
+        if (prior_wave && *date > *prior_wave) has_new_data = true;
         const auto& data = lab_data(state, id);
         if (!research_data_fits(topic.data_requirement, data)) return "Selected research data needs the requested domain and quality.";
         units += data.unique_units;
     }
+    if (!has_new_data) return "Select a qualifying dataset delivered after the previous observation wave.";
     if (units < topic.data_requirement.minimum_unique_units) return "Select at least " +
         std::to_string(topic.data_requirement.minimum_unique_units) + " usable records for this research.";
     return {};
@@ -663,6 +705,8 @@ void start_research(LabState& state, AccountsState& accounts, CapacityState& cap
         has_failure = has_failure || run.failed;
         ++attempt;
     }
+    if (const auto why = research_followup_blocker(state, capacity, node, day); !why.empty())
+        throw std::invalid_argument(why);
     if (completed_runs>=node.repeat_limit) invalid("This topic has reached its limit for successful research results");
     if (state.research.size() >= lab_record_limit) invalid("Research run record limit was reached");
     if (allocation.staff == 0) invalid("Research needs assigned staff");
@@ -866,6 +910,7 @@ void validate_lab(const LabState& state, const CapacityState& capacity, const Ac
         std::size_t attempts = 0, successes = 0;
         bool failed = false;
         const CapacityProject* latest = nullptr;
+        std::optional<OrdinalDay> last_result;
     };
     std::map<std::string_view, TopicHistory> history;
     const auto payment = [&](std::string_view key, Cents cash, OrdinalDay day) {
@@ -886,9 +931,16 @@ void validate_lab(const LabState& state, const CapacityState& capacity, const Ac
         const auto& work = find(capacity.projects, run.project_id);
         auto& prior = history[node.id];
         if (prior.successes >= node.repeat_limit) invalid("Research exceeded its authored repetition limit");
+        if (prior.last_result && node.technical_effect.observation_interval_days &&
+            work.starts_on < advance_days(*prior.last_result, Days{node.technical_effect.observation_interval_days}))
+            invalid("Research follow-up precedes its observation window");
         if (prior.latest && (!prior.latest->stopped_on || *prior.latest->stopped_on > work.starts_on ||
             (prior.latest->status == ProjectStatus::completed && !project_result_on(*prior.latest,work.starts_on))))
             invalid("Research retry precedes the settled end of its previous attempt");
+        if (deep && node.technical_effect.observation_interval_days) {
+            const auto why = research_data_blocker(state, capacity, work.starts_on, node, run.data_ids);
+            if (!why.empty()) throw std::invalid_argument(why);
+        }
         const auto attempt = ++prior.attempts;
         const auto credit=insight_on(state,node.id,work.starts_on);
         const auto retry = node.setback && prior.failed && prior.successes == 0 ? node.setback->retry_credit : BasisPoints{0};
@@ -911,7 +963,10 @@ void validate_lab(const LabState& state, const CapacityState& capacity, const Ac
             invalid("Research progress or outcome differs from its settled work and accepted experiment terms");
         prior.latest = &work;
         prior.failed = prior.failed || run.failed;
-        if (run.completed) ++prior.successes;
+        if (run.completed) {
+            ++prior.successes;
+            prior.last_result = work.stopped_on;
+        }
         if (run.sponsored_fee.value()<0 || run.sponsored_fee>node.cash) invalid("Sponsored research exceeds the authored fee");
         const auto cash=checked_unit_subtract(node.cash,run.sponsored_fee);
         payment(work.id,cash,work.starts_on);

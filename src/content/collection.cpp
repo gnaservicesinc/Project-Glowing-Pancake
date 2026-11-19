@@ -1184,7 +1184,7 @@ ResearchDefinition research(const Json& value, const std::string& path) {
         const auto& te = value.at("technical_effect");
         const auto loc = child(path, "technical_effect");
         fields(te, loc, {"data_efficiency_bp", "compute_efficiency_bp", "latency_bonus_bp", "robustness_bonus_bp",
-                         "modality_unlock", "deployment_setting_unlock", "refinement_family", "diminishing_tier"}, {});
+                         "modality_unlock", "deployment_setting_unlock", "refinement_family", "diminishing_tier", "observation_interval_days"}, {});
         if (te.contains("data_efficiency_bp"))
             result.technical_effect.data_efficiency_bp = static_cast<std::uint32_t>(integer(te.at("data_efficiency_bp"), child(loc, "data_efficiency_bp"), 0, 2500));
         if (te.contains("compute_efficiency_bp"))
@@ -1199,6 +1199,8 @@ ResearchDefinition research(const Json& value, const std::string& path) {
             result.technical_effect.deployment_setting_unlock = text(te.at("deployment_setting_unlock"), child(loc, "deployment_setting_unlock"), 64);
         if (te.contains("refinement_family"))
             result.technical_effect.refinement_family = text(te.at("refinement_family"), child(loc, "refinement_family"), 64);
+        if (te.contains("observation_interval_days"))
+            result.technical_effect.observation_interval_days = positive(te.at("observation_interval_days"), child(loc, "observation_interval_days"), 36525);
         if (te.contains("diminishing_tier"))
             result.technical_effect.diminishing_tier = static_cast<std::uint32_t>(integer(te.at("diminishing_tier"), child(loc, "diminishing_tier"), 0, 6));
     }

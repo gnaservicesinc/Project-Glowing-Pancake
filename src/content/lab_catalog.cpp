@@ -213,6 +213,8 @@ core::LabCatalog load_lab_catalog(std::string_view bytes) {
             if (te.contains("modality_unlock")) topic.technical_effect.modality_unlock = text(te.at("modality_unlock"));
             if (te.contains("deployment_setting_unlock")) topic.technical_effect.deployment_setting_unlock = text(te.at("deployment_setting_unlock"));
             if (te.contains("refinement_family")) topic.technical_effect.refinement_family = text(te.at("refinement_family"));
+            if (te.contains("observation_interval_days"))
+                topic.technical_effect.observation_interval_days = static_cast<std::uint32_t>(integer(te.at("observation_interval_days")));
             if (te.contains("diminishing_tier")) topic.technical_effect.diminishing_tier = static_cast<std::uint32_t>(integer(te.at("diminishing_tier")));
         }
         if(row.contains("innovation")) {
@@ -329,6 +331,7 @@ std::string canonical_lab_catalog(const core::LabCatalog& catalog) {
             if (!te.modality_unlock.empty()) tej["modality_unlock"] = te.modality_unlock;
             if (!te.deployment_setting_unlock.empty()) tej["deployment_setting_unlock"] = te.deployment_setting_unlock;
             if (!te.refinement_family.empty()) tej["refinement_family"] = te.refinement_family;
+            if (te.observation_interval_days) tej["observation_interval_days"] = te.observation_interval_days;
             if (te.diminishing_tier) tej["diminishing_tier"] = te.diminishing_tier;
             research.back()["technical_effect"] = std::move(tej);
         }

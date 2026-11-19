@@ -110517,6 +110517,79 @@
         "prepared_headquarters": 24,
         "scenarios": 8
       }
+    },
+    {
+      "changed_definitions": [
+        {
+          "after_hash": "fd3ac4023248bff0762ae654f932d93b529d10b9a68cd8527f8e7c4e2776db2b",
+          "before_hash": null,
+          "change": "introduced",
+          "id": "research.compute.fleet_turnover",
+          "kind": "research",
+          "old_revision": null,
+          "revision": 1
+        },
+        {
+          "after_hash": "6f133551a3cd5e3a66567f9556b9ccea95bea3ca12d73aa009f3a70221d6ab48",
+          "before_hash": null,
+          "change": "introduced",
+          "id": "research.data.longitudinal_sampling",
+          "kind": "research",
+          "old_revision": null,
+          "revision": 1
+        },
+        {
+          "after_hash": "f26d0b0f8d0e17d6ebf67e69d9b990cf2267a5ec210d4701e447dad746a5eef7",
+          "before_hash": null,
+          "change": "introduced",
+          "id": "research.safety.service_drift",
+          "kind": "research",
+          "old_revision": null,
+          "revision": 1
+        },
+        {
+          "after_hash": "a3171d31314b4a6b48e884ee9ba6936701c130edd372e05e2af11dd3a17719d8",
+          "before_hash": "bf639fe1e189a9ed4aad1ae9b8567d1b1576b6d6183312f7e31862fdb4ab639f",
+          "change": "changed",
+          "id": "scenario.founder_campaign",
+          "kind": "scenario",
+          "old_revision": 56,
+          "revision": 57
+        }
+      ],
+      "changed_text_keys": [
+        "research.compute.fleet_turnover.detail",
+        "research.compute.fleet_turnover.title",
+        "research.data.longitudinal_sampling.detail",
+        "research.data.longitudinal_sampling.title",
+        "research.safety.service_drift.detail",
+        "research.safety.service_drift.title"
+      ],
+      "collection_hash": "b3d94f950ddc21692b61ef78dd9199d5e27f23fe8172d019019c92bf699ea547",
+      "compatibility": {
+        "content_schema": 1,
+        "save_format": 1,
+        "simulation_rules": 1
+      },
+      "content_version": "0.85.0-dev.1",
+      "game_version_at_finalization": "0.0.0-dev",
+      "generation": 89,
+      "minimum_game_change": "minor",
+      "previous_content_version": "0.84.0-dev.1",
+      "previous_snapshot": "authoring/snapshots/000088.collection.json",
+      "purpose": "internal-playtest",
+      "required_game_version": "0.1.0-dev.1",
+      "save_policy": "reject-prior-content",
+      "snapshot": "authoring/snapshots/000089.collection.json",
+      "summary": "Add longitudinal sampling, fleet turnover and service drift studies with dated follow-ups.",
+      "target": "data/runtime/first-playable.json",
+      "validation": {
+        "compiler": "shared-game-runtime",
+        "exact_prepared_save_roundtrips": 24,
+        "lints": [],
+        "prepared_headquarters": 24,
+        "scenarios": 8
+      }
     }
   ],
   "format": 1

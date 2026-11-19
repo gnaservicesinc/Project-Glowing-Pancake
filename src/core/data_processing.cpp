@@ -476,9 +476,10 @@ ProductTechnicalProfile product_technical_profile(const SimulationState& state, 
     for (const auto& topic : lab.catalog.research) {
         const auto& effects = topic.technical_effect;
         if (!effects.latency_bonus_bp && !effects.robustness_bonus_bp && effects.modality_unlock.empty() && effects.deployment_setting_unlock.empty()) continue;
-        if (!has_research_access(lab, *state.capacity, topic.id, mit->created_on)) continue;
-        lat = std::min<std::uint32_t>(3500, lat + topic.technical_effect.latency_bonus_bp);
-        rob = std::min<std::uint32_t>(3500, rob + topic.technical_effect.robustness_bonus_bp);
+        const auto waves = research_effect_waves(lab, *state.capacity, topic, mit->created_on);
+        if (!waves) continue;
+        lat = std::min<std::uint32_t>(3500, lat + cumulative_research_effect(effects.latency_bonus_bp, waves));
+        rob = std::min<std::uint32_t>(3500, rob + cumulative_research_effect(effects.robustness_bonus_bp, waves));
         if (!topic.technical_effect.modality_unlock.empty()) mods.insert(topic.technical_effect.modality_unlock);
         if (!topic.technical_effect.deployment_setting_unlock.empty()) settings.insert(topic.technical_effect.deployment_setting_unlock);
     }

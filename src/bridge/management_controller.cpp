@@ -487,6 +487,11 @@ QString research_status(const core::LabState& lab,const core::CapacityState& cap
         stopped=true;
     }
     if (completed>=topic.repeat_limit) return QStringLiteral("Completed");
+    if (completed && topic.technical_effect.observation_interval_days) {
+        const auto today = lab.closed_through ? core::advance_days(*lab.closed_through, core::Days{1}) : lab.starts_on;
+        const auto wait = core::research_followup_blocker(lab, capacity, topic, today);
+        if (!wait.empty()) return QString::fromStdString(wait);
+    }
     if (completed>0) return QStringLiteral("Repeat available · %1 of %2 complete").arg(completed).arg(topic.repeat_limit);
     if (failed) return lab.catalog.research_workplaces?QStringLiteral("Setback · retry available"):QStringLiteral("Setback · paid retry available");
     return stopped?QStringLiteral("Stopped; retry available"):QStringLiteral("Available to research");
