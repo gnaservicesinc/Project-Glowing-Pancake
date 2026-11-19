@@ -3,7 +3,7 @@ add_library(pgp_runtime STATIC compiler.cpp runtime.cpp world.cpp scenario.cpp c
     authority.cpp authority_queries.cpp authority_validation.cpp legacy.cpp
     objectives.cpp objectives_sources.cpp objective_finance.cpp career.cpp career_transitions.cpp campaign_facts.cpp)
 if(NOT PGP_DISTRIBUTION)
-    target_sources(pgp_runtime PRIVATE playtest.cpp)
+    target_sources(pgp_runtime PRIVATE playtest.cpp playtest_setup.cpp)
 endif()
 if(APPLE)
     target_sources(pgp_runtime PRIVATE rival_policy_metal.mm)

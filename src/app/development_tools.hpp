@@ -15,7 +15,7 @@ public:
     [[nodiscard]] QString message() const { return message_; }
     Q_INVOKABLE bool selectCheckout(const QUrl& folder);
     Q_INVOKABLE bool openContentStudio();
-    Q_INVOKABLE bool openGodMode();
+    Q_INVOKABLE bool openGodMode(bool showSetup = false);
 
 signals:
     void changed();

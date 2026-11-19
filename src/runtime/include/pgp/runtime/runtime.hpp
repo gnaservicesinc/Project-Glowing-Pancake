@@ -67,6 +67,8 @@ struct WorldState {
     std::optional<core::FamilyState> family{};
     bool developer_playtest = false;
     bool playtest_unlimited = false;
+    bool playtest_custom = false;
+    int starting_industry_stage = 0;
     auto operator<=>(const WorldState&) const = default;
 };
 

@@ -1,6 +1,7 @@
 #include <pgp/runtime/scenario.hpp>
 #include <pgp/persistence/save.hpp>
 #include <algorithm>
+#include <nlohmann/json.hpp>
 #include <iostream>
 #include <stdexcept>
 namespace {
@@ -10,9 +11,13 @@ template<class F> void refuses(F f) {try{f();}catch(const std::exception&){retur
 }
 int main() {
     try {
-        const auto registry=content::foundation_registry();const auto program=runtime::compile_collection(content::load_collection(persistence::read_bounded(PGP_WORKPLACE_SOURCE,content::maximum_document_bytes),registry),registry);
+        auto fixture=nlohmann::json::parse(persistence::read_bounded(PGP_WORKPLACE_SOURCE,content::maximum_document_bytes));
+        for(auto& definition:fixture["definitions"]) if(definition["id"]=="scenario.founder_campaign")
+            definition["founding"]["opening"]={{"inherited_staff",3},{"cofounder_staff",1},{"ceo_equity_bp",500}};
+        const auto registry=content::foundation_registry();
+        const auto program=runtime::compile_collection(content::load_collection(fixture.dump(),registry),registry);
         const auto& definition=std::get<content::ScenarioDefinition>(program.collection.find("scenario.founder_campaign")->data);
-        content::FoundingSelection selected;selected.family="rich";selected.office="home";
+        content::FoundingSelection selected;selected.family="rich";selected.office="home";selected.route="bootstrap";
         for(const auto& chapter:definition.founding->scenes) selected.choices.emplace(chapter.id,chapter.choices.front().id);
         runtime::ScenarioOptions options;options.founding=selected;options.identity=runtime::CampaignIdentity{"Workplace test","Alex Vale","they/them"};
         runtime::Runtime live{program,runtime::begin_scenario(program,"scenario.founder_campaign","US-CA",core::ObjectiveSelection{core::ObjectiveKind::survival,{}},options)};

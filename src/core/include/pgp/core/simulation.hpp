@@ -175,14 +175,14 @@ struct CheckpointModel { std::string source_id,id; };
 struct StartEvaluation { std::string id, model_id, plan_id; LabAllocation allocation; std::string specialist_id{}; };
 struct AcceptBusinessOffer { std::string id; };
 struct AddMarketDemandChange { MarketDemandChange change; };
-using CommandAction = std::variant<ChangeCompanyMission,RespondToMissionConcern,Socialize,ManageTalent,ManagePeopleContact,ManagePersonalLife,ManageRecruitment,ManageHeadquarters,AssignOperationsManager, OpenLiaisonOffice, CloseLiaisonOffice, BuyPersonalDevice, ServicePersonalDevice, SetDevicePower, RetirePersonalDevice, ExpandHeadquarters, CreateFacilityBlueprint, BuildFromBlueprint, HireEmployee, SetRecruitingTerms, ReserveFunds, ConsumeReservation, CancelReservation,
+using CommandAction = std::variant<ChangeCompanyMission,RespondToMissionConcern,RespondToMissionScandal,AcquireCompanyControl,Socialize,ManageTalent,ManagePeopleContact,ManagePersonalLife,ManageRecruitment,ManageHeadquarters,AssignOperationsManager, OpenLiaisonOffice, CloseLiaisonOffice, BuyPersonalDevice, ServicePersonalDevice, SetDevicePower, RetirePersonalDevice, ExpandHeadquarters, CreateFacilityBlueprint, BuildFromBlueprint, HireEmployee, SetRecruitingTerms, ReserveFunds, ConsumeReservation, CancelReservation,
                                    AdvanceDay, SetPaused, ResolveOpeningChoice,
                                    AddRecurringObligation, IssueInvoice, SettleInvoice,
                                    DrawDebt, RepayDebt, InvestEquity,
                                    ReserveProject, CancelProject, PauseProject, ResumeProject, WithdrawOperations, SetEffectiveCapacity,
                                    EnableMarket, AddMarketProduct, AddMarketSegment, AddMarketPreference,
                                    SetMarketProductAvailable, SetMarketPrice, SetServiceWaitlist, AcceptContract, StartContract, CancelContract,
-                                   AcknowledgeLiquidityWarning, BuyData, StartResearch, PublishResearch, AcquireResearchInsight, StartTraining, GenerateDataset, StartDataAcquisition, CloneModel, CheckpointModel, StartEvaluation,
+                                   AcknowledgeLiquidityWarning, BuyData, StartResearch, PublishResearch, AcquireResearchInsight, StartTraining, GenerateDataset, StartDataAcquisition, ProcessDataset, StartCreativeProduction, LicenseTechnology, RenewTechLicense, CloneModel, CheckpointModel, StartEvaluation,
                                    AcceptBusinessOffer, AddMarketDemandChange, DeployModel, StageServiceRollout, FinishServiceRollout, RollbackService,
                                    CommitServiceCompatibility, AnnounceServiceRetirement,
                                    TakeFinancing,HireSpecialist,AddDelegationPolicy,SetDelegationEnabled,ReviewDelegation,AcknowledgeManagementNotice,RenewComputeLease,

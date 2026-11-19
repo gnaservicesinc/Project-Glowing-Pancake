@@ -137,6 +137,27 @@ struct PublicFiling {
     [[nodiscard]] Cents profit() const {return checked_unit_subtract(revenue,expenses);}
     auto operator<=>(const PublicFiling&) const = default;
 };
+struct ControlTransfer {
+    std::string id,kind,seller;
+    OrdinalDay day{0};
+    BasisPoints shares{0};
+    std::uint32_t transferred_seats=0;
+    Cents personal_price{0},company_fee{0};
+    bool voting_granted=false;
+    auto operator<=>(const ControlTransfer&) const = default;
+};
+struct CompanyAuthoritySummary {
+    bool inherited_company=false;
+    BasisPoints player_economic_bp{0};
+    BasisPoints seller_economic_bp{0};
+    std::uint32_t player_voting_seats=0,total_voting_seats=0;
+    bool has_economic_control=false,has_voting_control=false,can_change_mission=false;
+    bool can_buy_economic_stake=false,can_acquire_voting_control=false;
+    BasisPoints economic_buyout_shares{0};
+    std::uint32_t voting_transfer_seats=0;
+    Cents economic_buyout_price{0},voting_control_price{0},voting_company_fee{0};
+    std::string authority_blocker,charter_constraints;
+};
 struct ListingQualification {
     OrdinalDay eligible_on{0};
     Cents revenue{0},profit{0};
@@ -151,6 +172,7 @@ struct GovernanceState {
     std::vector<CorporateDispute> disputes;
     std::vector<CharterChange> charters{};
     PagedHistory<PublicFiling,16> public_filings;
+    std::vector<ControlTransfer> control_transfers{};
     auto operator<=>(const GovernanceState&) const = default;
 };
 struct NegotiateCorporateFinance { std::string terms_id; };
@@ -161,6 +183,7 @@ struct VoteBoardMotion { std::string id;bool support=false; };
 struct RespondCorporateDispute { std::string id;bool buy_waiver=false; };
 struct TransferCompanyOwnership { std::string parent; };
 struct TransferGroupFunds { std::string parent,target;std::uint32_t sequence=0;Cents amount{0};bool funding=false,parent_leg=false; };
+struct AcquireCompanyControl { std::string step; };
 
 void validate_governance_catalog(const GovernanceCatalog&);
 [[nodiscard]] bool nonprofit_organization(const SimulationState&);
@@ -174,6 +197,8 @@ void close_public_reporting_day(SimulationState&);
 [[nodiscard]] BasisPoints unallocated_option_pool(const SimulationState&);
 [[nodiscard]] std::vector<BoardMember> current_board(const SimulationState&);
 [[nodiscard]] std::vector<EquityHolding> corporate_holdings_before(const SimulationState&,OrdinalDay);
+[[nodiscard]] CompanyAuthoritySummary company_authority(const SimulationState&);
+void acquire_company_control(SimulationState&,const AcquireCompanyControl&,Cents protected_cash);
 void transfer_to_acquirer(SimulationState&,std::string buyer,Cents consideration,Cents founder_proceeds,std::string key);
 void company_equity(SimulationState&,std::string investor,Cents proceeds,BasisPoints acquired,std::string key,bool assets=false);
 void negotiate_corporate_finance(SimulationState&,std::string_view,bool from_contact=false);

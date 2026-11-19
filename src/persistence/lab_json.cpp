@@ -34,12 +34,22 @@ Json lab_json(const core::LabState& state) {
         if (!row.researchers.empty()) research.back()["researchers"]=row.researchers;
         if (!row.original_traits.empty()) research.back()["original_traits"]=row.original_traits;
         if(row.cooperation)research.back()["cooperation"]={{"agreement",row.cooperation->agreement},{"partner",row.cooperation->partner},{"credit",row.cooperation->credit.value()}};
+        if(!row.data_ids.empty())research.back()["data_ids"]=row.data_ids;
     }
     for (const auto& row : state.models) {models.push_back({{"id",row.id},{"recipe_id",row.recipe_id},{"parent_id",row.parent_id},{"project_id",row.project_id},
         {"data_ids",row.data_ids},{"created_on",row.created_on.value()},{"inherited_work_milli_CU",row.inherited_work.value()},
         {"consumed_work_milli_CU",row.consumed_work.value()},{"capability_bp",lab_profile_json(row.capability)}});
         if(!row.data_weights.empty())models.back()["data_weights"]=row.data_weights;
         if(row.checkpoint_cursor) models.back()["checkpoint_cursor"]=*row.checkpoint_cursor;
+        if(row.is_proof_of_concept) {
+            models.back()["is_proof_of_concept"]=true;
+            models.back()["origin_research_id"]=row.origin_research_id;
+            models.back()["task_scope"]=row.task_scope;
+            models.back()["method_label"]=row.method_label;
+            models.back()["authors"]=row.authors;
+        }
+        if(row.data_efficiency_bp) models.back()["data_efficiency_bp"]=row.data_efficiency_bp;
+        if(row.compute_efficiency_bp) models.back()["compute_efficiency_bp"]=row.compute_efficiency_bp;
     }
     for (const auto& row : state.evaluations) evaluations.push_back({{"id",row.id},{"model_id",row.model_id},{"plan_id",row.plan_id},{"project_id",row.project_id},
         {"model_work_milli_CU",row.model_work.value()},{"completed",row.completed},{"measured_bp",lab_profile_json(row.measured)},
@@ -72,10 +82,35 @@ Json lab_json(const core::LabState& state) {
             if(job.output) rows.back()["output"]=data_offer_json(*job.output);
         }
     }
+    if(!state.processed.empty()) {
+        auto& rows=result["processed"]=Json::array();
+        for(const auto& job:state.processed) {
+            rows.push_back({{"id",job.id},{"source_dataset_id",job.source_dataset_id},{"operation",job.operation},
+                {"project_id",job.project_id},{"started_on",job.started_on.value()},{"fee_cents",job.fee.value()}});
+            if(job.output) rows.back()["output"]=data_offer_json(*job.output);
+        }
+    }
+    if(!state.creative_jobs.empty()) {
+        auto& rows=result["creative_jobs"]=Json::array();
+        for(const auto& job:state.creative_jobs) {
+            rows.push_back({{"id",job.id},{"domain",job.domain},{"project_id",job.project_id},
+                {"creatives",job.creatives},{"average_creative_skill",job.average_creative_skill},
+                {"started_on",job.started_on.value()},{"fee_cents",job.fee.value()},{"target_units",job.target_units}});
+            if(job.output) rows.back()["output"]=data_offer_json(*job.output);
+        }
+    }
+    if(!state.tech_licenses.empty()) {
+        auto& rows=result["tech_licenses"]=Json::array();
+        for(const auto& lic:state.tech_licenses) {
+            rows.push_back({{"offer_id",lic.offer_id},{"research_id",lic.research_id},{"licensor",lic.licensor},
+                {"starts_on",lic.starts_on.value()},{"active_on",lic.active_on.value()},{"expires_on",lic.expires_on.value()},
+                {"grants_discovery_credit",lic.grants_discovery_credit},{"renewals",lic.renewals}});
+        }
+    }
     return result;
 }
 core::LabState parse_lab(const Json& value) {
-    fields(value,"lab",{"owner","starts_on","closed_through","research_stream_origin","catalog","licenses","research","models","evaluations"},{"publications","insights","generated","acquisitions","setback_risk_scale_bp","research_work_scale_bp"});
+    fields(value,"lab",{"owner","starts_on","closed_through","research_stream_origin","catalog","licenses","research","models","evaluations"},{"publications","insights","generated","acquisitions","processed","creative_jobs","tech_licenses","setback_risk_scale_bp","research_work_scale_bp"});
     core::LabState state;
     if (value.contains("setback_risk_scale_bp")) state.setback_risk_scale_bp=core::BasisPoints{i64(value.at("setback_risk_scale_bp"),"lab/setback_risk_scale_bp")};
     if (value.contains("research_work_scale_bp")) state.research_work_scale_bp=core::BasisPoints{i64(value.at("research_work_scale_bp"),"lab/research_work_scale_bp")};
@@ -108,7 +143,7 @@ core::LabState parse_lab(const Json& value) {
         state.licenses.push_back({label(row.at("offer_id")),core::OrdinalDay{i64(row.at("acquired_on"),"lab/license/acquired_on")}});
     }
     for (const auto& row : value.at("research")) {
-        fields(row,"lab/research_run",{"research_id","project_id","completed"},{"insight_credit","sponsored_fee","failed","retry_credit","researchers","creativity","compatibility_bp","cooperation","original_traits"});
+        fields(row,"lab/research_run",{"research_id","project_id","completed"},{"insight_credit","sponsored_fee","failed","retry_credit","researchers","creativity","compatibility_bp","cooperation","original_traits","data_ids"});
         state.research.push_back({label(row.at("research_id")),label(row.at("project_id")),boolean(row.at("completed"),"lab/research_run/completed"),
             core::BasisPoints{row.contains("insight_credit")?i64(row.at("insight_credit"),"lab/research_run/insight_credit"):0},
             core::Cents{row.contains("sponsored_fee")?i64(row.at("sponsored_fee"),"lab/research_run/sponsored_fee"):0},
@@ -127,9 +162,10 @@ core::LabState parse_lab(const Json& value) {
             for(const auto& [id,traits]:original.items())
                 state.research.back().original_traits.emplace(id,strings(traits,32,80));
         }
+        if(row.contains("data_ids")) state.research.back().data_ids=strings(row.at("data_ids"),16,128);
     }
     for (const auto& row : value.at("models")) {
-        fields(row,"lab/model",{"id","recipe_id","parent_id","project_id","data_ids","created_on","inherited_work_milli_CU","consumed_work_milli_CU","capability_bp"},{"checkpoint_cursor","data_weights"});
+        fields(row,"lab/model",{"id","recipe_id","parent_id","project_id","data_ids","created_on","inherited_work_milli_CU","consumed_work_milli_CU","capability_bp"},{"checkpoint_cursor","data_weights","is_proof_of_concept","origin_research_id","task_scope","method_label","authors","data_efficiency_bp","compute_efficiency_bp"});
         state.models.push_back({label(row.at("id")),label(row.at("recipe_id")),label(row.at("parent_id"),true),label(row.at("project_id"),true),
             strings(row.at("data_ids"),core::lab_catalog_limit),core::OrdinalDay{i64(row.at("created_on"),"lab/model/created_on")},
             core::MilliCU{i64(row.at("inherited_work_milli_CU"),"lab/model/inherited_work")},
@@ -141,10 +177,19 @@ core::LabState parse_lab(const Json& value) {
                 state.models.back().data_weights.emplace(label(Json(id)),static_cast<std::uint32_t>(u64(value,"lab/model/data_weights",100)));
         }
         if(row.contains("checkpoint_cursor")) state.models.back().checkpoint_cursor=u64(row.at("checkpoint_cursor"),"lab/model/checkpoint_cursor",core::capacity_day_limit);
+        if(row.contains("is_proof_of_concept") && boolean(row.at("is_proof_of_concept"),"lab/model/poc")) {
+            state.models.back().is_proof_of_concept=true;
+            if(row.contains("origin_research_id")) state.models.back().origin_research_id=label(row.at("origin_research_id"),true);
+            if(row.contains("task_scope")) state.models.back().task_scope=label(row.at("task_scope"),true);
+            if(row.contains("method_label")) state.models.back().method_label=label(row.at("method_label"),true);
+            if(row.contains("authors")) state.models.back().authors=strings(row.at("authors"),32,64);
+        }
+        if(row.contains("data_efficiency_bp")) state.models.back().data_efficiency_bp=static_cast<std::uint32_t>(u64(row.at("data_efficiency_bp"),"lab/model/data_eff",4500));
+        if(row.contains("compute_efficiency_bp")) state.models.back().compute_efficiency_bp=static_cast<std::uint32_t>(u64(row.at("compute_efficiency_bp"),"lab/model/comp_eff",4000));
     }
     for (const auto& row : value.at("evaluations")) {
         fields(row,"lab/evidence",{"id","model_id","plan_id","project_id","model_work_milli_CU","completed","measured_bp","lower_bp","upper_bp","findings","stream_before","stream_after"});
-        state.evaluations.push_back({label(row.at("id")),label(row.at("model_id")),label(row.at("plan_id")),label(row.at("project_id")),
+        state.evaluations.push_back({label(row.at("id")),label(row.at("model_id")),label(row.at("plan_id")),label(row.at("project_id"),true),
             core::MilliCU{i64(row.at("model_work_milli_CU"),"lab/evidence/model_work")},boolean(row.at("completed"),"lab/evidence/completed"),
             parse_lab_profile(row.at("measured_bp")),parse_lab_profile(row.at("lower_bp")),parse_lab_profile(row.at("upper_bp")),
             strings(row.at("findings"),core::lab_domain_count,512),u64(row.at("stream_before"),"lab/stream_before"),u64(row.at("stream_after"),"lab/stream_after")});
@@ -170,6 +215,40 @@ core::LabState parse_lab(const Json& value) {
             if(row.contains("settled_deliveries")) job.settled_deliveries=u64(row.at("settled_deliveries"),"lab/acquisition/settled_deliveries");
             if(row.contains("output")) job.output=parse_data_offer(row.at("output"));
             state.acquisitions.push_back(std::move(job));
+        }
+    }
+    if(value.contains("processed")) {
+        array(value.at("processed"),"lab/processed",core::lab_record_limit);
+        for(const auto& row:value.at("processed")) {
+            fields(row,"lab/processed/dataset",{"id","source_dataset_id","operation","project_id","started_on","fee_cents"},{"output"});
+            state.processed.push_back({label(row.at("id")),label(row.at("source_dataset_id")),label(row.at("operation")),
+                label(row.at("project_id")),core::OrdinalDay{i64(row.at("started_on"),"lab/processed/started_on")},
+                core::Cents{i64(row.at("fee_cents"),"lab/processed/fee")},
+                row.contains("output")?std::optional{parse_data_offer(row.at("output"))}:std::nullopt});
+        }
+    }
+    if(value.contains("creative_jobs")) {
+        array(value.at("creative_jobs"),"lab/creative_jobs",core::lab_record_limit);
+        for(const auto& row:value.at("creative_jobs")) {
+            fields(row,"lab/creative_job",{"id","domain","project_id","creatives","average_creative_skill","started_on","fee_cents","target_units"},{"output"});
+            state.creative_jobs.push_back({label(row.at("id")),label(row.at("domain")),label(row.at("project_id")),
+                strings(row.at("creatives"),16,64),static_cast<std::uint32_t>(u64(row.at("average_creative_skill"),"creative skill",100)),
+                core::OrdinalDay{i64(row.at("started_on"),"lab/creative/started_on")},
+                core::Cents{i64(row.at("fee_cents"),"lab/creative/fee")},
+                u64(row.at("target_units"),"lab/creative/target_units",5'000'000),
+                row.contains("output")?std::optional{parse_data_offer(row.at("output"))}:std::nullopt});
+        }
+    }
+    if(value.contains("tech_licenses")) {
+        array(value.at("tech_licenses"),"lab/tech_licenses",core::lab_catalog_limit);
+        for(const auto& row:value.at("tech_licenses")) {
+            fields(row,"lab/tech_license",{"offer_id","research_id","licensor","starts_on","active_on","expires_on","grants_discovery_credit","renewals"});
+            state.tech_licenses.push_back({label(row.at("offer_id")),label(row.at("research_id")),label(row.at("licensor")),
+                core::OrdinalDay{i64(row.at("starts_on"),"lab/tech_license/starts_on")},
+                core::OrdinalDay{i64(row.at("active_on"),"lab/tech_license/active_on")},
+                core::OrdinalDay{i64(row.at("expires_on"),"lab/tech_license/expires_on")},
+                boolean(row.at("grants_discovery_credit"),"lab/tech_license/credit"),
+                static_cast<std::uint32_t>(u64(row.at("renewals"),"lab/tech_license/renewals",1000))});
         }
     }
     return state;

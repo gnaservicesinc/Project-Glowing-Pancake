@@ -96,11 +96,17 @@ public:
     Q_INVOKABLE void usePlaytestTool(QString tool,QString topic={});
     Q_INVOKABLE QVariantMap playtestFounder() const;
     Q_INVOKABLE void editPlaytestFounder(const QStringList& traits,bool genius);
+    Q_INVOKABLE QVariantMap playtestSetupCatalog() const;
+    Q_INVOKABLE QVariantMap playtestSetupDraft() const;
+    Q_INVOKABLE QVariantMap savePlaytestSetupDraft(QVariantMap draft) const;
+    Q_INVOKABLE QVariantMap resetPlaytestSetupDraft() const;
+    Q_INVOKABLE void startPlaytestCustom(QVariantMap draft);
 #endif
     CampaignController(runtime::CompiledProgram program, runtime::Checkpoint checkpoint,
                        persistence::LocalPaths paths, persistence::Settings initial_settings = {},
                        QObject* parent = nullptr, bool welcome = false, bool continuous = false);
     ~CampaignController() override;
+    Q_INVOKABLE ManagementController* createManagementView(QObject* owner);
     ManagementController* management() const { return management_; }
     InfrastructureController* infrastructure() const { return infrastructure_; }
     CivicController* civic() const { return civic_; }

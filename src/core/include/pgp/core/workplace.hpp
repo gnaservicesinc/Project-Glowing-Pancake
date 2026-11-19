@@ -61,6 +61,7 @@ std::uint32_t headquarters_seats(const SimulationState&);
 std::uint32_t headquarters_seats_used(const SimulationState&);
 void expand_headquarters(SimulationState&,const ExpandHeadquarters&,Cents protected_cash);
 void create_facility_blueprint(SimulationState&,const FacilityBlueprint&);
+BlueprintQuote preview_blueprint_design(const SimulationState&,const FacilityBlueprint&,const BuildFromBlueprint&);
 BlueprintQuote preview_blueprint_build(const SimulationState&,const BuildFromBlueprint&);
 void build_from_blueprint(SimulationState&,const BuildFromBlueprint&,Cents protected_cash);
 void validate_workplace(const SimulationState&,bool deep=true);

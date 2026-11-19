@@ -10,12 +10,33 @@ Json mission_json(const core::MissionConflictState& state) {
     for(const auto& [person,c]:state.concerns)
         concerns[person]={{"previous",c.previous_mission},{"next",c.new_mission},{"raised",c.raised_on.value()},{"affinity",c.previous_affinity},
             {"rivalry",date(c.rivalry_on)},{"heard",date(c.heard_on)},{"settled",date(c.settled_on)},{"mediator",c.mediator},{"frenemy",c.frenemy}};
-    return {{"mission",state.mission},{"since",state.committed_on.value()},{"concerns",std::move(concerns)}};
+    Json result{{"mission",state.mission},{"since",state.committed_on.value()},{"concerns",std::move(concerns)}};
+    if(state.inherited_purpose) result["inherited_purpose"]=true;
+    if(state.scandal) {
+        const auto& sc=*state.scandal;
+        result["scandal"]={{"previous",sc.previous_mission},{"next",sc.new_mission},{"triggered_on",sc.triggered_on.value()},
+            {"employee_morale_hit",sc.employee_morale_hit},{"donor_customer_reaction_bp",sc.donor_customer_reaction_bp},
+            {"investor_reaction_bp",sc.investor_reaction_bp},{"response",sc.response},{"responded_on",date(sc.responded_on)},
+            {"response_cost",sc.response_cost.value()}};
+    }
+    return result;
 }
 
 core::MissionConflictState parse_mission(const Json& j) {
-    fields(j,"mission",{"mission","since","concerns"});
+    fields(j,"mission",{"mission","since","concerns"},{"inherited_purpose","scandal"});
     core::MissionConflictState state{text(j.at("mission"),"mission",24),core::OrdinalDay{i64(j.at("since"),"commitment date")},{}};
+    if(j.contains("inherited_purpose")) state.inherited_purpose=boolean(j.at("inherited_purpose"),"inherited_purpose");
+    if(j.contains("scandal")) {
+        const auto& s=j.at("scandal");
+        fields(s,"mission scandal",{"previous","next","triggered_on","employee_morale_hit","donor_customer_reaction_bp","investor_reaction_bp","response","responded_on","response_cost"});
+        state.scandal=core::MissionReversalScandal{text(s.at("previous"),"scandal previous",24),text(s.at("next"),"scandal next",24),
+            core::OrdinalDay{i64(s.at("triggered_on"),"scandal triggered_on")},
+            static_cast<int>(i64(s.at("employee_morale_hit"),"scandal morale")),
+            static_cast<int>(i64(s.at("donor_customer_reaction_bp"),"scandal donor")),
+            static_cast<int>(i64(s.at("investor_reaction_bp"),"scandal investor")),
+            text(s.at("response"),"scandal response",48,true),optional_date(s.at("responded_on")),
+            core::Cents{i64(s.at("response_cost"),"scandal cost")}};
+    }
     const auto& concerns=j.at("concerns");
     if(!concerns.is_object() || concerns.size()>256)invalid("concerns","Too many mission concerns");
     for(const auto& [person,c]:concerns.items()) {

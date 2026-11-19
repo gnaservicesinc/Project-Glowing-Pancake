@@ -21,7 +21,25 @@ struct PersonalDevice {
     std::optional<OrdinalDay> retired_on;
     std::vector<DeviceService> services;
     bool playtest_delivery=false;
+    std::string owner; // "protagonist" for personal devices, "company" for company-owned purchases
     auto operator<=>(const PersonalDevice&) const = default;
+};
+struct PhysicalDeviceInfo {
+    std::string device_id;      // "personal/<id>" or "hq/<id>"
+    std::string kind;           // "phone", "laptop", "tablet", "desktop"
+    std::string name;           // Human-readable name distinguishing multiple physical units
+    std::string owner;          // "protagonist" or "company"
+    std::string location;       // "with you", "headquarters", "in transit", "in service", "retired", "storage"
+    bool portable = true;
+    bool powered = true;
+    bool available = false;
+    bool can_power = false;
+    bool can_service = false;
+    bool can_retire = false;
+    std::uint64_t numeric_id = 0;
+    std::string unavailability_reason;
+    std::vector<std::string> apps;
+    auto operator<=>(const PhysicalDeviceInfo&) const = default;
 };
 struct DeviceInventory {std::vector<PersonalDevice> records;auto operator<=>(const DeviceInventory&) const = default;};
 struct BuyPersonalDevice {std::string offer;};
@@ -34,6 +52,10 @@ bool device_functioning(const SimulationState&,const PersonalDevice&);
 bool device_available(const SimulationState&,const PersonalDevice&,bool at_headquarters);
 bool device_supports_app(const SimulationState&,std::string_view kind,std::string_view app);
 std::string resolve_app_device(const SimulationState&,std::string_view preferred,std::string_view app,bool at_headquarters);
+[[nodiscard]] std::vector<PhysicalDeviceInfo> physical_devices(const SimulationState&,bool at_headquarters);
+[[nodiscard]] std::optional<PhysicalDeviceInfo> inspect_physical_device(const SimulationState&,std::string_view device_id,bool at_headquarters);
+[[nodiscard]] bool physical_device_supports_app(const SimulationState&,std::string_view device_id,std::string_view app,bool at_headquarters);
+[[nodiscard]] std::string resolve_physical_app_device(const SimulationState&,std::string_view preferred_device_id,std::string_view app,bool at_headquarters);
 void buy_personal_device(SimulationState&,std::string_view,Cents protected_cash);
 void service_personal_device(SimulationState&,std::uint64_t,Cents protected_cash);
 void set_device_power(SimulationState&,const SetDevicePower&);

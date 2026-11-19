@@ -63,6 +63,22 @@ Applicant applicant(SimulationState& s,bool opening,std::string_view role_overri
         }
     }
     if(r.romance)initialize_romantic_profile(result.profile,p.stream,*r.romance);
+    {
+        SplitMix64 cr_rng{p.stream ^ UINT64_C(0x4352454154495645) ^ p.next_id};
+        if(role_override=="Data Creative" || (!opening && role_override.empty() && p.next_id>=10 && (p.next_id%4==0))) {
+            result.profile.role="Data Creative";
+            result.profile.creative=std::clamp<std::uint32_t>(68U+static_cast<std::uint32_t>(cr_rng.bounded(28)),65U,96U);
+        } else if(result.profile.role=="Data Creative" || result.profile.role=="Digital artist" || result.profile.role=="UI designer") {
+            result.profile.creative=std::clamp<std::uint32_t>(65U+static_cast<std::uint32_t>(cr_rng.bounded(30)),65U,96U);
+        } else {
+            const bool gifted=(p.next_id%2==0) || std::ranges::any_of(result.profile.skills,[](std::string_view sk){
+                return sk=="creative_writing" || sk=="digital_art" || sk=="ui_design";
+            });
+            result.profile.creative=gifted
+                ? std::clamp<std::uint32_t>(58U+static_cast<std::uint32_t>(cr_rng.bounded(32)),55U,92U)
+                : std::clamp<std::uint32_t>(20U+static_cast<std::uint32_t>(cr_rng.bounded(28)),15U,50U);
+        }
+    }
     p.stream=rng.state();return result;
 }
 void recruit(SimulationState& s) {
@@ -85,7 +101,7 @@ void profile_valid(const PersonProfile& p,OrdinalDay now) {
     if(!p.id.starts_with("employee/") || p.id.size()>64 || p.name.empty() || p.name.size()>128 ||
         p.gender.empty() || p.gender.size()>32 || p.pronouns.empty() || p.pronouns.size()>64 || p.education.size()>128 || p.role.size()>64 || p.bio.size()>512 ||
         p.birth_year>year-18 || p.birth_year<year-80 || p.experience>static_cast<unsigned>(year-p.birth_year-18) ||
-        p.research>100 || p.engineering>100 || p.evaluation>100 || p.mission_fit>100 || p.applied_on>now ||
+        p.research>100 || p.engineering>100 || p.evaluation>100 || p.creative>100 || p.mission_fit>100 || p.applied_on>now ||
         (p.preferred_mission!="research" && p.preferred_mission!="public benefit" && p.preferred_mission!="commercial"))
         invalid("Employee profile has an invalid identity, age, experience or skill.");
     for(const auto* value:{&p.id,&p.name,&p.gender,&p.pronouns,&p.education,&p.role,&p.bio})

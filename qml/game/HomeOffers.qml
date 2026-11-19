@@ -67,7 +67,7 @@ ColumnLayout {
 
     Heading {
         visible: !panel.selected
-        text: panel.mode === "labs" ? qsTr("Alder Research · Careers") : panel.mode === "investors" ? qsTr("Founders’ Exchange") : qsTr("Messages")
+        text: panel.mode === "labs" ? qsTr("Executive Careers · Existing Labs") : panel.mode === "investors" ? qsTr("Founders’ Exchange") : qsTr("Messages")
     }
     Copy {
         visible: panel.mode !== "messages" || (!panel.selected && panel.inbox.length === 0)

@@ -574,6 +574,8 @@ Json world_json(const WorldState& world) {
     if (world.family) result["family"]=detail::family_json(*world.family);
     if (world.developer_playtest) result["developer_playtest"]=true;
     if (world.playtest_unlimited) result["playtest_unlimited"]=true;
+    if (world.starting_industry_stage) result["starting_industry_stage"]=world.starting_industry_stage;
+    if (world.playtest_custom) result["playtest_custom"]=true;
     if (world.romance) result["romance"]=detail::romance_json(*world.romance);
     if (world.founding) result["founding"]=Json::parse(content::canonical_founding_selection(*world.founding));
     if (world.identity) result["identity"] = {{"company_name",world.identity->company_name},
@@ -587,7 +589,7 @@ WorldState parse_world(Json& value,const CompiledProgram& program) {
     for (const auto& [name,ignored]:value.items()) {
         (void)ignored;
         if (name!="variables" && name!="competition" && name!="competition_mode" && name!="scenario_id" && name!="society" &&
-            name!="authority" && name!="objectives" && name!="simulation_storage" && name!="identity" && name!="background" && name!="difficulty" && name!="founding" && name!="counties" && name!="romance" && name!="family" && name!="developer_playtest" && name!="playtest_unlimited") prior_shape[name]=nullptr;
+            name!="authority" && name!="objectives" && name!="simulation_storage" && name!="identity" && name!="background" && name!="difficulty" && name!="founding" && name!="counties" && name!="romance" && name!="family" && name!="developer_playtest" && name!="playtest_unlimited" && name!="starting_industry_stage" && name!="playtest_custom") prior_shape[name]=nullptr;
     }
     detail::fields(prior_shape,"world",{"simulation","company_id","world_id","state_id","campaign_start","scope_created",
                                    "root_seed","enabled_flows","facts","counterparty_cash_cents","decisions","negotiations"});
@@ -598,8 +600,10 @@ WorldState parse_world(Json& value,const CompiledProgram& program) {
     if(value.contains("developer_playtest"))
         result.developer_playtest=detail::boolean(value.at("developer_playtest"),"world/developer_playtest");
     if(value.contains("playtest_unlimited")) result.playtest_unlimited=detail::boolean(value.at("playtest_unlimited"),"world/playtest_unlimited");
+    if(value.contains("starting_industry_stage")) result.starting_industry_stage=static_cast<int>(detail::u64(value.at("starting_industry_stage"),"world/starting_industry_stage",3));
+    if(value.contains("playtest_custom")) result.playtest_custom=detail::boolean(value.at("playtest_custom"),"world/playtest_custom");
 #if PGP_DISTRIBUTION
-    if(result.developer_playtest) detail::invalid("world/developer_playtest","Open this save in Playtest Environment.");
+    if(result.developer_playtest || result.playtest_custom) detail::invalid("world/developer_playtest","Open this save in Playtest Environment.");
 #endif
     if(value.contains("family")) result.family=detail::parse_family(value.at("family"));
     if(value.contains("romance")) result.romance=detail::parse_romance(value.at("romance"));

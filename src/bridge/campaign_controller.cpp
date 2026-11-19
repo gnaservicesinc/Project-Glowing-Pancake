@@ -223,6 +223,14 @@ std::vector<CampaignRow> inbox_rows(const runtime::Checkpoint& checkpoint,const 
     return rows;
 }
 }
+static void nameModels(QObject* owner,const QString& prefix) {
+        const auto* meta=owner->metaObject();
+        for(int index=meta->propertyOffset();index<meta->propertyCount();++index) {
+            const auto property=meta->property(index);
+            if(property.metaType()!=QMetaType::fromType<StableListModel*>()) continue;
+            if(auto* model=property.read(owner).value<StableListModel*>()) model->setObjectName(prefix+QLatin1Char('/')+QString::fromLatin1(property.name()));
+        }
+    }
 CampaignController::CampaignController(runtime::CompiledProgram program,runtime::Checkpoint checkpoint,
     persistence::LocalPaths paths,persistence::Settings initial_settings,QObject* parent,bool welcome,bool continuous)
     : QObject(parent),program_(program),management_(new ManagementController(this)),infrastructure_(new InfrastructureController(this)),
@@ -234,14 +242,6 @@ CampaignController::CampaignController(runtime::CompiledProgram program,runtime:
       world_(new WorldController(paths.saves_directory.parent_path()/"world-navigation",this)),
       welcome_(welcome),projects_(new StableListModel(this)),inbox_(new StableListModel(this,true)),settings_(initial_settings),
       save_folder_(QUrl::fromLocalFile(QString::fromStdU16String(paths.saves_directory.u16string()))) {
-    const auto nameModels=[](QObject* owner,const QString& prefix) {
-        const auto* meta=owner->metaObject();
-        for(int index=meta->propertyOffset();index<meta->propertyCount();++index) {
-            const auto property=meta->property(index);
-            if(property.metaType()!=QMetaType::fromType<StableListModel*>()) continue;
-            if(auto* model=property.read(owner).value<StableListModel*>()) model->setObjectName(prefix+QLatin1Char('/')+QString::fromLatin1(property.name()));
-        }
-    };
     nameModels(this,QStringLiteral("campaign"));nameModels(management_,QStringLiteral("management"));
     nameModels(infrastructure_,QStringLiteral("infrastructure"));nameModels(civic_,QStringLiteral("civic"));
     nameModels(society_,QStringLiteral("society"));nameModels(institutions_,QStringLiteral("institutions"));
@@ -343,6 +343,22 @@ CampaignController::CampaignController(runtime::CompiledProgram program,runtime:
     connect(inbox_,&StableListModel::selectedRowChanged,this,&CampaignController::selectionChanged);
     thread_.start();
     QMetaObject::invokeMethod(worker_,[worker = worker_] { worker->start(); },Qt::QueuedConnection);
+}
+ManagementController* CampaignController::createManagementView(QObject* owner) {
+    if (!owner || !snapshot_) return management_;
+    auto* view = new ManagementController(owner);
+    nameModels(view, QStringLiteral("management"));
+    view->update(snapshot_, activeProgram(), true);
+    connect(this, &CampaignController::snapshotChanged, view, [this, view, generation = snapshot_->generation]() mutable {
+        view->update(snapshot_, activeProgram(), generation != snapshot_->generation);
+        generation = snapshot_->generation;
+    });
+    connect(view, &ManagementController::actionRequested, management_, &ManagementController::actionRequested);
+    connect(view, &ManagementController::noticeRaised, management_, &ManagementController::noticeRaised);
+    connect(view, &ManagementController::competitiveResponseRequested, management_, &ManagementController::competitiveResponseRequested);
+    connect(view, &ManagementController::groupTransferRequested, management_, &ManagementController::groupTransferRequested);
+    connect(view, &ManagementController::acquisitionRequested, management_, &ManagementController::acquisitionRequested);
+    return view;
 }
 CampaignController::~CampaignController() {
     if (thread_.isRunning()) {

@@ -42,7 +42,7 @@ void schedule_world_smoke(QQuickWindow& window,pgp::bridge::CampaignController& 
         if(state->phase==0) {
             state->resumed=campaign.currentCampaign();
             state->workplaceDone=state->resumed;
-            if(devices && state->resumed && (campaign.world()->navigation().value("app")!="lab" || window.property("room").toString()!="lab" || window.property("activeDevice").toString()!="tablet" || !window.property("deviceOpen").toBool())) {fail("Tablet application navigation did not restore automatically");return;}
+            if(devices && state->resumed && campaign.world()->deviceWorkspace(campaign.world()->resolvePhysicalDevice("tablet","")).value("activeApp")!="lab") {fail("Tablet research workspace did not reload");return;}
             if(state->resumed && window.property("menuVisible").toBool()) {fail("Launch did not resume automatically");return;}
             if(!state->resumed) {
                 auto* founding=campaign.founding();founding->reset();founding->setField("family","rich");founding->setField("route","bootstrap");
@@ -82,7 +82,7 @@ void schedule_world_smoke(QQuickWindow& window,pgp::bridge::CampaignController& 
             if(devices) {
                 if(state->resumed) {
                     const auto rows=campaign.world()->deviceInventory();
-                    if(rows.size()!=4 || rows[1].toMap().value("powered").toBool() || !rows[3].toMap().value("available").toBool()) {fail("Equipment power and delivered tablet did not resume");return;}
+                    if(rows.size()!=3 || rows[1].toMap().value("powered").toBool() || !rows[2].toMap().value("available").toBool()) {fail("Equipment power and delivered tablet did not resume");return;}
                     std::cout<<"Owned equipment, power and delivery resumed exactly\n";timer->stop();QCoreApplication::exit(0);return;
                 }
                 if(!click("devicesButton")) {fail("Device launcher");return;}state->phase=300;return;
@@ -175,10 +175,10 @@ void schedule_world_smoke(QQuickWindow& window,pgp::bridge::CampaignController& 
             timer->stop();QCoreApplication::exit(0);return;
         }
         if(state->phase==300) {
-            if(!click("equipmentApp")) {fail("Equipment launcher entry");return;}state->phase=301;return;
+            if(!click("launcherDevice_phone") || !click("equipmentApp")) {fail("Equipment launcher entry");return;}state->phase=301;return;
         }
         if(state->phase==301) {
-            if(window.property("room").toString()!="devices" || campaign.world()->deviceInventory().size()!=3) {fail("Owned starter equipment");return;}
+            if(campaign.world()->deviceWorkspace(campaign.world()->resolvePhysicalDevice("phone","")).value("activeApp")!="devices" || campaign.world()->deviceInventory().size()!=2) {fail("Owned starter equipment");return;}
             if(!click("devicePower2")) {fail("Laptop power control");return;}state->phase=302;return;
         }
         if(state->phase==302) {
@@ -190,14 +190,14 @@ void schedule_world_smoke(QQuickWindow& window,pgp::bridge::CampaignController& 
             if(!press(window,buttonText(window.contentItem(),QStringLiteral("OK")))) {fail("Confirm device purchase");return;}state->phase=304;return;
         }
         if(state->phase==304) {
-            if(campaign.world()->deviceInventory().size()!=4 || campaign.world()->deviceInventory()[3].toMap().value("available").toBool()) {fail("Paid tablet needs delivery");return;}
+            if(campaign.world()->deviceInventory().size()!=3 || campaign.world()->deviceInventory()[2].toMap().value("available").toBool()) {fail("Paid tablet needs delivery");return;}
             if(!screenshot.isEmpty()) (void)window.grabWindow().save(screenshot+"-equipment.png");
             campaign.step();state->phase=305;return;
         }
         if(state->phase==305) {campaign.step();state->phase=306;return;}
         if(state->phase==306) {
-            if(!campaign.world()->deviceInventory()[3].toMap().value("available").toBool()) {fail("Delivered tablet");return;}
-            if(!click("closeDeviceButton") || !click("devicesButton")) {fail("Return to device launcher");return;}state->phase=307;return;
+            if(!campaign.world()->deviceInventory()[2].toMap().value("available").toBool()) {fail("Delivered tablet");return;}
+            if(!click("workspaceCloseButton") || !click("devicesButton")) {fail("Return to device launcher");return;}state->phase=307;return;
         }
         if(state->phase==307) {
             if(!click("launcherDevice_tablet")) {fail("Choose available tablet");return;}state->phase=308;return;
@@ -206,7 +206,7 @@ void schedule_world_smoke(QQuickWindow& window,pgp::bridge::CampaignController& 
             if(!click("labApp")) {fail("Launch tablet research app");return;}state->phase=309;return;
         }
         if(state->phase==309) {
-            if(window.property("activeDevice").toString()!="tablet" || window.property("room").toString()!="lab") {fail("App header must match its available compatible device");return;}
+            if(campaign.world()->deviceWorkspace(campaign.world()->resolvePhysicalDevice("tablet","")).value("activeApp")!="lab") {fail("App header must match its available compatible device");return;}
             if(!screenshot.isEmpty()) (void)window.grabWindow().save(screenshot+"-tablet.png");
             if(campaign.storageBlocked()) {fail("Durable device commands");return;}
             std::cout<<"Equipment launcher, power controls, reviewed purchase, delayed delivery and tablet app routing passed\n";

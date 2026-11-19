@@ -290,9 +290,38 @@ Json definition_json(const Definition& definition, const std::string& key) {
     } else if (const auto* research = std::get_if<ResearchDefinition>(&definition.data)) {
         shape(research->all_of.size() <= 512 && research->any_of.size() <= 512, path, "Research prerequisite budget exceeded");
         result["kind"] = "research"; result["prerequisites"] = {{"all_of", research->all_of}, {"any_of", research->any_of}};
+        if (!research->any_of_groups.empty()) result["prerequisites"]["any_of_groups"] = research->any_of_groups;
         result["cash_cents"] = research->cash.value(); result["staff_days"] = research->staff_days.value();
         result["work_milli_CU"] = research->work.value();
         if (research->repeat_limit!=1) result["repeat_limit"] = research->repeat_limit;
+        if (research->data_requirement.required) {
+            Json req{{"required", true}, {"minimum_unique_units", research->data_requirement.minimum_unique_units},
+                     {"minimum_quality_bp", research->data_requirement.minimum_quality_bp}};
+            if (!research->data_requirement.domain_hint.empty()) req["domain_hint"] = research->data_requirement.domain_hint;
+            result["data_requirement"] = std::move(req);
+        }
+        if (research->poc_spec.produces_poc) {
+            Json cap = Json::object();
+            for (std::size_t i = 0; i < core::lab_domain_count; ++i)
+                if (i < core::introductory_lab_domains || research->poc_spec.max_capability[i].value() > 0)
+                    cap[core::lab_domain_names[i]] = research->poc_spec.max_capability[i].value();
+            result["poc_spec"] = {{"produces_poc", true}, {"task_scope", research->poc_spec.task_scope},
+                                  {"method_label", research->poc_spec.method_label}, {"recipe_id", research->poc_spec.recipe_id},
+                                  {"max_capability_bp", std::move(cap)}};
+        }
+        const auto& te = research->technical_effect;
+        if (te != core::ResearchTechnicalEffect{}) {
+            Json tej = Json::object();
+            if (te.data_efficiency_bp) tej["data_efficiency_bp"] = te.data_efficiency_bp;
+            if (te.compute_efficiency_bp) tej["compute_efficiency_bp"] = te.compute_efficiency_bp;
+            if (te.latency_bonus_bp) tej["latency_bonus_bp"] = te.latency_bonus_bp;
+            if (te.robustness_bonus_bp) tej["robustness_bonus_bp"] = te.robustness_bonus_bp;
+            if (!te.modality_unlock.empty()) tej["modality_unlock"] = te.modality_unlock;
+            if (!te.deployment_setting_unlock.empty()) tej["deployment_setting_unlock"] = te.deployment_setting_unlock;
+            if (!te.refinement_family.empty()) tej["refinement_family"] = te.refinement_family;
+            if (te.diminishing_tier) tej["diminishing_tier"] = te.diminishing_tier;
+            result["technical_effect"] = std::move(tej);
+        }
         if (const auto& level=research->innovation) {
             Json savings=Json::object();
             for(const auto& [recipe,amount]:level->inference_savings) savings[recipe]=amount.value();

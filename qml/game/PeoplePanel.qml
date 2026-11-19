@@ -4,37 +4,47 @@ import QtQuick.Layouts
 ColumnLayout {
     id:panel
     property int textSize:14
+    property string deviceId: ""
+    property string application: "people"
+    function readDraft(key, fallback) {
+        if (!deviceId) return campaign.world.draft(key, fallback)
+        return campaign.world.deviceAppState(deviceId, application)[key] ?? fallback
+    }
+    function saveDraft(key, value) {
+        if (deviceId) campaign.world.setDeviceAppState(deviceId, application, key, value)
+        else campaign.world.setDraft(key, value)
+    }
     signal openApp(string app,string section)
     signal revealRequested(Item target)
     property string page: "team"
-    property string applicantFilter:campaign.world.draft("people/applicantFilter","all")
-    property string selectedApplicant: campaign.world.draft("people/applicant", "")
+    property string applicantFilter:panel.readDraft("people/applicantFilter","all")
+    property string selectedApplicant: panel.readDraft("people/applicant", "")
     readonly property bool showDiscussion: page === "applicants" && discussion.offer.id !== undefined
-    readonly property bool messagesOnly: campaign.world.navigation.app === "people" && campaign.world.navigation.section === "messages"
+    readonly property bool messagesOnly: deviceId ? application === "messages" : campaign.world.navigation.app === "people" && campaign.world.navigation.section === "messages"
     readonly property bool editable: campaign.paused && campaign.companyEditable && !campaign.busy && !campaign.storageBlocked
     function selectApplicant(id) {
         selectedApplicant=id
-        campaign.world.setDraft("people/applicant", id)
+        panel.saveDraft("people/applicant", id)
         Qt.callLater(() => discussion.focusDiscussion())
     }
     function changePage(value) {
         page=value
-        campaign.world.setDraft("people/page",value)
+        panel.saveDraft("people/page",value)
         const nav=campaign.world.navigation
-        if (nav.app==="people" && nav.section && !messagesOnly)
+        if (!deviceId && nav.app==="people" && nav.section && !messagesOnly)
             campaign.world.navigate(nav.place,nav.scale,nav.device,nav.app,"")
     }
     function restorePage() {
-        applicantFilter=campaign.world.draft("people/applicantFilter","all")
-        const requested=campaign.world.navigation.section
-        const value=requested || campaign.world.draft("people/page","team")
+        applicantFilter=panel.readDraft("people/applicantFilter","all")
+        const requested=deviceId ? (messagesOnly ? "messages" : "") : campaign.world.navigation.section
+        const value=requested || panel.readDraft("people/page","team")
         page=["team","applicants","branches","messages","university","social","industry"].includes(value)?value:"team"
     }
     Component.onCompleted:restorePage()
     Connections {
         target:campaign.world
-        function onDraftsReset(){panel.restorePage();panel.applicantFilter=campaign.world.draft("people/applicantFilter","all");panel.selectedApplicant=campaign.world.draft("people/applicant","")}
-        function onNavigationChanged(){if(campaign.world.navigation.app==="people")panel.restorePage()}
+        function onDraftsReset(){panel.restorePage();panel.applicantFilter=panel.readDraft("people/applicantFilter","all");panel.selectedApplicant=panel.readDraft("people/applicant","")}
+        function onNavigationChanged(){if(!panel.deviceId && campaign.world.navigation.app==="people")panel.restorePage()}
     }
     spacing:16
     Label {visible:!panel.showDiscussion && panel.page!=="messages" && panel.page!=="university" && panel.page!=="social" && panel.page!=="industry";text:qsTr("The people behind the company");Layout.fillWidth:true;wrapMode:Text.Wrap;font.pixelSize:panel.textSize*1.4;font.bold:true;color:"#eee5d2"}
@@ -70,8 +80,8 @@ ColumnLayout {
     }
     Label {visible:panel.page==="applicants" && (campaign.world.familyAlbum.queued || 0)>0;Layout.fillWidth:true;wrapMode:Text.Wrap;font.pixelSize:panel.textSize;text:qsTr("Awaiting review · %1").arg(campaign.world.familyAlbum.queued || 0);color:"#ddc48b"}
     Flow {visible:panel.page==="applicants" && !panel.showDiscussion;Layout.fillWidth:true;spacing:8
-        WorldButton {objectName:"applicantsAll";text:qsTr("All candidates");textSize:panel.textSize;checked:panel.applicantFilter==="all";onClicked:{panel.applicantFilter="all";campaign.world.setDraft("people/applicantFilter","all")}}
-        WorldButton {objectName:"applicantsRecommended";text:qsTr("Employee recommended candidates");textSize:panel.textSize;checked:panel.applicantFilter==="recommended";onClicked:{panel.applicantFilter="recommended";campaign.world.setDraft("people/applicantFilter","recommended")}}
+        WorldButton {objectName:"applicantsAll";text:qsTr("All candidates");textSize:panel.textSize;checked:panel.applicantFilter==="all";onClicked:{panel.applicantFilter="all";panel.saveDraft("people/applicantFilter","all")}}
+        WorldButton {objectName:"applicantsRecommended";text:qsTr("Employee recommended candidates");textSize:panel.textSize;checked:panel.applicantFilter==="recommended";onClicked:{panel.applicantFilter="recommended";panel.saveDraft("people/applicantFilter","recommended")}}
     }
     RecruitmentDiscussion {
         id:discussion
@@ -162,7 +172,7 @@ ColumnLayout {
     GameDialog {
         id:hireDialog;objectName:"employeeHireDialog"
         property var applicant:({})
-        anchors.centerIn:Overlay.overlay;width:Math.min(540,Overlay.overlay.width-32)
+        anchors.centerIn:Overlay.overlay;width:Math.min(540,(Overlay.overlay?.width ?? 650)-32)
         modal:true;focus:true;title:qsTr("Hire %1?").arg(applicant.name || "")
         background:Rectangle {radius:12;color:"#142d32";border.color:"#bba775"}
         contentItem:Label {text:hireDialog.applicant.detail || "";textFormat:Text.PlainText;wrapMode:Text.Wrap;font.pixelSize:panel.textSize;color:"#d7e3d7"}

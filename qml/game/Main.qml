@@ -3,6 +3,7 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import QtQuick.Dialogs
 import QtQuick.Window
+import "apps"
 
 ApplicationWindow {
     id: window
@@ -40,6 +41,25 @@ ApplicationWindow {
     property bool deviceOpen: prototypeSmoke
     property bool startupRouted: false
     property string activeDevice: "laptop"
+    readonly property string activePhysicalDeviceId: {
+        campaign.world.physicalDevices
+        if (!window.activeDevice) return ""
+        return campaign.world.resolvePhysicalDevice(window.activeDevice, window.room)
+    }
+    readonly property var activePhysicalDevice: {
+        campaign.world.physicalDevices
+        return window.activePhysicalDeviceId ? campaign.world.physicalDevice(window.activePhysicalDeviceId) : ({})
+    }
+    readonly property var activeDeviceWorkspace: {
+        campaign.world.physicalDevices
+        return window.activePhysicalDeviceId ? campaign.world.deviceWorkspace(window.activePhysicalDeviceId) : ({})
+    }
+    function focusDetachedWindow(deviceId) {
+        for (let i = 0; i < detachedDeviceWindows.count; ++i) {
+            const win = detachedDeviceWindows.objectAt(i)
+            if (win && win.deviceId === deviceId) { win.focusWindow(); return }
+        }
+    }
     readonly property string appTitle: room === "leadership" && campaign.world.navigation.section === "personal" ? qsTr("Personal life") : room === "people" && campaign.world.navigation.section === "messages" ? qsTr("Messages") : ({devices:qsTr("Equipment"),office:qsTr("Company"),people:qsTr("People"),
         facilities:qsTr("Headquarters"),lab:qsTr("Research notebook"),inbox:activeDevice ? qsTr("News & decisions") : qsTr("Journal"),
         operations:qsTr("Infrastructure & travel"),civic:qsTr("Public affairs"),society:qsTr("World affairs"),
@@ -237,7 +257,54 @@ ApplicationWindow {
     DeviceHome {
         id: deviceHome
         textSize: window.textSize
+        allowDetach: window.visibility !== Window.FullScreen
         onAppRequested: (app,section,device) => window.openApp(app,section,device)
+        onFocusDetachedRequested: deviceId => window.focusDetachedWindow(deviceId)
+    }
+    readonly property bool showDetached: !menuVisible && !campaign.welcome && !exitConfirmed && visibility !== Window.FullScreen
+    onShowDetachedChanged: Qt.callLater(syncDetachedDevices)
+    ListModel { id: detachedDevices }
+    function syncDetachedDevices() {
+        const wanted = menuVisible || campaign.welcome || exitConfirmed || visibility === Window.FullScreen ? [] :
+                       campaign.world.poppedOutDevices.map(row => row.deviceId)
+        for (let i = detachedDevices.count - 1; i >= 0; --i)
+            if (!wanted.includes(detachedDevices.get(i).physicalId)) detachedDevices.remove(i)
+        for (const id of wanted) {
+            let present = false
+            for (let i = 0; i < detachedDevices.count; ++i)
+                if (detachedDevices.get(i).physicalId === id) present = true
+            if (!present) detachedDevices.append({physicalId: id})
+        }
+    }
+    Connections {
+        target: campaign.world
+        function onWorkspacesChanged() { Qt.callLater(window.syncDetachedDevices) }
+    }
+    Instantiator {
+        id: detachedDeviceWindows
+        model: detachedDevices
+        delegate: DetachedDeviceWindow {
+            required property string physicalId
+            deviceId: physicalId
+            deviceName: campaign.world.physicalDevice(deviceId).name || deviceId
+            textSize: window.textSize
+            mainExiting: window.exitConfirmed
+            onOpenEquipmentRequested: window.openApp("devices", "", "")
+        }
+    }
+    Loader {
+        id: detachedResearchTreeLoader
+        active: window.showDetached && !!campaign.world.detachedResearchTree.open
+        sourceComponent: Component {
+            DetachedResearchTreeWindow {
+                deviceId: campaign.world.detachedResearchTree.deviceId || ""
+                deviceName: campaign.world.detachedResearchTree.deviceName || ""
+                deviceAvailable: !!campaign.world.detachedResearchTree.available
+                unavailabilityReason: campaign.world.detachedResearchTree.unavailabilityReason || ""
+                textSize: window.textSize
+                mainExiting: window.exitConfirmed
+            }
+        }
     }
     component Heading: Label {
         Layout.fillWidth: true
@@ -473,8 +540,10 @@ ApplicationWindow {
         objectName: "activeDeviceFrame"
         visible: !window.menuVisible && !(campaign.welcome && campaign.founding.available) && (window.deviceOpen || campaign.welcome)
         enabled: visible
-        kind: window.activeDevice || "desktop"
+        kind: window.activePhysicalDevice.kind || window.activeDevice || "desktop"
         textSize: window.textSize
+        readonly property bool activePoppedOut: !campaign.welcome && !!window.activePhysicalDevice.poppedOut
+        readonly property bool activeUnavailable: !campaign.welcome && !!window.activePhysicalDevice.deviceId && !window.activePhysicalDevice.available && window.room !== "devices"
         readonly property bool compactChrome: window.height < window.textSize*24
         readonly property int sideInset: compactChrome ? 6 : 14
         readonly property bool narrowContent: width < 1030
@@ -532,11 +601,31 @@ ApplicationWindow {
                             Label {
                                 Layout.fillWidth: true
                                 visible: appBar.width>window.textSize*31
-                                text: qsTr("Pancake Desktop · %1").arg(campaign.date)
+                                text: (window.activePhysicalDevice.name ? window.activePhysicalDevice.name + " · " : qsTr("Pancake Desktop · ")) + campaign.date
                                 elide: Text.ElideRight
                                 font.pixelSize: window.textSize*0.75
                                 color: "#aac6b9"
                             }
+                        }
+                        WorldButton {
+                            objectName: "popOutResearchTreeButton"
+                            visible: !campaign.welcome && window.room === "lab" && !!window.activePhysicalDeviceId && !deviceWindow.compactChrome && !deviceWindow.activePoppedOut && !deviceWindow.activeUnavailable
+                            text: campaign.world.detachedResearchTree.open ? qsTr("Focus tree") : qsTr("Pop out tree")
+                            textSize: window.textSize * 0.85
+                            padding: 8
+                            onClicked: {
+                                if (campaign.world.detachedResearchTree.open && detachedResearchTreeLoader.item)
+                                    detachedResearchTreeLoader.item.focusWindow()
+                                else campaign.world.openDetachedResearchTree(window.activePhysicalDeviceId)
+                            }
+                        }
+                        WorldButton {
+                            objectName: "popOutDeviceButton"
+                            visible: !campaign.welcome && !!window.activePhysicalDeviceId && !deviceWindow.compactChrome
+                            text: deviceWindow.activePoppedOut ? qsTr("Dock") : qsTr("Pop out")
+                            textSize: window.textSize * 0.85
+                            padding: 8
+                            onClicked: campaign.world.setDevicePoppedOut(window.activePhysicalDeviceId, !deviceWindow.activePoppedOut)
                         }
                         WorldButton {
                             objectName: "deviceTimeButton"
@@ -555,6 +644,49 @@ ApplicationWindow {
                             onClicked:window.closeApp()
                         }
                     }
+                    Flow {
+                        Layout.fillWidth: true
+                        visible: !campaign.welcome && !deviceWindow.compactChrome && !deviceWindow.activePoppedOut && (window.activeDeviceWorkspace.openApps || []).length > 1
+                        spacing: 4
+                        Repeater {
+                            model: window.activeDeviceWorkspace.openApps || []
+                            Rectangle {
+                                required property string modelData
+                                radius: 5
+                                color: window.room === modelData ? "#33546f" : "#18293a"
+                                border.color: window.room === modelData ? "#efc389" : "#445e75"
+                                implicitWidth: openTabRow.implicitWidth + 8
+                                implicitHeight: Math.max(26, openTabRow.implicitHeight + 4)
+                                RowLayout {
+                                    id: openTabRow
+                                    anchors.centerIn: parent
+                                    spacing: 2
+                                    WorldButton {
+                                        text: ({devices:qsTr("Equipment"),office:qsTr("Company"),people:qsTr("People"),facilities:qsTr("HQ"),lab:qsTr("Research"),inbox:qsTr("Journal"),operations:qsTr("Operations"),civic:qsTr("Civic"),society:qsTr("World"),institutions:qsTr("Institutions"),frontier:qsTr("Frontier"),leadership:qsTr("Leadership"),objectives:qsTr("Legacy")})[modelData] || modelData
+                                        textSize: window.textSize * 0.78
+                                        quiet: true
+                                        padding: 4
+                                        onClicked: window.openApp(modelData, "", window.activePhysicalDeviceId)
+                                    }
+                                    WorldButton {
+                                        text: "×"
+                                        Accessible.name: qsTr("Close %1").arg(modelData)
+                                        textSize: window.textSize * 0.78
+                                        quiet: true
+                                        padding: 4
+                                        onClicked: {
+                                            campaign.world.closeDeviceApp(window.activePhysicalDeviceId, modelData)
+                                            if (window.room === modelData) {
+                                                const nextApp = campaign.world.deviceWorkspace(window.activePhysicalDeviceId).activeApp || ""
+                                                if (nextApp) window.openApp(nextApp, "", window.activePhysicalDeviceId)
+                                                else window.closeApp()
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
                     WorldButton {
                         objectName: "appDecisionButton"
                         Layout.fillWidth: true
@@ -569,8 +701,83 @@ ApplicationWindow {
                     }
                 }
             }
+            Item {
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                visible: deviceWindow.activePoppedOut
+                ColumnLayout {
+                    anchors.centerIn: parent
+                    width: Math.min(parent.width - 32, 480)
+                    spacing: 10
+                    Heading {
+                        horizontalAlignment: Text.AlignHCenter
+                        text: qsTr("%1 is open in a detached window").arg(window.activePhysicalDevice.name || window.activePhysicalDeviceId)
+                    }
+                    Copy {
+                        horizontalAlignment: Text.AlignHCenter
+                        text: qsTr("Only one live surface runs per physical device so drafts and settings stay synchronized. Focus the detached window or dock it back here.")
+                    }
+                    Flow {
+                        Layout.alignment: Qt.AlignHCenter
+                        spacing: 8
+                        Action {
+                            text: qsTr("Focus window")
+                            onClicked: window.focusDetachedWindow(window.activePhysicalDeviceId)
+                        }
+                        Action {
+                            text: qsTr("Dock back here")
+                            onClicked: campaign.world.setDevicePoppedOut(window.activePhysicalDeviceId, false)
+                        }
+                    }
+                }
+            }
+            Item {
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                visible: !deviceWindow.activePoppedOut && deviceWindow.activeUnavailable
+                ColumnLayout {
+                    anchors.centerIn: parent
+                    width: Math.min(parent.width - 32, 520)
+                    spacing: 10
+                    Heading {
+                        text: qsTr("%1 is currently unavailable").arg(window.activePhysicalDevice.name || window.activePhysicalDeviceId)
+                    }
+                    Copy {
+                        text: window.activePhysicalDevice.unavailabilityReason || qsTr("This device cannot be used right now.")
+                    }
+                    Copy {
+                        text: qsTr("Open apps and unfinished drafts on this device remain preserved while it is offline.")
+                    }
+                    Flow {
+                        Layout.fillWidth: true
+                        spacing: 8
+                        Action {
+                            visible: !!window.activePhysicalDevice.canPower && !window.activePhysicalDevice.powered
+                            text: qsTr("Power on %1").arg(window.activePhysicalDevice.name || "")
+                            enabled: !campaign.busy
+                            onClicked: campaign.world.powerPhysicalDevice(window.activePhysicalDeviceId, true, window.activePhysicalDevice.revision || campaign.world.reviewToken)
+                        }
+                        Action {
+                            text: qsTr("Equipment controls")
+                            onClicked: window.openApp("devices", "", "")
+                        }
+                        Repeater {
+                            model: {
+                                campaign.world.physicalDevices
+                                return deviceWindow.activeUnavailable ? campaign.world.alternateDevicesForApp(window.room, window.activePhysicalDeviceId) : []
+                            }
+                            Action {
+                                required property var modelData
+                                text: qsTr("Open on %1").arg(modelData.name)
+                                onClicked: window.openApp(window.room, campaign.world.navigation.section || "", modelData.deviceId)
+                            }
+                        }
+                    }
+                }
+            }
             ScrollView {
                 id: scroll
+                visible: !deviceWindow.activePoppedOut && !deviceWindow.activeUnavailable
                 onAvailableWidthChanged: Qt.callLater(() => reveal(window.activeFocusItem))
                 onAvailableHeightChanged: Qt.callLater(() => reveal(window.activeFocusItem))
                 objectName: "managementScroll"
@@ -1063,8 +1270,8 @@ ApplicationWindow {
                             Copy { text: campaign.identitySummary }
                             Copy { visible: window.room === "office"; text: campaign.capacityText + "\n" + campaign.management.briefing }
                             ManagementPanel {
-                        onOpenSuppliers: window.openApp("facilities","equipment","laptop")
-                        id: managementPanel; Layout.fillWidth: true; room: window.room; textSize: window.textSize
+                        onOpenSuppliers: window.openApp("facilities","equipment",window.activePhysicalDeviceId || "laptop")
+                        id: managementPanel; Layout.fillWidth: true; room: window.room; deviceId: window.activePhysicalDeviceId; textSize: window.textSize
                     }
                         }
                     }

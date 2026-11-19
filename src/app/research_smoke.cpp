@@ -137,18 +137,35 @@ void schedule_research_smoke(QQuickWindow &window, pgp::bridge::CampaignControll
                     fail("The live estimate must show the expected year and early-start multiplier");return;
                 }
             }
+            if (!item("technology_" + root)) press("researchViewToggle");
             if (!press("technology_" + root) || !capture("graph")) {
                 fail("Select an available graph node");
                 return;
             }
             break;
         }
-        case 9:
+        case 9: {
+            if (auto *cards = item("researchWorkerCards")) {
+                std::vector<QRectF> boxes;
+                for (auto *child : cards->childItems()) {
+                    if (child->isVisible() && child->objectName().startsWith("researcher_")) {
+                        boxes.push_back(QRectF{child->x(), child->y(), child->width(), child->height()});
+                    }
+                }
+                std::ranges::sort(boxes, [](const QRectF &a, const QRectF &b) { return a.top() < b.top(); });
+                for (std::size_t i = 0; i + 1 < boxes.size(); ++i) {
+                    if (boxes[i].bottom() > boxes[i + 1].top() + 0.5) {
+                        fail("Research worker rows must never overlap vertically");
+                        return;
+                    }
+                }
+            }
             if (!press("researcher_" + run->worker)) {
                 fail("Assign the named researcher");
                 return;
             }
             break;
+        }
         case 10:
             if (!press("startGroundedResearch")) {
                 fail("Start from the graph with the workstation");
@@ -208,7 +225,8 @@ void schedule_research_smoke(QQuickWindow &window, pgp::bridge::CampaignControll
             }
             if (++run->frames < 8)
                 return;
-            if (!press("technology_" + root) || !item("technologyPicker") || !capture("compact")) {
+            if (!item("technologyPicker")) press("researchViewToggle");
+            if (!item("technologyPicker") || !capture("compact") || !press("technology_" + root) || !item("researchTopicInspector") || !press("researchViewToggle")) {
                 fail("Compact graph and keyboard selector");
                 return;
             }

@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="810" viewBox="0 0 1440 810">
+  <title>The bookshop after closing</title>
+  <defs><linearGradient id="light" x2="0" y2="1"><stop stop-color="#33434b"/><stop offset="1" stop-color="#b6916e"/></linearGradient></defs>
+  <rect width="1440" height="810" fill="url(#light)"/>
+  <circle cx="1090" cy="232" r="90" fill="#ead2a2" opacity=".78"/>
+  <path fill="#53615d" d="M0 485l378-72 206 69 280-85 267 15 309-42v440H0z"/>
+  <path fill="#645957" d="M590 264l650-60 200 63v372l-850 59z"/>
+  <path fill="#38444a" d="M570 264l672-77 198 65v21l-203-60-667 78z"/>
+  <path fill="#c7ab84" d="M688 319l121-9v76l-121 9zm227-18l119-11v78l-119 10zm220-19l69-8v79l-69 7z"/>
+  <path fill="#35464b" d="M629 482l592-45v193l-592 41z"/>
+  <path fill="#d4ad76" d="M646 492l200-13v143l-200 13zm224-15l103-7v161l-103 8zm131-10l201-16v143l-201 14z"/>
+  <path fill="#527565" d="M606 427l617-47 37 53-674 56z"/>
+  <path fill="#335449" d="M586 488l674-56v18l-674 58z"/>
+  <g fill="#776654"><path d="M660 563l170-11v9l-170 11zm351-28l177-13v9l-177 13z"/><path d="M658 620l174-13v8l-174 13zm355-29l176-12v7l-176 13z"/></g>
+  <g fill="#795e4f"><path d="M679 562v-25l14-1v25zm20-2v-37l13-1v38zm19-2v-29l16-1v29zm26-2l-6-39 12-3 9 40zm303-22v-27l12-1v27zm20-1v-32l19-2v32zm26-2l-7-34 12-3 10 36zm29-3v-29l16-2v30z"/></g>
+  <path fill="#3b4848" d="M1266 622l46-8 32 65-50 8zm-12 4l12-4-21 71-9 3z"/>
+  <path fill="#bea276" d="M1276 632l30-5 14 31-27 5z"/>
+  <path fill="#364348" d="M0 721l1440-111v19L0 767z"/>
+</svg>

@@ -50,6 +50,7 @@ public:
     [[nodiscard]] qreal anchorOffset() const noexcept { return anchor_offset_; }
     void setSortByTitle(bool value);
     void setFilterText(QString value);
+    Q_INVOKABLE void filterField(QString field, QString value);
     void setRequiredOnly(bool value);
     void setSelectedId(QString id);
     void setAnchorId(QString id);
@@ -86,6 +87,7 @@ private:
     const bool journal_;
     bool sort_by_title_ = false;
     QString filter_text_;
+    QString filter_field_, field_value_;
     bool required_only_ = false;
     QString selected_id_;
     QString anchor_id_;

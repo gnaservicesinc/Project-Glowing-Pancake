@@ -3,6 +3,9 @@
 #include "campaign_snapshot.hpp"
 #include <pgp/session/milestone.hpp>
 #include <pgp/runtime/scenario.hpp>
+#if !PGP_DISTRIBUTION
+#include <pgp/runtime/playtest_setup.hpp>
+#endif
 #include <pgp/persistence/current_campaign.hpp>
 #include <QLockFile>
 
@@ -30,6 +33,7 @@ public:
     void editPlaytestPerson(std::uint64_t,std::uint64_t,std::string,std::vector<std::string>,std::array<int,5>);
     void usePlaytestTool(std::uint64_t,std::uint64_t,std::string,std::string);
     void editPlaytestFounder(std::uint64_t token,std::uint64_t revision,std::vector<std::string> traits,bool genius);
+    void startPlaytestCustom(std::uint64_t token, runtime::PlaytestSetupConfig config);
 #endif
     void retryPersistence(std::uint64_t token);
     void submitCommand(std::uint64_t token, core::Command command);

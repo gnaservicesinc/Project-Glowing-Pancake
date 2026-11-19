@@ -70,7 +70,13 @@ int main() {
             people.social->links.push_back({std::min(std::string{"founder"},worker),std::max(std::string{"founder"},worker),
                 720,25,simulation.date,simulation.date,{},"Long-time colleague",true});
         }
+        // Grant personal funds and acquire company control so the appointed executive has board voting authority to test mission-pivot concerns.
+        fixture.world.developer_playtest=true;
+        simulation.succession->playtest_cash=core::Cents{5000000000LL};
+        simulation.succession->personal_cash=core::checked_unit_add(simulation.succession->personal_cash,core::Cents{5000000000LL});
         game=runtime::Runtime{program,fixture};
+        apply(game,core::AcquireCompanyControl{"buy_economic_stake"});
+        apply(game,core::AcquireCompanyControl{"acquire_voting_control"});
         apply(game,core::SetRecruitingTerms{state(game).management->people->offered_pay,changed_mission});
         check(core::committed_company_mission(state(game))==initial_mission,"Recruiting terms preserve the public commitment");
         check(core::mission_pivot_concerns(state(game),changed_mission).empty(),"Preference alone does not create a grievance");

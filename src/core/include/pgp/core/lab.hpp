@@ -24,7 +24,7 @@ inline constexpr LabProfile empty_lab_profile{
     while (count>introductory_lab_domains && profile[count-1].value()==0) --count;
     return count;
 }
-inline constexpr std::size_t lab_catalog_limit = 64;
+inline constexpr std::size_t lab_catalog_limit = 256;
 inline constexpr std::size_t lab_record_limit = 1024;
 
 struct DataOffer {
@@ -37,6 +37,17 @@ struct DataOffer {
     BasisPoints contamination{0};
     bool commercial_use = true;
     bool open_weight_release = false;
+    // Separate provenance, volume/duplication, controversy and immutable processing lineage (F-08D).
+    std::string source_path = "licensed";
+    std::string supplier_or_publisher{};
+    std::string underlying_history{};
+    std::string collection_method{};
+    std::uint64_t raw_units = 0;
+    BasisPoints duplication_bp{0};
+    BasisPoints provenance_confidence_bp{10000};
+    bool third_party_controversy_risk = false;
+    std::string parent_dataset_id{};
+    std::string processing_step{};
     auto operator<=>(const DataOffer&) const = default;
 };
 struct ResearchSetback {
@@ -49,6 +60,40 @@ struct ResearchInnovation {
     std::map<std::string,BasisPoints> inference_savings;
     auto operator<=>(const ResearchInnovation&) const = default;
 };
+struct ResearchDataRequirement {
+    bool required = false;
+    std::uint64_t minimum_unique_units = 0;
+    std::uint32_t minimum_quality_bp = 0;
+    std::string domain_hint{};
+    auto operator<=>(const ResearchDataRequirement&) const = default;
+};
+struct ResearchPocSpec {
+    bool produces_poc = false;
+    std::string task_scope{};
+    std::string method_label{};
+    std::string recipe_id{};
+    LabProfile max_capability = empty_lab_profile;
+    auto operator<=>(const ResearchPocSpec&) const = default;
+};
+struct ResearchTechnicalEffect {
+    std::uint32_t data_efficiency_bp = 0;
+    std::uint32_t compute_efficiency_bp = 0;
+    std::uint32_t latency_bonus_bp = 0;
+    std::uint32_t robustness_bonus_bp = 0;
+    std::string modality_unlock{};
+    std::string deployment_setting_unlock{};
+    std::string refinement_family{};
+    std::uint32_t diminishing_tier = 0;
+    auto operator<=>(const ResearchTechnicalEffect&) const = default;
+};
+struct TechLicenseOffer {
+    std::string id, research_id, licensor, scope_label;
+    Cents upfront_fee{0}, monthly_royalty{0};
+    Days term_days{365}, integration_days{5};
+    std::uint32_t royalty_bp = 0;
+    bool renewable = true;
+    auto operator<=>(const TechLicenseOffer&) const = default;
+};
 struct LabResearch {
     std::string id;
     std::vector<std::string> all_of, any_of;
@@ -58,6 +103,11 @@ struct LabResearch {
     std::uint32_t repeat_limit = 1;
     std::optional<ResearchSetback> setback{};
     std::optional<ResearchInnovation> innovation{};
+    // Compound AND-of-ORs: every inner group requires at least one satisfied topic (F-08E).
+    std::vector<std::vector<std::string>> any_of_groups{};
+    ResearchDataRequirement data_requirement{};
+    ResearchPocSpec poc_spec{};
+    ResearchTechnicalEffect technical_effect{};
     auto operator<=>(const LabResearch&) const = default;
 };
 struct TrainingRecipe {
@@ -130,6 +180,7 @@ struct LabCatalog {
     // additionally require the specified equipment together in a room.
     std::optional<std::map<std::string,std::vector<std::string>>> research_workplaces{};
     std::map<std::string,CreativeResearchRule> creative_research{};
+    std::vector<TechLicenseOffer> tech_licenses{};
     auto operator<=>(const LabCatalog&) const = default;
 };
 struct DataLicense {
@@ -154,6 +205,7 @@ struct ResearchRun {
     std::optional<ResearchCooperation> cooperation{};
     // Preserve the launch team's evidence when a person's live traits change.
     std::map<std::string,std::vector<std::string>,std::less<>> original_traits{};
+    std::vector<std::string> data_ids{};
     auto operator<=>(const ResearchRun&) const = default;
 };
 struct ResearchPublication {
@@ -178,6 +230,13 @@ struct LabModel {
     // Immutable snapshot of the parent's settled work at this capacity-day cursor.
     std::optional<std::uint64_t> checkpoint_cursor{};
     DataMixWeights data_weights{};
+    bool is_proof_of_concept = false;
+    std::string origin_research_id{};
+    std::string task_scope{};
+    std::string method_label{};
+    std::vector<std::string> authors{};
+    std::uint32_t data_efficiency_bp = 0;
+    std::uint32_t compute_efficiency_bp = 0;
     auto operator<=>(const LabModel&) const = default;
 };
 struct EvaluationEvidence {
@@ -203,6 +262,30 @@ struct DataAcquisition {
     std::optional<DataOffer> output{};
     auto operator<=>(const DataAcquisition&) const = default;
 };
+struct ProcessedDataset {
+    std::string id, source_dataset_id, operation, project_id;
+    OrdinalDay started_on{0};
+    Cents fee{0};
+    std::optional<DataOffer> output{};
+    auto operator<=>(const ProcessedDataset&) const = default;
+};
+struct CreativeProductionJob {
+    std::string id, domain, project_id;
+    std::vector<std::string> creatives;
+    std::uint32_t average_creative_skill = 0;
+    OrdinalDay started_on{0};
+    Cents fee{0};
+    std::uint64_t target_units = 0;
+    std::optional<DataOffer> output{};
+    auto operator<=>(const CreativeProductionJob&) const = default;
+};
+struct ActiveTechLicense {
+    std::string offer_id, research_id, licensor;
+    OrdinalDay starts_on{0}, active_on{0}, expires_on{0};
+    bool grants_discovery_credit = false;
+    std::uint32_t renewals = 0;
+    auto operator<=>(const ActiveTechLicense&) const = default;
+};
 struct LabState {
     std::string owner = "company.player";
     OrdinalDay starts_on{0};
@@ -217,6 +300,9 @@ struct LabState {
     std::vector<ResearchInsight> insights{};
     std::vector<GeneratedDataset> generated{};
     std::vector<DataAcquisition> acquisitions{};
+    std::vector<ProcessedDataset> processed{};
+    std::vector<CreativeProductionJob> creative_jobs{};
+    std::vector<ActiveTechLicense> tech_licenses{};
     BasisPoints setback_risk_scale_bp{10000};
     BasisPoints research_work_scale_bp{10000};
     auto operator<=>(const LabState&) const = default;
@@ -235,7 +321,58 @@ struct LabAllocation {
     MilliCUPerDay daily_compute{0};
     std::uint32_t staff = 0;
     std::vector<std::string> researchers{};
+    std::vector<std::string> data_ids{};
     auto operator<=>(const LabAllocation&) const = default;
+};
+struct ProcessDataset {
+    std::string source_dataset_id, operation, output_id;
+    LabAllocation allocation;
+};
+struct StartCreativeProduction {
+    std::string output_id, domain;
+    std::uint64_t target_units = 0;
+    LabAllocation allocation;
+};
+struct LicenseTechnology {
+    std::string offer_id;
+};
+struct RenewTechLicense {
+    std::string offer_id;
+};
+struct DataProcessingPreview {
+    Cents fee{0};
+    MilliCU work{0};
+    Days minimum_days{0};
+    std::uint64_t estimated_unique_units = 0;
+    BasisPoints estimated_quality{0};
+    BasisPoints estimated_duplication{0};
+    BasisPoints estimated_contamination{0};
+    BasisPoints provenance_confidence{10000};
+    bool commercial_use = false;
+    bool open_weight_release = false;
+    bool third_party_controversy_risk = false;
+    std::string explanation;
+};
+struct CreativeProductionPreview {
+    Cents fee{0};
+    MilliCU work{0};
+    Days minimum_days{0};
+    std::uint32_t average_creative_skill = 0;
+    BasisPoints estimated_quality{0};
+    BasisPoints provenance_confidence{10000};
+    bool third_party_controversy_risk = false;
+    std::string explanation;
+};
+struct ProductTechnicalProfile {
+    std::uint32_t quality_bp = 0;
+    std::uint32_t latency_bonus_bp = 0;
+    std::uint32_t robustness_bonus_bp = 0;
+    std::uint32_t data_efficiency_bp = 0;
+    std::uint32_t compute_efficiency_bp = 0;
+    bool clean_provenance = true;
+    bool is_proof_of_concept = false;
+    std::vector<std::string> modalities;
+    std::vector<std::string> deployment_settings;
 };
 struct GenerateDataset {
     std::string id,recipe_id,teacher_id,evidence_id,verification_id;
@@ -317,7 +454,24 @@ void checkpoint_model(LabState&,const CapacityState&,OrdinalDay,std::string_view
 void validate_lab(const LabState& state, const CapacityState& capacity, const AccountsState& accounts,
                   const RandomSnapshot& random, bool deep = true);
 [[nodiscard]] LabProfile model_capability(const LabCatalog& catalog, const LabModel& model,
-    std::span<const GeneratedDataset> generated={},std::span<const DataAcquisition> acquired={});
+    std::span<const GeneratedDataset> generated={},std::span<const DataAcquisition> acquired={},
+    std::span<const ProcessedDataset> processed={},std::span<const CreativeProductionJob> creative={});
+[[nodiscard]] bool has_research_access(const LabState& state, const CapacityState& capacity, std::string_view research_id, OrdinalDay day);
+[[nodiscard]] std::pair<std::uint32_t, std::uint32_t> research_efficiency_bonuses(const LabState& state, const CapacityState& capacity, OrdinalDay day);
+[[nodiscard]] DataProcessingPreview preview_data_processing(const LabState& state, const CapacityState& capacity, const ProcessDataset& request);
+void start_data_processing(LabState& state, AccountsState& accounts, CapacityState& capacity, OrdinalDay day, const ProcessDataset& request, Cents protected_cash);
+void close_data_processing(LabState& state, const CapacityState& capacity, OrdinalDay day);
+void validate_data_processing(const LabState& state, const CapacityState& capacity, const AccountsState& accounts, bool deep);
+[[nodiscard]] CreativeProductionPreview preview_creative_production(const SimulationState& state, const StartCreativeProduction& request);
+void start_creative_production(SimulationState& state, const StartCreativeProduction& request, Cents protected_cash);
+void close_creative_production(LabState& state, const CapacityState& capacity, OrdinalDay day);
+void validate_creative_production(const LabState& state, const CapacityState& capacity, const AccountsState& accounts, bool deep);
+void license_technology(LabState& state, AccountsState& accounts, OrdinalDay day, std::string_view offer_id, Cents protected_cash);
+void renew_tech_license(LabState& state, AccountsState& accounts, OrdinalDay day, std::string_view offer_id, Cents protected_cash);
+void validate_tech_licenses(const LabState& state, const AccountsState& accounts, bool deep);
+[[nodiscard]] bool dataset_lineage_has_controversy(const LabState& state, std::string_view dataset_id);
+[[nodiscard]] bool model_lineage_has_controversy(const LabState& state, std::string_view model_id);
+[[nodiscard]] ProductTechnicalProfile product_technical_profile(const SimulationState& state, std::string_view model_id);
 [[nodiscard]] DataMixPreview preview_data_mix(const LabState&,const TrainingRequest&);
 [[nodiscard]] TrainingPreview preview_training(const LabState& state, const TrainingRequest& request);
 [[nodiscard]] LabReport lab_report(const LabState& state, const CapacityState& capacity);
@@ -340,5 +494,9 @@ void clone_model(LabState& state, const CapacityState& capacity, OrdinalDay day,
 void start_evaluation(LabState& state, AccountsState& accounts, CapacityState& capacity, OrdinalDay day,
                       std::string id, std::string_view model_id, std::string_view plan_id,
                       const LabAllocation& allocation, Cents protected_cash, std::string specialist_id={});
+#if !PGP_DISTRIBUTION
+void finish_playtest_evaluation(LabState&, CapacityState&, RandomSnapshot&, OrdinalDay);
+#endif
+void record_research_prototype(LabState&,const LabResearch&,const ResearchRun&,const CapacityProject&,OrdinalDay);
 void close_lab_day(LabState& state, const CapacityState& capacity, OrdinalDay day, RandomSnapshot& random);
 } // namespace pgp::core

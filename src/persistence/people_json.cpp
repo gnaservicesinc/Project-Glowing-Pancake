@@ -5,16 +5,19 @@
 namespace pgp::persistence::detail {
 namespace {
 Json profile(const core::PersonProfile& p) {
-    return {{"id",p.id},{"name",p.name},{"gender",p.gender},{"pronouns",p.pronouns},{"education",p.education},{"role",p.role},{"bio",p.bio},{"preferred_mission",p.preferred_mission},
+    Json out{{"id",p.id},{"name",p.name},{"gender",p.gender},{"pronouns",p.pronouns},{"education",p.education},{"role",p.role},{"bio",p.bio},{"preferred_mission",p.preferred_mission},
         {"birth_year",p.birth_year},{"experience",p.experience},{"research",p.research},{"engineering",p.engineering},{"evaluation",p.evaluation},{"mission_fit",p.mission_fit},{"applied_on",p.applied_on.value()},
         {"romantic",p.romantic?romantic_profile_json(*p.romantic):Json(nullptr)},{"skills",p.skills},{"orientation",p.orientation},{"traits",p.traits},{"portrait",{{"kit",p.portrait.kit},{"parts",p.portrait.parts},{"style",p.portrait.style}}}};
+    if(p.creative>0) out["creative"]=p.creative;
+    return out;
 }
 core::PersonProfile parse_profile(const Json& j) {
-    fields(j,"person",{"id","name","gender","pronouns","education","role","bio","preferred_mission","birth_year","experience","research","engineering","evaluation","mission_fit","applied_on","portrait","traits","skills","orientation","romantic"});
+    fields(j,"person",{"id","name","gender","pronouns","education","role","bio","preferred_mission","birth_year","experience","research","engineering","evaluation","mission_fit","applied_on","portrait","traits","skills","orientation","romantic"},{"creative"});
     const auto year=i64(j.at("birth_year"),"birth_year");if(year<1800 || year>3000) invalid("person","Birth year out of bounds");
     const auto count=[&](const char* name){return static_cast<std::uint32_t>(u64(j.at(name),name,100));};
     core::PersonProfile result{text(j.at("id"),"id",64),text(j.at("name"),"name",128),text(j.at("gender"),"gender",32),text(j.at("pronouns"),"pronouns",64),
         text(j.at("education"),"education",128,true),text(j.at("role"),"role",64),text(j.at("bio"),"bio",512,true),text(j.at("preferred_mission"),"preferred_mission",32),static_cast<int>(year),count("experience"),count("research"),count("engineering"),count("evaluation"),count("mission_fit"),core::OrdinalDay{i64(j.at("applied_on"),"applied_on")}};
+    if(j.contains("creative")) result.creative=count("creative");
     if(!j.at("romantic").is_null())result.romantic=parse_romantic_profile(j.at("romantic"));
     result.orientation=text(j.at("orientation"),"orientation",32);
     array(j.at("skills"),"skills",96);for(const auto& id:j.at("skills"))result.skills.push_back(text(id,"skill",64));

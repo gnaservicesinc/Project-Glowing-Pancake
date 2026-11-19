@@ -91,7 +91,7 @@ ColumnLayout {
     }
     GameDialog {
         id:review;objectName:"researchJamReviewDialog";property var terms:({});property string revision:"";property string summary:""
-        anchors.centerIn:Overlay.overlay;width:Math.min(jam.textSize*38,Overlay.overlay.width-32);height:Math.min(jam.textSize*25,Overlay.overlay.height-32);modal:true;focus:true;title:qsTr("Make this research pact?")
+        anchors.centerIn:Overlay.overlay;width:Math.min(jam.textSize*38,(Overlay.overlay?.width ?? 650)-32);height:Math.min(jam.textSize*25,(Overlay.overlay?.height ?? 480)-32);modal:true;focus:true;title:qsTr("Make this research pact?")
         onAboutToShow:{terms=Object.assign({},jam.draft);revision=campaign.world.reviewToken;summary=jam.preview.partner+"\n\n"+jam.preview.summary+"\n\n"+qsTr("Both labs retain their results and agree to joint publication once both finish. Costs and work already used are not refundable.")}
         contentItem:ScrollView {id:reviewScroll;contentWidth:availableWidth;clip:true;Label {width:reviewScroll.availableWidth;text:review.summary;wrapMode:Text.Wrap;font.pixelSize:jam.textSize}}
         footer:Flow {spacing:8;padding:10
@@ -101,7 +101,7 @@ ColumnLayout {
     }
     GameDialog {
         id:publication;property string agreement:"";property string revision:"";title:qsTr("Share the joint discovery?");modal:true;focus:true
-        anchors.centerIn:Overlay.overlay;width:Math.min(jam.textSize*35,Overlay.overlay.width-32);height:Math.min(jam.textSize*18,Overlay.overlay.height-32)
+        anchors.centerIn:Overlay.overlay;width:Math.min(jam.textSize*35,(Overlay.overlay?.width ?? 650)-32);height:Math.min(jam.textSize*18,(Overlay.overlay?.height ?? 480)-32)
         onAboutToShow:revision=campaign.world.reviewToken
         contentItem:ScrollView {id:paperScroll;contentWidth:availableWidth;clip:true;Label {width:paperScroll.availableWidth;text:qsTr("Both labs will publish this completed result. Other labs can learn from the public research under the ordinary adoption rules. There is no publication bonus payment.");wrapMode:Text.Wrap;font.pixelSize:jam.textSize}}
         footer:Flow {spacing:8;padding:10

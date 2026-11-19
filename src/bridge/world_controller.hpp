@@ -15,6 +15,7 @@ class WorldController final : public QObject {
     Q_PROPERTY(QVariantList industryPeople READ industryPeople NOTIFY changed)
     Q_PROPERTY(QVariantMap deskColleague READ deskColleague NOTIFY changed)
     Q_PROPERTY(QVariantMap relationships READ relationships NOTIFY changed)
+    Q_PROPERTY(QVariantMap companyAuthority READ companyAuthority NOTIFY changed)
     Q_PROPERTY(QVariantMap familyAlbum READ familyAlbum NOTIFY changed)
     Q_PROPERTY(QVariantMap romance READ romance NOTIFY changed)
     Q_PROPERTY(QVariantMap researchJams READ researchJams NOTIFY changed)
@@ -35,6 +36,9 @@ class WorldController final : public QObject {
     Q_PROPERTY(QString countyState READ countyState WRITE setCountyState NOTIFY changed)
     Q_PROPERTY(QVariantList rooms READ rooms NOTIFY changed)
     Q_PROPERTY(QVariantList devices READ devices NOTIFY changed)
+    Q_PROPERTY(QVariantList physicalDevices READ physicalDevices NOTIFY workspacesChanged)
+    Q_PROPERTY(QVariantList poppedOutDevices READ poppedOutDevices NOTIFY workspacesChanged)
+    Q_PROPERTY(QVariantMap detachedResearchTree READ detachedResearchTree NOTIFY workspacesChanged)
     Q_PROPERTY(QVariantList deviceInventory READ deviceInventory NOTIFY changed)
     Q_PROPERTY(QVariantList deviceOffers READ deviceOffers NOTIFY changed)
     Q_PROPERTY(QString deviceSummary READ deviceSummary NOTIFY changed)
@@ -89,6 +93,9 @@ public:
     Q_INVOKABLE QStringList missionPreview(QString mission) const;
     Q_INVOKABLE void changeCompanyMission(QString mission,QString revision);
     Q_INVOKABLE void respondToMissionConcern(QString person,QString mediator,QString revision);
+    QVariantMap companyAuthority() const;
+    Q_INVOKABLE void acquireCompanyControl(QString step,QString revision);
+    Q_INVOKABLE void respondToMissionScandal(QString choice,QString revision);
     Q_INVOKABLE void socialize(QString person,QString activity,QString revision);
     Q_INVOKABLE QVariantMap softwareQuote(QVariantMap draft) const;
     Q_INVOKABLE QVariantMap courseQuote(QString person,QString skill,QString payer) const;
@@ -145,6 +152,25 @@ public:
     Q_INVOKABLE void setRecruitingTerms(int payPercent,QString mission);
     QVariantList rooms() const;
     QVariantList devices() const;
+    QVariantList physicalDevices() const;
+    QVariantList poppedOutDevices() const;
+    QVariantMap detachedResearchTree() const;
+    Q_INVOKABLE QVariantMap physicalDevice(QString deviceId) const;
+    Q_INVOKABLE QVariantMap deviceWorkspace(QString deviceId) const;
+    Q_INVOKABLE QString resolvePhysicalDevice(QString preferredDeviceId,QString appId) const;
+    Q_INVOKABLE bool openDeviceApp(QString deviceId,QString appId,QString section={});
+    Q_INVOKABLE bool switchDeviceApp(QString deviceId,QString appId);
+    Q_INVOKABLE void suspendDeviceApp(QString deviceId);
+    Q_INVOKABLE void closeDeviceApp(QString deviceId,QString appId);
+    Q_INVOKABLE QVariantMap deviceAppState(QString deviceId,QString appId) const;
+    Q_INVOKABLE void setDeviceAppState(QString deviceId,QString appId,QString key,QVariant value);
+    Q_INVOKABLE bool setDevicePoppedOut(QString deviceId,bool poppedOut);
+    Q_INVOKABLE bool openDetachedResearchTree(QString deviceId);
+    Q_INVOKABLE void closeDetachedResearchTree();
+    Q_INVOKABLE QVariantList alternateDevicesForApp(QString appId,QString excludeDeviceId) const;
+    Q_INVOKABLE QVariantMap clampedWindowGeometry(QString windowKey,int defaultW,int defaultH) const;
+    Q_INVOKABLE void saveWindowGeometry(QString windowKey,int x,int y,int w,int h);
+    Q_INVOKABLE void powerPhysicalDevice(QString deviceId,bool powered,QString revision);
     QVariantList deviceInventory() const;
     QVariantList deviceOffers() const;
     QString deviceSummary() const;
@@ -206,6 +232,7 @@ public:
     QVariantList blueprintHardware() const;
     Q_INVOKABLE void orderHeadquartersRoom(QString offer,QString revision);
     Q_INVOKABLE void createBlueprint(QString name,QString hardware,QString gridKw,QString operators,bool evaporative);
+    Q_INVOKABLE QVariantMap blueprintDesignPreview(QString hardware,QString gridKw,QString operators,bool evaporative,QString state) const;
     Q_INVOKABLE QVariantMap blueprintQuote(QString blueprint,QString state) const;
     Q_INVOKABLE void buildBlueprint(QVariantMap reviewed);
 signals:
@@ -217,6 +244,7 @@ signals:
     void actionRequested(core::CommandAction);
     void changed();
     void navigationChanged();
+    void workspacesChanged();
     void draftsReset();
     void noticeRaised(QString);
 private:
@@ -224,6 +252,9 @@ private:
     void personalAction(core::PersonalLifeAction,QString revision);
     bool hqReview(QString revision);
     void restore();
+    void restoreWorkspaces();
+    bool saveWorkspaces();
+    QString canonicalPhysicalDeviceId(const QString& idOrKind,const QString& appId={}) const;
     CampaignSnapshotPtr snapshot_;
     const runtime::CompiledProgram* program_=nullptr;
     QString county_state_="US-CA";
@@ -231,5 +262,8 @@ private:
     QVariantMap navigation_{{"place","workspace"},{"scale","hq"},{"device",""},{"app",""},{"section",""}};
     QVariantMap world_geometry_;
     QVariantMap drafts_;
+    QVariantMap device_workspaces_;
+    QVariantMap window_geometries_;
+    QVariantMap detached_research_tree_{{"open",false},{"deviceId",""}};
 };
 }

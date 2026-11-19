@@ -10,7 +10,7 @@
     "music.weitblick": "9da14349e75eaa6e799a45522c2c8cb00046372efefd2a6121caf1959b10140b"
   },
   "content_schema": 1,
-  "content_version": "0.82.0-dev.1",
+  "content_version": "0.84.0-dev.1",
   "currency_basis": "constant_2014_cents",
   "definitions": [
     {
@@ -15190,6 +15190,176 @@
       "work_milli_CU": 2000000
     },
     {
+      "cash_cents": 0,
+      "id": "research.bio.active_wetlab_closed_loop",
+      "kind": "research",
+      "prerequisites": {
+        "all_of": [
+          "research.integrated_science",
+          "research.math.bayesian_uncertainty_calibration"
+        ],
+        "any_of": []
+      },
+      "revision": 1,
+      "staff_days": 12,
+      "technical_effect": {
+        "data_efficiency_bp": 600
+      },
+      "work_milli_CU": 175000
+    },
+    {
+      "cash_cents": 0,
+      "id": "research.bio.climate_pde_surrogates",
+      "kind": "research",
+      "prerequisites": {
+        "all_of": [
+          "research.integrated_science"
+        ],
+        "any_of": []
+      },
+      "revision": 1,
+      "staff_days": 13,
+      "technical_effect": {
+        "compute_efficiency_bp": 450
+      },
+      "work_milli_CU": 200000
+    },
+    {
+      "cash_cents": 0,
+      "id": "research.bio.clinical_trial_stratification",
+      "kind": "research",
+      "prerequisites": {
+        "all_of": [
+          "research.integrated_science",
+          "research.held_out_evaluation"
+        ],
+        "any_of": []
+      },
+      "revision": 1,
+      "staff_days": 11,
+      "technical_effect": {
+        "robustness_bonus_bp": 450
+      },
+      "work_milli_CU": 165000
+    },
+    {
+      "cash_cents": 0,
+      "id": "research.bio.crystal_lattice_diffusion",
+      "kind": "research",
+      "prerequisites": {
+        "all_of": [
+          "research.bio.equivariant_molecular_graphs"
+        ],
+        "any_of": []
+      },
+      "revision": 1,
+      "staff_days": 15,
+      "technical_effect": {
+        "data_efficiency_bp": 400
+      },
+      "work_milli_CU": 230000
+    },
+    {
+      "cash_cents": 0,
+      "id": "research.bio.enzyme_active_site_design",
+      "kind": "research",
+      "prerequisites": {
+        "all_of": [
+          "research.bio.protein_folding_poc",
+          "research.bio.equivariant_molecular_graphs"
+        ],
+        "any_of": []
+      },
+      "revision": 1,
+      "staff_days": 16,
+      "technical_effect": {
+        "robustness_bonus_bp": 400
+      },
+      "work_milli_CU": 240000
+    },
+    {
+      "cash_cents": 0,
+      "id": "research.bio.equivariant_molecular_graphs",
+      "kind": "research",
+      "prerequisites": {
+        "all_of": [
+          "research.integrated_science",
+          "research.math.equivariant_representations"
+        ],
+        "any_of": []
+      },
+      "revision": 1,
+      "staff_days": 14,
+      "technical_effect": {
+        "data_efficiency_bp": 550,
+        "modality_unlock": "molecular_simulation"
+      },
+      "work_milli_CU": 210000
+    },
+    {
+      "cash_cents": 0,
+      "id": "research.bio.genomic_regulatory_motifs",
+      "kind": "research",
+      "prerequisites": {
+        "all_of": [
+          "research.integrated_science",
+          "research.sequence_modeling"
+        ],
+        "any_of": []
+      },
+      "revision": 1,
+      "staff_days": 12,
+      "technical_effect": {
+        "modality_unlock": "genomics"
+      },
+      "work_milli_CU": 185000
+    },
+    {
+      "cash_cents": 0,
+      "id": "research.bio.protein_folding_poc",
+      "kind": "research",
+      "poc_spec": {
+        "max_capability_bp": {
+          "documents": 3600,
+          "scanned_tables": 4400,
+          "science_industry": 6200
+        },
+        "method_label": "Pairwise residue geometry network",
+        "produces_poc": true,
+        "recipe_id": "recipe.sensor_transfer",
+        "task_scope": "Monomer backbone structure prediction prototype"
+      },
+      "prerequisites": {
+        "all_of": [
+          "research.integrated_science"
+        ],
+        "any_of": [
+          "research.attention_systems",
+          "research.ml.state_space_recurrence"
+        ]
+      },
+      "revision": 1,
+      "staff_days": 10,
+      "work_milli_CU": 150000
+    },
+    {
+      "cash_cents": 0,
+      "id": "research.compute.asynchronous_pipeline_parallel",
+      "kind": "research",
+      "prerequisites": {
+        "all_of": [
+          "research.compute.zero_redundancy_sharding"
+        ],
+        "any_of": []
+      },
+      "revision": 1,
+      "staff_days": 14,
+      "technical_effect": {
+        "compute_efficiency_bp": 550
+      },
+      "work_milli_CU": 210000
+    },
+    {
       "cash_cents": 80000,
       "id": "research.compute.batched_serving",
       "innovation": {
@@ -15210,6 +15380,23 @@
       "work_milli_CU": 120000
     },
     {
+      "cash_cents": 75000,
+      "id": "research.compute.deadline_batching",
+      "kind": "research",
+      "prerequisites": {
+        "all_of": [
+          "research.compute.batched_serving"
+        ],
+        "any_of": []
+      },
+      "revision": 1,
+      "staff_days": 7,
+      "technical_effect": {
+        "latency_bonus_bp": 220
+      },
+      "work_milli_CU": 75000
+    },
+    {
       "cash_cents": 1350000,
       "id": "research.compute.fabric_qos",
       "kind": "research",
@@ -15219,9 +15406,26 @@
         ],
         "any_of": []
       },
+      "revision": 2,
+      "staff_days": 18,
+      "work_milli_CU": 240000
+    },
+    {
+      "cash_cents": 125000,
+      "id": "research.compute.fallback_routing",
+      "kind": "research",
+      "prerequisites": {
+        "all_of": [
+          "research.compute.fabric_qos"
+        ],
+        "any_of": []
+      },
       "revision": 1,
-      "staff_days": 165,
-      "work_milli_CU": 5400000
+      "staff_days": 9,
+      "technical_effect": {
+        "robustness_bonus_bp": 250
+      },
+      "work_milli_CU": 105000
     },
     {
       "cash_cents": 660000,
@@ -15233,9 +15437,62 @@
         ],
         "any_of": []
       },
+      "revision": 2,
+      "staff_days": 18,
+      "work_milli_CU": 240000
+    },
+    {
+      "cash_cents": 0,
+      "id": "research.compute.fused_attention_kernels",
+      "kind": "research",
+      "prerequisites": {
+        "all_of": [
+          "research.efficient_serving"
+        ],
+        "any_of": []
+      },
       "revision": 1,
-      "staff_days": 123,
-      "work_milli_CU": 2550000
+      "staff_days": 11,
+      "technical_effect": {
+        "compute_efficiency_bp": 500,
+        "latency_bonus_bp": 450
+      },
+      "work_milli_CU": 160000
+    },
+    {
+      "cash_cents": 100000,
+      "id": "research.compute.idle_replica_parking",
+      "kind": "research",
+      "prerequisites": {
+        "all_of": [
+          "research.compute.queue_metering"
+        ],
+        "any_of": []
+      },
+      "revision": 1,
+      "staff_days": 8,
+      "technical_effect": {
+        "compute_efficiency_bp": 180
+      },
+      "work_milli_CU": 90000
+    },
+    {
+      "cash_cents": 0,
+      "id": "research.compute.int8_activation_quantization",
+      "kind": "research",
+      "prerequisites": {
+        "all_of": [
+          "research.efficient_serving"
+        ],
+        "any_of": []
+      },
+      "revision": 1,
+      "staff_days": 10,
+      "technical_effect": {
+        "compute_efficiency_bp": 450,
+        "latency_bonus_bp": 400
+      },
+      "work_milli_CU": 140000
     },
     {
       "cash_cents": 640000,
@@ -15247,9 +15504,66 @@
         ],
         "any_of": []
       },
+      "revision": 2,
+      "staff_days": 18,
+      "work_milli_CU": 220000
+    },
+    {
+      "cash_cents": 0,
+      "id": "research.compute.kernel_refinement_1",
+      "kind": "research",
+      "prerequisites": {
+        "all_of": [
+          "research.compute.fused_attention_kernels"
+        ],
+        "any_of": []
+      },
       "revision": 1,
-      "staff_days": 88,
-      "work_milli_CU": 2200000
+      "staff_days": 8,
+      "technical_effect": {
+        "diminishing_tier": 1,
+        "latency_bonus_bp": 250,
+        "refinement_family": "serving_kernels"
+      },
+      "work_milli_CU": 110000
+    },
+    {
+      "cash_cents": 0,
+      "id": "research.compute.kernel_refinement_2",
+      "kind": "research",
+      "prerequisites": {
+        "all_of": [
+          "research.compute.kernel_refinement_1"
+        ],
+        "any_of": []
+      },
+      "revision": 1,
+      "staff_days": 9,
+      "technical_effect": {
+        "diminishing_tier": 2,
+        "latency_bonus_bp": 160,
+        "refinement_family": "serving_kernels"
+      },
+      "work_milli_CU": 135000
+    },
+    {
+      "cash_cents": 0,
+      "id": "research.compute.kernel_refinement_3",
+      "kind": "research",
+      "prerequisites": {
+        "all_of": [
+          "research.compute.kernel_refinement_2"
+        ],
+        "any_of": []
+      },
+      "revision": 1,
+      "staff_days": 11,
+      "technical_effect": {
+        "diminishing_tier": 3,
+        "latency_bonus_bp": 90,
+        "refinement_family": "serving_kernels"
+      },
+      "work_milli_CU": 160000
     },
     {
       "cash_cents": 450000,
@@ -15261,9 +15575,9 @@
         ],
         "any_of": []
       },
-      "revision": 1,
-      "staff_days": 55,
-      "work_milli_CU": 1800000
+      "revision": 2,
+      "staff_days": 18,
+      "work_milli_CU": 180000
     },
     {
       "cash_cents": 320000,
@@ -15280,6 +15594,23 @@
       "work_milli_CU": 1100000
     },
     {
+      "cash_cents": 0,
+      "id": "research.compute.paged_kv_cache",
+      "kind": "research",
+      "prerequisites": {
+        "all_of": [
+          "research.efficient_serving"
+        ],
+        "any_of": []
+      },
+      "revision": 1,
+      "staff_days": 10,
+      "technical_effect": {
+        "latency_bonus_bp": 450
+      },
+      "work_milli_CU": 150000
+    },
+    {
       "cash_cents": 900000,
       "id": "research.compute.pooled_boards",
       "kind": "research",
@@ -15289,9 +15620,9 @@
         ],
         "any_of": []
       },
-      "revision": 1,
-      "staff_days": 110,
-      "work_milli_CU": 3600000
+      "revision": 2,
+      "staff_days": 18,
+      "work_milli_CU": 240000
     },
     {
       "cash_cents": 220000,
@@ -15303,9 +15634,9 @@
         ],
         "any_of": []
       },
-      "revision": 1,
-      "staff_days": 41,
-      "work_milli_CU": 850000
+      "revision": 2,
+      "staff_days": 18,
+      "work_milli_CU": 85000
     },
     {
       "cash_cents": 960000,
@@ -15317,9 +15648,27 @@
         ],
         "any_of": []
       },
+      "revision": 2,
+      "staff_days": 18,
+      "work_milli_CU": 240000
+    },
+    {
+      "cash_cents": 0,
+      "id": "research.compute.speculative_decoding",
+      "kind": "research",
+      "prerequisites": {
+        "all_of": [
+          "research.efficient_serving",
+          "research.math.compact_distillation"
+        ],
+        "any_of": []
+      },
       "revision": 1,
-      "staff_days": 132,
-      "work_milli_CU": 3300000
+      "staff_days": 12,
+      "technical_effect": {
+        "latency_bonus_bp": 600
+      },
+      "work_milli_CU": 170000
     },
     {
       "cash_cents": 440000,
@@ -15331,9 +15680,43 @@
         ],
         "any_of": []
       },
+      "revision": 2,
+      "staff_days": 18,
+      "work_milli_CU": 170000
+    },
+    {
+      "cash_cents": 0,
+      "id": "research.compute.zero_redundancy_sharding",
+      "kind": "research",
+      "prerequisites": {
+        "all_of": [
+          "research.reproducible_tooling"
+        ],
+        "any_of": []
+      },
       "revision": 1,
-      "staff_days": 82,
-      "work_milli_CU": 1700000
+      "staff_days": 12,
+      "technical_effect": {
+        "compute_efficiency_bp": 500
+      },
+      "work_milli_CU": 180000
+    },
+    {
+      "cash_cents": 0,
+      "id": "research.data.active_curriculum_ordering",
+      "kind": "research",
+      "prerequisites": {
+        "all_of": [
+          "research.data_deduplication"
+        ],
+        "any_of": []
+      },
+      "revision": 1,
+      "staff_days": 10,
+      "technical_effect": {
+        "data_efficiency_bp": 450
+      },
+      "work_milli_CU": 135000
     },
     {
       "cash_cents": 180000,
@@ -15345,9 +15728,103 @@
         ],
         "any_of": []
       },
+      "revision": 2,
+      "staff_days": 16,
+      "work_milli_CU": 60000
+    },
+    {
+      "cash_cents": 0,
+      "id": "research.data.contamination_decontamination",
+      "kind": "research",
+      "prerequisites": {
+        "all_of": [
+          "research.held_out_evaluation",
+          "research.data_deduplication"
+        ],
+        "any_of": []
+      },
       "revision": 1,
-      "staff_days": 32,
-      "work_milli_CU": 550000
+      "staff_days": 9,
+      "technical_effect": {
+        "robustness_bonus_bp": 300
+      },
+      "work_milli_CU": 125000
+    },
+    {
+      "cash_cents": 50000,
+      "id": "research.data.coverage_buckets",
+      "kind": "research",
+      "prerequisites": {
+        "all_of": [
+          "research.data_deduplication"
+        ],
+        "any_of": []
+      },
+      "revision": 1,
+      "staff_days": 6,
+      "technical_effect": {
+        "data_efficiency_bp": 150
+      },
+      "work_milli_CU": 60000
+    },
+    {
+      "cash_cents": 0,
+      "id": "research.data.creative_pedagogy_schemas",
+      "kind": "research",
+      "prerequisites": {
+        "all_of": [
+          "research.reproducible_tooling"
+        ],
+        "any_of": []
+      },
+      "revision": 1,
+      "staff_days": 8,
+      "technical_effect": {
+        "data_efficiency_bp": 600
+      },
+      "work_milli_CU": 105000
+    },
+    {
+      "cash_cents": 0,
+      "id": "research.data.curation_refinement_1",
+      "kind": "research",
+      "prerequisites": {
+        "all_of": [
+          "research.data_deduplication"
+        ],
+        "any_of": []
+      },
+      "revision": 1,
+      "staff_days": 7,
+      "technical_effect": {
+        "data_efficiency_bp": 200,
+        "diminishing_tier": 1,
+        "refinement_family": "corpus_balancing"
+      },
+      "work_milli_CU": 90000
+    },
+    {
+      "cash_cents": 0,
+      "data_requirement": {
+        "domain_hint": "documents",
+        "minimum_quality_bp": 5000,
+        "minimum_unique_units": 50000,
+        "required": true
+      },
+      "id": "research.data.empirical_scaling_laws",
+      "kind": "research",
+      "prerequisites": {
+        "all_of": [
+          "research.data_deduplication"
+        ],
+        "any_of": []
+      },
+      "revision": 1,
+      "staff_days": 10,
+      "technical_effect": {
+        "data_efficiency_bp": 400
+      },
+      "work_milli_CU": 140000
     },
     {
       "cash_cents": 540000,
@@ -15359,9 +15836,9 @@
         ],
         "any_of": []
       },
-      "revision": 1,
-      "staff_days": 96,
-      "work_milli_CU": 1650000
+      "revision": 2,
+      "staff_days": 18,
+      "work_milli_CU": 165000
     },
     {
       "cash_cents": 280000,
@@ -15373,9 +15850,60 @@
         ],
         "any_of": []
       },
+      "revision": 2,
+      "staff_days": 18,
+      "work_milli_CU": 104000
+    },
+    {
+      "cash_cents": 0,
+      "id": "research.data.information_theoretic_pruning",
+      "kind": "research",
+      "prerequisites": {
+        "all_of": [
+          "research.data_deduplication"
+        ],
+        "any_of": []
+      },
       "revision": 1,
-      "staff_days": 56,
-      "work_milli_CU": 1040000
+      "staff_days": 9,
+      "technical_effect": {
+        "data_efficiency_bp": 350
+      },
+      "work_milli_CU": 110000
+    },
+    {
+      "cash_cents": 25000,
+      "id": "research.data.label_disagreement",
+      "kind": "research",
+      "prerequisites": {
+        "all_of": [
+          "research.data.partition_audit"
+        ],
+        "any_of": []
+      },
+      "revision": 1,
+      "staff_days": 5,
+      "technical_effect": {
+        "data_efficiency_bp": 200
+      },
+      "work_milli_CU": 45000
+    },
+    {
+      "cash_cents": 0,
+      "id": "research.data.multilingual_alignment",
+      "kind": "research",
+      "prerequisites": {
+        "all_of": [
+          "research.data_deduplication"
+        ],
+        "any_of": []
+      },
+      "revision": 1,
+      "staff_days": 11,
+      "technical_effect": {
+        "modality_unlock": "multilingual"
+      },
+      "work_milli_CU": 145000
     },
     {
       "cash_cents": 360000,
@@ -15387,9 +15915,26 @@
         ],
         "any_of": []
       },
+      "revision": 2,
+      "staff_days": 18,
+      "work_milli_CU": 110000
+    },
+    {
+      "cash_cents": 0,
+      "id": "research.data.provenance_watermarking",
+      "kind": "research",
+      "prerequisites": {
+        "all_of": [
+          "research.reproducible_tooling"
+        ],
+        "any_of": []
+      },
       "revision": 1,
-      "staff_days": 64,
-      "work_milli_CU": 1100000
+      "staff_days": 8,
+      "technical_effect": {
+        "robustness_bonus_bp": 250
+      },
+      "work_milli_CU": 95000
     },
     {
       "cash_cents": 140000,
@@ -15401,9 +15946,29 @@
         ],
         "any_of": []
       },
+      "revision": 2,
+      "staff_days": 14,
+      "work_milli_CU": 60000
+    },
+    {
+      "cash_cents": 150000,
+      "id": "research.data.shift_watch",
+      "kind": "research",
+      "prerequisites": {
+        "all_of": [
+          "research.held_out_evaluation"
+        ],
+        "any_of": [
+          "research.data.label_disagreement",
+          "research.data.coverage_buckets"
+        ]
+      },
       "revision": 1,
-      "staff_days": 28,
-      "work_milli_CU": 520000
+      "staff_days": 10,
+      "technical_effect": {
+        "robustness_bonus_bp": 160
+      },
+      "work_milli_CU": 120000
     },
     {
       "cash_cents": 48000,
@@ -15421,8 +15986,8 @@
         ],
         "any_of": []
       },
-      "revision": 1,
-      "staff_days": 8,
+      "revision": 2,
+      "staff_days": 6,
       "work_milli_CU": 60000
     },
     {
@@ -15441,9 +16006,26 @@
         ],
         "any_of": []
       },
+      "revision": 2,
+      "staff_days": 8,
+      "work_milli_CU": 60000
+    },
+    {
+      "cash_cents": 0,
+      "id": "research.data.synthetic_critique_loops",
+      "kind": "research",
+      "prerequisites": {
+        "all_of": [
+          "research.workflow_verification"
+        ],
+        "any_of": []
+      },
       "revision": 1,
-      "staff_days": 16,
-      "work_milli_CU": 160000
+      "staff_days": 12,
+      "technical_effect": {
+        "data_efficiency_bp": 350
+      },
+      "work_milli_CU": 165000
     },
     {
       "cash_cents": 420000,
@@ -15455,9 +16037,9 @@
         ],
         "any_of": []
       },
-      "revision": 1,
-      "staff_days": 84,
-      "work_milli_CU": 1560000
+      "revision": 2,
+      "staff_days": 18,
+      "work_milli_CU": 156000
     },
     {
       "cash_cents": 50000,
@@ -15741,6 +16323,188 @@
       "work_milli_CU": 2000000
     },
     {
+      "cash_cents": 0,
+      "id": "research.math.bayesian_uncertainty_calibration",
+      "kind": "research",
+      "prerequisites": {
+        "all_of": [
+          "research.held_out_evaluation"
+        ],
+        "any_of": []
+      },
+      "revision": 1,
+      "staff_days": 11,
+      "technical_effect": {
+        "robustness_bonus_bp": 450
+      },
+      "work_milli_CU": 155000
+    },
+    {
+      "cash_cents": 0,
+      "id": "research.math.compact_distillation",
+      "kind": "research",
+      "prerequisites": {
+        "all_of": [
+          "research.sequence_modeling"
+        ],
+        "any_of": []
+      },
+      "revision": 1,
+      "staff_days": 11,
+      "technical_effect": {
+        "compute_efficiency_bp": 500,
+        "data_efficiency_bp": 650,
+        "latency_bonus_bp": 350
+      },
+      "work_milli_CU": 150000
+    },
+    {
+      "cash_cents": 0,
+      "id": "research.math.eff_refinement_1",
+      "kind": "research",
+      "prerequisites": {
+        "all_of": [
+          "research.math.second_order_optimizers"
+        ],
+        "any_of": []
+      },
+      "revision": 1,
+      "staff_days": 7,
+      "technical_effect": {
+        "data_efficiency_bp": 250,
+        "diminishing_tier": 1,
+        "refinement_family": "sample_efficiency"
+      },
+      "work_milli_CU": 100000
+    },
+    {
+      "cash_cents": 0,
+      "id": "research.math.eff_refinement_2",
+      "kind": "research",
+      "prerequisites": {
+        "all_of": [
+          "research.math.eff_refinement_1"
+        ],
+        "any_of": []
+      },
+      "revision": 1,
+      "staff_days": 9,
+      "technical_effect": {
+        "data_efficiency_bp": 150,
+        "diminishing_tier": 2,
+        "refinement_family": "sample_efficiency"
+      },
+      "work_milli_CU": 125000
+    },
+    {
+      "cash_cents": 0,
+      "id": "research.math.equivariant_representations",
+      "kind": "research",
+      "prerequisites": {
+        "all_of": [
+          "research.math.spectral_regularization"
+        ],
+        "any_of": []
+      },
+      "revision": 1,
+      "staff_days": 13,
+      "technical_effect": {
+        "data_efficiency_bp": 700
+      },
+      "work_milli_CU": 190000
+    },
+    {
+      "cash_cents": 0,
+      "id": "research.math.low_rank_factorization",
+      "kind": "research",
+      "prerequisites": {
+        "all_of": [
+          "research.math.compact_distillation"
+        ],
+        "any_of": []
+      },
+      "revision": 1,
+      "staff_days": 10,
+      "technical_effect": {
+        "compute_efficiency_bp": 450,
+        "latency_bonus_bp": 300
+      },
+      "work_milli_CU": 135000
+    },
+    {
+      "cash_cents": 0,
+      "id": "research.math.optimal_transport_alignment",
+      "kind": "research",
+      "prerequisites": {
+        "all_of": [
+          "research.math.spectral_regularization"
+        ],
+        "any_of": []
+      },
+      "revision": 1,
+      "staff_days": 12,
+      "technical_effect": {
+        "data_efficiency_bp": 500
+      },
+      "work_milli_CU": 175000
+    },
+    {
+      "cash_cents": 0,
+      "id": "research.math.second_order_optimizers",
+      "kind": "research",
+      "prerequisites": {
+        "all_of": [
+          "research.reproducible_tooling"
+        ],
+        "any_of": []
+      },
+      "revision": 1,
+      "staff_days": 13,
+      "technical_effect": {
+        "compute_efficiency_bp": 450,
+        "data_efficiency_bp": 550
+      },
+      "work_milli_CU": 180000
+    },
+    {
+      "cash_cents": 0,
+      "id": "research.math.small_model_chinchilla",
+      "kind": "research",
+      "prerequisites": {
+        "all_of": [
+          "research.math.compact_distillation",
+          "research.data.creative_pedagogy_schemas"
+        ],
+        "any_of": []
+      },
+      "revision": 1,
+      "staff_days": 14,
+      "technical_effect": {
+        "compute_efficiency_bp": 600,
+        "data_efficiency_bp": 800,
+        "latency_bonus_bp": 400
+      },
+      "work_milli_CU": 200000
+    },
+    {
+      "cash_cents": 0,
+      "id": "research.math.spectral_regularization",
+      "kind": "research",
+      "prerequisites": {
+        "all_of": [
+          "research.reproducible_tooling"
+        ],
+        "any_of": []
+      },
+      "revision": 1,
+      "staff_days": 9,
+      "technical_effect": {
+        "data_efficiency_bp": 450,
+        "robustness_bonus_bp": 250
+      },
+      "work_milli_CU": 120000
+    },
+    {
       "cash_cents": 6000000,
       "id": "research.methods_prototype",
       "kind": "research",
@@ -15753,6 +16517,243 @@
       "revision": 1,
       "staff_days": 30,
       "work_milli_CU": 2000000
+    },
+    {
+      "cash_cents": 0,
+      "id": "research.ml.arch_refinement_1",
+      "kind": "research",
+      "prerequisites": {
+        "all_of": [
+          "research.sequence_modeling"
+        ],
+        "any_of": []
+      },
+      "revision": 1,
+      "staff_days": 7,
+      "technical_effect": {
+        "compute_efficiency_bp": 250,
+        "diminishing_tier": 1,
+        "refinement_family": "arch_scaling"
+      },
+      "work_milli_CU": 100000
+    },
+    {
+      "cash_cents": 0,
+      "id": "research.ml.contrastive_embeddings",
+      "kind": "research",
+      "prerequisites": {
+        "all_of": [
+          "research.reproducible_tooling"
+        ],
+        "any_of": []
+      },
+      "revision": 1,
+      "staff_days": 9,
+      "technical_effect": {
+        "data_efficiency_bp": 300
+      },
+      "work_milli_CU": 120000
+    },
+    {
+      "cash_cents": 0,
+      "id": "research.ml.hierarchical_planning",
+      "kind": "research",
+      "prerequisites": {
+        "all_of": [
+          "research.workflow_verification"
+        ],
+        "any_of": [
+          "research.attention_systems",
+          "research.ml.state_space_recurrence"
+        ]
+      },
+      "revision": 1,
+      "staff_days": 14,
+      "technical_effect": {
+        "robustness_bonus_bp": 400
+      },
+      "work_milli_CU": 190000
+    },
+    {
+      "cash_cents": 0,
+      "id": "research.ml.long_horizon_memory",
+      "kind": "research",
+      "prerequisites": {
+        "all_of": [],
+        "any_of": [],
+        "any_of_groups": [
+          [
+            "research.attention_systems",
+            "research.ml.state_space_recurrence"
+          ]
+        ]
+      },
+      "revision": 1,
+      "staff_days": 13,
+      "technical_effect": {
+        "modality_unlock": "long_context"
+      },
+      "work_milli_CU": 180000
+    },
+    {
+      "cash_cents": 0,
+      "id": "research.ml.modular_adapters",
+      "kind": "research",
+      "prerequisites": {
+        "all_of": [
+          "research.reproducible_tooling"
+        ],
+        "any_of": []
+      },
+      "revision": 1,
+      "staff_days": 8,
+      "technical_effect": {
+        "compute_efficiency_bp": 350,
+        "data_efficiency_bp": 350
+      },
+      "work_milli_CU": 110000
+    },
+    {
+      "cash_cents": 0,
+      "id": "research.ml.neuro_symbolic_constraints",
+      "kind": "research",
+      "prerequisites": {
+        "all_of": [
+          "research.workflow_verification"
+        ],
+        "any_of": []
+      },
+      "revision": 1,
+      "staff_days": 12,
+      "technical_effect": {
+        "robustness_bonus_bp": 450
+      },
+      "work_milli_CU": 170000
+    },
+    {
+      "cash_cents": 0,
+      "id": "research.ml.rapid_prototyping_poc",
+      "kind": "research",
+      "poc_spec": {
+        "max_capability_bp": {
+          "documents": 5400,
+          "scanned_tables": 4800,
+          "software_reasoning": 4200
+        },
+        "method_label": "Small gated recurrent prototype",
+        "produces_poc": true,
+        "recipe_id": "recipe.sequence",
+        "task_scope": "Internal document & sequence triage prototype"
+      },
+      "prerequisites": {
+        "all_of": [
+          "research.sequence_modeling"
+        ],
+        "any_of": []
+      },
+      "revision": 1,
+      "staff_days": 7,
+      "work_milli_CU": 90000
+    },
+    {
+      "cash_cents": 0,
+      "id": "research.ml.retrieval_grounded_generation",
+      "kind": "research",
+      "prerequisites": {
+        "all_of": [
+          "research.ml.contrastive_embeddings"
+        ],
+        "any_of": []
+      },
+      "revision": 1,
+      "staff_days": 11,
+      "technical_effect": {
+        "data_efficiency_bp": 500,
+        "robustness_bonus_bp": 300
+      },
+      "work_milli_CU": 150000
+    },
+    {
+      "cash_cents": 0,
+      "id": "research.ml.sparse_mixture_routing",
+      "kind": "research",
+      "prerequisites": {
+        "all_of": [
+          "research.sequence_modeling"
+        ],
+        "any_of": [
+          "research.attention_systems",
+          "research.ml.state_space_recurrence"
+        ]
+      },
+      "revision": 1,
+      "staff_days": 15,
+      "technical_effect": {
+        "compute_efficiency_bp": 550
+      },
+      "work_milli_CU": 220000
+    },
+    {
+      "cash_cents": 0,
+      "id": "research.ml.state_space_recurrence",
+      "kind": "research",
+      "prerequisites": {
+        "all_of": [
+          "research.sequence_modeling"
+        ],
+        "any_of": []
+      },
+      "revision": 1,
+      "staff_days": 12,
+      "technical_effect": {
+        "compute_efficiency_bp": 400
+      },
+      "work_milli_CU": 160000
+    },
+    {
+      "cash_cents": 0,
+      "id": "research.ml.unified_reasoning",
+      "kind": "research",
+      "prerequisites": {
+        "all_of": [
+          "research.reproducible_tooling"
+        ],
+        "any_of": [],
+        "any_of_groups": [
+          [
+            "research.attention_systems",
+            "research.ml.state_space_recurrence"
+          ],
+          [
+            "research.held_out_evaluation",
+            "research.workflow_verification"
+          ]
+        ]
+      },
+      "revision": 1,
+      "staff_days": 17,
+      "technical_effect": {
+        "data_efficiency_bp": 450,
+        "robustness_bonus_bp": 350
+      },
+      "work_milli_CU": 240000
+    },
+    {
+      "cash_cents": 0,
+      "id": "research.ml.world_model_dynamics",
+      "kind": "research",
+      "prerequisites": {
+        "all_of": [
+          "research.ml.hierarchical_planning"
+        ],
+        "any_of": []
+      },
+      "revision": 1,
+      "staff_days": 16,
+      "technical_effect": {
+        "data_efficiency_bp": 400
+      },
+      "work_milli_CU": 240000
     },
     {
       "cash_cents": 310000,
@@ -15938,6 +16939,125 @@
       "work_milli_CU": 2370000
     },
     {
+      "cash_cents": 0,
+      "id": "research.product.edge_quantization_runtime",
+      "kind": "research",
+      "prerequisites": {
+        "all_of": [
+          "research.efficient_serving"
+        ],
+        "any_of": [
+          "research.math.compact_distillation",
+          "research.compute.int8_activation_quantization"
+        ]
+      },
+      "revision": 1,
+      "staff_days": 10,
+      "technical_effect": {
+        "deployment_setting_unlock": "edge_device",
+        "latency_bonus_bp": 550
+      },
+      "work_milli_CU": 145000
+    },
+    {
+      "cash_cents": 0,
+      "id": "research.product.hybrid_local_cloud_routing",
+      "kind": "research",
+      "prerequisites": {
+        "all_of": [],
+        "any_of": [],
+        "any_of_groups": [
+          [
+            "research.product.edge_quantization_runtime",
+            "research.math.compact_distillation"
+          ],
+          [
+            "research.efficient_serving",
+            "research.compute.speculative_decoding"
+          ]
+        ]
+      },
+      "revision": 1,
+      "staff_days": 12,
+      "technical_effect": {
+        "compute_efficiency_bp": 500,
+        "latency_bonus_bp": 450
+      },
+      "work_milli_CU": 165000
+    },
+    {
+      "cash_cents": 0,
+      "id": "research.product.interactive_copilot_ux",
+      "kind": "research",
+      "prerequisites": {
+        "all_of": [
+          "research.efficient_serving"
+        ],
+        "any_of": []
+      },
+      "revision": 1,
+      "staff_days": 9,
+      "technical_effect": {
+        "latency_bonus_bp": 450
+      },
+      "work_milli_CU": 120000
+    },
+    {
+      "cash_cents": 0,
+      "id": "research.product.privacy_preserving_federation",
+      "kind": "research",
+      "prerequisites": {
+        "all_of": [
+          "research.ml.modular_adapters",
+          "research.data.provenance_watermarking"
+        ],
+        "any_of": []
+      },
+      "revision": 1,
+      "staff_days": 12,
+      "technical_effect": {
+        "deployment_setting_unlock": "regulated_on_prem",
+        "robustness_bonus_bp": 400
+      },
+      "work_milli_CU": 175000
+    },
+    {
+      "cash_cents": 0,
+      "id": "research.product.sla_canary_observability",
+      "kind": "research",
+      "prerequisites": {
+        "all_of": [
+          "research.held_out_evaluation",
+          "research.efficient_serving"
+        ],
+        "any_of": []
+      },
+      "revision": 1,
+      "staff_days": 10,
+      "technical_effect": {
+        "robustness_bonus_bp": 450
+      },
+      "work_milli_CU": 140000
+    },
+    {
+      "cash_cents": 0,
+      "id": "research.product.structured_json_schema_engine",
+      "kind": "research",
+      "prerequisites": {
+        "all_of": [
+          "research.efficient_serving"
+        ],
+        "any_of": []
+      },
+      "revision": 1,
+      "staff_days": 8,
+      "technical_effect": {
+        "latency_bonus_bp": 350,
+        "robustness_bonus_bp": 350
+      },
+      "work_milli_CU": 115000
+    },
+    {
       "cash_cents": 420000,
       "id": "research.public.benchmark_exchange",
       "kind": "research",
@@ -16047,6 +17167,283 @@
       "revision": 2,
       "staff_days": 6,
       "work_milli_CU": 60000
+    },
+    {
+      "cash_cents": 0,
+      "id": "research.robotics.bimanual_manipulation",
+      "kind": "research",
+      "prerequisites": {
+        "all_of": [
+          "research.robotics.tactile_force_feedback",
+          "research.robotics.sim_to_real_domain_rand"
+        ],
+        "any_of": []
+      },
+      "revision": 1,
+      "staff_days": 15,
+      "technical_effect": {
+        "robustness_bonus_bp": 450
+      },
+      "work_milli_CU": 230000
+    },
+    {
+      "cash_cents": 0,
+      "id": "research.robotics.embodied_poc",
+      "kind": "research",
+      "poc_spec": {
+        "max_capability_bp": {
+          "autonomous_workflows": 5200,
+          "documents": 3200,
+          "scanned_tables": 3800,
+          "science_industry": 5800
+        },
+        "method_label": "Visuomotor diffusion policy prototype",
+        "produces_poc": true,
+        "recipe_id": "recipe.sensor_transfer",
+        "task_scope": "Benchtop part-sorting & assembly prototype"
+      },
+      "prerequisites": {
+        "all_of": [
+          "research.robotics.visuomotor_policies"
+        ],
+        "any_of": []
+      },
+      "revision": 1,
+      "staff_days": 8,
+      "work_milli_CU": 115000
+    },
+    {
+      "cash_cents": 0,
+      "id": "research.robotics.fleet_teleop_learning",
+      "kind": "research",
+      "prerequisites": {
+        "all_of": [
+          "research.robotics.sim_to_real_domain_rand"
+        ],
+        "any_of": []
+      },
+      "revision": 1,
+      "staff_days": 11,
+      "technical_effect": {
+        "data_efficiency_bp": 500
+      },
+      "work_milli_CU": 165000
+    },
+    {
+      "cash_cents": 0,
+      "id": "research.robotics.mobile_navigation_slam",
+      "kind": "research",
+      "prerequisites": {
+        "all_of": [
+          "research.efficient_image_features"
+        ],
+        "any_of": []
+      },
+      "revision": 1,
+      "staff_days": 11,
+      "technical_effect": {
+        "modality_unlock": "spatial_navigation"
+      },
+      "work_milli_CU": 160000
+    },
+    {
+      "cash_cents": 0,
+      "id": "research.robotics.safety_control_barriers",
+      "kind": "research",
+      "prerequisites": {
+        "all_of": [
+          "research.robotics.visuomotor_policies",
+          "research.workflow_verification"
+        ],
+        "any_of": []
+      },
+      "revision": 1,
+      "staff_days": 12,
+      "technical_effect": {
+        "robustness_bonus_bp": 550
+      },
+      "work_milli_CU": 170000
+    },
+    {
+      "cash_cents": 0,
+      "id": "research.robotics.sim_to_real_domain_rand",
+      "kind": "research",
+      "prerequisites": {
+        "all_of": [
+          "research.robotics.visuomotor_policies"
+        ],
+        "any_of": []
+      },
+      "revision": 1,
+      "staff_days": 12,
+      "technical_effect": {
+        "data_efficiency_bp": 450,
+        "robustness_bonus_bp": 400
+      },
+      "work_milli_CU": 175000
+    },
+    {
+      "cash_cents": 0,
+      "id": "research.robotics.tactile_force_feedback",
+      "kind": "research",
+      "prerequisites": {
+        "all_of": [
+          "research.robotics.visuomotor_policies"
+        ],
+        "any_of": []
+      },
+      "revision": 1,
+      "staff_days": 12,
+      "technical_effect": {
+        "deployment_setting_unlock": "industrial_floor",
+        "robustness_bonus_bp": 350
+      },
+      "work_milli_CU": 180000
+    },
+    {
+      "cash_cents": 0,
+      "id": "research.robotics.visuomotor_policies",
+      "kind": "research",
+      "prerequisites": {
+        "all_of": [
+          "research.efficient_image_features",
+          "research.sequence_modeling"
+        ],
+        "any_of": []
+      },
+      "revision": 1,
+      "staff_days": 13,
+      "technical_effect": {
+        "latency_bonus_bp": 300,
+        "modality_unlock": "embodied_control"
+      },
+      "work_milli_CU": 190000
+    },
+    {
+      "cash_cents": 0,
+      "id": "research.safety.adversarial_probes",
+      "kind": "research",
+      "prerequisites": {
+        "all_of": [
+          "research.held_out_evaluation"
+        ],
+        "any_of": []
+      },
+      "revision": 1,
+      "staff_days": 9,
+      "technical_effect": {
+        "robustness_bonus_bp": 450
+      },
+      "work_milli_CU": 130000
+    },
+    {
+      "cash_cents": 0,
+      "id": "research.safety.constitutional_rule_critique",
+      "kind": "research",
+      "prerequisites": {
+        "all_of": [
+          "research.workflow_verification"
+        ],
+        "any_of": [
+          "research.held_out_evaluation",
+          "research.safety.adversarial_probes"
+        ]
+      },
+      "revision": 1,
+      "staff_days": 12,
+      "technical_effect": {
+        "robustness_bonus_bp": 550
+      },
+      "work_milli_CU": 170000
+    },
+    {
+      "cash_cents": 0,
+      "id": "research.safety.formal_tool_sandboxing",
+      "kind": "research",
+      "prerequisites": {
+        "all_of": [
+          "research.workflow_verification"
+        ],
+        "any_of": []
+      },
+      "revision": 1,
+      "staff_days": 11,
+      "technical_effect": {
+        "deployment_setting_unlock": "high_assurance_enterprise",
+        "robustness_bonus_bp": 500
+      },
+      "work_milli_CU": 155000
+    },
+    {
+      "cash_cents": 0,
+      "id": "research.safety.mechanistic_circuit_tracing",
+      "kind": "research",
+      "prerequisites": {
+        "all_of": [
+          "research.held_out_evaluation",
+          "research.reproducible_tooling"
+        ],
+        "any_of": []
+      },
+      "revision": 1,
+      "staff_days": 13,
+      "technical_effect": {
+        "robustness_bonus_bp": 500
+      },
+      "work_milli_CU": 185000
+    },
+    {
+      "cash_cents": 0,
+      "id": "research.safety.scalable_debate_oversight",
+      "kind": "research",
+      "prerequisites": {
+        "all_of": [
+          "research.safety.constitutional_rule_critique"
+        ],
+        "any_of": []
+      },
+      "revision": 1,
+      "staff_days": 14,
+      "technical_effect": {
+        "robustness_bonus_bp": 600
+      },
+      "work_milli_CU": 210000
+    },
+    {
+      "cash_cents": 0,
+      "id": "research.safety.unlearning_and_redaction",
+      "kind": "research",
+      "prerequisites": {
+        "all_of": [
+          "research.safety.mechanistic_circuit_tracing"
+        ],
+        "any_of": []
+      },
+      "revision": 1,
+      "staff_days": 12,
+      "technical_effect": {
+        "robustness_bonus_bp": 450
+      },
+      "work_milli_CU": 180000
+    },
+    {
+      "cash_cents": 0,
+      "id": "research.safety.verification_refinement_1",
+      "kind": "research",
+      "prerequisites": {
+        "all_of": [
+          "research.safety.adversarial_probes"
+        ],
+        "any_of": []
+      },
+      "revision": 1,
+      "staff_days": 7,
+      "technical_effect": {
+        "diminishing_tier": 1,
+        "refinement_family": "safety_verification",
+        "robustness_bonus_bp": 220
+      },
+      "work_milli_CU": 100000
     },
     {
       "cash_cents": 50000,
@@ -21187,7 +22584,8 @@
         "century.product_customer.cedar_quarter",
         "century.product_customer.district_rollout",
         "century.product_customer.harbormark_cycle",
-        "deployment.incident_news"
+        "deployment.incident_news",
+        "story.provenance_scrutiny_audit"
       ],
       "frontier": "frontier.frontier_paths",
       "headquarters_choices": [
@@ -23298,6 +24696,74 @@
             "staff_days": 4
           },
           {
+            "collection_days": 8,
+            "dataset": {
+              "collection_method": "High-concurrency distributed scraping",
+              "commercial_use": true,
+              "contamination_bp": 700,
+              "coverage_bp": {
+                "documents": 7400,
+                "scanned_tables": 6000,
+                "social_interaction": 7000
+              },
+              "duplication_bp": 3500,
+              "id": "collected.scrape_broad_web_crawl",
+              "name": "Broad Autonomous Web Scrape",
+              "price_cents": 45000,
+              "provenance": "High-throughput indiscriminate web spider across news, blogs, and forums",
+              "provenance_confidence_bp": 3800,
+              "quality_bp": 5500,
+              "raw_units": 1100000,
+              "relevance_bp": {
+                "documents": 8000,
+                "scanned_tables": 6600,
+                "social_interaction": 7500
+              },
+              "rights": "Unconsented web scrape · elevated third-party controversy risk",
+              "source_path": "direct_scraping",
+              "supplier_or_publisher": "In-house Broad Spider",
+              "third_party_controversy_risk": true,
+              "underlying_history": "Broad public web pages ignoring robots.txt politeness hints.",
+              "unique_units": 680000
+            },
+            "review_work_milli_CU": 400000,
+            "staff_days": 5
+          },
+          {
+            "collection_days": 6,
+            "dataset": {
+              "collection_method": "Targeted domain-filtered web scraping",
+              "commercial_use": true,
+              "contamination_bp": 350,
+              "coverage_bp": {
+                "documents": 7800,
+                "scanned_tables": 7000,
+                "software_reasoning": 8200
+              },
+              "duplication_bp": 1800,
+              "id": "collected.scrape_focused_technical",
+              "name": "Focused Technical & Documentation Crawl",
+              "price_cents": 35000,
+              "provenance": "In-house crawler targeting technical repositories and API portals",
+              "provenance_confidence_bp": 5500,
+              "quality_bp": 7300,
+              "raw_units": 360000,
+              "relevance_bp": {
+                "documents": 8400,
+                "scanned_tables": 7600,
+                "software_reasoning": 8600
+              },
+              "rights": "Scraped third-party documentation · commercial use claimed under fair use",
+              "source_path": "direct_scraping",
+              "supplier_or_publisher": "In-house Focused Crawler",
+              "third_party_controversy_risk": true,
+              "underlying_history": "Publicly reachable developer portals, Q&A threads, and schema docs.",
+              "unique_units": 280000
+            },
+            "review_work_milli_CU": 250000,
+            "staff_days": 4
+          },
+          {
             "collection_days": 10,
             "dataset": {
               "commercial_use": true,
@@ -23386,6 +24852,34 @@
             },
             "rights": "Commercial training and open weight redistribution with attribution.",
             "unique_units": 590000
+          },
+          {
+            "collection_method": "Automated internal harness logging",
+            "commercial_use": true,
+            "contamination_bp": 100,
+            "coverage_bp": {
+              "documents": 7600,
+              "scanned_tables": 6800,
+              "software_reasoning": 6200
+            },
+            "duplication_bp": 400,
+            "id": "data.company_internal_logs",
+            "name": "Company Operational & Benchmark Logs",
+            "open_weight_release": true,
+            "price_cents": 25000,
+            "provenance": "Collected from internal company engineering traces and regression suites",
+            "quality_bp": 7800,
+            "raw_units": 95000,
+            "relevance_bp": {
+              "documents": 8200,
+              "scanned_tables": 7400,
+              "software_reasoning": 6800
+            },
+            "rights": "Company-owned first-party data · commercial and open-weight cleared",
+            "source_path": "company_created",
+            "supplier_or_publisher": "Internal Engineering Operations",
+            "underlying_history": "First-party telemetry, unit test traces, and internal document templates.",
+            "unique_units": 90000
           },
           {
             "commercial_use": true,
@@ -23601,6 +25095,33 @@
             "unique_units": 180000
           },
           {
+            "collection_method": "Broker batch FTP drop",
+            "commercial_use": true,
+            "contamination_bp": 500,
+            "coverage_bp": {
+              "documents": 7600,
+              "scanned_tables": 6800,
+              "software_reasoning": 6200
+            },
+            "duplication_bp": 2600,
+            "id": "data.licensed_bulk_syndicate_noisy",
+            "name": "Syndicated Regional Content Broker Feed",
+            "price_cents": 75000,
+            "provenance": "Sub-licensed bulk aggregator feed from regional content brokers",
+            "provenance_confidence_bp": 6800,
+            "quality_bp": 5900,
+            "raw_units": 780000,
+            "relevance_bp": {
+              "documents": 8200,
+              "scanned_tables": 7400,
+              "software_reasoning": 6800
+            },
+            "rights": "Commercial training permitted; open-weight redistribution excluded",
+            "supplier_or_publisher": "Apex Content Syndicate",
+            "underlying_history": "OCR newsprint, syndicated press releases, and boilerplate forms.",
+            "unique_units": 540000
+          },
+          {
             "commercial_use": true,
             "contamination_bp": 600,
             "coverage_bp": {
@@ -23618,6 +25139,36 @@
             },
             "rights": "Perpetual commercial training and model distribution",
             "unique_units": 1000000
+          },
+          {
+            "collection_method": "Signed publisher master feed",
+            "commercial_use": true,
+            "contamination_bp": 50,
+            "coverage_bp": {
+              "documents": 8800,
+              "scanned_tables": 8200,
+              "science_industry": 8400,
+              "software_reasoning": 7800
+            },
+            "duplication_bp": 200,
+            "id": "data.licensed_editorial_gold",
+            "name": "Meridian Peer-Reviewed Editorial Archive",
+            "open_weight_release": true,
+            "price_cents": 280000,
+            "provenance": "Direct commercial license from Meridian Academic & Technical Press",
+            "provenance_confidence_bp": 9800,
+            "quality_bp": 9100,
+            "raw_units": 330000,
+            "relevance_bp": {
+              "documents": 9200,
+              "scanned_tables": 8600,
+              "science_industry": 8800,
+              "software_reasoning": 8200
+            },
+            "rights": "Full commercial and open-weight distribution license with indemnity",
+            "supplier_or_publisher": "Meridian Technical Press",
+            "underlying_history": "Curated journals, verified manuals, and copy-edited financial filings.",
+            "unique_units": 320000
           },
           {
             "commercial_use": true,
@@ -23716,6 +25267,64 @@
             },
             "rights": "Research use only. Commercial service and weight redistribution excluded.",
             "unique_units": 480000
+          },
+          {
+            "collection_method": "Signed public repository snapshot",
+            "commercial_use": true,
+            "contamination_bp": 100,
+            "coverage_bp": {
+              "documents": 7600,
+              "scanned_tables": 6800,
+              "software_reasoning": 6200
+            },
+            "duplication_bp": 300,
+            "id": "data.public_civic_registry_clean",
+            "name": "Federal & Municipal Open Civic Registry",
+            "open_weight_release": true,
+            "price_cents": 0,
+            "provenance": "Public-domain statutory filings, patent specifications, and court dockets",
+            "provenance_confidence_bp": 9900,
+            "quality_bp": 8400,
+            "raw_units": 250000,
+            "relevance_bp": {
+              "documents": 8200,
+              "scanned_tables": 7400,
+              "software_reasoning": 6800
+            },
+            "rights": "Dedicated public domain (CC0 / US Gov) · commercial and open-weight cleared",
+            "source_path": "public_dataset",
+            "supplier_or_publisher": "Open Civic Data Consortium",
+            "underlying_history": "Verified public statutes, patent claims, and audited municipal ledgers.",
+            "unique_units": 240000
+          },
+          {
+            "collection_method": "Public WARC mirror download",
+            "commercial_use": true,
+            "contamination_bp": 750,
+            "coverage_bp": {
+              "documents": 7600,
+              "scanned_tables": 6800,
+              "software_reasoning": 6200
+            },
+            "duplication_bp": 3600,
+            "id": "data.public_common_dump_noisy",
+            "name": "Open Web Common Crawl Snapshot (Unfiltered)",
+            "price_cents": 0,
+            "provenance": "Publicly downloadable raw web crawl snapshot",
+            "provenance_confidence_bp": 5000,
+            "quality_bp": 5300,
+            "raw_units": 1200000,
+            "relevance_bp": {
+              "documents": 8200,
+              "scanned_tables": 7400,
+              "software_reasoning": 6800
+            },
+            "rights": "Publicly hosted crawl index; contains mixed third-party web pages",
+            "source_path": "public_dataset",
+            "supplier_or_publisher": "Open Web Archive Foundation",
+            "third_party_controversy_risk": true,
+            "underlying_history": "Unfiltered HTML text dumps with navigation chrome and duplicate mirrors.",
+            "unique_units": 720000
           },
           {
             "commercial_use": true,
@@ -23839,6 +25448,35 @@
             },
             "rights": "Commercial training and weight redistribution with attribution",
             "unique_units": 820000
+          },
+          {
+            "collection_method": "BitTorrent swarm ingest",
+            "commercial_use": false,
+            "contamination_bp": 850,
+            "coverage_bp": {
+              "documents": 7600,
+              "scanned_tables": 6800,
+              "software_reasoning": 6200
+            },
+            "duplication_bp": 3400,
+            "id": "data.torrent_shadow_archive",
+            "name": "Shadow Library & Forum Torrent Dump",
+            "price_cents": 10000,
+            "provenance": "Unverified peer-to-peer mirror of books, articles, and forum threads",
+            "provenance_confidence_bp": 2200,
+            "quality_bp": 6400,
+            "raw_units": 1350000,
+            "relevance_bp": {
+              "documents": 8200,
+              "scanned_tables": 7400,
+              "software_reasoning": 6800
+            },
+            "rights": "Research-only · unverified third-party copyright claims",
+            "source_path": "torrent_distributed",
+            "supplier_or_publisher": "Distributed peer swarm",
+            "third_party_controversy_risk": true,
+            "underlying_history": "Aggregated mirror archives with stripped headers and mixed licensing.",
+            "unique_units": 850000
           },
           {
             "commercial_use": false,
@@ -24591,6 +26229,80 @@
             "staff_days": 4,
             "verification_milli_CU_per_unit": 2
           }
+        ],
+        "tech_licenses": [
+          {
+            "id": "license.compact_distillation",
+            "integration_days": 4,
+            "licensor": "DistillCore Labs",
+            "monthly_royalty_cents": 19000,
+            "renewable": true,
+            "research_id": "research.math.compact_distillation",
+            "royalty_bp": 200,
+            "scope_label": "Compact student distillation toolkit license",
+            "term_days": 365,
+            "upfront_fee_cents": 140000
+          },
+          {
+            "id": "license.data_deduplication",
+            "integration_days": 2,
+            "licensor": "ClearStream Data Tooling",
+            "monthly_royalty_cents": 12000,
+            "renewable": true,
+            "research_id": "research.data_deduplication",
+            "royalty_bp": 150,
+            "scope_label": "MinHash & locality-sensitive deduplication pipeline license",
+            "term_days": 365,
+            "upfront_fee_cents": 95000
+          },
+          {
+            "id": "license.edge_quantization_runtime",
+            "integration_days": 4,
+            "licensor": "SiliconEdge Embedded AI",
+            "monthly_royalty_cents": 21000,
+            "renewable": true,
+            "research_id": "research.product.edge_quantization_runtime",
+            "royalty_bp": 250,
+            "scope_label": "On-device quantized runtime binary redistribution license",
+            "term_days": 365,
+            "upfront_fee_cents": 160000
+          },
+          {
+            "id": "license.efficient_serving",
+            "integration_days": 4,
+            "licensor": "Vanguard Inference Runtime Corp.",
+            "monthly_royalty_cents": 22000,
+            "renewable": true,
+            "research_id": "research.efficient_serving",
+            "royalty_bp": 300,
+            "scope_label": "Managed serving engine license for production deployments",
+            "term_days": 365,
+            "upfront_fee_cents": 150000
+          },
+          {
+            "id": "license.sequence_modeling",
+            "integration_days": 3,
+            "licensor": "Hawthorne Sequence Systems",
+            "monthly_royalty_cents": 18000,
+            "renewable": true,
+            "research_id": "research.sequence_modeling",
+            "royalty_bp": 250,
+            "scope_label": "Commercial SDK & training kernel license (no discovery credit)",
+            "term_days": 365,
+            "upfront_fee_cents": 120000
+          },
+          {
+            "id": "license.state_space_recurrence",
+            "integration_days": 5,
+            "licensor": "Linearis Research Consortium",
+            "monthly_royalty_cents": 25000,
+            "renewable": true,
+            "research_id": "research.ml.state_space_recurrence",
+            "royalty_bp": 300,
+            "scope_label": "State-space sequence backbone patent & kernel license",
+            "term_days": 365,
+            "upfront_fee_cents": 180000
+          }
         ]
       },
       "lease_energy_included": true,
@@ -25177,10 +26889,79 @@
         "research.public.benchmark_exchange",
         "research.data.sorting_adaptive",
         "research.data.sorting_external",
-        "research.compute.batched_serving"
+        "research.compute.batched_serving",
+        "research.ml.state_space_recurrence",
+        "research.ml.sparse_mixture_routing",
+        "research.ml.unified_reasoning",
+        "research.ml.rapid_prototyping_poc",
+        "research.ml.contrastive_embeddings",
+        "research.ml.hierarchical_planning",
+        "research.ml.retrieval_grounded_generation",
+        "research.ml.neuro_symbolic_constraints",
+        "research.ml.long_horizon_memory",
+        "research.ml.modular_adapters",
+        "research.ml.world_model_dynamics",
+        "research.ml.arch_refinement_1",
+        "research.data.empirical_scaling_laws",
+        "research.data.information_theoretic_pruning",
+        "research.data.provenance_watermarking",
+        "research.data.active_curriculum_ordering",
+        "research.data.contamination_decontamination",
+        "research.data.creative_pedagogy_schemas",
+        "research.data.multilingual_alignment",
+        "research.data.synthetic_critique_loops",
+        "research.data.curation_refinement_1",
+        "research.math.compact_distillation",
+        "research.math.second_order_optimizers",
+        "research.math.spectral_regularization",
+        "research.math.optimal_transport_alignment",
+        "research.math.low_rank_factorization",
+        "research.math.bayesian_uncertainty_calibration",
+        "research.math.equivariant_representations",
+        "research.math.small_model_chinchilla",
+        "research.math.eff_refinement_1",
+        "research.math.eff_refinement_2",
+        "research.compute.fused_attention_kernels",
+        "research.compute.speculative_decoding",
+        "research.compute.int8_activation_quantization",
+        "research.compute.zero_redundancy_sharding",
+        "research.compute.paged_kv_cache",
+        "research.compute.asynchronous_pipeline_parallel",
+        "research.compute.kernel_refinement_1",
+        "research.compute.kernel_refinement_2",
+        "research.compute.kernel_refinement_3",
+        "research.robotics.visuomotor_policies",
+        "research.robotics.sim_to_real_domain_rand",
+        "research.robotics.tactile_force_feedback",
+        "research.robotics.mobile_navigation_slam",
+        "research.robotics.bimanual_manipulation",
+        "research.robotics.safety_control_barriers",
+        "research.robotics.fleet_teleop_learning",
+        "research.robotics.embodied_poc",
+        "research.bio.equivariant_molecular_graphs",
+        "research.bio.protein_folding_poc",
+        "research.bio.genomic_regulatory_motifs",
+        "research.bio.crystal_lattice_diffusion",
+        "research.bio.active_wetlab_closed_loop",
+        "research.bio.climate_pde_surrogates",
+        "research.bio.clinical_trial_stratification",
+        "research.bio.enzyme_active_site_design",
+        "research.safety.adversarial_probes",
+        "research.safety.mechanistic_circuit_tracing",
+        "research.safety.constitutional_rule_critique",
+        "research.safety.formal_tool_sandboxing",
+        "research.safety.unlearning_and_redaction",
+        "research.safety.scalable_debate_oversight",
+        "research.safety.verification_refinement_1",
+        "research.product.edge_quantization_runtime",
+        "research.product.structured_json_schema_engine",
+        "research.product.privacy_preserving_federation",
+        "research.product.interactive_copilot_ux",
+        "research.product.sla_canary_observability",
+        "research.product.hybrid_local_cloud_routing"
       ],
       "resilience": "resilience.domestic",
-      "revision": 21,
+      "revision": 22,
       "rivals": [
         {
           "capacity_milli_CU_per_day": 380000,
@@ -26622,7 +28403,8 @@
         "century.product_customer.cedar_quarter",
         "century.product_customer.district_rollout",
         "century.product_customer.harbormark_cycle",
-        "deployment.incident_news"
+        "deployment.incident_news",
+        "story.provenance_scrutiny_audit"
       ],
       "frontier": "frontier.plateau_paths",
       "headquarters_choices": [
@@ -28733,6 +30515,74 @@
             "staff_days": 4
           },
           {
+            "collection_days": 8,
+            "dataset": {
+              "collection_method": "High-concurrency distributed scraping",
+              "commercial_use": true,
+              "contamination_bp": 700,
+              "coverage_bp": {
+                "documents": 7400,
+                "scanned_tables": 6000,
+                "social_interaction": 7000
+              },
+              "duplication_bp": 3500,
+              "id": "collected.scrape_broad_web_crawl",
+              "name": "Broad Autonomous Web Scrape",
+              "price_cents": 45000,
+              "provenance": "High-throughput indiscriminate web spider across news, blogs, and forums",
+              "provenance_confidence_bp": 3800,
+              "quality_bp": 5500,
+              "raw_units": 1100000,
+              "relevance_bp": {
+                "documents": 8000,
+                "scanned_tables": 6600,
+                "social_interaction": 7500
+              },
+              "rights": "Unconsented web scrape · elevated third-party controversy risk",
+              "source_path": "direct_scraping",
+              "supplier_or_publisher": "In-house Broad Spider",
+              "third_party_controversy_risk": true,
+              "underlying_history": "Broad public web pages ignoring robots.txt politeness hints.",
+              "unique_units": 680000
+            },
+            "review_work_milli_CU": 400000,
+            "staff_days": 5
+          },
+          {
+            "collection_days": 6,
+            "dataset": {
+              "collection_method": "Targeted domain-filtered web scraping",
+              "commercial_use": true,
+              "contamination_bp": 350,
+              "coverage_bp": {
+                "documents": 7800,
+                "scanned_tables": 7000,
+                "software_reasoning": 8200
+              },
+              "duplication_bp": 1800,
+              "id": "collected.scrape_focused_technical",
+              "name": "Focused Technical & Documentation Crawl",
+              "price_cents": 35000,
+              "provenance": "In-house crawler targeting technical repositories and API portals",
+              "provenance_confidence_bp": 5500,
+              "quality_bp": 7300,
+              "raw_units": 360000,
+              "relevance_bp": {
+                "documents": 8400,
+                "scanned_tables": 7600,
+                "software_reasoning": 8600
+              },
+              "rights": "Scraped third-party documentation · commercial use claimed under fair use",
+              "source_path": "direct_scraping",
+              "supplier_or_publisher": "In-house Focused Crawler",
+              "third_party_controversy_risk": true,
+              "underlying_history": "Publicly reachable developer portals, Q&A threads, and schema docs.",
+              "unique_units": 280000
+            },
+            "review_work_milli_CU": 250000,
+            "staff_days": 4
+          },
+          {
             "collection_days": 10,
             "dataset": {
               "commercial_use": true,
@@ -28821,6 +30671,34 @@
             },
             "rights": "Commercial training and open weight redistribution with attribution.",
             "unique_units": 590000
+          },
+          {
+            "collection_method": "Automated internal harness logging",
+            "commercial_use": true,
+            "contamination_bp": 100,
+            "coverage_bp": {
+              "documents": 7600,
+              "scanned_tables": 6800,
+              "software_reasoning": 6200
+            },
+            "duplication_bp": 400,
+            "id": "data.company_internal_logs",
+            "name": "Company Operational & Benchmark Logs",
+            "open_weight_release": true,
+            "price_cents": 25000,
+            "provenance": "Collected from internal company engineering traces and regression suites",
+            "quality_bp": 7800,
+            "raw_units": 95000,
+            "relevance_bp": {
+              "documents": 8200,
+              "scanned_tables": 7400,
+              "software_reasoning": 6800
+            },
+            "rights": "Company-owned first-party data · commercial and open-weight cleared",
+            "source_path": "company_created",
+            "supplier_or_publisher": "Internal Engineering Operations",
+            "underlying_history": "First-party telemetry, unit test traces, and internal document templates.",
+            "unique_units": 90000
           },
           {
             "commercial_use": true,
@@ -29036,6 +30914,33 @@
             "unique_units": 180000
           },
           {
+            "collection_method": "Broker batch FTP drop",
+            "commercial_use": true,
+            "contamination_bp": 500,
+            "coverage_bp": {
+              "documents": 7600,
+              "scanned_tables": 6800,
+              "software_reasoning": 6200
+            },
+            "duplication_bp": 2600,
+            "id": "data.licensed_bulk_syndicate_noisy",
+            "name": "Syndicated Regional Content Broker Feed",
+            "price_cents": 75000,
+            "provenance": "Sub-licensed bulk aggregator feed from regional content brokers",
+            "provenance_confidence_bp": 6800,
+            "quality_bp": 5900,
+            "raw_units": 780000,
+            "relevance_bp": {
+              "documents": 8200,
+              "scanned_tables": 7400,
+              "software_reasoning": 6800
+            },
+            "rights": "Commercial training permitted; open-weight redistribution excluded",
+            "supplier_or_publisher": "Apex Content Syndicate",
+            "underlying_history": "OCR newsprint, syndicated press releases, and boilerplate forms.",
+            "unique_units": 540000
+          },
+          {
             "commercial_use": true,
             "contamination_bp": 600,
             "coverage_bp": {
@@ -29053,6 +30958,36 @@
             },
             "rights": "Perpetual commercial training and model distribution",
             "unique_units": 1000000
+          },
+          {
+            "collection_method": "Signed publisher master feed",
+            "commercial_use": true,
+            "contamination_bp": 50,
+            "coverage_bp": {
+              "documents": 8800,
+              "scanned_tables": 8200,
+              "science_industry": 8400,
+              "software_reasoning": 7800
+            },
+            "duplication_bp": 200,
+            "id": "data.licensed_editorial_gold",
+            "name": "Meridian Peer-Reviewed Editorial Archive",
+            "open_weight_release": true,
+            "price_cents": 280000,
+            "provenance": "Direct commercial license from Meridian Academic & Technical Press",
+            "provenance_confidence_bp": 9800,
+            "quality_bp": 9100,
+            "raw_units": 330000,
+            "relevance_bp": {
+              "documents": 9200,
+              "scanned_tables": 8600,
+              "science_industry": 8800,
+              "software_reasoning": 8200
+            },
+            "rights": "Full commercial and open-weight distribution license with indemnity",
+            "supplier_or_publisher": "Meridian Technical Press",
+            "underlying_history": "Curated journals, verified manuals, and copy-edited financial filings.",
+            "unique_units": 320000
           },
           {
             "commercial_use": true,
@@ -29151,6 +31086,64 @@
             },
             "rights": "Research use only. Commercial service and weight redistribution excluded.",
             "unique_units": 480000
+          },
+          {
+            "collection_method": "Signed public repository snapshot",
+            "commercial_use": true,
+            "contamination_bp": 100,
+            "coverage_bp": {
+              "documents": 7600,
+              "scanned_tables": 6800,
+              "software_reasoning": 6200
+            },
+            "duplication_bp": 300,
+            "id": "data.public_civic_registry_clean",
+            "name": "Federal & Municipal Open Civic Registry",
+            "open_weight_release": true,
+            "price_cents": 0,
+            "provenance": "Public-domain statutory filings, patent specifications, and court dockets",
+            "provenance_confidence_bp": 9900,
+            "quality_bp": 8400,
+            "raw_units": 250000,
+            "relevance_bp": {
+              "documents": 8200,
+              "scanned_tables": 7400,
+              "software_reasoning": 6800
+            },
+            "rights": "Dedicated public domain (CC0 / US Gov) · commercial and open-weight cleared",
+            "source_path": "public_dataset",
+            "supplier_or_publisher": "Open Civic Data Consortium",
+            "underlying_history": "Verified public statutes, patent claims, and audited municipal ledgers.",
+            "unique_units": 240000
+          },
+          {
+            "collection_method": "Public WARC mirror download",
+            "commercial_use": true,
+            "contamination_bp": 750,
+            "coverage_bp": {
+              "documents": 7600,
+              "scanned_tables": 6800,
+              "software_reasoning": 6200
+            },
+            "duplication_bp": 3600,
+            "id": "data.public_common_dump_noisy",
+            "name": "Open Web Common Crawl Snapshot (Unfiltered)",
+            "price_cents": 0,
+            "provenance": "Publicly downloadable raw web crawl snapshot",
+            "provenance_confidence_bp": 5000,
+            "quality_bp": 5300,
+            "raw_units": 1200000,
+            "relevance_bp": {
+              "documents": 8200,
+              "scanned_tables": 7400,
+              "software_reasoning": 6800
+            },
+            "rights": "Publicly hosted crawl index; contains mixed third-party web pages",
+            "source_path": "public_dataset",
+            "supplier_or_publisher": "Open Web Archive Foundation",
+            "third_party_controversy_risk": true,
+            "underlying_history": "Unfiltered HTML text dumps with navigation chrome and duplicate mirrors.",
+            "unique_units": 720000
           },
           {
             "commercial_use": true,
@@ -29274,6 +31267,35 @@
             },
             "rights": "Commercial training and weight redistribution with attribution",
             "unique_units": 820000
+          },
+          {
+            "collection_method": "BitTorrent swarm ingest",
+            "commercial_use": false,
+            "contamination_bp": 850,
+            "coverage_bp": {
+              "documents": 7600,
+              "scanned_tables": 6800,
+              "software_reasoning": 6200
+            },
+            "duplication_bp": 3400,
+            "id": "data.torrent_shadow_archive",
+            "name": "Shadow Library & Forum Torrent Dump",
+            "price_cents": 10000,
+            "provenance": "Unverified peer-to-peer mirror of books, articles, and forum threads",
+            "provenance_confidence_bp": 2200,
+            "quality_bp": 6400,
+            "raw_units": 1350000,
+            "relevance_bp": {
+              "documents": 8200,
+              "scanned_tables": 7400,
+              "software_reasoning": 6800
+            },
+            "rights": "Research-only · unverified third-party copyright claims",
+            "source_path": "torrent_distributed",
+            "supplier_or_publisher": "Distributed peer swarm",
+            "third_party_controversy_risk": true,
+            "underlying_history": "Aggregated mirror archives with stripped headers and mixed licensing.",
+            "unique_units": 850000
           },
           {
             "commercial_use": false,
@@ -30026,6 +32048,80 @@
             "staff_days": 4,
             "verification_milli_CU_per_unit": 2
           }
+        ],
+        "tech_licenses": [
+          {
+            "id": "license.compact_distillation",
+            "integration_days": 4,
+            "licensor": "DistillCore Labs",
+            "monthly_royalty_cents": 19000,
+            "renewable": true,
+            "research_id": "research.math.compact_distillation",
+            "royalty_bp": 200,
+            "scope_label": "Compact student distillation toolkit license",
+            "term_days": 365,
+            "upfront_fee_cents": 140000
+          },
+          {
+            "id": "license.data_deduplication",
+            "integration_days": 2,
+            "licensor": "ClearStream Data Tooling",
+            "monthly_royalty_cents": 12000,
+            "renewable": true,
+            "research_id": "research.data_deduplication",
+            "royalty_bp": 150,
+            "scope_label": "MinHash & locality-sensitive deduplication pipeline license",
+            "term_days": 365,
+            "upfront_fee_cents": 95000
+          },
+          {
+            "id": "license.edge_quantization_runtime",
+            "integration_days": 4,
+            "licensor": "SiliconEdge Embedded AI",
+            "monthly_royalty_cents": 21000,
+            "renewable": true,
+            "research_id": "research.product.edge_quantization_runtime",
+            "royalty_bp": 250,
+            "scope_label": "On-device quantized runtime binary redistribution license",
+            "term_days": 365,
+            "upfront_fee_cents": 160000
+          },
+          {
+            "id": "license.efficient_serving",
+            "integration_days": 4,
+            "licensor": "Vanguard Inference Runtime Corp.",
+            "monthly_royalty_cents": 22000,
+            "renewable": true,
+            "research_id": "research.efficient_serving",
+            "royalty_bp": 300,
+            "scope_label": "Managed serving engine license for production deployments",
+            "term_days": 365,
+            "upfront_fee_cents": 150000
+          },
+          {
+            "id": "license.sequence_modeling",
+            "integration_days": 3,
+            "licensor": "Hawthorne Sequence Systems",
+            "monthly_royalty_cents": 18000,
+            "renewable": true,
+            "research_id": "research.sequence_modeling",
+            "royalty_bp": 250,
+            "scope_label": "Commercial SDK & training kernel license (no discovery credit)",
+            "term_days": 365,
+            "upfront_fee_cents": 120000
+          },
+          {
+            "id": "license.state_space_recurrence",
+            "integration_days": 5,
+            "licensor": "Linearis Research Consortium",
+            "monthly_royalty_cents": 25000,
+            "renewable": true,
+            "research_id": "research.ml.state_space_recurrence",
+            "royalty_bp": 300,
+            "scope_label": "State-space sequence backbone patent & kernel license",
+            "term_days": 365,
+            "upfront_fee_cents": 180000
+          }
         ]
       },
       "lease_energy_included": true,
@@ -30612,10 +32708,79 @@
         "research.public.benchmark_exchange",
         "research.data.sorting_adaptive",
         "research.data.sorting_external",
-        "research.compute.batched_serving"
+        "research.compute.batched_serving",
+        "research.ml.state_space_recurrence",
+        "research.ml.sparse_mixture_routing",
+        "research.ml.unified_reasoning",
+        "research.ml.rapid_prototyping_poc",
+        "research.ml.contrastive_embeddings",
+        "research.ml.hierarchical_planning",
+        "research.ml.retrieval_grounded_generation",
+        "research.ml.neuro_symbolic_constraints",
+        "research.ml.long_horizon_memory",
+        "research.ml.modular_adapters",
+        "research.ml.world_model_dynamics",
+        "research.ml.arch_refinement_1",
+        "research.data.empirical_scaling_laws",
+        "research.data.information_theoretic_pruning",
+        "research.data.provenance_watermarking",
+        "research.data.active_curriculum_ordering",
+        "research.data.contamination_decontamination",
+        "research.data.creative_pedagogy_schemas",
+        "research.data.multilingual_alignment",
+        "research.data.synthetic_critique_loops",
+        "research.data.curation_refinement_1",
+        "research.math.compact_distillation",
+        "research.math.second_order_optimizers",
+        "research.math.spectral_regularization",
+        "research.math.optimal_transport_alignment",
+        "research.math.low_rank_factorization",
+        "research.math.bayesian_uncertainty_calibration",
+        "research.math.equivariant_representations",
+        "research.math.small_model_chinchilla",
+        "research.math.eff_refinement_1",
+        "research.math.eff_refinement_2",
+        "research.compute.fused_attention_kernels",
+        "research.compute.speculative_decoding",
+        "research.compute.int8_activation_quantization",
+        "research.compute.zero_redundancy_sharding",
+        "research.compute.paged_kv_cache",
+        "research.compute.asynchronous_pipeline_parallel",
+        "research.compute.kernel_refinement_1",
+        "research.compute.kernel_refinement_2",
+        "research.compute.kernel_refinement_3",
+        "research.robotics.visuomotor_policies",
+        "research.robotics.sim_to_real_domain_rand",
+        "research.robotics.tactile_force_feedback",
+        "research.robotics.mobile_navigation_slam",
+        "research.robotics.bimanual_manipulation",
+        "research.robotics.safety_control_barriers",
+        "research.robotics.fleet_teleop_learning",
+        "research.robotics.embodied_poc",
+        "research.bio.equivariant_molecular_graphs",
+        "research.bio.protein_folding_poc",
+        "research.bio.genomic_regulatory_motifs",
+        "research.bio.crystal_lattice_diffusion",
+        "research.bio.active_wetlab_closed_loop",
+        "research.bio.climate_pde_surrogates",
+        "research.bio.clinical_trial_stratification",
+        "research.bio.enzyme_active_site_design",
+        "research.safety.adversarial_probes",
+        "research.safety.mechanistic_circuit_tracing",
+        "research.safety.constitutional_rule_critique",
+        "research.safety.formal_tool_sandboxing",
+        "research.safety.unlearning_and_redaction",
+        "research.safety.scalable_debate_oversight",
+        "research.safety.verification_refinement_1",
+        "research.product.edge_quantization_runtime",
+        "research.product.structured_json_schema_engine",
+        "research.product.privacy_preserving_federation",
+        "research.product.interactive_copilot_ux",
+        "research.product.sla_canary_observability",
+        "research.product.hybrid_local_cloud_routing"
       ],
       "resilience": "resilience.domestic",
-      "revision": 21,
+      "revision": 22,
       "rivals": [
         {
           "capacity_milli_CU_per_day": 380000,
@@ -69661,85 +71826,9 @@
         "life.mission.concern",
         "life.mission.rival",
         "life.mission.resignation",
-        "story.the_missing_zero",
-        "story.open_bench"
+        "story.provenance_scrutiny_audit"
       ],
       "founding": {
-        "appointment": {
-          "activity": "sedentary",
-          "advantages": [
-            "genius"
-          ],
-          "appearance": {
-            "kit": 1,
-            "parts": [
-              3,
-              0,
-              4,
-              0,
-              1,
-              2,
-              1,
-              1,
-              1,
-              0,
-              3,
-              5,
-              5,
-              5,
-              4
-            ],
-            "style": [
-              2,
-              1,
-              2,
-              3,
-              5,
-              4,
-              2,
-              4,
-              3,
-              0,
-              1,
-              4
-            ]
-          },
-          "backers": [],
-          "choices": {
-            "code_camp": "test_release",
-            "elem_best_friend": "accept",
-            "elem_first_job": "label_bins",
-            "elem_playground": "draw_serial",
-            "elem_prodigy": "mentor",
-            "elem_project": "deliberate",
-            "elem_respect_teacher": "show_work",
-            "elem_sharing": "make_timer",
-            "grad_choice": "workforce",
-            "hs_cheat": "notify_teacher",
-            "hs_identity": "systems",
-            "hs_open_lab": "source",
-            "ms_bday_party": "skip",
-            "ms_clubs": "paper",
-            "ms_exclude": "include",
-            "ms_radio": "credit",
-            "ms_sport": "no_sport",
-            "setback": "share"
-          },
-          "disposition": "deliberate",
-          "family": "middle",
-          "first_name": "Robin",
-          "gender": "nonbinary",
-          "last_name": "Ibarra",
-          "legal_form": "corporation",
-          "mode": "campaign",
-          "office": "shared",
-          "orientation": "questioning",
-          "personal_investment_cents": 0,
-          "researcher": "founder",
-          "route": "hired_ceo",
-          "sociability": "introverted",
-          "story_seed": 19972015
-        },
         "backers": [
           {
             "buzz": 0,
@@ -69828,6 +71917,24 @@
         ],
         "buzz_finance_bp": 10,
         "compute_monthly_cents": 400000,
+        "employer": {
+          "ceo_seats": 1,
+          "charter": "charter.independent_lab",
+          "current_commitments": "Inherited research staff on monthly payroll, office lease, and the Independent Laboratory employee learning program.",
+          "delegated_authority": "Ordinary operating decisions within budget (hiring, research, suppliers, product releases). Fundamental changes to company purpose, bylaws, ownership or borrowing require controlling ownership and board voting control.",
+          "facilities_summary": "Shared valley office with company-owned desks and desktop computers.",
+          "id": "northstar",
+          "independent_seats": 1,
+          "legal_form": "corporation",
+          "mission": "research",
+          "name": "Northstar Applied Labs",
+          "objective": "survival",
+          "owner_cash_floor_cents": 20000000,
+          "owner_maximum_dilution_bp": 1000,
+          "owner_seats": 2,
+          "owners_label": "Northstar Founding Investors",
+          "recruiter_name": "Leena Rao"
+        },
         "families": [
           {
             "buzz": 0,
@@ -69868,6 +71975,48 @@
             "legal_form": "",
             "monthly_cents": 0,
             "name": "Rich",
+            "prestige": 0,
+            "shares_bp": 0
+          },
+          {
+            "buzz": 0,
+            "capital_cents": 3500000,
+            "detail": "Your family put aside $35,000 from repairing appliances. The workshop has room for a first desk.",
+            "family": "",
+            "fee_cents": 0,
+            "id": "workshop",
+            "leg": "",
+            "legal_form": "",
+            "monthly_cents": 0,
+            "name": "Family repair shop",
+            "prestige": 0,
+            "shares_bp": 0
+          },
+          {
+            "buzz": 0,
+            "capital_cents": 2700000,
+            "detail": "You grew up sharing space and tools. You have $27,000 in savings and access to the co-op workrooms.",
+            "family": "",
+            "fee_cents": 0,
+            "id": "cooperative",
+            "leg": "",
+            "legal_form": "",
+            "monthly_cents": 0,
+            "name": "Housing co-op",
+            "prestige": 0,
+            "shares_bp": 0
+          },
+          {
+            "buzz": 0,
+            "capital_cents": 8500000,
+            "detail": "Your family set aside $85,000 over years of running a bookshop. Its back rooms can house a small team.",
+            "family": "",
+            "fee_cents": 0,
+            "id": "bookshop",
+            "leg": "",
+            "legal_form": "",
+            "monthly_cents": 0,
+            "name": "Neighborhood booksellers",
             "prestige": 0,
             "shares_bp": 0
           }
@@ -78428,6 +80577,157 @@
                   "Library",
                   "Guest house"
                 ]
+              },
+              {
+                "family": "workshop",
+                "plan": {
+                  "depth": 5,
+                  "id": "home.workshop",
+                  "name": "Flat above the repair shop",
+                  "rooms": [
+                    {
+                      "depth": 4,
+                      "width": 4,
+                      "x": 0,
+                      "y": 0
+                    },
+                    {
+                      "depth": 4,
+                      "width": 4,
+                      "x": 4,
+                      "y": 0
+                    },
+                    {
+                      "depth": 3,
+                      "width": 3,
+                      "x": 8,
+                      "y": 0
+                    },
+                    {
+                      "depth": 1,
+                      "passage": true,
+                      "width": 11,
+                      "x": 0,
+                      "y": 4
+                    },
+                    {
+                      "depth": 1,
+                      "passage": true,
+                      "width": 3,
+                      "x": 8,
+                      "y": 3
+                    }
+                  ],
+                  "width": 11
+                },
+                "room_names": [
+                  "Repair bay",
+                  "Parts room",
+                  "Packing room"
+                ]
+              },
+              {
+                "family": "cooperative",
+                "plan": {
+                  "depth": 5,
+                  "id": "home.cooperative",
+                  "name": "Cooperative courtyard",
+                  "rooms": [
+                    {
+                      "depth": 4,
+                      "width": 4,
+                      "x": 0,
+                      "y": 0
+                    },
+                    {
+                      "depth": 4,
+                      "width": 4,
+                      "x": 4,
+                      "y": 0
+                    },
+                    {
+                      "depth": 3,
+                      "width": 3,
+                      "x": 8,
+                      "y": 0
+                    },
+                    {
+                      "depth": 1,
+                      "passage": true,
+                      "width": 11,
+                      "x": 0,
+                      "y": 4
+                    },
+                    {
+                      "depth": 1,
+                      "passage": true,
+                      "width": 3,
+                      "x": 8,
+                      "y": 3
+                    }
+                  ],
+                  "width": 11
+                },
+                "room_names": [
+                  "Tool library",
+                  "Print room",
+                  "Meeting room"
+                ]
+              },
+              {
+                "family": "bookshop",
+                "plan": {
+                  "depth": 7,
+                  "id": "home.bookshop",
+                  "name": "Home above the bookshop",
+                  "rooms": [
+                    {
+                      "depth": 5,
+                      "width": 4,
+                      "x": 0,
+                      "y": 0
+                    },
+                    {
+                      "depth": 5,
+                      "width": 4,
+                      "x": 4,
+                      "y": 0
+                    },
+                    {
+                      "depth": 4,
+                      "width": 3,
+                      "x": 8,
+                      "y": 0
+                    },
+                    {
+                      "depth": 5,
+                      "width": 3,
+                      "x": 11,
+                      "y": 0
+                    },
+                    {
+                      "depth": 2,
+                      "passage": true,
+                      "width": 14,
+                      "x": 0,
+                      "y": 5
+                    },
+                    {
+                      "depth": 1,
+                      "passage": true,
+                      "width": 3,
+                      "x": 8,
+                      "y": 4
+                    }
+                  ],
+                  "width": 14
+                },
+                "room_names": [
+                  "Reading room",
+                  "Stockroom",
+                  "Bindery",
+                  "Back office"
+                ]
               }
             ],
             "markets": [
@@ -78712,6 +81012,74 @@
             "staff_days": 4
           },
           {
+            "collection_days": 8,
+            "dataset": {
+              "collection_method": "High-concurrency distributed scraping",
+              "commercial_use": true,
+              "contamination_bp": 700,
+              "coverage_bp": {
+                "documents": 7400,
+                "scanned_tables": 6000,
+                "social_interaction": 7000
+              },
+              "duplication_bp": 3500,
+              "id": "collected.scrape_broad_web_crawl",
+              "name": "Broad Autonomous Web Scrape",
+              "price_cents": 45000,
+              "provenance": "High-throughput indiscriminate web spider across news, blogs, and forums",
+              "provenance_confidence_bp": 3800,
+              "quality_bp": 5500,
+              "raw_units": 1100000,
+              "relevance_bp": {
+                "documents": 8000,
+                "scanned_tables": 6600,
+                "social_interaction": 7500
+              },
+              "rights": "Unconsented web scrape · elevated third-party controversy risk",
+              "source_path": "direct_scraping",
+              "supplier_or_publisher": "In-house Broad Spider",
+              "third_party_controversy_risk": true,
+              "underlying_history": "Broad public web pages ignoring robots.txt politeness hints.",
+              "unique_units": 680000
+            },
+            "review_work_milli_CU": 400000,
+            "staff_days": 5
+          },
+          {
+            "collection_days": 6,
+            "dataset": {
+              "collection_method": "Targeted domain-filtered web scraping",
+              "commercial_use": true,
+              "contamination_bp": 350,
+              "coverage_bp": {
+                "documents": 7800,
+                "scanned_tables": 7000,
+                "software_reasoning": 8200
+              },
+              "duplication_bp": 1800,
+              "id": "collected.scrape_focused_technical",
+              "name": "Focused Technical & Documentation Crawl",
+              "price_cents": 35000,
+              "provenance": "In-house crawler targeting technical repositories and API portals",
+              "provenance_confidence_bp": 5500,
+              "quality_bp": 7300,
+              "raw_units": 360000,
+              "relevance_bp": {
+                "documents": 8400,
+                "scanned_tables": 7600,
+                "software_reasoning": 8600
+              },
+              "rights": "Scraped third-party documentation · commercial use claimed under fair use",
+              "source_path": "direct_scraping",
+              "supplier_or_publisher": "In-house Focused Crawler",
+              "third_party_controversy_risk": true,
+              "underlying_history": "Publicly reachable developer portals, Q&A threads, and schema docs.",
+              "unique_units": 280000
+            },
+            "review_work_milli_CU": 250000,
+            "staff_days": 4
+          },
+          {
             "collection_days": 10,
             "dataset": {
               "commercial_use": true,
@@ -78748,20 +81116,105 @@
             "earliest_year": 2017,
             "replaces_frontier_calendar": true
           },
+          "research.bio.active_wetlab_closed_loop": {
+            "coordination_bonus_bp": 1200,
+            "difficulty": 7,
+            "earliest_year": 2020
+          },
+          "research.bio.climate_pde_surrogates": {
+            "coordination_bonus_bp": 1200,
+            "difficulty": 8,
+            "earliest_year": 2021
+          },
+          "research.bio.clinical_trial_stratification": {
+            "coordination_bonus_bp": 1200,
+            "difficulty": 9,
+            "earliest_year": 2016
+          },
+          "research.bio.crystal_lattice_diffusion": {
+            "coordination_bonus_bp": 1200,
+            "difficulty": 6,
+            "earliest_year": 2019
+          },
+          "research.bio.enzyme_active_site_design": {
+            "coordination_bonus_bp": 1200,
+            "difficulty": 10,
+            "earliest_year": 2017
+          },
+          "research.bio.equivariant_molecular_graphs": {
+            "coordination_bonus_bp": 1200,
+            "difficulty": 10,
+            "earliest_year": 2016
+          },
+          "research.bio.genomic_regulatory_motifs": {
+            "coordination_bonus_bp": 1200,
+            "difficulty": 5,
+            "earliest_year": 2018
+          },
+          "research.bio.protein_folding_poc": {
+            "coordination_bonus_bp": 1200,
+            "difficulty": 4,
+            "earliest_year": 2017
+          },
+          "research.compute.asynchronous_pipeline_parallel": {
+            "coordination_bonus_bp": 1200,
+            "difficulty": 5,
+            "earliest_year": 2016
+          },
+          "research.compute.deadline_batching": {
+            "coordination_bonus_bp": 1200,
+            "difficulty": 4,
+            "earliest_year": 2017
+          },
           "research.compute.fabric_qos": {
             "coordination_bonus_bp": 2000,
             "difficulty": 21,
             "earliest_year": 2030
+          },
+          "research.compute.fallback_routing": {
+            "coordination_bonus_bp": 1200,
+            "difficulty": 5,
+            "earliest_year": 2019
           },
           "research.compute.flexible_duty": {
             "coordination_bonus_bp": 2000,
             "difficulty": 16,
             "earliest_year": 2023
           },
+          "research.compute.fused_attention_kernels": {
+            "coordination_bonus_bp": 1200,
+            "difficulty": 7,
+            "earliest_year": 2017
+          },
+          "research.compute.idle_replica_parking": {
+            "coordination_bonus_bp": 1200,
+            "difficulty": 4,
+            "earliest_year": 2018
+          },
+          "research.compute.int8_activation_quantization": {
+            "coordination_bonus_bp": 1200,
+            "difficulty": 9,
+            "earliest_year": 2019
+          },
           "research.compute.kernel_layout": {
             "coordination_bonus_bp": 2000,
             "difficulty": 16,
             "earliest_year": 2021
+          },
+          "research.compute.kernel_refinement_1": {
+            "coordination_bonus_bp": 1200,
+            "difficulty": 6,
+            "earliest_year": 2017
+          },
+          "research.compute.kernel_refinement_2": {
+            "coordination_bonus_bp": 1200,
+            "difficulty": 7,
+            "earliest_year": 2018
+          },
+          "research.compute.kernel_refinement_3": {
+            "coordination_bonus_bp": 1200,
+            "difficulty": 8,
+            "earliest_year": 2019
           },
           "research.compute.local_memory": {
             "coordination_bonus_bp": 2000,
@@ -78772,6 +81225,11 @@
             "coordination_bonus_bp": 2000,
             "difficulty": 15,
             "earliest_year": 2018
+          },
+          "research.compute.paged_kv_cache": {
+            "coordination_bonus_bp": 1200,
+            "difficulty": 4,
+            "earliest_year": 2021
           },
           "research.compute.pooled_boards": {
             "coordination_bonus_bp": 2000,
@@ -78788,14 +81246,54 @@
             "difficulty": 19,
             "earliest_year": 2025
           },
+          "research.compute.speculative_decoding": {
+            "coordination_bonus_bp": 1200,
+            "difficulty": 8,
+            "earliest_year": 2018
+          },
           "research.compute.thermal_profiles": {
             "coordination_bonus_bp": 2000,
             "difficulty": 14,
             "earliest_year": 2018
           },
+          "research.compute.zero_redundancy_sharding": {
+            "coordination_bonus_bp": 1200,
+            "difficulty": 10,
+            "earliest_year": 2020
+          },
+          "research.data.active_curriculum_ordering": {
+            "coordination_bonus_bp": 1200,
+            "difficulty": 5,
+            "earliest_year": 2019
+          },
           "research.data.consent_registry": {
             "coordination_bonus_bp": 2000,
             "difficulty": 30,
+            "earliest_year": 2016
+          },
+          "research.data.contamination_decontamination": {
+            "coordination_bonus_bp": 1200,
+            "difficulty": 6,
+            "earliest_year": 2020
+          },
+          "research.data.coverage_buckets": {
+            "coordination_bonus_bp": 1200,
+            "difficulty": 3,
+            "earliest_year": 2016
+          },
+          "research.data.creative_pedagogy_schemas": {
+            "coordination_bonus_bp": 1200,
+            "difficulty": 7,
+            "earliest_year": 2021
+          },
+          "research.data.curation_refinement_1": {
+            "coordination_bonus_bp": 1200,
+            "difficulty": 10,
+            "earliest_year": 2018
+          },
+          "research.data.empirical_scaling_laws": {
+            "coordination_bonus_bp": 1200,
+            "difficulty": 9,
             "earliest_year": 2016
           },
           "research.data.exchange_protocol": {
@@ -78808,15 +81306,45 @@
             "difficulty": 13,
             "earliest_year": 2017
           },
+          "research.data.information_theoretic_pruning": {
+            "coordination_bonus_bp": 1200,
+            "difficulty": 10,
+            "earliest_year": 2017
+          },
+          "research.data.label_disagreement": {
+            "coordination_bonus_bp": 1200,
+            "difficulty": 3,
+            "earliest_year": 2015
+          },
+          "research.data.multilingual_alignment": {
+            "coordination_bonus_bp": 1200,
+            "difficulty": 8,
+            "earliest_year": 2016
+          },
           "research.data.partition_audit": {
             "coordination_bonus_bp": 2000,
             "difficulty": 16,
             "earliest_year": 2019
           },
+          "research.data.provenance_watermarking": {
+            "coordination_bonus_bp": 1200,
+            "difficulty": 4,
+            "earliest_year": 2018
+          },
           "research.data.receipt_layout": {
             "coordination_bonus_bp": 2000,
             "difficulty": 31,
             "earliest_year": 2015
+          },
+          "research.data.shift_watch": {
+            "coordination_bonus_bp": 1200,
+            "difficulty": 5,
+            "earliest_year": 2020
+          },
+          "research.data.synthetic_critique_loops": {
+            "coordination_bonus_bp": 1200,
+            "difficulty": 9,
+            "earliest_year": 2017
           },
           "research.data.table_indexing": {
             "coordination_bonus_bp": 2000,
@@ -78927,11 +81455,121 @@
             "earliest_year": 2044,
             "replaces_frontier_calendar": true
           },
+          "research.math.bayesian_uncertainty_calibration": {
+            "coordination_bonus_bp": 1200,
+            "difficulty": 9,
+            "earliest_year": 2018
+          },
+          "research.math.compact_distillation": {
+            "coordination_bonus_bp": 1200,
+            "difficulty": 4,
+            "earliest_year": 2019
+          },
+          "research.math.eff_refinement_1": {
+            "coordination_bonus_bp": 1200,
+            "difficulty": 5,
+            "earliest_year": 2021
+          },
+          "research.math.eff_refinement_2": {
+            "coordination_bonus_bp": 1200,
+            "difficulty": 6,
+            "earliest_year": 2016
+          },
+          "research.math.equivariant_representations": {
+            "coordination_bonus_bp": 1200,
+            "difficulty": 10,
+            "earliest_year": 2019
+          },
+          "research.math.low_rank_factorization": {
+            "coordination_bonus_bp": 1200,
+            "difficulty": 8,
+            "earliest_year": 2017
+          },
+          "research.math.optimal_transport_alignment": {
+            "coordination_bonus_bp": 1200,
+            "difficulty": 7,
+            "earliest_year": 2016
+          },
+          "research.math.second_order_optimizers": {
+            "coordination_bonus_bp": 1200,
+            "difficulty": 5,
+            "earliest_year": 2020
+          },
+          "research.math.small_model_chinchilla": {
+            "coordination_bonus_bp": 1200,
+            "difficulty": 4,
+            "earliest_year": 2020
+          },
+          "research.math.spectral_regularization": {
+            "coordination_bonus_bp": 1200,
+            "difficulty": 6,
+            "earliest_year": 2021
+          },
           "research.methods_prototype": {
             "coordination_bonus_bp": 2000,
             "difficulty": 22,
             "earliest_year": 2048,
             "replaces_frontier_calendar": true
+          },
+          "research.ml.arch_refinement_1": {
+            "coordination_bonus_bp": 1200,
+            "difficulty": 8,
+            "earliest_year": 2021
+          },
+          "research.ml.contrastive_embeddings": {
+            "coordination_bonus_bp": 1200,
+            "difficulty": 8,
+            "earliest_year": 2020
+          },
+          "research.ml.hierarchical_planning": {
+            "coordination_bonus_bp": 1200,
+            "difficulty": 9,
+            "earliest_year": 2021
+          },
+          "research.ml.long_horizon_memory": {
+            "coordination_bonus_bp": 1200,
+            "difficulty": 5,
+            "earliest_year": 2018
+          },
+          "research.ml.modular_adapters": {
+            "coordination_bonus_bp": 1200,
+            "difficulty": 6,
+            "earliest_year": 2019
+          },
+          "research.ml.neuro_symbolic_constraints": {
+            "coordination_bonus_bp": 1200,
+            "difficulty": 4,
+            "earliest_year": 2017
+          },
+          "research.ml.rapid_prototyping_poc": {
+            "coordination_bonus_bp": 1200,
+            "difficulty": 7,
+            "earliest_year": 2019
+          },
+          "research.ml.retrieval_grounded_generation": {
+            "coordination_bonus_bp": 1200,
+            "difficulty": 10,
+            "earliest_year": 2016
+          },
+          "research.ml.sparse_mixture_routing": {
+            "coordination_bonus_bp": 1200,
+            "difficulty": 5,
+            "earliest_year": 2017
+          },
+          "research.ml.state_space_recurrence": {
+            "coordination_bonus_bp": 1200,
+            "difficulty": 4,
+            "earliest_year": 2016
+          },
+          "research.ml.unified_reasoning": {
+            "coordination_bonus_bp": 1200,
+            "difficulty": 6,
+            "earliest_year": 2018
+          },
+          "research.ml.world_model_dynamics": {
+            "coordination_bonus_bp": 1200,
+            "difficulty": 7,
+            "earliest_year": 2020
           },
           "research.models.adapter_maps": {
             "coordination_bonus_bp": 2000,
@@ -78999,6 +81637,36 @@
             "difficulty": 19,
             "earliest_year": 2028
           },
+          "research.product.edge_quantization_runtime": {
+            "coordination_bonus_bp": 1200,
+            "difficulty": 4,
+            "earliest_year": 2019
+          },
+          "research.product.hybrid_local_cloud_routing": {
+            "coordination_bonus_bp": 1200,
+            "difficulty": 9,
+            "earliest_year": 2018
+          },
+          "research.product.interactive_copilot_ux": {
+            "coordination_bonus_bp": 1200,
+            "difficulty": 7,
+            "earliest_year": 2016
+          },
+          "research.product.privacy_preserving_federation": {
+            "coordination_bonus_bp": 1200,
+            "difficulty": 6,
+            "earliest_year": 2021
+          },
+          "research.product.sla_canary_observability": {
+            "coordination_bonus_bp": 1200,
+            "difficulty": 8,
+            "earliest_year": 2017
+          },
+          "research.product.structured_json_schema_engine": {
+            "coordination_bonus_bp": 1200,
+            "difficulty": 5,
+            "earliest_year": 2020
+          },
           "research.public.benchmark_exchange": {
             "coordination_bonus_bp": 2000,
             "difficulty": 17,
@@ -79038,6 +81706,81 @@
             "coordination_bonus_bp": 2000,
             "difficulty": 8,
             "earliest_year": 2015
+          },
+          "research.robotics.bimanual_manipulation": {
+            "coordination_bonus_bp": 1200,
+            "difficulty": 6,
+            "earliest_year": 2018
+          },
+          "research.robotics.embodied_poc": {
+            "coordination_bonus_bp": 1200,
+            "difficulty": 9,
+            "earliest_year": 2021
+          },
+          "research.robotics.fleet_teleop_learning": {
+            "coordination_bonus_bp": 1200,
+            "difficulty": 8,
+            "earliest_year": 2020
+          },
+          "research.robotics.mobile_navigation_slam": {
+            "coordination_bonus_bp": 1200,
+            "difficulty": 5,
+            "earliest_year": 2017
+          },
+          "research.robotics.safety_control_barriers": {
+            "coordination_bonus_bp": 1200,
+            "difficulty": 7,
+            "earliest_year": 2019
+          },
+          "research.robotics.sim_to_real_domain_rand": {
+            "coordination_bonus_bp": 1200,
+            "difficulty": 10,
+            "earliest_year": 2021
+          },
+          "research.robotics.tactile_force_feedback": {
+            "coordination_bonus_bp": 1200,
+            "difficulty": 4,
+            "earliest_year": 2016
+          },
+          "research.robotics.visuomotor_policies": {
+            "coordination_bonus_bp": 1200,
+            "difficulty": 9,
+            "earliest_year": 2020
+          },
+          "research.safety.adversarial_probes": {
+            "coordination_bonus_bp": 1200,
+            "difficulty": 4,
+            "earliest_year": 2018
+          },
+          "research.safety.constitutional_rule_critique": {
+            "coordination_bonus_bp": 1200,
+            "difficulty": 6,
+            "earliest_year": 2020
+          },
+          "research.safety.formal_tool_sandboxing": {
+            "coordination_bonus_bp": 1200,
+            "difficulty": 7,
+            "earliest_year": 2021
+          },
+          "research.safety.mechanistic_circuit_tracing": {
+            "coordination_bonus_bp": 1200,
+            "difficulty": 5,
+            "earliest_year": 2019
+          },
+          "research.safety.scalable_debate_oversight": {
+            "coordination_bonus_bp": 1200,
+            "difficulty": 9,
+            "earliest_year": 2017
+          },
+          "research.safety.unlearning_and_redaction": {
+            "coordination_bonus_bp": 1200,
+            "difficulty": 8,
+            "earliest_year": 2016
+          },
+          "research.safety.verification_refinement_1": {
+            "coordination_bonus_bp": 1200,
+            "difficulty": 10,
+            "earliest_year": 2018
           },
           "research.sequence_modeling": {
             "coordination_bonus_bp": 2000,
@@ -79110,6 +81853,34 @@
             },
             "rights": "Commercial training and open weight redistribution with attribution.",
             "unique_units": 590000
+          },
+          {
+            "collection_method": "Automated internal harness logging",
+            "commercial_use": true,
+            "contamination_bp": 100,
+            "coverage_bp": {
+              "documents": 7600,
+              "scanned_tables": 6800,
+              "software_reasoning": 6200
+            },
+            "duplication_bp": 400,
+            "id": "data.company_internal_logs",
+            "name": "Company Operational & Benchmark Logs",
+            "open_weight_release": true,
+            "price_cents": 25000,
+            "provenance": "Collected from internal company engineering traces and regression suites",
+            "quality_bp": 7800,
+            "raw_units": 95000,
+            "relevance_bp": {
+              "documents": 8200,
+              "scanned_tables": 7400,
+              "software_reasoning": 6800
+            },
+            "rights": "Company-owned first-party data · commercial and open-weight cleared",
+            "source_path": "company_created",
+            "supplier_or_publisher": "Internal Engineering Operations",
+            "underlying_history": "First-party telemetry, unit test traces, and internal document templates.",
+            "unique_units": 90000
           },
           {
             "commercial_use": true,
@@ -79325,6 +82096,33 @@
             "unique_units": 180000
           },
           {
+            "collection_method": "Broker batch FTP drop",
+            "commercial_use": true,
+            "contamination_bp": 500,
+            "coverage_bp": {
+              "documents": 7600,
+              "scanned_tables": 6800,
+              "software_reasoning": 6200
+            },
+            "duplication_bp": 2600,
+            "id": "data.licensed_bulk_syndicate_noisy",
+            "name": "Syndicated Regional Content Broker Feed",
+            "price_cents": 75000,
+            "provenance": "Sub-licensed bulk aggregator feed from regional content brokers",
+            "provenance_confidence_bp": 6800,
+            "quality_bp": 5900,
+            "raw_units": 780000,
+            "relevance_bp": {
+              "documents": 8200,
+              "scanned_tables": 7400,
+              "software_reasoning": 6800
+            },
+            "rights": "Commercial training permitted; open-weight redistribution excluded",
+            "supplier_or_publisher": "Apex Content Syndicate",
+            "underlying_history": "OCR newsprint, syndicated press releases, and boilerplate forms.",
+            "unique_units": 540000
+          },
+          {
             "commercial_use": true,
             "contamination_bp": 600,
             "coverage_bp": {
@@ -79342,6 +82140,36 @@
             },
             "rights": "Perpetual commercial training and model distribution",
             "unique_units": 1000000
+          },
+          {
+            "collection_method": "Signed publisher master feed",
+            "commercial_use": true,
+            "contamination_bp": 50,
+            "coverage_bp": {
+              "documents": 8800,
+              "scanned_tables": 8200,
+              "science_industry": 8400,
+              "software_reasoning": 7800
+            },
+            "duplication_bp": 200,
+            "id": "data.licensed_editorial_gold",
+            "name": "Meridian Peer-Reviewed Editorial Archive",
+            "open_weight_release": true,
+            "price_cents": 280000,
+            "provenance": "Direct commercial license from Meridian Academic & Technical Press",
+            "provenance_confidence_bp": 9800,
+            "quality_bp": 9100,
+            "raw_units": 330000,
+            "relevance_bp": {
+              "documents": 9200,
+              "scanned_tables": 8600,
+              "science_industry": 8800,
+              "software_reasoning": 8200
+            },
+            "rights": "Full commercial and open-weight distribution license with indemnity",
+            "supplier_or_publisher": "Meridian Technical Press",
+            "underlying_history": "Curated journals, verified manuals, and copy-edited financial filings.",
+            "unique_units": 320000
           },
           {
             "commercial_use": true,
@@ -79440,6 +82268,64 @@
             },
             "rights": "Research use only. Commercial service and weight redistribution excluded.",
             "unique_units": 480000
+          },
+          {
+            "collection_method": "Signed public repository snapshot",
+            "commercial_use": true,
+            "contamination_bp": 100,
+            "coverage_bp": {
+              "documents": 7600,
+              "scanned_tables": 6800,
+              "software_reasoning": 6200
+            },
+            "duplication_bp": 300,
+            "id": "data.public_civic_registry_clean",
+            "name": "Federal & Municipal Open Civic Registry",
+            "open_weight_release": true,
+            "price_cents": 0,
+            "provenance": "Public-domain statutory filings, patent specifications, and court dockets",
+            "provenance_confidence_bp": 9900,
+            "quality_bp": 8400,
+            "raw_units": 250000,
+            "relevance_bp": {
+              "documents": 8200,
+              "scanned_tables": 7400,
+              "software_reasoning": 6800
+            },
+            "rights": "Dedicated public domain (CC0 / US Gov) · commercial and open-weight cleared",
+            "source_path": "public_dataset",
+            "supplier_or_publisher": "Open Civic Data Consortium",
+            "underlying_history": "Verified public statutes, patent claims, and audited municipal ledgers.",
+            "unique_units": 240000
+          },
+          {
+            "collection_method": "Public WARC mirror download",
+            "commercial_use": true,
+            "contamination_bp": 750,
+            "coverage_bp": {
+              "documents": 7600,
+              "scanned_tables": 6800,
+              "software_reasoning": 6200
+            },
+            "duplication_bp": 3600,
+            "id": "data.public_common_dump_noisy",
+            "name": "Open Web Common Crawl Snapshot (Unfiltered)",
+            "price_cents": 0,
+            "provenance": "Publicly downloadable raw web crawl snapshot",
+            "provenance_confidence_bp": 5000,
+            "quality_bp": 5300,
+            "raw_units": 1200000,
+            "relevance_bp": {
+              "documents": 8200,
+              "scanned_tables": 7400,
+              "software_reasoning": 6800
+            },
+            "rights": "Publicly hosted crawl index; contains mixed third-party web pages",
+            "source_path": "public_dataset",
+            "supplier_or_publisher": "Open Web Archive Foundation",
+            "third_party_controversy_risk": true,
+            "underlying_history": "Unfiltered HTML text dumps with navigation chrome and duplicate mirrors.",
+            "unique_units": 720000
           },
           {
             "commercial_use": true,
@@ -79563,6 +82449,35 @@
             },
             "rights": "Commercial training and weight redistribution with attribution",
             "unique_units": 820000
+          },
+          {
+            "collection_method": "BitTorrent swarm ingest",
+            "commercial_use": false,
+            "contamination_bp": 850,
+            "coverage_bp": {
+              "documents": 7600,
+              "scanned_tables": 6800,
+              "software_reasoning": 6200
+            },
+            "duplication_bp": 3400,
+            "id": "data.torrent_shadow_archive",
+            "name": "Shadow Library & Forum Torrent Dump",
+            "price_cents": 10000,
+            "provenance": "Unverified peer-to-peer mirror of books, articles, and forum threads",
+            "provenance_confidence_bp": 2200,
+            "quality_bp": 6400,
+            "raw_units": 1350000,
+            "relevance_bp": {
+              "documents": 8200,
+              "scanned_tables": 7400,
+              "software_reasoning": 6800
+            },
+            "rights": "Research-only · unverified third-party copyright claims",
+            "source_path": "torrent_distributed",
+            "supplier_or_publisher": "Distributed peer swarm",
+            "third_party_controversy_risk": true,
+            "underlying_history": "Aggregated mirror archives with stripped headers and mixed licensing.",
+            "unique_units": 850000
           },
           {
             "commercial_use": false,
@@ -80397,6 +83312,80 @@
             ],
             "staff_days": 4,
             "verification_milli_CU_per_unit": 2
+          }
+        ],
+        "tech_licenses": [
+          {
+            "id": "license.compact_distillation",
+            "integration_days": 4,
+            "licensor": "DistillCore Labs",
+            "monthly_royalty_cents": 19000,
+            "renewable": true,
+            "research_id": "research.math.compact_distillation",
+            "royalty_bp": 200,
+            "scope_label": "Compact student distillation toolkit license",
+            "term_days": 365,
+            "upfront_fee_cents": 140000
+          },
+          {
+            "id": "license.data_deduplication",
+            "integration_days": 2,
+            "licensor": "ClearStream Data Tooling",
+            "monthly_royalty_cents": 12000,
+            "renewable": true,
+            "research_id": "research.data_deduplication",
+            "royalty_bp": 150,
+            "scope_label": "MinHash & locality-sensitive deduplication pipeline license",
+            "term_days": 365,
+            "upfront_fee_cents": 95000
+          },
+          {
+            "id": "license.edge_quantization_runtime",
+            "integration_days": 4,
+            "licensor": "SiliconEdge Embedded AI",
+            "monthly_royalty_cents": 21000,
+            "renewable": true,
+            "research_id": "research.product.edge_quantization_runtime",
+            "royalty_bp": 250,
+            "scope_label": "On-device quantized runtime binary redistribution license",
+            "term_days": 365,
+            "upfront_fee_cents": 160000
+          },
+          {
+            "id": "license.efficient_serving",
+            "integration_days": 4,
+            "licensor": "Vanguard Inference Runtime Corp.",
+            "monthly_royalty_cents": 22000,
+            "renewable": true,
+            "research_id": "research.efficient_serving",
+            "royalty_bp": 300,
+            "scope_label": "Managed serving engine license for production deployments",
+            "term_days": 365,
+            "upfront_fee_cents": 150000
+          },
+          {
+            "id": "license.sequence_modeling",
+            "integration_days": 3,
+            "licensor": "Hawthorne Sequence Systems",
+            "monthly_royalty_cents": 18000,
+            "renewable": true,
+            "research_id": "research.sequence_modeling",
+            "royalty_bp": 250,
+            "scope_label": "Commercial SDK & training kernel license (no discovery credit)",
+            "term_days": 365,
+            "upfront_fee_cents": 120000
+          },
+          {
+            "id": "license.state_space_recurrence",
+            "integration_days": 5,
+            "licensor": "Linearis Research Consortium",
+            "monthly_royalty_cents": 25000,
+            "renewable": true,
+            "research_id": "research.ml.state_space_recurrence",
+            "royalty_bp": 300,
+            "scope_label": "State-space sequence backbone patent & kernel license",
+            "term_days": 365,
+            "upfront_fee_cents": 180000
           }
         ]
       },
@@ -83325,72 +86314,147 @@
       },
       "regional_markets": "market.century",
       "research": [
-        "research.efficient_image_features",
-        "research.sequence_modeling",
-        "research.data_deduplication",
-        "research.held_out_evaluation",
-        "research.efficient_serving",
-        "research.reproducible_tooling",
         "research.attention_systems",
-        "research.multimodal_systems",
-        "research.workflow_verification",
-        "research.integrated_science",
-        "research.frontier_fabric",
-        "research.energy_prototype",
-        "research.materials_prototype",
-        "research.methods_prototype",
-        "research.refresh_measurement",
-        "research.data.consent_registry",
-        "research.data.partition_audit",
-        "research.data.exchange_protocol",
-        "research.data.receipt_layout",
-        "research.data.grid_normalization",
-        "research.data.table_indexing",
-        "research.compute.low_precision",
-        "research.compute.kernel_layout",
-        "research.compute.sparse_serving",
-        "research.compute.queue_metering",
-        "research.compute.thermal_profiles",
-        "research.compute.flexible_duty",
-        "research.compute.local_memory",
-        "research.compute.pooled_boards",
+        "research.bio.active_wetlab_closed_loop",
+        "research.bio.climate_pde_surrogates",
+        "research.bio.clinical_trial_stratification",
+        "research.bio.crystal_lattice_diffusion",
+        "research.bio.enzyme_active_site_design",
+        "research.bio.equivariant_molecular_graphs",
+        "research.bio.genomic_regulatory_motifs",
+        "research.bio.protein_folding_poc",
+        "research.compute.asynchronous_pipeline_parallel",
+        "research.compute.batched_serving",
+        "research.compute.deadline_batching",
         "research.compute.fabric_qos",
-        "research.operations.fault_diagnostics",
-        "research.operations.cold_replica",
-        "research.operations.resilient_backplane",
-        "research.evidence.regional_labeling",
-        "research.evidence.transfer_holdouts",
-        "research.evidence.service_evidence",
+        "research.compute.fallback_routing",
+        "research.compute.flexible_duty",
+        "research.compute.fused_attention_kernels",
+        "research.compute.idle_replica_parking",
+        "research.compute.int8_activation_quantization",
+        "research.compute.kernel_layout",
+        "research.compute.kernel_refinement_1",
+        "research.compute.kernel_refinement_2",
+        "research.compute.kernel_refinement_3",
+        "research.compute.local_memory",
+        "research.compute.low_precision",
+        "research.compute.paged_kv_cache",
+        "research.compute.pooled_boards",
+        "research.compute.queue_metering",
+        "research.compute.sparse_serving",
+        "research.compute.speculative_decoding",
+        "research.compute.thermal_profiles",
+        "research.compute.zero_redundancy_sharding",
+        "research.data.active_curriculum_ordering",
+        "research.data.consent_registry",
+        "research.data.contamination_decontamination",
+        "research.data.coverage_buckets",
+        "research.data.creative_pedagogy_schemas",
+        "research.data.curation_refinement_1",
+        "research.data.empirical_scaling_laws",
+        "research.data.exchange_protocol",
+        "research.data.grid_normalization",
+        "research.data.information_theoretic_pruning",
+        "research.data.label_disagreement",
+        "research.data.multilingual_alignment",
+        "research.data.partition_audit",
+        "research.data.provenance_watermarking",
+        "research.data.receipt_layout",
+        "research.data.shift_watch",
+        "research.data.sorting_adaptive",
+        "research.data.sorting_external",
+        "research.data.synthetic_critique_loops",
+        "research.data.table_indexing",
+        "research.data_deduplication",
+        "research.efficient_image_features",
+        "research.efficient_serving",
+        "research.energy_prototype",
         "research.evidence.edge_failures",
         "research.evidence.rare_cases",
+        "research.evidence.regional_labeling",
+        "research.evidence.service_evidence",
         "research.evidence.stress_replay",
-        "research.models.indexed_retrieval",
-        "research.models.grounded_synthesis",
-        "research.models.bounded_tools",
+        "research.evidence.transfer_holdouts",
+        "research.frontier.cross_source_transfer",
+        "research.frontier.efficient_prototypes",
+        "research.frontier.field_metering",
+        "research.frontier.integrated_measurement",
+        "research.frontier.prototype_replication",
+        "research.frontier.sensor_alignment",
+        "research.frontier_fabric",
+        "research.held_out_evaluation",
+        "research.integrated_science",
+        "research.materials_prototype",
+        "research.math.bayesian_uncertainty_calibration",
+        "research.math.compact_distillation",
+        "research.math.eff_refinement_1",
+        "research.math.eff_refinement_2",
+        "research.math.equivariant_representations",
+        "research.math.low_rank_factorization",
+        "research.math.optimal_transport_alignment",
+        "research.math.second_order_optimizers",
+        "research.math.small_model_chinchilla",
+        "research.math.spectral_regularization",
+        "research.methods_prototype",
+        "research.ml.arch_refinement_1",
+        "research.ml.contrastive_embeddings",
+        "research.ml.hierarchical_planning",
+        "research.ml.long_horizon_memory",
+        "research.ml.modular_adapters",
+        "research.ml.neuro_symbolic_constraints",
+        "research.ml.rapid_prototyping_poc",
+        "research.ml.retrieval_grounded_generation",
+        "research.ml.sparse_mixture_routing",
+        "research.ml.state_space_recurrence",
+        "research.ml.unified_reasoning",
+        "research.ml.world_model_dynamics",
         "research.models.adapter_maps",
-        "research.models.region_adapters",
+        "research.models.bounded_tools",
         "research.models.budgeted_refresh",
+        "research.models.grounded_synthesis",
+        "research.models.indexed_retrieval",
+        "research.models.region_adapters",
+        "research.models.supervised_agents",
         "research.models.task_containment",
         "research.models.verified_workflow",
-        "research.models.supervised_agents",
-        "research.frontier.sensor_alignment",
-        "research.frontier.cross_source_transfer",
-        "research.frontier.integrated_measurement",
-        "research.frontier.field_metering",
-        "research.frontier.prototype_replication",
-        "research.frontier.efficient_prototypes",
-        "research.public.translated_tables",
+        "research.multimodal_systems",
+        "research.operations.cold_replica",
+        "research.operations.fault_diagnostics",
+        "research.operations.resilient_backplane",
+        "research.product.edge_quantization_runtime",
+        "research.product.hybrid_local_cloud_routing",
+        "research.product.interactive_copilot_ux",
+        "research.product.privacy_preserving_federation",
+        "research.product.sla_canary_observability",
+        "research.product.structured_json_schema_engine",
+        "research.public.benchmark_exchange",
         "research.public.continuity_packages",
         "research.public.local_rollout",
         "research.public.publication_package",
         "research.public.replication_handbook",
-        "research.public.benchmark_exchange",
-        "research.data.sorting_adaptive",
-        "research.data.sorting_external",
-        "research.compute.batched_serving"
+        "research.public.translated_tables",
+        "research.refresh_measurement",
+        "research.reproducible_tooling",
+        "research.robotics.bimanual_manipulation",
+        "research.robotics.embodied_poc",
+        "research.robotics.fleet_teleop_learning",
+        "research.robotics.mobile_navigation_slam",
+        "research.robotics.safety_control_barriers",
+        "research.robotics.sim_to_real_domain_rand",
+        "research.robotics.tactile_force_feedback",
+        "research.robotics.visuomotor_policies",
+        "research.safety.adversarial_probes",
+        "research.safety.constitutional_rule_critique",
+        "research.safety.formal_tool_sandboxing",
+        "research.safety.mechanistic_circuit_tracing",
+        "research.safety.scalable_debate_oversight",
+        "research.safety.unlearning_and_redaction",
+        "research.safety.verification_refinement_1",
+        "research.sequence_modeling",
+        "research.workflow_verification"
       ],
       "resilience": "resilience.domestic",
-      "revision": 54,
+      "revision": 56,
       "rivals": [
         {
           "capacity_milli_CU_per_day": 380000,
@@ -103695,8 +106759,8 @@
       }
     },
     {
-      "entry_node": "letter",
-      "id": "story.open_bench",
+      "entry_node": "inquiry",
+      "id": "story.provenance_scrutiny_audit",
       "kind": "flow",
       "lifecycle": {
         "max_occurrences_per_scope": 1,
@@ -103704,513 +106768,105 @@
         "occurrence_scope": "company"
       },
       "nodes": {
-        "close": {
-          "kind": "news",
-          "next": "end",
-          "text_key": "story.open_bench.close.body"
+        "apply_audit": {
+          "effects": [
+            {
+              "amount_cents": -15000,
+              "op": "adjust_cash",
+              "target": "self"
+            },
+            {
+              "op": "record_decision",
+              "target": "self",
+              "value": "provenance_audit_disclosed"
+            }
+          ],
+          "kind": "effect",
+          "next": "result"
+        },
+        "apply_clean": {
+          "effects": [
+            {
+              "amount_cents": -25000,
+              "op": "adjust_cash",
+              "target": "self"
+            },
+            {
+              "op": "record_decision",
+              "target": "self",
+              "value": "provenance_clean_retrain_pledge"
+            }
+          ],
+          "kind": "effect",
+          "next": "result"
+        },
+        "apply_defend": {
+          "effects": [
+            {
+              "op": "record_decision",
+              "target": "self",
+              "value": "provenance_fair_use_defense"
+            }
+          ],
+          "kind": "effect",
+          "next": "result"
         },
         "end": {
           "kind": "end"
         },
-        "interest": {
-          "effects": [
-            {
-              "delta_bp": 500,
-              "duration_days": 14,
-              "op": "temporary_demand_change",
-              "segment_id": "segment.enterprise",
-              "target": "self"
-            }
-          ],
-          "kind": "effect",
-          "next": "reading"
-        },
-        "letter": {
+        "inquiry": {
           "choices": [
             {
-              "id": "open",
-              "label_key": "story.open_bench.letter.open",
-              "next": "interest"
+              "id": "audit_and_disclose",
+              "label_key": "story.provenance_scrutiny_audit.audit",
+              "next": "apply_audit"
             },
             {
-              "id": "private",
-              "label_key": "story.open_bench.letter.private",
-              "next": "private"
-            }
-          ],
-          "default_choice_if_dismissed": "private",
-          "kind": "dialogue",
-          "participants": [
+              "id": "transition_clean",
+              "label_key": "story.provenance_scrutiny_audit.clean",
+              "next": "apply_clean"
+            },
             {
-              "id": "contact.nell_soto",
-              "kind": "contact",
-              "name_key": "cast.nell.name",
-              "portrait": {
-                "kit": 1,
-                "parts": [
-                  3,
-                  8,
-                  0,
-                  0,
-                  1,
-                  2,
-                  0,
-                  3,
-                  0,
-                  0,
-                  2,
-                  5,
-                  6,
-                  0,
-                  2
-                ]
-              },
-              "role_key": "cast.nell.role"
+              "id": "defend_fair_use",
+              "label_key": "story.provenance_scrutiny_audit.defend",
+              "next": "apply_defend"
             }
           ],
-          "text_key": "story.open_bench.letter.body",
-          "title_key": "story.open_bench.letter.title"
+          "default_choice_if_dismissed": "defend_fair_use",
+          "kind": "dialogue",
+          "text_key": "story.provenance_scrutiny_audit.body",
+          "title_key": "story.provenance_scrutiny_audit.title"
         },
-        "private": {
+        "result": {
           "kind": "result",
           "next": "end",
           "show_committed_changes": true,
-          "text_key": "story.open_bench.private.body"
-        },
-        "reading": {
-          "kind": "news",
-          "next": "wait",
-          "text_key": "story.open_bench.reading.body"
-        },
-        "wait": {
-          "duration_days": 14,
-          "kind": "delay",
-          "next": "close"
+          "text_key": "story.provenance_scrutiny_audit.result"
         }
       },
       "revision": 1,
       "scope": "company",
       "tags": [
         "story",
-        "founder_desk",
-        "ai_assisted"
+        "recovery",
+        "operational",
+        "open_ecosystem"
       ],
       "trigger": {
         "all_of": [
           {
-            "fact": "company.independent_evaluations",
-            "op": "gte",
-            "unit": "count",
-            "value": 1
-          },
-          {
-            "fact": "company.has_enterprise_segment",
+            "fact": "company.uses_controversial_data",
             "op": "eq",
             "unit": "boolean",
             "value": true
+          },
+          {
+            "fact": "company.trained_models",
+            "op": "gte",
+            "unit": "count",
+            "value": 1
           }
         ]
-      }
-    },
-    {
-      "entry_node": "letter",
-      "id": "story.the_missing_zero",
-      "kind": "flow",
-      "lifecycle": {
-        "anchor": {
-          "invalid_day": "clamp_to_month_end",
-          "kind": "scope_created",
-          "offset": {
-            "unit": "days",
-            "value": 2
-          }
-        },
-        "every": {
-          "unit": "days",
-          "value": 7
-        },
-        "max_occurrences_per_scope": 1,
-        "miss_policy": "skip",
-        "mode": "interval",
-        "occurrence_scope": "company"
-      },
-      "nodes": {
-        "correction": {
-          "kind": "result",
-          "next": "correction_wait",
-          "show_committed_changes": true,
-          "text_key": "story.the_missing_zero.correction.body"
-        },
-        "correction_wait": {
-          "duration_days": 1,
-          "kind": "delay",
-          "next": "erratum"
-        },
-        "declined": {
-          "kind": "result",
-          "next": "end",
-          "show_committed_changes": true,
-          "text_key": "story.the_missing_zero.declined.body"
-        },
-        "delivery": {
-          "duration_days": 3,
-          "kind": "delay",
-          "next": "license"
-        },
-        "end": {
-          "kind": "end"
-        },
-        "erratum": {
-          "kind": "news",
-          "next": "later",
-          "text_key": "story.the_missing_zero.erratum.body"
-        },
-        "filed": {
-          "kind": "result",
-          "next": "end",
-          "show_committed_changes": true,
-          "text_key": "story.the_missing_zero.filed.body"
-        },
-        "later": {
-          "duration_days": 2,
-          "kind": "delay",
-          "next": "license"
-        },
-        "letter": {
-          "choices": [
-            {
-              "id": "tickets",
-              "label_key": "story.the_missing_zero.letter.tickets",
-              "next": "rolls"
-            },
-            {
-              "id": "method",
-              "label_key": "story.the_missing_zero.letter.method",
-              "next": "scan"
-            },
-            {
-              "id": "pass",
-              "label_key": "story.the_missing_zero.letter.pass",
-              "next": "declined"
-            }
-          ],
-          "default_choice_if_dismissed": "pass",
-          "kind": "dialogue",
-          "participants": [
-            {
-              "id": "contact.nell_soto",
-              "kind": "contact",
-              "name_key": "cast.nell.name",
-              "portrait": {
-                "kit": 1,
-                "parts": [
-                  3,
-                  8,
-                  0,
-                  0,
-                  1,
-                  2,
-                  0,
-                  3,
-                  0,
-                  0,
-                  2,
-                  5,
-                  6,
-                  0,
-                  2
-                ]
-              },
-              "role_key": "cast.nell.role"
-            },
-            {
-              "id": "contact.gus_bell",
-              "kind": "contact",
-              "name_key": "cast.gus.name",
-              "portrait": {
-                "kit": 1,
-                "parts": [
-                  2,
-                  3,
-                  0,
-                  0,
-                  1,
-                  2,
-                  0,
-                  2,
-                  0,
-                  0,
-                  2,
-                  3,
-                  6,
-                  0,
-                  2
-                ]
-              },
-              "role_key": "cast.gus.role"
-            }
-          ],
-          "text_key": "story.the_missing_zero.letter.body",
-          "title_key": "story.the_missing_zero.letter.title"
-        },
-        "license": {
-          "choices": [
-            {
-              "id": "take",
-              "label_key": "story.the_missing_zero.license.take",
-              "next": "license_effect"
-            },
-            {
-              "id": "return",
-              "label_key": "story.the_missing_zero.license.return",
-              "next": "returned"
-            }
-          ],
-          "default_choice_if_dismissed": "return",
-          "kind": "dialogue",
-          "participants": [
-            {
-              "id": "contact.gus_bell",
-              "kind": "contact",
-              "name_key": "cast.gus.name",
-              "portrait": {
-                "kit": 1,
-                "parts": [
-                  2,
-                  3,
-                  0,
-                  0,
-                  1,
-                  2,
-                  0,
-                  2,
-                  0,
-                  0,
-                  2,
-                  3,
-                  6,
-                  0,
-                  2
-                ]
-              },
-              "role_key": "cast.gus.role"
-            },
-            {
-              "id": "contact.nell_soto",
-              "kind": "contact",
-              "name_key": "cast.nell.name",
-              "portrait": {
-                "kit": 1,
-                "parts": [
-                  3,
-                  8,
-                  0,
-                  0,
-                  1,
-                  2,
-                  0,
-                  3,
-                  0,
-                  0,
-                  2,
-                  5,
-                  6,
-                  0,
-                  2
-                ]
-              },
-              "role_key": "cast.nell.role"
-            }
-          ],
-          "text_key": "story.the_missing_zero.license.body",
-          "title_key": "story.the_missing_zero.license.title"
-        },
-        "license_effect": {
-          "effects": [
-            {
-              "dataset_id": "data.civic_forms_open",
-              "op": "accept_open_dataset",
-              "target": "self"
-            }
-          ],
-          "kind": "effect",
-          "next": "filed"
-        },
-        "returned": {
-          "kind": "result",
-          "next": "end",
-          "show_committed_changes": true,
-          "text_key": "story.the_missing_zero.returned.body"
-        },
-        "rolls": {
-          "choices": [
-            {
-              "id": "source",
-              "label_key": "story.the_missing_zero.rolls.source",
-              "next": "verified"
-            },
-            {
-              "id": "hold",
-              "label_key": "story.the_missing_zero.rolls.hold",
-              "next": "second"
-            }
-          ],
-          "default_choice_if_dismissed": "hold",
-          "kind": "dialogue",
-          "participants": [
-            {
-              "id": "contact.gus_bell",
-              "kind": "contact",
-              "name_key": "cast.gus.name",
-              "portrait": {
-                "kit": 1,
-                "parts": [
-                  2,
-                  3,
-                  0,
-                  0,
-                  1,
-                  2,
-                  0,
-                  2,
-                  0,
-                  0,
-                  2,
-                  3,
-                  6,
-                  0,
-                  2
-                ]
-              },
-              "role_key": "cast.gus.role"
-            },
-            {
-              "id": "contact.nell_soto",
-              "kind": "contact",
-              "name_key": "cast.nell.name",
-              "portrait": {
-                "kit": 1,
-                "parts": [
-                  3,
-                  8,
-                  0,
-                  0,
-                  1,
-                  2,
-                  0,
-                  3,
-                  0,
-                  0,
-                  2,
-                  5,
-                  6,
-                  0,
-                  2
-                ]
-              },
-              "role_key": "cast.nell.role"
-            }
-          ],
-          "text_key": "story.the_missing_zero.rolls.body",
-          "title_key": "story.the_missing_zero.rolls.title"
-        },
-        "scan": {
-          "choices": [
-            {
-              "id": "blind",
-              "label_key": "story.the_missing_zero.scan.blind",
-              "next": "second"
-            },
-            {
-              "id": "copy",
-              "label_key": "story.the_missing_zero.scan.copy",
-              "next": "correction"
-            }
-          ],
-          "default_choice_if_dismissed": "blind",
-          "kind": "dialogue",
-          "participants": [
-            {
-              "id": "contact.nell_soto",
-              "kind": "contact",
-              "name_key": "cast.nell.name",
-              "portrait": {
-                "kit": 1,
-                "parts": [
-                  3,
-                  8,
-                  0,
-                  0,
-                  1,
-                  2,
-                  0,
-                  3,
-                  0,
-                  0,
-                  2,
-                  5,
-                  6,
-                  0,
-                  2
-                ]
-              },
-              "role_key": "cast.nell.role"
-            },
-            {
-              "id": "contact.gus_bell",
-              "kind": "contact",
-              "name_key": "cast.gus.name",
-              "portrait": {
-                "kit": 1,
-                "parts": [
-                  2,
-                  3,
-                  0,
-                  0,
-                  1,
-                  2,
-                  0,
-                  2,
-                  0,
-                  0,
-                  2,
-                  3,
-                  6,
-                  0,
-                  2
-                ]
-              },
-              "role_key": "cast.gus.role"
-            }
-          ],
-          "text_key": "story.the_missing_zero.scan.body",
-          "title_key": "story.the_missing_zero.scan.title"
-        },
-        "second": {
-          "kind": "result",
-          "next": "delivery",
-          "show_committed_changes": true,
-          "text_key": "story.the_missing_zero.second.body"
-        },
-        "verified": {
-          "kind": "result",
-          "next": "delivery",
-          "show_committed_changes": true,
-          "text_key": "story.the_missing_zero.verified.body"
-        }
-      },
-      "revision": 1,
-      "scope": "company",
-      "tags": [
-        "story",
-        "founder_desk",
-        "ai_assisted"
-      ],
-      "trigger": {
-        "fact": "company.is_operating",
-        "op": "eq",
-        "unit": "boolean",
-        "value": true
       }
     },
     {
@@ -104336,16 +106992,12 @@
     "cast.customer.name": "Pilot customer",
     "cast.field_desk": "Field desk, Harbormark",
     "cast.founder": "Founder",
-    "cast.gus.name": "Gus Bell",
-    "cast.gus.role": "Keeper of the district archive",
     "cast.incumbent": "Incoming chief executive",
     "cast.iona.name": "Iona Pell",
     "cast.lab": "Independent lab",
     "cast.lio.name": "Lio Ward",
     "cast.maren.name": "Maren Pell",
     "cast.morrow.name": "Morrow Cooperative",
-    "cast.nell.name": "Nell Soto",
-    "cast.nell.role": "Night editor, The Switchback",
     "cast.plainwick.name": "Plainwick lab",
     "cast.procurement": "Procurement lead, Cedar Desk",
     "cast.supplier": "Compute supplier",
@@ -104477,42 +107129,111 @@
     "life.mission.rival.body": "The mission change has turned personal. You can find the conversation in the social circle.",
     "life.mission.rival.title": "A promise broken",
     "operations.site.outcome": "An owned site reports a change\nOperations recorded a site outcome. Review its cause, current capacity and recovery terms in Operations.",
+    "research.attention_systems.detail": "Compare which parts of a sequence matter most to a prediction.",
+    "research.bio.active_wetlab_closed_loop.detail": "Selects maximally informative synthesis experiments to cut physical screening rounds.",
+    "research.bio.active_wetlab_closed_loop.title": "Bayesian Wet-Lab Assay Design",
+    "research.bio.climate_pde_surrogates.detail": "Accelerates fluid, weather, and grid thermal simulations by 1000x with conservation guarantees.",
+    "research.bio.climate_pde_surrogates.title": "Neural Operator PDE Surrogates",
+    "research.bio.clinical_trial_stratification.detail": "Identifies responder subgroups while controlling for confounding hospital covariates.",
+    "research.bio.clinical_trial_stratification.title": "Causal Biomarker Patient Stratification",
+    "research.bio.crystal_lattice_diffusion.detail": "Generates stable candidate battery and catalyst crystal structures under thermodynamic constraints.",
+    "research.bio.crystal_lattice_diffusion.title": "Inorganic Crystal Lattice Generation",
+    "research.bio.enzyme_active_site_design.detail": "Designs bespoke enzyme scaffolds around target transition states.",
+    "research.bio.enzyme_active_site_design.title": "Catalytic Active-Site Pocket Design",
+    "research.bio.equivariant_molecular_graphs.detail": "Models 3D atomic coordinates and bond symmetries with physical conservation laws.",
+    "research.bio.equivariant_molecular_graphs.title": "SE(3)-Equivariant Molecular Graph Networks",
+    "research.bio.genomic_regulatory_motifs.detail": "Predicts non-coding enhancer and splice-site effects across kilobase contexts.",
+    "research.bio.genomic_regulatory_motifs.title": "Long-Range Genomic Regulatory Modeling",
+    "research.bio.protein_folding_poc.detail": "Validates a proof-of-concept folding predictor on held-out structural biology targets.",
+    "research.bio.protein_folding_poc.title": "De Novo Protein Structure PoC",
+    "research.compute.asynchronous_pipeline_parallel.detail": "Overlaps communication collectives with backward pass compute across racks.",
+    "research.compute.asynchronous_pipeline_parallel.title": "Micro-Batched Pipeline Parallelism",
     "research.compute.batched_serving.detail": "Schedule compatible requests together to reduce the compute reserved by new releases of the efficient recipe.",
     "research.compute.batched_serving.title": "Batched inference",
+    "research.compute.deadline_batching.detail": "Group requests that can wait and send urgent requests first. Measure the delay for both groups.",
+    "research.compute.deadline_batching.title": "Deadline-aware batching",
     "research.compute.fabric_qos.detail": "Unlocks additional memory-first and fabric v1 racks.",
     "research.compute.fabric_qos.title": "Shared fabric scheduling",
+    "research.compute.fallback_routing.detail": "Send queued work to a second serving path when a replica goes offline and measure successful completions.",
+    "research.compute.fallback_routing.title": "Service fallback routing",
     "research.compute.flexible_duty.detail": "Unlocks the variable load and continuous duty racks.",
     "research.compute.flexible_duty.title": "Flexible duty scheduling",
+    "research.compute.fused_attention_kernels.detail": "Keeps intermediate activations in SRAM to eliminate HBM bandwidth bottlenecks.",
+    "research.compute.fused_attention_kernels.title": "IO-Aware Fused Sequence Kernels",
+    "research.compute.idle_replica_parking.detail": "Measure quiet periods and suspend spare replicas while keeping enough capacity online for incoming work.",
+    "research.compute.idle_replica_parking.title": "Idle replica parking",
+    "research.compute.int8_activation_quantization.detail": "Preserves precision on high-magnitude channels while quantizing 99% of weights and activations.",
+    "research.compute.int8_activation_quantization.title": "Outlier-Aware INT8/FP8 Quantization",
     "research.compute.kernel_layout.detail": "Test which operations fit the memory bandwidth envelope.",
     "research.compute.kernel_layout.title": "Kernel layout optimization",
+    "research.compute.kernel_refinement_1.detail": "Vectorized prefill and decode micro-kernel scheduling.",
+    "research.compute.kernel_refinement_1.title": "Serving Kernel Refinement I",
+    "research.compute.kernel_refinement_2.detail": "Warp-specialized register tiling for low-batch inference.",
+    "research.compute.kernel_refinement_2.title": "Serving Kernel Refinement II",
+    "research.compute.kernel_refinement_3.detail": "Instruction-cache prefetch tuning for tail-latency reduction.",
+    "research.compute.kernel_refinement_3.title": "Serving Kernel Refinement III",
     "research.compute.local_memory.detail": "Measure when larger checkpoints need a different placement.",
     "research.compute.local_memory.title": "Local memory topology",
     "research.compute.low_precision.detail": "Compare precision loss against a held-out serving reference.",
     "research.compute.low_precision.title": "Low-precision experiments",
+    "research.compute.paged_kv_cache.detail": "Eliminates serving memory fragmentation for concurrent variable-length requests.",
+    "research.compute.paged_kv_cache.title": "Paged Virtual-Memory KV Caching",
     "research.compute.pooled_boards.detail": "Measure useful throughput lost when training must synchronize.",
     "research.compute.pooled_boards.title": "Pooled accelerator boards",
     "research.compute.queue_metering.detail": "Measure useful work across training and contracted inference.",
     "research.compute.queue_metering.title": "Rack queue metering",
     "research.compute.sparse_serving.detail": "Unlocks the sparse serving and quiet office racks.",
     "research.compute.sparse_serving.title": "Sparse serving systems",
+    "research.compute.speculative_decoding.detail": "Uses a tiny compact model to draft multiple tokens verified in parallel.",
+    "research.compute.speculative_decoding.title": "Draft-and-Verify Speculative Decoding",
     "research.compute.thermal_profiles.detail": "Measure peak loads against steady power and operator staffing.",
     "research.compute.thermal_profiles.title": "Thermal load profiles",
+    "research.compute.zero_redundancy_sharding.detail": "Partitions optimizer states, gradients, and parameters across cluster nodes.",
+    "research.compute.zero_redundancy_sharding.title": "Zero-Redundancy Optimizer Sharding",
+    "research.data.active_curriculum_ordering.detail": "Orders training examples from clean foundational structure to complex edge cases.",
+    "research.data.active_curriculum_ordering.title": "Active Curriculum Scheduling",
     "research.data.consent_registry.detail": "Record consent and weight-release terms at ingestion.",
     "research.data.consent_registry.title": "Consent and license register",
+    "research.data.contamination_decontamination.detail": "Detects and strips benchmark leakage from raw web and licensed corpora.",
+    "research.data.contamination_decontamination.title": "N-Gram & Embedding Decontamination",
+    "research.data.coverage_buckets.detail": "Group examples by topic before sampling so rare topics keep a place in a small training set.",
+    "research.data.coverage_buckets.title": "Coverage-aware sampling",
+    "research.data.creative_pedagogy_schemas.detail": "Designs dense, high-signal instructional rubrics for in-house Data Creative authors.",
+    "research.data.creative_pedagogy_schemas.title": "Structured Creative Pedagogy Schemas",
+    "research.data.curation_refinement_1.detail": "Iterative domain mixture reweighting for long-tail edge cases.",
+    "research.data.curation_refinement_1.title": "Corpus Balancing Refinement I",
+    "research.data.empirical_scaling_laws.detail": "Measures how dataset uniqueness and task quality govern validation loss across compute budgets. Requires an owned empirical dataset.",
+    "research.data.empirical_scaling_laws.title": "Empirical Corpus Scaling Laws",
     "research.data.exchange_protocol.detail": "Unlocks the archive exchange evaluation panel.",
     "research.data.exchange_protocol.title": "Independent dataset exchange",
     "research.data.grid_normalization.detail": "Separate table geometry from field content during experiments.",
     "research.data.grid_normalization.title": "Table grid normalization",
+    "research.data.information_theoretic_pruning.detail": "Theoretical derivation of redundant sample elimination without requiring an initial corpus.",
+    "research.data.information_theoretic_pruning.title": "Information-Theoretic Sample Pruning",
+    "research.data.label_disagreement.detail": "Spend the review budget on records where annotators disagree. A smaller sample can then cover more of the hard cases.",
+    "research.data.label_disagreement.title": "Disagreement sampling",
+    "research.data.multilingual_alignment.detail": "Aligns technical and civic terminology across regional document collections.",
+    "research.data.multilingual_alignment.title": "Cross-Lingual Parallel Curation",
     "research.data.partition_audit.detail": "Trace a sample to its originating archive before assigning partitions.",
     "research.data.partition_audit.title": "Holdout partition audit",
+    "research.data.provenance_watermarking.detail": "Tracks document origin hashes and consent metadata through tokenization and filtering.",
+    "research.data.provenance_watermarking.title": "Cryptographic Provenance Lineage",
     "research.data.receipt_layout.detail": "Measure the difference between scanned receipts and typed documents.",
     "research.data.receipt_layout.title": "Receipt layout sampling",
+    "research.data.shift_watch.detail": "Compare fresh examples with the evaluation set and flag domains where the model needs another check.",
+    "research.data.shift_watch.title": "Dataset shift monitoring",
     "research.data.sorting_adaptive.detail": "Use the existing order of routine records to reduce sorting work in new ledger extraction releases.",
     "research.data.sorting_adaptive.title": "Adaptive table sorting",
     "research.data.sorting_external.detail": "Reuse sorted batches across tables that exceed working memory. New ledger extraction releases reserve less compute.",
     "research.data.sorting_external.title": "External merge sorting",
+    "research.data.synthetic_critique_loops.detail": "Uses verification checklists to reject low-diversity synthetic examples.",
+    "research.data.synthetic_critique_loops.title": "Self-Consistent Data Critique Filtering",
     "research.data.table_indexing.detail": "Unlocks the ledger extraction recipe for routine tables.",
     "research.data.table_indexing.title": "Table indexing and sorting",
+    "research.data_deduplication.detail": "Find repeated records so that duplicates do not inflate the training sample.",
+    "research.efficient_image_features.detail": "Test how much visual detail can be preserved with a smaller image representation.",
+    "research.efficient_serving.detail": "Measure how many customer requests a fixed serving budget can handle.",
+    "research.energy_prototype.detail": "Test a small demonstration of energy forecasting against measured demand.",
     "research.evidence.edge_failures.detail": "Retain a separate list of recurring operational errors.",
     "research.evidence.edge_failures.title": "Failure sampling",
     "research.evidence.rare_cases.detail": "Design an audit set for consequential failures with low average frequency.",
@@ -104537,6 +107258,55 @@
     "research.frontier.prototype_replication.title": "Prototype replication",
     "research.frontier.sensor_alignment.detail": "Compare paired inputs with independent holdout material.",
     "research.frontier.sensor_alignment.title": "Sensor and language alignment",
+    "research.frontier_fabric.detail": "Compare network arrangements for moving work between compute nodes.",
+    "research.held_out_evaluation.detail": "Reserve examples the team has never trained on and use them to check its claims.",
+    "research.integrated_science.detail": "Combine findings from several specialist teams and check their predictions together.",
+    "research.materials_prototype.detail": "Compare a materials prediction with a held-out set of measured properties.",
+    "research.math.bayesian_uncertainty_calibration.detail": "Produces well-calibrated posterior confidence intervals on out-of-distribution inputs.",
+    "research.math.bayesian_uncertainty_calibration.title": "Variational Uncertainty Calibration",
+    "research.math.compact_distillation.detail": "Transfers dark knowledge and logit geometry from larger teachers or dense ensembles into fast small models.",
+    "research.math.compact_distillation.title": "Knowledge Distillation for Compact Models",
+    "research.math.eff_refinement_1.detail": "Variance-reduced gradient accumulation schedules.",
+    "research.math.eff_refinement_1.title": "Sample Efficiency Refinement I",
+    "research.math.eff_refinement_2.detail": "Second-tier adaptive momentum damping for small-batch convergence.",
+    "research.math.eff_refinement_2.title": "Sample Efficiency Refinement II",
+    "research.math.equivariant_representations.detail": "Bakes geometric and permutation invariances directly into layer operations so models learn from 10x fewer samples.",
+    "research.math.equivariant_representations.title": "Symmetry-Equivariant Representations",
+    "research.math.low_rank_factorization.detail": "Decomposes dense projection matrices into compact shared bases.",
+    "research.math.low_rank_factorization.title": "Tensor & Low-Rank Weight Factorization",
+    "research.math.optimal_transport_alignment.detail": "Minimizes Wasserstein distance between compact model representations and target domain distributions.",
+    "research.math.optimal_transport_alignment.title": "Optimal Transport Distribution Alignment",
+    "research.math.second_order_optimizers.detail": "Approximates curvature to converge in significantly fewer tokens and gradient steps.",
+    "research.math.second_order_optimizers.title": "Kronecker-Factored Second-Order Optimizers",
+    "research.math.small_model_chinchilla.detail": "Balances parameter count against high-grade curated creative tokens for maximum small-model capability.",
+    "research.math.small_model_chinchilla.title": "Compute-Optimal Small-Model Scaling",
+    "research.math.spectral_regularization.detail": "Bounds layer Lipschitz constants to prevent representation collapse on small clean datasets.",
+    "research.math.spectral_regularization.title": "Spectral Norm Weight Regularization",
+    "research.methods_prototype.detail": "Test a proposed research method on a small, reproducible benchmark.",
+    "research.ml.arch_refinement_1.detail": "Systematic width-to-depth ratio tuning for transformer and recurrent backbones.",
+    "research.ml.arch_refinement_1.title": "Architecture Scaling Refinement I",
+    "research.ml.contrastive_embeddings.detail": "Aligns text, table, and code representations in a shared metric space.",
+    "research.ml.contrastive_embeddings.title": "Contrastive Cross-Domain Embeddings",
+    "research.ml.hierarchical_planning.detail": "Splits multi-step workflows into verifiable subgoals with explicit state tracking.",
+    "research.ml.hierarchical_planning.title": "Hierarchical Task Decomposition",
+    "research.ml.long_horizon_memory.detail": "Maintains compressed key-value memory slots across extended document and workflow sessions.",
+    "research.ml.long_horizon_memory.title": "Episodic Long-Horizon Memory",
+    "research.ml.modular_adapters.detail": "Trains lightweight low-rank task adapters without modifying frozen base weights.",
+    "research.ml.modular_adapters.title": "Composable Parameter Adapters",
+    "research.ml.neuro_symbolic_constraints.detail": "Enforces formal schema and logic invariants during decoding.",
+    "research.ml.neuro_symbolic_constraints.title": "Neuro-Symbolic Grammar Constraints",
+    "research.ml.rapid_prototyping_poc.detail": "Builds an internal proof-of-concept sequence prototype with preliminary benchmark evidence before committing to full production training.",
+    "research.ml.rapid_prototyping_poc.title": "Rapid Sequence Proof-of-Concept",
+    "research.ml.retrieval_grounded_generation.detail": "Conditions model outputs on live indexed passages to reduce hallucination and shrink parameter requirements.",
+    "research.ml.retrieval_grounded_generation.title": "Retrieval-Grounded Synthesis",
+    "research.ml.sparse_mixture_routing.detail": "Conditional token routing activates only a subset of parameters per example.",
+    "research.ml.sparse_mixture_routing.title": "Sparse Mixture-of-Experts Routing",
+    "research.ml.state_space_recurrence.detail": "Linear-time recurrent state spaces provide an alternative to quadratic attention for long sequences.",
+    "research.ml.state_space_recurrence.title": "State-Space Sequence Recurrence",
+    "research.ml.unified_reasoning.detail": "Combines sequence representations, routing or attention, and rigorous verification into a general reasoning backbone.",
+    "research.ml.unified_reasoning.title": "Unified Structural Reasoning",
+    "research.ml.world_model_dynamics.detail": "Predicts environment state transitions in latent space for planning and simulation.",
+    "research.ml.world_model_dynamics.title": "Latent World-Model Dynamics",
     "research.models.adapter_maps.detail": "Separate local changes from the shared checkpoint.",
     "research.models.adapter_maps.title": "Reusable adapter layouts",
     "research.models.bounded_tools.detail": "Unlocks the retrieval compiler recipe.",
@@ -104555,12 +107325,25 @@
     "research.models.task_containment.title": "Isolated tool tasks",
     "research.models.verified_workflow.detail": "Require agreement between execution receipts and workflow evidence.",
     "research.models.verified_workflow.title": "Verified workflow controls",
+    "research.multimodal_systems.detail": "Connect image and text representations and test whether they agree.",
     "research.operations.cold_replica.detail": "Test restart from a frozen model and independent result.",
     "research.operations.cold_replica.title": "Cold replica procedures",
     "research.operations.fault_diagnostics.detail": "Identify the smallest replicable unit of service failure.",
     "research.operations.fault_diagnostics.title": "Fault isolation and repair",
     "research.operations.resilient_backplane.detail": "Unlocks the continuity and remote field racks.",
     "research.operations.resilient_backplane.title": "Resilient backplane design",
+    "research.product.edge_quantization_runtime.detail": "Compiles compact models to run locally on laptops, phones, and embedded controllers with zero cloud latency.",
+    "research.product.edge_quantization_runtime.title": "On-Device Edge Inference Runtime",
+    "research.product.hybrid_local_cloud_routing.detail": "Handles 80% of routine queries on fast compact models and escalates hard edge cases to frontier models.",
+    "research.product.hybrid_local_cloud_routing.title": "Confidence-Cascaded Local/Cloud Routing",
+    "research.product.interactive_copilot_ux.detail": "Integrates speculative prefill, inline diff previews, and instant user undo into professional workflows.",
+    "research.product.interactive_copilot_ux.title": "Low-Latency Streaming Workspace UX",
+    "research.product.privacy_preserving_federation.detail": "Trains and serves domain adapters across hospital and bank silos without centralizing raw customer records.",
+    "research.product.privacy_preserving_federation.title": "Differential Privacy & Federated Updates",
+    "research.product.sla_canary_observability.detail": "Detects distribution shift and rolls back degraded checkpoints before customer contracts breach.",
+    "research.product.sla_canary_observability.title": "Automated Drift & SLA Canary Telemetry",
+    "research.product.structured_json_schema_engine.detail": "Compiles customer JSON and table schemas into finite-state token masks with zero latency penalty.",
+    "research.product.structured_json_schema_engine.title": "Zero-Overhead Constrained Schema Engine",
     "research.public.benchmark_exchange.detail": "Unlocks the replication and publication evidence panel.",
     "research.public.benchmark_exchange.title": "Public benchmark exchange",
     "research.public.continuity_packages.detail": "Design a handover for local operators and the incoming board.",
@@ -104573,6 +107356,40 @@
     "research.public.replication_handbook.title": "External replication handbook",
     "research.public.translated_tables.detail": "Measure layout coverage across alternate public forms.",
     "research.public.translated_tables.title": "Translated public forms",
+    "research.refresh_measurement.detail": "Recheck measurements when data changes and compare them with the original baseline.",
+    "research.reproducible_tooling.detail": "Repeat the same experiment from a saved configuration and compare the result.",
+    "research.robotics.bimanual_manipulation.detail": "Plans collision-free dual-arm assembly and deformable object handling.",
+    "research.robotics.bimanual_manipulation.title": "Coordinated Bimanual Manipulation",
+    "research.robotics.embodied_poc.detail": "Demonstrates a working proof-of-concept manipulation policy on a calibrated test rig.",
+    "research.robotics.embodied_poc.title": "Benchtop Dexterous Assembly PoC",
+    "research.robotics.fleet_teleop_learning.detail": "Learns from brief human recovery demonstrations across deployed robot fleets.",
+    "research.robotics.fleet_teleop_learning.title": "Fleet Imitation from Shared Interventions",
+    "research.robotics.mobile_navigation_slam.detail": "Builds real-time 3D occupancy and affordance maps in dynamic warehouses and clinics.",
+    "research.robotics.mobile_navigation_slam.title": "Semantic Neural SLAM & Navigation",
+    "research.robotics.safety_control_barriers.detail": "Guarantees hard kinematic and force safety envelopes around human coworkers.",
+    "research.robotics.safety_control_barriers.title": "Control Barrier Function Safety Shields",
+    "research.robotics.sim_to_real_domain_rand.detail": "Trains robust control loops across randomized friction, mass, and sensor latency.",
+    "research.robotics.sim_to_real_domain_rand.title": "Physics Sim-to-Real Domain Randomization",
+    "research.robotics.tactile_force_feedback.detail": "Fuses compliant force-torque sensing with visual grasp planning.",
+    "research.robotics.tactile_force_feedback.title": "High-Frequency Tactile Force Control",
+    "research.robotics.visuomotor_policies.detail": "Maps multi-camera perception directly to low-latency joint torque trajectories.",
+    "research.robotics.visuomotor_policies.title": "End-to-End Visuomotor Control Policies",
+    "research.safety.adversarial_probes.detail": "Searches systematically for prompt, table, and workflow failure modes before deployment.",
+    "research.safety.adversarial_probes.title": "Automated Red-Team Adversarial Probes",
+    "research.safety.constitutional_rule_critique.detail": "Trains models to evaluate actions against explicit organizational charter and safety rules.",
+    "research.safety.constitutional_rule_critique.title": "Rule-Guided Self-Critique & Revision",
+    "research.safety.formal_tool_sandboxing.detail": "Proves strict side-effect isolation and rollback guarantees for autonomous agent actions.",
+    "research.safety.formal_tool_sandboxing.title": "Capability-Bounded Tool Sandboxing",
+    "research.safety.mechanistic_circuit_tracing.detail": "Decomposes internal activations into interpretable sparse features and causal circuits.",
+    "research.safety.mechanistic_circuit_tracing.title": "Mechanistic Feature & Circuit Tracing",
+    "research.safety.scalable_debate_oversight.detail": "Pairs competing verifier models to expose subtle flaws in complex code and policy drafts.",
+    "research.safety.scalable_debate_oversight.title": "Scalable Cross-Examination Oversight",
+    "research.safety.unlearning_and_redaction.detail": "Excises specific disputed or hazardous capabilities without degrading general task performance.",
+    "research.safety.unlearning_and_redaction.title": "Targeted Concept Unlearning & Redaction",
+    "research.safety.verification_refinement_1.detail": "Expanded property-based invariant fuzzing for deployed services.",
+    "research.safety.verification_refinement_1.title": "Verification Coverage Refinement I",
+    "research.sequence_modeling.detail": "Follow how earlier words affect predictions later in a passage.",
+    "research.workflow_verification.detail": "Trace a multi-step task and verify the result at each handoff.",
     "slice.demand.decrease": "Enterprise customers defer purchases\nA fictional business spending cycle lowers discretionary enterprise demand by 20% for 30 days. Existing signed task promises remain protected.",
     "slice.demand.expired": "Enterprise demand returns to its baseline\nThe temporary demand condition has expired. Base demand resumes; completed work and settled bills are unchanged.",
     "slice.demand.increase": "Enterprise customers bring purchases forward\nA fictional business spending cycle raises enterprise demand by 20% for 30 days. Customer budgets and existing signed commitments do not change.",
@@ -104626,37 +107443,12 @@
     "story.morrow_cooperative.followup": "Morrow’s lease term has ended\nThe original cooperative allocation reached the end of its term. Check where any long-running work is now placed and confirm your next capacity plan.",
     "story.morrow_cooperative.result": "The cooperative lease was accepted. The finite allocation and charges are recorded in Operations and Finance.",
     "story.morrow_cooperative.title": "A cooperative read your methods",
-    "story.open_bench.close.body": "The last reader takes her folder home\nThe Switchback closes its fortnight of public tests. The extra enterprise demand from the reading has ended.",
-    "story.open_bench.letter.body": "Nell is laying out the Saturday business page. Your lab has finished an independent evaluation. “Give me a test readers could repeat,” she says. “Or keep the notebook closed. I have a perfectly good crossword.”",
-    "story.open_bench.letter.open": "Show the test at a public reading",
-    "story.open_bench.letter.private": "Keep the evaluation in the lab",
-    "story.open_bench.letter.title": "Room for one figure",
-    "story.open_bench.private.body": "The crossword gets the space\nNell prints the crossword. Your evaluation stays in the lab. No public reading is booked.",
-    "story.open_bench.reading.body": "Readers bring their own test pages\nLocal buyers start comparing document services after the public reading. Enterprise demand rises 5% for 14 days. Any provider can compete for the work. Your company still has to earn each sale.",
-    "story.the_missing_zero.correction.body": "An extra copy of the same mistake\nBoth scans read 18. The depot calls after the edition goes out. Nell runs a correction to 108 and asks Gus to find a fresh set of forms for your lab.",
-    "story.the_missing_zero.declined.body": "Nell takes the night bus\nWithout a second reader, Nell takes the paper register to the depot herself. The next edition credits the ticket clerk. Your company took on no work.",
-    "story.the_missing_zero.erratum.body": "Night route figures corrected\nThe Switchback counted two copies of the same scan as independent sources. The depot register puts ridership at 108. The correction names both sources.",
-    "story.the_missing_zero.filed.body": "Civic forms on the workbench\nThe Civic Forms Exchange collection is available in Lab → Train. A baseline document model can use it. Inspect the sample mix before committing compute. The archive supplied the file at no charge.",
-    "story.the_missing_zero.letter.body": "Nell lays two printouts on your desk. The archive scan says “Night bus riders: 108.” The text she plans to print says 18. “I can fit either number in the headline,” she says. “Which one can I defend by five?” Gus has the paper ticket rolls.",
-    "story.the_missing_zero.letter.method": "Trace the error in the scan",
-    "story.the_missing_zero.letter.pass": "Send Nell back to the archive",
-    "story.the_missing_zero.letter.tickets": "Ask Gus for the ticket rolls",
-    "story.the_missing_zero.letter.title": "The missing zero",
-    "story.the_missing_zero.license.body": "“Here. Spill coffee on these instead.” Gus has brought the Civic Forms Exchange seed collection. The license permits commercial training and open-weight redistribution with attribution. The file is free. Nell wants to know whether you will put it to work.",
-    "story.the_missing_zero.license.return": "Leave the file at the archive",
-    "story.the_missing_zero.license.take": "Accept the free forms for the Lab",
-    "story.the_missing_zero.license.title": "Gus brings the practice file",
-    "story.the_missing_zero.returned.body": "Gus keeps the file\nThe archive copy stays on Gus’s shelf. You can still obtain the ordinary license from the Lab if you need it later.",
-    "story.the_missing_zero.rolls.body": "Gus brings three rolls marked 37, 36 and 35. “Count the punches,” he says. “The machine missed a zero. A person missed it too.” Nell has room for one line about how you checked.",
-    "story.the_missing_zero.rolls.hold": "Hold the figure until a second reader checks",
-    "story.the_missing_zero.rolls.source": "Print 108 and show the three counts",
-    "story.the_missing_zero.rolls.title": "Three rolls and a stapler",
-    "story.the_missing_zero.scan.blind": "Ask for a separately transcribed page",
-    "story.the_missing_zero.scan.body": "Under the fold, the middle digit is a pale ring. Gus slides over a second copy with the same crease. Nell asks whether testing on that copy would settle the question.",
-    "story.the_missing_zero.scan.copy": "Use the second scan as confirmation",
-    "story.the_missing_zero.scan.title": "A crease through the type",
-    "story.the_missing_zero.second.body": "Gus calls the depot\nA clerk reads out 108 from the original register. Nell holds the first edition and gets the figure into the second. Gus offers to bring the practice forms in three days.",
-    "story.the_missing_zero.verified.body": "The count goes to press\nNell pencils “37 + 36 + 35 = 108” under the masthead. Gus asks if you want a copy of the forms that caused the trouble. He will bring the license in three days.",
+    "story.provenance_scrutiny_audit.audit": "Commission an independent lineage audit and publish a provenance disclosure ($150)",
+    "story.provenance_scrutiny_audit.body": "Reporters and rights holders traced third-party scraped or shadow-archive material into your training corpus lineage. Because dataset processing and filtering do not erase underlying provenance history, enterprise customers are asking how your lab will respond.",
+    "story.provenance_scrutiny_audit.clean": "Fund a clean-room transition reserve toward licensed and in-house creative corpora ($250)",
+    "story.provenance_scrutiny_audit.defend": "Defend the training lineage under fair-use doctrine without altering current datasets",
+    "story.provenance_scrutiny_audit.result": "Your dataset provenance response has been recorded in the company journal.",
+    "story.provenance_scrutiny_audit.title": "Authors Guild & Trade Press Question Dataset Provenance",
     "story.willow_council.accept": "Schedule an evidence review",
     "story.willow_council.body": "The company has fulfilled a public commitment. Council secretary Iona Pell wants to see how the result was counted before the next proposal. Set a reminder to review the original promise and the independent report in one month?",
     "story.willow_council.decline": "Leave the record as filed",

@@ -24,7 +24,7 @@ class FoundingController final : public QObject {
     Q_PROPERTY(QVariantMap familyHome READ familyHome NOTIFY changed)
     Q_PROPERTY(QVariantList charters READ charters CONSTANT)
     Q_PROPERTY(QVariantMap startupLoan READ startupLoan CONSTANT)
-    Q_PROPERTY(QString appointmentName READ appointmentName CONSTANT)
+    Q_PROPERTY(QVariantMap employerTerms READ employerTerms NOTIFY changed)
     Q_PROPERTY(QString preview READ preview NOTIFY changed)
     Q_PROPERTY(QString error READ error NOTIFY changed)
     Q_PROPERTY(QString portrait READ portrait NOTIFY changed)
@@ -32,8 +32,7 @@ class FoundingController final : public QObject {
     Q_PROPERTY(QVariantList appearanceParts READ appearanceParts CONSTANT)
 public:
     FoundingController(const content::Collection&,std::filesystem::path,QObject* parent=nullptr);
-    QString appointmentName() const;
-    Q_INVOKABLE bool prepareAppointment();
+    QVariantMap employerTerms() const;
     bool available() const {return catalog_.has_value();}
     QVariantMap form() const {return form_;}
     QVariantList chapters() const;

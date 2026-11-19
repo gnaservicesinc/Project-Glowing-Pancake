@@ -312,6 +312,7 @@ set_tests_properties(runtime.world-life PROPERTIES TIMEOUT 30)
 
 add_executable(pgp-workplace-test workplace_test.cpp)
 target_link_libraries(pgp-workplace-test PRIVATE pgp::session)
+target_include_directories(pgp-workplace-test SYSTEM PRIVATE "${PROJECT_SOURCE_DIR}/third_party/json/include")
 target_compile_definitions(pgp-workplace-test PRIVATE PGP_WORKPLACE_SOURCE="${PROJECT_SOURCE_DIR}/data/drafts/workplaces.json")
 pgp_project_target(pgp-workplace-test)
 add_test(NAME runtime.workplace COMMAND pgp-workplace-test)

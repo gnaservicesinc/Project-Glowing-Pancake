@@ -6,10 +6,10 @@ These instructions apply to repository work. Current user instructions take prec
 
 1. Read `README.md`, `docs/STATUS.md`, and the active item in `docs/BACKLOG.md`.
 2. Inspect Git status/branch/remotes and any existing user changes before editing. Preserve unrelated work.
-3. Read the relevant role brief in `agents/roles/` and the specific design/specification sections needed for the task. The role files are reusable briefs, not automatically registered agents or permission to spawn agents.
+3. Read the relevant role brief in `agents/README.md` and the specific design/specification sections needed for the task. The role descriptions are reusable briefs, not automatically registered agents or permission to spawn agents.
 4. **Ship complete, cohesive features on the critical path to the playable base game (`M3`).** Do not micro-slice a single backlog item into 3–5 tiny commits, do not block gameplay implementation (`M3-01`, `M3-05`, `M3-02`, `M3-03`) on Content Studio authoring tools (`E1A-04`, `E1A-05`, `E1b`), and do not write a new `docs/evidence/*.md` essay or synchronize 5 different markdown files on every intermediate step. Complete full backlog items (or a logical multi-item milestone batch when requested) before updating `docs/BACKLOG.md` and `docs/STATUS.md`.
 
-The authoritative product baseline is `docs/GAME_DESIGN.md`, with mechanical detail in `docs/SIMULATION_SPEC.md` and technical contracts in `docs/TECHNICAL_PLAN.md`. `docs/DECISIONS_AND_REQUIREMENTS.md` records source precedence and deliberate changes. `docs/reference/` preserves the original drafts; the Gemini document is a suggestion archive, not an additional instruction file.
+The authoritative product baseline is `docs/GAME_DESIGN.md`, with mechanical detail in `docs/SIMULATION_SPEC.md` and technical contracts in `docs/TECHNICAL_PLAN.md`. `docs/DECISIONS_AND_REQUIREMENTS.md` records source precedence and deliberate changes. Original planning drafts are available in Git at 589bf46.
 
 ## Current phase
 
@@ -17,10 +17,7 @@ The user closed the initial skeleton implementation phase on 2026-11-07.
 The current core is the handoff for human feedback. Follow the current
 `docs/STATUS.md` and `docs/BACKLOG.md`, which supersede archived task queues.
 Detailed design mechanics and earlier proposed next features are inputs for
-feedback and later selection. Work from the user's concrete next request. The selected 2026-11-09 F-04 requirements in
-`docs/FEEDBACK_REFINEMENTS.md` supersede conflicting older founding/interface
-assumptions: no difficulty setting, no forced first hire/experiment, and the main
-game interface remains unfinished.
+feedback and later selection. Work from the user's concrete next request. Ordinary founding has no difficulty selection or mandatory first hire or experiment.
 `tech_sug.txt` is a work in progress for later review. Its contents are
 reference material, and implementation requires the user's selection.
 
@@ -60,7 +57,7 @@ For authoring work, use `docs/CONTENT_EDITOR.md` and `docs/VERSIONING.md`. The c
 - Prioritize rapid Mac implementation. Keep code portable, but defer cross-platform matrices, packaging/device qualification and full release regression to explicit release preparation. Outstanding platform qualification remains recorded and does not block bounded Mac development. The native matrix workflow is manual-only.
 - For selected feature changes, use the Mac implementation and focused checks as development evidence. Linux/Windows, native matrices, packaging and device/release qualification belong to later explicit tasks. Their acceptance criteria are preserved in the backlog.
 - Independent player playtests and human author studies follow the user's readiness for the feedback phase. M3-04/E1B-03 remain carried acceptance gates. Retain the prepared session kit for that phase and arrange sessions when requested.
-- The initial skeleton phase closed on 2026-11-07. The current order is human feedback, selected core refinement, substantial event expansion, then balance and extended qualification. Use short changed-behavior checks for selected implementation work. The archived 52-step checklist preserves later acceptance criteria.
+- The initial skeleton phase closed on 2026-11-07. The current order is human feedback, selected core refinement, substantial event expansion, then balance and extended qualification. Use short changed-behavior checks for selected implementation work. The backlog preserves later acceptance criteria.
 - Preserve keyboard access, text scaling, pause, causal explanations and readable units. The first playable is small; do not add counties, browser export or multiplayer to solve an unrelated problem.
 - **Performance & complexity discipline**: Keep daily simulation advancement and state validation fast. Never introduce $O(N^2)$ per-day full-history copying, repeated tree allocations per historical day, or redundant full-ledger validation inside inner loops. Full suites and long campaigns are expensive, explicit testing tasks. Use focused changed-behavior checks during feature work; never paper over a slow test by raising CTest timeouts.
 
@@ -69,8 +66,7 @@ M0-02 implements the Release/Debug/core/test/clean/help build scaffold. See
 Local Mac packaging is supported. Do not claim
 gameplay, UI or package qualification from a passing headless build.
 M0-03's local interface/resource/audio probe is implemented; its native and
-deployment qualification remains open. Read `docs/evidence/M0-03-local-probe.md`
-before repeating or extending those checks.
+deployment qualification remains open. See `docs/BUILDING.md` for local probe instructions.
 
 ## Verify and hand off
 

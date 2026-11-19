@@ -6,6 +6,7 @@
 #include <QKeyEvent>
 #include <QQuickItem>
 #include <QQuickWindow>
+#include <QMouseEvent>
 #include <QTimer>
 #include <QVector3D>
 #include <QtTest/QTest>
@@ -15,6 +16,11 @@
 
 namespace {
 QQuickItem* find(QQuickItem* root,const char* name) {if(root->objectName()==QLatin1String{name}) return root;for(auto* child:root->childItems()) if(auto* result=find(child,name)) return result;return nullptr;}
+void movePointer(QQuickWindow& window, QPointF point, Qt::MouseButtons buttons = Qt::NoButton) {
+    QMouseEvent move{QEvent::MouseMove,point,point,window.mapToGlobal(point.toPoint()),
+                     Qt::NoButton,buttons,Qt::NoModifier};
+    QCoreApplication::sendEvent(&window,&move);
+}
 bool key(QQuickWindow& window,QQuickItem* item,Qt::Key code=Qt::Key_Space) {if(!item || !item->isVisible() || !item->isEnabled()) return false;item->forceActiveFocus(Qt::TabFocusReason);QTest::keyClick(&window,code);return true;}
 }
 void schedule_headquarters_smoke(QQuickWindow& window,pgp::bridge::CampaignController& campaign,pgp::persistence::LocalPaths paths,QString screenshot) {
@@ -61,7 +67,18 @@ void schedule_headquarters_smoke(QQuickWindow& window,pgp::bridge::CampaignContr
             if(!capture(".empty-garage") || !press("hqFurnishButton") || !press("hqOpenShop")) {fail("Garage and supplier entry");return;}
             ++state->phase;break;
         case 2:
-            if(!press("hqBuy_desk")) {fail("Desk supplier offer");return;}++state->phase;break;
+            if(!press("hqTab_branches")) {fail("Open branch design in the founder headquarters");return;}
+            state->phase=100;break;
+        case 100: {
+            const auto* quote=item("blueprintDesignPreview");
+            if(!quote || !quote->isVisible() || quote->property("text").toString().isEmpty() ||
+               !press("blueprintWaterCooling") || !capture(".branch-design") || !press("hqTab_equipment")) {
+                fail("Branch design preview and cooling controls");return;
+            }
+            state->phase=101;break;
+        }
+        case 101:
+            if(!press("hqBuy_desk")) {fail("Desk supplier offer");return;}state->phase=3;break;
         case 3:
             if(!press("hqConfirmPurchase")) {fail("Desk signing review");return;}++state->phase;break;
         case 4:
@@ -110,7 +127,7 @@ void schedule_headquarters_smoke(QQuickWindow& window,pgp::bridge::CampaignContr
                     validPoint=view->mapToScene({left+cell*1.2,top+cell*0.2});invalidPoint=view->mapToScene({left+cell*(pgp::core::current_headquarters(s).width-0.8),top+cell*(pgp::core::current_headquarters(s).depth-0.8)});
                 }
                 if(state->previewPhase==1) {
-                    QTest::mouseMove(&window,validPoint.toPoint(),20);++state->previewPhase;return;
+                    movePointer(window,validPoint);++state->previewPhase;return;
                 }
                 if(state->previewPhase==2) {
                     if(!tools->property("placing").toBool() || !tools->property("preview").toMap().value("valid").toBool() || !capture(".placement-valid")) {const auto p=tools->property("preview").toMap();std::cerr<<"Preview: "<<p.value("x").toInt()<<","<<p.value("y").toInt()<<" target="<<p.value("mount").toInt()<<" reason="<<p.value("reason").toString().toStdString()<<"\n";fail("Valid translucent placement preview");return;}
@@ -121,7 +138,7 @@ void schedule_headquarters_smoke(QQuickWindow& window,pgp::bridge::CampaignContr
                     // the active offscreen run covers the R shortcut.
                     if(window.isActive()) QTest::keyClick(&window,Qt::Key_R);
                     else if(!press("hqRotatePreview")) {fail("Visible placement rotation control");return;}
-                    QTest::mouseMove(&window,invalidPoint.toPoint(),20);++state->previewPhase;return;
+                    movePointer(window,invalidPoint);++state->previewPhase;return;
                 }
                 if(state->previewPhase==3) {
                     if(!capture(".placement-blocked") || !tools->property("rotated").toBool() || tools->property("preview").toMap().value("valid").toBool()) {
@@ -135,7 +152,7 @@ void schedule_headquarters_smoke(QQuickWindow& window,pgp::bridge::CampaignContr
                 if(tools->property("placing").toBool() || headquarters->items[0].x!=0 || headquarters->items[0].rotated) {fail("Invalid placement and cancel must preserve the real object");return;}
                 ++state->previewPhase;
             }
-            QTest::mousePress(&window,Qt::LeftButton,Qt::NoModifier,start.toPoint());QTest::mouseMove(&window,end.toPoint(),20);QTest::mouseRelease(&window,Qt::LeftButton,Qt::NoModifier,end.toPoint());
+            QTest::mousePress(&window,Qt::LeftButton,Qt::NoModifier,start.toPoint());movePointer(window,end,Qt::LeftButton);QTest::mouseRelease(&window,Qt::LeftButton,Qt::NoModifier,end.toPoint());
             ++state->phase;break;
         }
         case 11:

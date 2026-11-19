@@ -107,6 +107,8 @@ std::map<std::string, EmployeeMood> workplace_moods(const SimulationState& state
         const auto role_weight = static_cast<int>(mood.role);
         if(person.preferred_mission!="commercial")
             report.nonprofit_goodwill=nonprofit.goodwill<0 || person.preferred_mission==committed_company_mission(state)?nonprofit.goodwill:0;
+        if(const auto* scandal=mission_scandal(state); scandal && person.preferred_mission==scandal->previous_mission)
+            report.nonprofit_goodwill+=scandal->employee_morale_hit;
         report.role = person.preferred_mission == committed_company_mission(state) ? role_weight / 2 : -role_weight / 2;
         if (manager && manager->person == person.id) {
             report.role += person.role == "Software engineer" ? role_weight / 2 : -role_weight / 2;

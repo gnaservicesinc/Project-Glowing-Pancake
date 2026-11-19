@@ -229,6 +229,7 @@ FocusScope {
                     Layout.fillWidth: true
                     Layout.minimumWidth: 0
                     visible: status === Loader.Ready
+                    Connections { target: optionalMenu.item; function onPlaytestStarted() { menu.resumeRequested() } }
                     source: optionalMenuSource
                     Binding {
                         target: optionalMenu.item

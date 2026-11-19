@@ -161,7 +161,7 @@ Rectangle {
                     Heading {text:qsTr("Valley Directory")}
                     Copy {text:qsTr("◉  directory.local / starting-out")}
                     Repeater {
-                        model:[{id:"legal",name:"Cedar & Quill · business law",detail:qsTr("Found a corporation or nonprofit. Review registration costs, ownership and your investment.")},{id:"labs",name:"Alder Research · careers",detail:qsTr("Apply to lead an existing laboratory. Your biography determines whether the board will consider you.")},{id:"investors",name:"Founders’ Exchange · investors",detail:qsTr("Meet potential partners, compare funding and keep track of who wants a say.")},{id:"bank",name:"Redwood Mutual · personal banking",detail:qsTr("Inspect savings and choose the money you can afford to put at risk.")}]
+                        model:[{id:"legal",name:"Cedar & Quill · business law",detail:qsTr("Found a corporation or nonprofit. Review registration costs, ownership and your investment.")},{id:"labs",name:qsTr("Executive Careers · existing labs"),detail:qsTr("Apply to lead an existing laboratory under its current mission, bylaws, and board. Your biography determines whether the board will consider you.")},{id:"investors",name:"Founders’ Exchange · investors",detail:qsTr("Meet potential partners, compare funding and keep track of who wants a say.")},{id:"bank",name:"Redwood Mutual · personal banking",detail:qsTr("Inspect savings and choose the money you can afford to put at risk.")}]
                         Rectangle {
                             required property var modelData
                             Layout.fillWidth:true;implicitHeight:service.implicitHeight+24;radius:12;color:"#2a3e52";border.color:"#63788c"
@@ -218,14 +218,39 @@ Rectangle {
                 }
                 ColumnLayout {
                     visible:home.app==="formation" && !home.signing;Layout.fillWidth:true
-                    Heading {text:home.story.form.route==="hired_ceo"?qsTr("Alder Research · Appointment offer"):qsTr("Cedar & Quill · Formation workspace")}
-                    Copy {text:home.story.form.route==="hired_ceo"?qsTr("The board offers an existing team, office and a disclosed minority stake. The company owns its cash and equipment; your personal savings remain yours."):qsTr("Name the institution, choose its purpose, and decide what you will personally invest. Outside funding only enters the company when you accept an offer below.")}
-                    GameField {objectName:"homeCompanyName";visible:home.story.form.route!=="hired_ceo";Layout.fillWidth:true;text:home.story.form.company;textSize:home.typeSize;Accessible.name:qsTr("Company name");onEditingFinished:home.story.answerText("company",text)}
-                    GameSelect {objectName:"homeMission";Layout.fillWidth:true;textSize:home.typeSize;textRole:"name";valueRole:"id";enabled:!home.story.form.partner;model:[{id:"survival",name:qsTr("Build a lab that lasts")},{id:"utopia",name:qsTr("Make lives better")},{id:"monopoly",name:qsTr("Build the leading platform")},{id:"domination",name:qsTr("Steer the AI age")},{id:"asi",name:qsTr("Demonstrate ASI first")}];currentIndex:Math.max(0,model.findIndex(row=>row.id===home.story.form.mission));onActivated:home.story.setField("mission",currentValue);Accessible.name:qsTr("Mission")}
-                    Copy {visible:!!home.story.form.partner;text:qsTr("Your cofounder’s agreement sets the opening mission.")}
-                    Copy {visible:home.story.form.route!=="hired_ceo";text:qsTr("How will you fund the company?")}
+                    readonly property bool isAppointment: home.story.form.route==="hired_ceo"
+                    readonly property var terms: home.story.employerTerms || ({})
+                    Heading {text:parent.isAppointment?qsTr("%1 · Appointment Letter").arg(parent.terms.companyName || home.story.form.company):qsTr("Cedar & Quill · Formation workspace")}
+                    Copy {text:parent.isAppointment?qsTr("You are reviewing an employment appointment to lead an existing company. Its mission, legal form, bylaws, owners, and board seats are already in place and cannot be rewritten at hiring."):qsTr("Name the institution, choose its purpose, and decide what you will personally invest. Outside funding only enters the company when you accept an offer below.")}
+                    Rectangle {
+                        objectName: "appointmentLetterCard"
+                        visible: parent.isAppointment
+                        Layout.fillWidth: true
+                        implicitHeight: letterBody.implicitHeight + 28
+                        radius: 12
+                        color: "#22384a"
+                        border.color: "#80a398"
+                        ColumnLayout {
+                            id: letterBody
+                            anchors.left: parent.left; anchors.right: parent.right; anchors.top: parent.top; anchors.margins: 14
+                            spacing: 8
+                            Copy { font.bold: true; color: "#f1e3bc"; text: qsTr("Company & Legal Form: %1 · %2").arg(parent.parent.parent.terms.companyName || "").arg(parent.parent.parent.terms.legalForm || "") }
+                            Copy { text: qsTr("Inherited Purpose (%1): %2").arg(parent.parent.parent.terms.mission || "").arg(parent.parent.parent.terms.purpose || "") }
+                            Copy { text: qsTr("Bylaws / Charter: %1 — %2").arg(parent.parent.parent.terms.bylawsName || "").arg(parent.parent.parent.terms.bylawsDetail || "") }
+                            Copy { text: qsTr("Board & Owners: %1").arg(parent.parent.parent.terms.boardSummary || "") }
+                            Copy { color: "#f1c492"; text: qsTr("Delegated Authority: %1").arg(parent.parent.parent.terms.authoritySummary || "") }
+                            Copy { text: qsTr("Compensation & Equity: %1 · %2").arg(parent.parent.parent.terms.salaryText || "").arg(parent.parent.parent.terms.equityText || "") }
+                            Copy { text: qsTr("Company Resources: Cash %1 · Inherited team: %2 · Payroll %3").arg(parent.parent.parent.terms.companyCashText || "").arg(parent.parent.parent.terms.inheritedStaff || 0).arg(parent.parent.parent.terms.monthlyPayrollText || "") }
+                            Copy { text: qsTr("Facilities: %1").arg(parent.parent.parent.terms.facilities || "") }
+                            Copy { text: qsTr("Current Commitments: %1").arg(parent.parent.parent.terms.commitments || "") }
+                        }
+                    }
+                    GameField {objectName:"homeCompanyName";visible:!parent.isAppointment;Layout.fillWidth:true;text:home.story.form.company;textSize:home.typeSize;Accessible.name:qsTr("Company name");onEditingFinished:home.story.answerText("company",text)}
+                    GameSelect {objectName:"homeMission";visible:!parent.isAppointment;Layout.fillWidth:true;textSize:home.typeSize;textRole:"name";valueRole:"id";enabled:!home.story.form.partner && !parent.isAppointment;model:[{id:"survival",name:qsTr("Build a lab that lasts")},{id:"utopia",name:qsTr("Make lives better")},{id:"monopoly",name:qsTr("Build the leading platform")},{id:"domination",name:qsTr("Steer the AI age")},{id:"asi",name:qsTr("Demonstrate ASI first")}];currentIndex:Math.max(0,model.findIndex(row=>row.id===home.story.form.mission));onActivated:home.story.setField("mission",currentValue);Accessible.name:qsTr("Mission")}
+                    Copy {visible:!!home.story.form.partner && !parent.isAppointment;text:qsTr("Your cofounder’s agreement sets the opening mission.")}
+                    Copy {visible:!parent.isAppointment;text:qsTr("How will you fund the company?")}
                     GameSelect {
-                        id:fundingRoute;objectName:"homeFundingRoute";visible:home.story.form.route!=="hired_ceo";Layout.fillWidth:true;textSize:home.typeSize;textRole:"name";valueRole:"id"
+                        id:fundingRoute;objectName:"homeFundingRoute";visible:!parent.isAppointment;Layout.fillWidth:true;textSize:home.typeSize;textRole:"name";valueRole:"id"
                         model:home.story.routes.filter(row=>row.id!=="hired_ceo" && row.available)
                         currentIndex:Math.max(0,model.findIndex(row=>row.id===home.story.form.route))
                         onActivated:home.story.setField("route",currentValue);Accessible.name:qsTr("Company funding route")

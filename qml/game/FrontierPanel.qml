@@ -67,7 +67,7 @@ ColumnLayout {
             onRestored: value => choices.selected = value.filter(id => choices.options.some(option => option.id === id))
             onReset: choices.selected = []
         }
-        onOptionsChanged: Qt.callLater(checkedDraft.restoreDraft)
+        onOptionsChanged: checkedDraft?.scheduleRestore()
         Layout.fillWidth: true
         Repeater {
             model: choices.options

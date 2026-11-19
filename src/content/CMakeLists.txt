@@ -4,3 +4,7 @@ target_include_directories(pgp_content PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/inclu
 target_include_directories(pgp_content SYSTEM PRIVATE "${PROJECT_SOURCE_DIR}/third_party/json/include")
 target_link_libraries(pgp_content PUBLIC pgp::core)
 pgp_project_target(pgp_content)
+
+if(PGP_DISTRIBUTION)
+    target_compile_definitions(pgp_content PRIVATE PGP_DISTRIBUTION=1)
+endif()

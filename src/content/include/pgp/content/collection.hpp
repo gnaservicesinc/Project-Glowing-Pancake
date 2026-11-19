@@ -227,6 +227,10 @@ struct ResearchDefinition {
     std::uint32_t repeat_limit = 1;
     std::optional<core::ResearchSetback> setback{};
     std::optional<core::ResearchInnovation> innovation{};
+    std::vector<std::vector<std::string>> any_of_groups{};
+    core::ResearchDataRequirement data_requirement{};
+    core::ResearchPocSpec poc_spec{};
+    core::ResearchTechnicalEffect technical_effect{};
 };
 struct DealDefinition { pgp::core::Cents minimum_payment; pgp::core::Days minimum_duration; };
 using DefinitionData = std::variant<ScenarioDefinition, ResearchDefinition, FlowDefinition, DealDefinition,

@@ -3,6 +3,39 @@
 
 #include <algorithm>
 
+namespace pgp::runtime {
+IndustryActivity industry_activity(const WorldState& world) {
+    IndustryActivity activity;
+    const auto add = [&](const core::SimulationState& company, bool player) {
+        if (!world.playtest_custom) {
+            if (company.lab) activity.publications += company.lab->publications.size();
+            if (company.deployments) activity.deployments += company.deployments->records.size();
+            return;
+        }
+        // A later direct start may have years of simulated prehistory. Count changes
+        // from the chosen starting conditions, including player actions on launch day.
+        if (company.lab) activity.publications += std::ranges::count_if(company.lab->publications,
+            [&](const auto& publication) { return publication.day >= world.scope_created; });
+        if (company.deployments) activity.deployments += std::ranges::count_if(company.deployments->records,
+            [&](const auto& release) {
+                const bool prepared = player && release.deployed_on == world.scope_created && release.evidence_id == "playtest_eval";
+                return release.deployed_on >= world.scope_created && !prepared;
+            });
+    };
+    add(world.simulation, true);
+    if (world.competition) {
+        for (const auto& rival : world.competition->companies) {
+            if (!rival.planning || rival.planning->entered_on) add(rival.simulation, false);
+        }
+    }
+    const int observed = activity.publications >= 6 || activity.deployments >= 4 ? 3 :
+                         activity.publications >= 3 || activity.deployments >= 2 ? 2 :
+                         activity.publications || activity.deployments ? 1 : 0;
+    activity.stage = std::max(observed, world.starting_industry_stage);
+    return activity;
+}
+}
+
 namespace pgp::runtime::detail {
 namespace {
 template<class State, class Member, class Predicate>
@@ -110,6 +143,31 @@ content::Scalar campaign_fact(const WorldState& world, std::string_view id) {
         });
     if (id == "company.published_research") return lab ? static_cast<std::int64_t>(lab->publications.size()) : 0;
     if (id == "company.adopted_research") return lab ? static_cast<std::int64_t>(lab->insights.size()) : 0;
+    if (id == "company.uses_controversial_data") {
+        if (!lab) return false;
+        for (const auto& lic : lab->licenses)
+            if (dataset_lineage_has_controversy(*lab, lic.offer_id)) return true;
+        for (const auto& acq : lab->acquisitions)
+            if (acq.output && acq.output->third_party_controversy_risk) return true;
+        for (const auto& m : lab->models)
+            if (model_lineage_has_controversy(*lab, m.id)) return true;
+        return false;
+    }
+    if (id == "company.controversial_model_deployed") {
+        if (!lab || !s.deployments || !s.market) return false;
+        for (const auto& rec : s.deployments->records) {
+            const auto prod = std::ranges::find(s.market->products, rec.service_id, &MarketProduct::id);
+            if (prod != s.market->products.end() && prod->available && prod->capacity_project_id == rec.project_id) {
+                if (model_lineage_has_controversy(*lab, rec.model_id)) return true;
+            }
+        }
+        return false;
+    }
+    if (id == "company.has_clean_creative_data") {
+        if (!lab) return false;
+        return std::ranges::any_of(lab->creative_jobs, [](const auto& j) { return j.output.has_value(); });
+    }
+    if (id == "world.industry_stage_level") return static_cast<std::int64_t>(industry_activity(world).stage);
 
     const auto& frontier = s.frontier;
     if (id == "company.frontier_systems") return frontier ? static_cast<std::int64_t>(frontier->systems.size()) : 0;

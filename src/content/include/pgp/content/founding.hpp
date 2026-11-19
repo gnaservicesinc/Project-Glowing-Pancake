@@ -61,6 +61,23 @@ struct FoundingPartner {
     std::uint32_t shares_bp=0, seats=1, maximum_dilution_bp=0;
     auto operator<=>(const FoundingPartner&) const = default;
 };
+struct FoundingEmployer {
+    std::string id="northstar";
+    std::string name="Northstar Applied Labs";
+    std::string recruiter_name="Leena Rao";
+    std::string legal_form="corporation";
+    std::string mission="research";
+    std::string objective="survival";
+    std::string charter="charter.independent_lab";
+    std::string owners_label="Northstar Founding Investors";
+    std::string delegated_authority="Ordinary operating decisions within budget (hiring, research, suppliers, product releases). Fundamental changes to company purpose, bylaws, ownership or borrowing require controlling ownership and board voting control.";
+    std::string facilities_summary="Shared valley office with company-owned desks and desktop computers.";
+    std::string current_commitments="Inherited research staff on monthly payroll, office lease, and the Independent Laboratory employee learning program.";
+    std::uint32_t owner_seats=2, ceo_seats=1, independent_seats=1;
+    std::int64_t owner_cash_floor_cents=20000000;
+    std::uint32_t owner_maximum_dilution_bp=1000;
+    auto operator<=>(const FoundingEmployer&) const = default;
+};
 struct FoundingSelection {
     std::string mode="campaign", first_name="Alex", last_name="Vale", gender="nonbinary";
     std::string sociability="introverted", activity="sedentary", disposition="deliberate";
@@ -89,8 +106,10 @@ struct FoundingCatalog {
     std::uint32_t queer_community_buzz=0, queer_community_prestige=0;
     std::map<std::string,std::vector<std::string>> skill_rewards,trait_rewards;
     std::optional<FoundingSelection> appointment{};
+    std::optional<FoundingEmployer> employer{};
     auto operator<=>(const FoundingCatalog&) const = default;
 };
+[[nodiscard]] FoundingEmployer effective_employer(const FoundingCatalog&);
 inline constexpr std::array<std::string_view,8> founder_orientations{
     "straight","gay_or_lesbian","bisexual","pansexual","asexual","queer","questioning","demisexual"};
 [[nodiscard]] std::vector<const FormativeScene*> formative_scenes(const FoundingCatalog&,const FoundingSelection&);

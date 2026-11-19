@@ -24,6 +24,15 @@ Rectangle {
     readonly property var traffic: arranging && headquarters.trafficEnabled ? campaign.world.hqTraffic() : ({})
     readonly property var coordinates: arranging && item && !placing && !item.deskDevice
         ? campaign.world.hqPlacement(item.id, Number(column.text)-1, Number(row.text)-1, rotated, 0) : ({})
+    readonly property var infrastructure: headquarters.infrastructurePuzzle || ({})
+    readonly property var proposal: (placing ? preview : coordinates).infrastructurePuzzle || ({})
+    function infrastructureReview() {
+        if (infrastructure.score === undefined) return ""
+        const next = proposal.score === undefined ? infrastructure : proposal
+        return qsTr("Infrastructure score %1 → %2 · %3 active racks\nPower margin %4 · heat crowding %5 · redundancy %6")
+            .arg(infrastructure.score).arg(next.score).arg(next.activeRacks)
+            .arg(next.powerMargin).arg(next.thermalCrowding).arg(next.redundancyBonus)
+    }
     readonly property var deskWalk: ((placing ? preview.traffic : coordinates.traffic)?.desks || traffic.desks || [])
         .find(desk => desk.id === selectedItem) || ({})
     readonly property var changedDesks: (coordinates.traffic?.desks || []).filter(desk => {
@@ -117,6 +126,7 @@ Rectangle {
                     }
                 }
             }
+            Copy { objectName:"hqInfrastructureReview"; text:tools.infrastructureReview(); visible:text.length>0 }
             GameSelect {
                 objectName:"hqOwnedItemPicker";Layout.fillWidth:true;textSize:tools.textSize
                 model:[{id:0,name:qsTr("Choose owned equipment")}].concat(tools.headquarters.items || [])

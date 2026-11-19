@@ -1131,16 +1131,77 @@ ScenarioDefinition scenario(const Json& value, const std::string& path) {
     return result;
 }
 ResearchDefinition research(const Json& value, const std::string& path) {
-    fields(value, path, {"id", "kind", "revision", "prerequisites", "cash_cents", "staff_days", "work_milli_CU", "repeat_limit", "setback", "innovation"},
+    fields(value, path, {"id", "kind", "revision", "prerequisites", "cash_cents", "staff_days", "work_milli_CU", "repeat_limit", "setback", "innovation", "data_requirement", "poc_spec", "technical_effect"},
            {"id", "kind", "revision", "prerequisites", "cash_cents", "staff_days", "work_milli_CU"});
     const auto& prerequisites = value.at("prerequisites");
-    fields(prerequisites, child(path, "prerequisites"), {"all_of", "any_of"}, {"all_of", "any_of"});
+    fields(prerequisites, child(path, "prerequisites"), {"all_of", "any_of", "any_of_groups"}, {"all_of", "any_of"});
     ResearchDefinition result{identifiers(prerequisites.at("all_of"), child(path, "prerequisites/all_of")),
             identifiers(prerequisites.at("any_of"), child(path, "prerequisites/any_of")),
             pgp::core::Cents{integer(value.at("cash_cents"), child(path, "cash_cents"))},
             pgp::core::Days{integer(value.at("staff_days"), child(path, "staff_days"))},
             pgp::core::MilliCU{integer(value.at("work_milli_CU"), child(path, "work_milli_CU"))},
             value.contains("repeat_limit") ? positive(value.at("repeat_limit"),child(path,"repeat_limit"),12) : 1};
+    if (prerequisites.contains("any_of_groups")) {
+        const auto& groups = prerequisites.at("any_of_groups");
+        array(groups, child(path, "prerequisites/any_of_groups"), 8);
+        for (std::size_t gi = 0; gi < groups.size(); ++gi) {
+            auto group = identifiers(groups[gi], child(path, "prerequisites/any_of_groups/" + std::to_string(gi)));
+            if (group.empty()) fail("prerequisites", child(path, "prerequisites/any_of_groups"), "OR prerequisite group cannot be empty");
+            result.any_of_groups.push_back(std::move(group));
+        }
+    }
+    if (value.contains("data_requirement")) {
+        const auto& req = value.at("data_requirement");
+        const auto loc = child(path, "data_requirement");
+        fields(req, loc, {"required", "minimum_unique_units", "minimum_quality_bp", "domain_hint"}, {"required"});
+        result.data_requirement.required = boolean(req.at("required"), child(loc, "required"));
+        if (req.contains("minimum_unique_units"))
+            result.data_requirement.minimum_unique_units = static_cast<std::uint64_t>(integer(req.at("minimum_unique_units"), child(loc, "minimum_unique_units"), 0, 1'000'000'000'000LL));
+        if (req.contains("minimum_quality_bp"))
+            result.data_requirement.minimum_quality_bp = static_cast<std::uint32_t>(integer(req.at("minimum_quality_bp"), child(loc, "minimum_quality_bp"), 0, 10000));
+        if (req.contains("domain_hint"))
+            result.data_requirement.domain_hint = text(req.at("domain_hint"), child(loc, "domain_hint"), 64);
+    }
+    if (value.contains("poc_spec")) {
+        const auto& poc = value.at("poc_spec");
+        const auto loc = child(path, "poc_spec");
+        fields(poc, loc, {"produces_poc", "task_scope", "method_label", "recipe_id", "max_capability_bp"},
+               {"produces_poc", "task_scope", "method_label", "recipe_id", "max_capability_bp"});
+        result.poc_spec.produces_poc = boolean(poc.at("produces_poc"), child(loc, "produces_poc"));
+        result.poc_spec.task_scope = text(poc.at("task_scope"), child(loc, "task_scope"), 160);
+        result.poc_spec.method_label = text(poc.at("method_label"), child(loc, "method_label"), 160);
+        result.poc_spec.recipe_id = id(poc.at("recipe_id"), child(loc, "recipe_id"));
+        const auto& cap = poc.at("max_capability_bp");
+        if (!cap.is_object()) fail("poc_spec", child(loc, "max_capability_bp"), "Expected named task domain capability map");
+        for (const auto& [k, v] : cap.items()) {
+            const auto dom = std::ranges::find(core::lab_domain_names, k);
+            if (dom == core::lab_domain_names.end()) fail("poc_spec", child(loc, "max_capability_bp"), "Unsupported task domain");
+            result.poc_spec.max_capability[static_cast<std::size_t>(dom - core::lab_domain_names.begin())] =
+                core::BasisPoints{integer(v, child(loc, k), 0, 10000)};
+        }
+    }
+    if (value.contains("technical_effect")) {
+        const auto& te = value.at("technical_effect");
+        const auto loc = child(path, "technical_effect");
+        fields(te, loc, {"data_efficiency_bp", "compute_efficiency_bp", "latency_bonus_bp", "robustness_bonus_bp",
+                         "modality_unlock", "deployment_setting_unlock", "refinement_family", "diminishing_tier"}, {});
+        if (te.contains("data_efficiency_bp"))
+            result.technical_effect.data_efficiency_bp = static_cast<std::uint32_t>(integer(te.at("data_efficiency_bp"), child(loc, "data_efficiency_bp"), 0, 2500));
+        if (te.contains("compute_efficiency_bp"))
+            result.technical_effect.compute_efficiency_bp = static_cast<std::uint32_t>(integer(te.at("compute_efficiency_bp"), child(loc, "compute_efficiency_bp"), 0, 2500));
+        if (te.contains("latency_bonus_bp"))
+            result.technical_effect.latency_bonus_bp = static_cast<std::uint32_t>(integer(te.at("latency_bonus_bp"), child(loc, "latency_bonus_bp"), 0, 2000));
+        if (te.contains("robustness_bonus_bp"))
+            result.technical_effect.robustness_bonus_bp = static_cast<std::uint32_t>(integer(te.at("robustness_bonus_bp"), child(loc, "robustness_bonus_bp"), 0, 2000));
+        if (te.contains("modality_unlock"))
+            result.technical_effect.modality_unlock = text(te.at("modality_unlock"), child(loc, "modality_unlock"), 64);
+        if (te.contains("deployment_setting_unlock"))
+            result.technical_effect.deployment_setting_unlock = text(te.at("deployment_setting_unlock"), child(loc, "deployment_setting_unlock"), 64);
+        if (te.contains("refinement_family"))
+            result.technical_effect.refinement_family = text(te.at("refinement_family"), child(loc, "refinement_family"), 64);
+        if (te.contains("diminishing_tier"))
+            result.technical_effect.diminishing_tier = static_cast<std::uint32_t>(integer(te.at("diminishing_tier"), child(loc, "diminishing_tier"), 0, 6));
+    }
     if (value.contains("innovation")) {
         const auto& row=value.at("innovation");
         const auto location=child(path,"innovation");
@@ -1368,6 +1429,8 @@ void validate_references(const Collection& collection, const Registry& registry)
             auto& links = research_edges[name];
             links = research_definition->all_of;
             links.insert(links.end(), research_definition->any_of.begin(), research_definition->any_of.end());
+            for (const auto& group : research_definition->any_of_groups)
+                links.insert(links.end(), group.begin(), group.end());
             for (const auto& target : links) (void)reference(target, "research", path);
             if (research_definition->setback) {
                 const auto& safeguard = research_definition->setback->safeguard;
@@ -1589,7 +1652,7 @@ Collection load_collection(std::string_view document, const Registry& registry) 
     std::size_t tokens = 0;
     auto callback = [&](int depth, Json::parse_event_t event, Json& parsed) {
         // Includes the bounded 3,300-entry county catalog alongside scenario content.
-        if (depth > 48 || ++tokens > 200'000) fail("budget", "/", "JSON depth/token budget exceeded");
+        if (depth > 48 || ++tokens > 600'000) fail("budget", "/", "JSON depth/token budget exceeded");
         if (event == Json::parse_event_t::object_start) keys.emplace_back();
         else if (event == Json::parse_event_t::object_end) keys.pop_back();
         else if (event == Json::parse_event_t::key && !keys.back().insert(parsed.get<std::string>()).second)

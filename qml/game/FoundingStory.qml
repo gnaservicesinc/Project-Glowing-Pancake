@@ -19,9 +19,10 @@ QtObject {
         const charismatic = advantages.includes("charisma")
         const political = advantages.includes("political")
         const education = story.education
-        const homeArt = { poor: "street-apartments", middle: street, rich: "street-hillside" }[form.family] || street
+        const homeArt = { poor: "street-apartments", middle: street, rich: "street-hillside", workshop: "repair-shop", cooperative: "courtyard", bookshop: "bookshop" }[form.family] || street
         const foundingArt = form.legal_form === "nonprofit" ? "trust" : "company"
         const tones = {
+            "repair-shop": "plum", courtyard: "jade", bookshop: "amber",
             hospital: "slate", street: "amber", "street-apartments": "slate", "street-hillside": "olive",
             library: "jade", workshop: "plum", company: "amber", trust: "jade",
             elementary: "amber", "middle-school": "olive", "high-school": "slate",

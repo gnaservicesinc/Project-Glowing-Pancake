@@ -645,7 +645,9 @@ CommandResult Simulation::submit_impl(const Command& command,bool outer_transact
                     std::any_of(next.lab->models.begin(),next.lab->models.end(),[&](const auto& r){return r.project_id==action.id;}) ||
                     std::any_of(next.lab->evaluations.begin(),next.lab->evaluations.end(),[&](const auto& r){return r.project_id==action.id;}) ||
                     std::any_of(next.lab->generated.begin(),next.lab->generated.end(),[&](const auto& r){return r.project_id==action.id;}) ||
-                    std::ranges::any_of(next.lab->acquisitions,[&](const auto& r){return r.project_id==action.id;}));
+                    std::ranges::any_of(next.lab->acquisitions,[&](const auto& r){return r.project_id==action.id;}) ||
+                    std::ranges::any_of(next.lab->processed,[&](const auto& r){return r.project_id==action.id;}) ||
+                    std::ranges::any_of(next.lab->creative_jobs,[&](const auto& r){return r.project_id==action.id;}));
                 const bool response = next.deployments && next.deployments->risk &&
                     std::ranges::any_of(next.deployments->risk->responses,[&](const auto& row){return row.project_id==action.id;});
                 const auto software=talent_rules(next)?std::ranges::find(next.management->people->talent->software,action.id,&SoftwareProject::project):std::vector<SoftwareProject>::iterator{};
@@ -858,6 +860,26 @@ CommandResult Simulation::submit_impl(const Command& command,bool outer_transact
                 generate_dataset(lab(next),accounts(next),capacity(next),next.date,action,reserved_cash(next));
                 next.cash=accounts_report(*next.accounts).cash;
                 (void)receipt(next,"generate_and_verify_data",0,checked_unit_subtract(next.cash,before));
+            } else if constexpr (std::is_same_v<Action, ProcessDataset>) {
+                const auto before=next.cash;
+                start_data_processing(lab(next),accounts(next),capacity(next),next.date,action,reserved_cash(next));
+                next.cash=accounts_report(*next.accounts).cash;
+                (void)receipt(next,"process_dataset",0,checked_unit_subtract(next.cash,before));
+            } else if constexpr (std::is_same_v<Action, StartCreativeProduction>) {
+                const auto before=next.cash;
+                start_creative_production(next,action,reserved_cash(next));
+                next.cash=accounts_report(*next.accounts).cash;
+                (void)receipt(next,"start_creative_production",0,checked_unit_subtract(next.cash,before));
+            } else if constexpr (std::is_same_v<Action, LicenseTechnology>) {
+                const auto before=next.cash;
+                license_technology(lab(next),accounts(next),next.date,action.offer_id,reserved_cash(next));
+                next.cash=accounts_report(*next.accounts).cash;
+                (void)receipt(next,"license_technology",0,checked_unit_subtract(next.cash,before));
+            } else if constexpr (std::is_same_v<Action, RenewTechLicense>) {
+                const auto before=next.cash;
+                renew_tech_license(lab(next),accounts(next),next.date,action.offer_id,reserved_cash(next));
+                next.cash=accounts_report(*next.accounts).cash;
+                (void)receipt(next,"renew_tech_license",0,checked_unit_subtract(next.cash,before));
             } else if constexpr (std::is_same_v<Action, StartTraining>) {
                 if (action.request.model_id.starts_with(frontier_refresh_prefix))
                     refuse(CommandReason::dependent_commitment,"Automated candidate identities belong to their authorized refresh.");
@@ -959,6 +981,14 @@ CommandResult Simulation::submit_impl(const Command& command,bool outer_transact
             } else if constexpr (std::is_same_v<Action, RespondToMissionConcern>) {
                 respond_to_mission_concern(next,action);
                 (void)receipt(next,"mission_conversation");
+            } else if constexpr (std::is_same_v<Action, RespondToMissionScandal>) {
+                const auto before=next.cash;
+                respond_to_mission_scandal(next,action,reserved_cash(next));
+                (void)receipt(next,"mission_scandal_response",0,checked_unit_subtract(next.cash,before));
+            } else if constexpr (std::is_same_v<Action, AcquireCompanyControl>) {
+                const auto before=next.cash;
+                acquire_company_control(next,action,reserved_cash(next));
+                (void)receipt(next,"acquire_company_control",0,checked_unit_subtract(next.cash,before));
             } else if constexpr (std::is_same_v<Action, Socialize>) {
                 socialize(next,action);(void)receipt(next,"social_contact");
             } else if constexpr (std::is_same_v<Action, ManageTalent>) {

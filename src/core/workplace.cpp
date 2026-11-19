@@ -101,7 +101,12 @@ void create_facility_blueprint(SimulationState& s,const FacilityBlueprint& bluep
     w.blueprints.push_back(blueprint);
 }
 BlueprintQuote preview_blueprint_build(const SimulationState& s,const BuildFromBlueprint& request) {
-    (void)rules(s);const auto& b=find(s.infrastructure->workplace->blueprints,request.blueprint);valid_blueprint(s,b);
+    (void)rules(s);
+    return preview_blueprint_design(s,find(s.infrastructure->workplace->blueprints,request.blueprint),request);
+}
+BlueprintQuote preview_blueprint_design(const SimulationState& s,const FacilityBlueprint& b,const BuildFromBlueprint& request) {
+    (void)rules(s);
+    valid_blueprint(s,b);
     const auto& state=find(s.infrastructure->catalog.states,request.state);const auto& hardware=find(s.infrastructure->catalog.hardware,b.hardware_family);
     const auto site=preview_site_build(s,{request.id,request.name,request.state,b.grid_watts,b.evaporative?CoolingMode::evaporative:CoolingMode::air});
     if(auto blocked=frontier_technology_block(s,FrontierTechnology::hardware,b.hardware_family,s.date);!blocked.empty()) throw std::invalid_argument(blocked);

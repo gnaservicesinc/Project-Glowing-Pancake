@@ -136,6 +136,14 @@ DataOffer verified_output(const LabState& lab,const GeneratedDataset& job,const 
     output.rights=prepared.preview.open_weight_release?"Commercial training and weight redistribution with source attribution":
         prepared.preview.commercial_use?"Commercial training and deployment; weight redistribution unavailable":"Research use only";
     output.unique_units=retained(job.attempted_units,prepared.teacher->capability[axis],*prepared.verifier,prepared.recipe->diversity);
+    output.source_path="synthetic_teacher";
+    output.supplier_or_publisher=prepared.teacher->id;
+    output.collection_method=prepared.recipe->name;
+    output.underlying_history=prepared.verifier->provenance;
+    output.parent_dataset_id=prepared.verifier->id;
+    output.raw_units=job.attempted_units;
+    output.provenance_confidence_bp=prepared.verifier->provenance_confidence_bp;
+    output.third_party_controversy_risk=prepared.verifier->third_party_controversy_risk || model_lineage_has_controversy(lab,prepared.teacher->id);
     output.quality=prepared.verifier->quality;
     output.coverage[axis]=std::min(prepared.evaluation->coverage[axis],prepared.verifier->coverage[axis]);
     output.relevance[axis]=prepared.verifier->relevance[axis];

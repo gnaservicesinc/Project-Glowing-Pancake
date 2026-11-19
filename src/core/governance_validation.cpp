@@ -150,6 +150,12 @@ void validate_governance(const SimulationState& s,bool deep) {
                 std::ranges::none_of(g.motions,[&](const auto& motion){return motion.kind==BoardMotionKind::financing && motion.executed && motion.subject==offer.id && motion.resolved_on==e.day;}))
                 invalid("A nonprofit gift differs from its approved donor terms.");
             (void)posting(s,e.key,e.day,e.consideration,Account::cash,Account::equity);
+        } else if(e.kind=="secondary_transfer") {
+            if(e.consideration.value()!=0 || e.shares.value()<=0 ||
+                std::ranges::none_of(g.control_transfers,[&](const ControlTransfer& t){
+                    return t.id==e.key && t.kind=="economic_stake" && t.seller==e.subject && t.day==e.day && t.shares==e.shares && !t.voting_granted;
+                }))
+                invalid("Secondary share transfer lacks its recorded economic stake purchase.");
         } else if (e.consideration.value()!=0) invalid("Vesting, grants and pool changes cannot create cash or assets");
         if ((e.kind=="grant" || e.kind=="vest" || e.kind=="departure") && e.key!="executive/"+e.subject) invalid("Grant movement lost its actual executive owner");
         if (e.kind=="pool") {
@@ -198,6 +204,23 @@ void validate_governance(const SimulationState& s,bool deep) {
             obligation.cause!="Employee program under "+charter.name) invalid("Charter employee program differs from its funded monthly commitment");
     }
     if(charter_bills.size()!=expected_charter_bills.size()) invalid("Employee program has no approved charter");
+    if(g.control_transfers.size()>16) invalid("Corporate control transfers exceed bounded history.");
+    for(std::size_t i=0;i<g.control_transfers.size();++i) {
+        const auto& t=g.control_transfers[i];
+        if(t.id!="control/"+std::to_string(i+1) || t.day<s.accounts->starts_on || t.day>s.date ||
+           t.personal_price.value()<0 || t.company_fee.value()<0 ||
+           (i && t.day<g.control_transfers[i-1].day))
+            invalid("Corporate control transfer has invalid identity, dates or price.");
+        if(t.kind=="economic_stake") {
+            if(t.voting_granted || t.transferred_seats!=0 || t.shares.value()<=0 || t.company_fee.value()!=0 ||
+               std::ranges::none_of(g.capital,[&](const CapitalEvent& ce){return ce.kind=="secondary_transfer" && ce.key==t.id;}))
+                invalid("Economic stake transfer must move shares without silently granting board votes.");
+        } else if(t.kind=="voting_control") {
+            if(!t.voting_granted || t.transferred_seats==0 || t.transferred_seats>3 || t.shares.value()!=0)
+                invalid("Voting control transfer must explicitly grant bounded board seats.");
+            if(t.company_fee.value()>0) (void)posting(s,"control.legal/"+t.id,t.day,t.company_fee,Account::expenses,Account::cash);
+        } else invalid("Unsupported corporate control transfer kind.");
+    }
     validate_public_filings(s);
     std::set<std::string> finance;
     for (std::size_t index=0;index<g.motions.size();++index) {

@@ -335,6 +335,24 @@ MarketInfluences regional_market_conditions(const WorldState& w,const Simulation
             else it->software_quality=bonus;
         }
     }
+    if (seller.deployments && seller.lab && seller.capacity) {
+        const auto stage = industry_activity(w).stage;
+        for (const auto& product : seller.market->products) {
+            if (!product.available) continue;
+            const auto release = std::ranges::find(seller.deployments->records, product.capacity_project_id, &DeploymentRecord::project_id);
+            if (release == seller.deployments->records.end()) continue;
+            const auto profile = product_technical_profile(seller, release->model_id);
+            for (const auto& segment : seller.market->segments) {
+                if (!std::ranges::any_of(segment.preferences, [&](const auto& pref) { return pref.product_id == product.id && pref.eligible; })) continue;
+                const auto trait = segment.id.find("enterprise") != std::string::npos ? profile.robustness_bonus_bp : profile.latency_bonus_bp;
+                const auto fit = static_cast<std::int64_t>(trait) * (stage + 1) / 4;
+                if (!fit) continue;
+                auto edge = std::ranges::find_if(result, [&](const auto& row) { return row.product_id == product.id && row.segment_id == segment.id; });
+                if (edge == result.end()) result.push_back({product.id, segment.id, BasisPoints{0}, true, true, {}, BasisPoints{std::min<std::int64_t>(2000, fit)}});
+                else edge->software_quality = BasisPoints{std::min<std::int64_t>(2000, edge->software_quality.value() + fit)};
+            }
+        }
+    }
     const bool authority=w.authority && (!w.authority->mandates.empty() || !w.authority->cases.empty());
     std::vector<std::pair<const MarketProduct*,const DeploymentRecord*>> trials;
     if (seller.deployments && (authority || w.society)) for (const auto& route:seller.market->trials) {

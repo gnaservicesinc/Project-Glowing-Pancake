@@ -7,7 +7,9 @@ ColumnLayout {
     id: tools
     property int textSize: 16
     property bool openAfterChoosing: false
-    readonly property bool dialogOpen: studio.visible || playtest.visible || founderEditor.visible || personEditor.visible || checkoutPicker.visible || deleteCampaignDialog.visible
+    readonly property bool dialogOpen: studio.visible || playtest.visible || playtestSetup.visible || founderEditor.visible || personEditor.visible || checkoutPicker.visible || deleteCampaignDialog.visible
+    signal playtestStarted()
+    Component.onCompleted: if (setupRequested) Qt.callLater(playtestSetup.open)
     property bool savingFounder: false
     property bool savingPerson: false
     property bool usingTool: false
@@ -153,6 +155,18 @@ ColumnLayout {
             ColumnLayout {
                 width: parent.width
                 MenuButton {
+                    objectName: "openPlaytestSetupButton"
+                    text: qsTr("Custom playtest setup & start…")
+                    textSize: tools.textSize
+                    Layout.fillWidth: true
+                    enabled: campaign.ready && !campaign.busy
+                    onClicked: {
+                        playtest.close()
+                        if (godMode) playtestSetup.open()
+                        else if (!developmentTools.openGodMode(true)) playtest.open()
+                    }
+                }
+                MenuButton {
                     objectName: "openGodModeButton"
                     visible: !godMode
                     text: qsTr("God mode")
@@ -236,6 +250,11 @@ ColumnLayout {
                 }
             }
         }
+    }
+    PlaytestSetupPage {
+        id: playtestSetup
+        onStarted: tools.playtestStarted()
+        textSize: tools.textSize
     }
     GameDialog {
         id: founderEditor

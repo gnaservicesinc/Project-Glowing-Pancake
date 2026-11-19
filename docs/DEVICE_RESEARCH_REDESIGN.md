@@ -1,6 +1,6 @@
 # Devices, inherited companies and an unfinished research frontier
 
-Selected design direction · 2026-11-18 · Implementation plan, not completed features
+Mac implementation · F-08A–F-08F · content 0.84.0-dev.1, generation 88. Independent player review remains open.
 
 This records the user's current playtest feedback and their clarification that
 the technology tree cannot be finished and is not meant to be finished. It
@@ -335,58 +335,15 @@ authored catalog alone is not evidence of this: review attainable work budgets,
 branching opportunities and late-game continuation against the no-completion
 design requirement.
 
-## Current implementation and the work it requires
+## Implementation and playtest coverage
 
-The current code already provides validated commands, local persistence,
-devices with power/service, paid project allocations, AND/OR research links,
-dataset mixtures, commissioning, feedback, synthetic production and model
-lineage. Preserve those foundations.
+| Area | In the current Mac game |
+| --- | --- |
+| Opening and authority | New Game follows the founder's own life. Playtest Setup creates an isolated configurable company. Hired executives inherit the company's agreement, board and charter. |
+| Physical devices | Each available phone, tablet, laptop or HQ machine has its own apps and drafts. Docking and popping out use the same saved device identity. Direct management is also available from the main window. |
+| Research | The graph and list share selection, filters and project details. A proposal names its team, capacity, datasets and costs. A changed company revision requires another confirmation. |
+| Data and models | Acquisitions, processing and paid creative work produce distinct corpora. Required domains, quality and unique records constrain experiments. Proof-of-concept models carry source lineage into production work. |
+| Technologies and licensing | The founder scenario offers 138 research topics with alternatives, efficiency effects and bounded refinements. Licensing has a price, integration period and expiration. |
+| Company and industry | Device apps expose data, training, deployment and accounts. Publications and deployed services advance the observed industry stage. |
 
-The important gaps observed in source are:
-
-- The dedicated prepared opening and its related event chains need removal,
-  with the playtester setup page providing freely configurable direct starts.
-  For ordinary career appointments, `HomeStart.qml` still offers a mission
-  selector for a hired CEO; the bridge treats mission as editable unless a
-  cofounder sets it. Existing bylaws are not presented as a complete inherited
-  appointment agreement.
-- `DeviceHome.qml` routes icons into the shared surface in `Main.qml`.
-  `WorldController::devices()` collapses available equipment by kind, and
-  `resolve_app_device()` returns a kind. Navigation holds one app/device, while
-  research drafts use shared keys. These contracts cannot represent independent
-  workspaces on two actual computers.
-- `ResearchTree.qml` reserves a short graph viewport inside a larger scrolling
-  form. The inspector contains dense requirements, team/trait text and workers.
-- Data has provenance, rights and several production paths, but the dedicated
-  creative workforce, source/processing workflow and the requested connection
-  to research-produced proof-of-concept models need explicit extensions.
-- The reviewed 140-candidate catalog is a proposal, not proof that the shipped
-  tree has that breadth or the intended late-game alternatives.
-
-## Implementation order and acceptance
-
-These are cohesive milestones. None is complete merely because the existing
-screens remain reachable or an engineering scenario passes.
-
-| Milestone | Result to build | Acceptance path |
-| --- | --- | --- |
-| F-08A · Opening cleanup, playtester setup and authority | Remove the dedicated prepared opening and its related events, remove the rejected newsroom event entirely, add one-screen configurable bio/setup/start, and enforce inherited company authority | Verify every shortcut variant and removed event/follow-up is absent with no dangling references; configure contrasting biographies and arbitrary supported starting conditions on one page; start paused and reload the exact state; verify invalid combinations preserve edits; accept an ordinary career appointment with inherited terms, refuse unauthorized rewrites, and enact a survivable reversal after obtaining actual control |
-| F-08B · Physical device workspaces | Stable device identities, independent app sessions, menu-bar access to direct management tools and detached native device windows | Open Research on one computer and Accounts on another; switch apps independently; save/reload unfinished work; power off one device; resume its workspace after recovery; dock/undock without lost work or duplicate commands |
-| F-08C · Usable research app | App-specific project/graph/inspector flow, expanded tree window and plain-language explanations | Find a topic, compare paths, inspect missing requirements, choose qualified workers and start real funded work; use compact/high-text layouts with no overlapping worker controls; preserve graph position through switching and reload |
-| F-08D · Source and processing simulation | Named acquisitions, processing lineage, creative staffing and data-dependent research/PoC outcomes | Research a data-free topic without a corpus; supply data only to a project that needs it; obtain and clean a source; hire creatives and observe paid slow output/skill effects; produce, inspect and reload a real PoC model |
-| F-08E · Broad research and product choices | Expanded validated alternatives/combinations, licensing tradeoffs, small-model efficiency and technical product identity | Reach the same useful capability through different branches while skipping alternatives; compare a lengthy internal project with an actual license; build meaningfully different products; demonstrate remaining worthwhile frontier choices late in a feasible campaign |
-| F-08F · App suite and changing industry | Remaining app-specific workflows and staged funding/data/product consequences | Run early research/prestige, wealth-funded and small-lab routes; see an industry boom alter opportunities; sustain the lab under real costs; inspect and respond to an event grounded in actual dataset lineage |
-
-Define the shared record/command contracts before their consumers. A practical
-dependency order is F-08A, then device identity/session and application shell in
-F-08B, then F-08C. F-08D establishes source/processing and PoC contracts before
-F-08E content depends on them. F-08F completes the app suite and integrates the
-industry progression. Do not declare the overall redesign implemented at the
-end of its first milestone.
-
-For each implementation batch, use one retained optimized Mac build and focused
-checks for actual command effects, resource costs, failure/recovery and fresh
-save/reload. Inspect rendered normal and compact/high-text interfaces, including
-detached-window focus and closure. Human usability acceptance remains distinct
-from those checks. No release matrix, prior-development-save migration or
-external service is required by this design pass.
+Independent player sessions and balance across founding strategies remain in the [backlog](BACKLOG.md).

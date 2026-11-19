@@ -1,14 +1,26 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import "apps"
 
 Popup {
     id: desktop
     objectName: "deviceLauncher"
     required property int textSize
-    property string selectedDevice: "laptop"
-    signal appRequested(string app,string section,string device)
-    readonly property var device: campaign.world.devices.find(row=>row.id===selectedDevice) || ({})
+    property string selectedDevice: ""
+    property bool allowDetach: true
+    signal appRequested(string app, string section, string device)
+    signal focusDetachedRequested(string deviceId)
+
+    readonly property var physicalList: campaign.world.physicalDevices || []
+    readonly property bool hasPhysical: physicalList.length > 0
+    readonly property var deviceList: hasPhysical ? physicalList : (campaign.world.devices || [])
+    readonly property var device: deviceList.find(row => (row.deviceId || row.id) === selectedDevice) || deviceList[0] || ({})
+    readonly property string selectedKind: device.kind || device.id || "desktop"
+    readonly property string selectedId: device.deviceId || device.id || ""
+    readonly property bool selectedPoppedOut: !!device.poppedOut
+    readonly property bool selectedUnavailable: hasPhysical && !!device.deviceId && !device.available
+
     readonly property var applications: [
         {id:"office",name:qsTr("Company"),tint:"#567f8c"},
         {id:"people",name:qsTr("People"),tint:"#95768f"},
@@ -24,38 +36,77 @@ Popup {
         {id:"objectives",name:qsTr("World & legacy"),tint:"#6789a0"},
         {id:"devices",objectName:"equipmentApp",name:qsTr("Equipment"),tint:"#7d8d9b"}
     ]
+
+    function firstOfKind(row) {
+        const k = row.kind || row.id
+        for (let i = 0; i < deviceList.length; ++i) {
+            if ((deviceList[i].kind || deviceList[i].id) === k)
+                return (deviceList[i].deviceId || deviceList[i].id) === (row.deviceId || row.id)
+        }
+        return false
+    }
+
     anchors.centerIn: Overlay.overlay
-    width: Math.min(Overlay.overlay.width-16,textSize*(selectedDevice==="phone"?34:90))
-    height: Math.min(Overlay.overlay.height-16,textSize*54)
-    padding: 0; modal: true; focus: true
+    width: Math.min(Overlay.overlay.width - 16, textSize * (selectedKind === "phone" ? 34 : 90))
+    height: Math.min(Overlay.overlay.height - 16, textSize * 54)
+    padding: 0
+    modal: true
+    focus: true
     background: Item {}
+
     function showFor(preferred) {
-        const devices=campaign.world.devices
-        selectedDevice=devices.some(row=>row.id===preferred)?preferred:devices.some(row=>row.id==="laptop")?"laptop":(devices[0] || {}).id || ""
+        const list = deviceList
+        const resolved = hasPhysical ? campaign.world.resolvePhysicalDevice(preferred || "", "") : (preferred || "")
+        if (resolved && list.some(row => (row.deviceId || row.id) === resolved)) selectedDevice = resolved
+        else if (list.some(row => (row.kind || row.id) === "laptop")) selectedDevice = (list.find(row => (row.kind || row.id) === "laptop").deviceId || "laptop")
+        else selectedDevice = list.length ? (list[0].deviceId || list[0].id || "") : ""
         open()
     }
-    contentItem: DeviceFrame {
-        kind: desktop.selectedDevice || "desktop"; textSize: desktop.textSize
-        ColumnLayout {
-            anchors.fill:parent;spacing:0
-            Rectangle {
-                Layout.fillWidth:true;implicitHeight:deviceRow.implicitHeight+10;color:"#142232"
-                Rectangle { anchors.bottom: parent.bottom; width: parent.width; height: 1; color: "#364b5c" }
-                Flow {
-                    id:deviceRow;anchors.left:parent.left;anchors.right:parent.right;anchors.top:parent.top;anchors.margins:5;spacing:6
-                    Repeater {model:campaign.world.devices
-                        WorldButton {required property var modelData;objectName:"launcherDevice_"+modelData.id;text:modelData.name;textSize:desktop.textSize*0.8;padding:6;accent:"#efc389";checked:desktop.selectedDevice===modelData.id;onClicked:desktop.selectedDevice=modelData.id}
-                    }
+
+    contentItem: ColumnLayout {
+        spacing: 2
+        Flow {
+            Layout.fillWidth: true
+            spacing: 4
+            Repeater {
+                model: desktop.deviceList
+                WorldButton {
+                    required property var modelData
+                    readonly property string deviceKey: modelData.deviceId || modelData.id
+                    objectName: "launcherDevice_" + (desktop.firstOfKind(modelData) ? (modelData.kind || modelData.id) : deviceKey.replace("/", "_"))
+                    text: modelData.name
+                    checked: desktop.selectedId === deviceKey
+                    textSize: desktop.textSize * 0.8
+                    padding: 5
+                    onClicked: desktop.selectedDevice = deviceKey
                 }
             }
-        DesktopSurface {
-            Layout.fillWidth:true;Layout.fillHeight:true;textSize:desktop.textSize
-            owner: campaign.companyName; date: campaign.date
-            status: (desktop.device.name || qsTr("Your workspace")) + " · " + campaign.availableText
-            applications: desktop.applications.map(row=>Object.assign({},row,{available: row.id==="devices" || campaign.world.appAvailableOn(row.id,desktop.selectedDevice)}))
-            onCloseRequested: desktop.close()
-            onLaunched: (app,section)=>{desktop.close();desktop.appRequested(app,section,app==="devices"?"":desktop.selectedDevice)}
         }
+        DeviceSurfaceHost {
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            visible: desktop.hasPhysical
+            allowDetach: desktop.allowDetach
+            deviceId: desktop.selectedId
+            textSize: desktop.textSize
+            onSwitchDeviceRequested: id => desktop.selectedDevice = id
+            onFocusDetachedRequested: id => desktop.focusDetachedRequested(id)
+            onOpenEquipmentRequested: { desktop.close(); desktop.appRequested("devices", "", "") }
+            onCloseSurfaceRequested: desktop.close()
+        }
+        DesktopSurface {
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            visible: !desktop.hasPhysical
+            textSize: desktop.textSize
+            applications: desktop.applications.map(row => Object.assign({}, row, {
+                available: campaign.world.appAvailableOn(row.id, desktop.selectedId)
+            }))
+            onCloseRequested: desktop.close()
+            onLaunched: (app, section) => {
+                desktop.close()
+                desktop.appRequested(app, section, desktop.selectedId)
+            }
         }
     }
 }

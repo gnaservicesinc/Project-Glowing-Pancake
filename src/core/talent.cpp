@@ -93,6 +93,10 @@ std::string software_worker_blocker(const SimulationState& s,std::string_view id
     if(manager && manager->person==e->terms.profile.id)return "Already assigned to operations management.";
     if(s.lab)for(const auto& r:s.lab->research)
         if(r.project_id!=except && active_work(s,r.project_id) && std::ranges::find(r.researchers,e->terms.profile.id)!=r.researchers.end())return "Already assigned to research.";
+    if (s.lab) for (const auto& job : s.lab->creative_jobs) {
+        if (job.project_id != except && !job.output && active_work(s,job.project_id) &&
+            std::ranges::find(job.creatives,e->terms.profile.id) != job.creatives.end()) return "Already assigned to creative production.";
+    }
     if(talent_rules(s))for(const auto& p:s.management->people->talent->software)
         if(p.project!=except && active_work(s,p.project) && std::ranges::any_of(p.design.workers,[&](const auto& who){return canonical_person(s,who)==key;}))return "Already assigned to software development.";
     return {};

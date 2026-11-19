@@ -41,13 +41,30 @@ Json governance_json(const core::GovernanceState& g) {
                 {"revenue",filing.revenue.value()},{"expenses",filing.expenses.value()},{"cash",filing.ending_cash.value()}});
         }
     }
+    if (!g.control_transfers.empty()) {
+        result["control_transfers"]=Json::array();
+        for (const auto& t:g.control_transfers) {
+            result["control_transfers"].push_back({{"id",t.id},{"kind",t.kind},{"seller",t.seller},{"day",t.day.value()},
+                {"shares",t.shares.value()},{"transferred_seats",t.transferred_seats},{"personal_price",t.personal_price.value()},
+                {"company_fee",t.company_fee.value()},{"voting_granted",t.voting_granted}});
+        }
+    }
     return result;
 }
 core::GovernanceState parse_governance(const Json& j) {
-    fields(j,"governance",{"opening_holdings","appointments","grants","capital","motions","disputes"},{"charters","public_filings"});
+    fields(j,"governance",{"opening_holdings","appointments","grants","capital","motions","disputes"},{"charters","public_filings","control_transfers"});
     array(j.at("opening_holdings"),"governance/opening",core::accounts_terms_limit);array(j.at("appointments"),"governance/appointments",8);array(j.at("grants"),"governance/grants",8);
     array(j.at("capital"),"governance/capital",8192);array(j.at("motions"),"governance/motions",128);array(j.at("disputes"),"governance/disputes",32);
     core::GovernanceState g;
+    if (j.contains("control_transfers")) {
+        array(j.at("control_transfers"),"governance/control_transfers",16);
+        for (const auto& t:j.at("control_transfers")) {
+            fields(t,"governance/control_transfer",{"id","kind","seller","day","shares","transferred_seats","personal_price","company_fee","voting_granted"});
+            g.control_transfers.push_back({label(t.at("id")),label(t.at("kind")),label(t.at("seller")),day(t.at("day")),
+                bp(t.at("shares")),static_cast<std::uint32_t>(u64(t.at("transferred_seats"),"governance/seats",3)),
+                cents(t.at("personal_price")),cents(t.at("company_fee")),boolean(t.at("voting_granted"),"governance/voting_granted")});
+        }
+    }
     if (j.contains("public_filings")) {
         array(j.at("public_filings"),"governance/public_filings",core::public_filing_limit);
         for (const auto& filing:j.at("public_filings")) {

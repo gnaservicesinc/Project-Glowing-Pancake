@@ -90,13 +90,13 @@
     }
   ],
   "collection": "data/runtime/first-playable.json",
-  "collection_hash": "ad260e2249f52ed544cd9d4a946894ee5bdd31a3fd50fa1080e8b91d34b8260a",
+  "collection_hash": "0bf10c436f2f0f4de238daa0afbe3b681b9c5619bad2fd6ceeac53016f36131f",
   "compatibility": {
     "content_schema": 1,
     "save_format": 1,
     "simulation_rules": 1
   },
-  "content_version": "0.82.0-dev.1",
+  "content_version": "0.84.0-dev.1",
   "definitions": [
     {
       "id": "authority.executive_disclosure",
@@ -807,34 +807,136 @@
       "semantic_hash": "cdcfae79794a56380be21e13dd81ce038b45df0af77a2cab79fc973e07125cd3"
     },
     {
+      "id": "research.bio.active_wetlab_closed_loop",
+      "kind": "research",
+      "revision": 1,
+      "semantic_hash": "40bc3fc06d6edb4921603807271afe93f4511f9c292de90979ff0e7268df63e9"
+    },
+    {
+      "id": "research.bio.climate_pde_surrogates",
+      "kind": "research",
+      "revision": 1,
+      "semantic_hash": "9f33e8e76423c8d1e2948fbaf09e2883a0d9bd897fb1b0c19d5e0942ca0af5de"
+    },
+    {
+      "id": "research.bio.clinical_trial_stratification",
+      "kind": "research",
+      "revision": 1,
+      "semantic_hash": "6a8d0bb7f810108c9f3860c430f17cf58846bcc7911e23735fc74c8ad49a913b"
+    },
+    {
+      "id": "research.bio.crystal_lattice_diffusion",
+      "kind": "research",
+      "revision": 1,
+      "semantic_hash": "1ed7694a572d4cae1a1ff9ac00ee6320f5cc758089ec1e148b915223c3956e33"
+    },
+    {
+      "id": "research.bio.enzyme_active_site_design",
+      "kind": "research",
+      "revision": 1,
+      "semantic_hash": "399510b4f4b51fe33936e723c717f1905c949edf6ec8806ad0eb29c8b254777f"
+    },
+    {
+      "id": "research.bio.equivariant_molecular_graphs",
+      "kind": "research",
+      "revision": 1,
+      "semantic_hash": "cbbacf5488e804780d50f8e58b96b4ad43bbac8385c2b2a8f67ae78ddb7dad83"
+    },
+    {
+      "id": "research.bio.genomic_regulatory_motifs",
+      "kind": "research",
+      "revision": 1,
+      "semantic_hash": "bc8809dc5c852e7f82cd0a0865b3162ddf57d750d46224c6b698858d200f4bba"
+    },
+    {
+      "id": "research.bio.protein_folding_poc",
+      "kind": "research",
+      "revision": 1,
+      "semantic_hash": "59e8f783d2ac60291a1421baa390852e909af1b7f6df956a778003b37d5e2a2b"
+    },
+    {
+      "id": "research.compute.asynchronous_pipeline_parallel",
+      "kind": "research",
+      "revision": 1,
+      "semantic_hash": "5055a7670b20297775d9bfcc1fea5e9c77bfd615d74c49297102818fdfad9369"
+    },
+    {
       "id": "research.compute.batched_serving",
       "kind": "research",
       "revision": 1,
       "semantic_hash": "85ea508531b91fd5779ed9da3789bc4517e5167fd4e54cec8f739cb3d13c0808"
     },
     {
-      "id": "research.compute.fabric_qos",
+      "id": "research.compute.deadline_batching",
       "kind": "research",
       "revision": 1,
-      "semantic_hash": "5a45a93148f73c04063bbd42ca72ec6a90cddf63ed6bf3375d6dab4321d49f1b"
+      "semantic_hash": "fdcfb18df1648cda65588d6476ab992e3876b1c69dcbdd844dfa0ea7c9a73230"
+    },
+    {
+      "id": "research.compute.fabric_qos",
+      "kind": "research",
+      "revision": 2,
+      "semantic_hash": "64fbac6096b33511fb04aa4f63493b3b60afbff7899abc35cc0c02d339ae35b7"
+    },
+    {
+      "id": "research.compute.fallback_routing",
+      "kind": "research",
+      "revision": 1,
+      "semantic_hash": "b631afca5397dd9c0bee56454862428d16854e10ff21d1aa91eb301e45db2736"
     },
     {
       "id": "research.compute.flexible_duty",
       "kind": "research",
+      "revision": 2,
+      "semantic_hash": "1e7514310ddc73f1bee1c2ae1de188b9cd84b97d05c16488978b9ba3ba5a2d33"
+    },
+    {
+      "id": "research.compute.fused_attention_kernels",
+      "kind": "research",
       "revision": 1,
-      "semantic_hash": "6e22c7317cfa18e41cda313817245c020afc6a5d0166a5cacaa1786b0d8a98ab"
+      "semantic_hash": "095add043743843f5ab8c5b2297ab6ca838f5768f785e4564bd697be7c703416"
+    },
+    {
+      "id": "research.compute.idle_replica_parking",
+      "kind": "research",
+      "revision": 1,
+      "semantic_hash": "f35d61cffd7229fdba8e4162996dfaedd05bc2757c436365b77f7e7f020a8cbb"
+    },
+    {
+      "id": "research.compute.int8_activation_quantization",
+      "kind": "research",
+      "revision": 1,
+      "semantic_hash": "7fc7285e7cfc7ba3d7f758c47f19d0d2d233115237ac10581ed089fa11a90935"
     },
     {
       "id": "research.compute.kernel_layout",
       "kind": "research",
+      "revision": 2,
+      "semantic_hash": "e7a6c46c5daa19f8753245ae5915bcd6491ba3d08f9ecc953128da93bf8921f0"
+    },
+    {
+      "id": "research.compute.kernel_refinement_1",
+      "kind": "research",
       "revision": 1,
-      "semantic_hash": "7e00c3077c0d8d6ba0feddd2704ad582059077a84b872924e21732a5d9baa903"
+      "semantic_hash": "1da64e293ae5426765a5683adfec9a266591e18d301b4c6d93051c4d9ab6d46a"
+    },
+    {
+      "id": "research.compute.kernel_refinement_2",
+      "kind": "research",
+      "revision": 1,
+      "semantic_hash": "5302c97f19b096124522caa81c93bd9fccfaf483ac08f27f2d014600186a555e"
+    },
+    {
+      "id": "research.compute.kernel_refinement_3",
+      "kind": "research",
+      "revision": 1,
+      "semantic_hash": "ff4c8aa68958ee5d26c05e942e6a3bba34a28357de56677e0fdedfed5796b531"
     },
     {
       "id": "research.compute.local_memory",
       "kind": "research",
-      "revision": 1,
-      "semantic_hash": "65367b5ccbf7f87848fe6199b519b130e63d9b096b64dbfc1ff5938fffcbd2b4"
+      "revision": 2,
+      "semantic_hash": "e43be32cce119ab0d68904d4e7d6bc57f31cfa0b48c4ddae8648de857331a7a4"
     },
     {
       "id": "research.compute.low_precision",
@@ -843,76 +945,166 @@
       "semantic_hash": "3556c45b00fdb13d55a0e5b3defc73a3a779f2c7303796068a4823afff0a23d4"
     },
     {
-      "id": "research.compute.pooled_boards",
+      "id": "research.compute.paged_kv_cache",
       "kind": "research",
       "revision": 1,
-      "semantic_hash": "d63f39e16e256befb3644c330090ed2b660fa0644603ae72df286b850796ad05"
+      "semantic_hash": "431af4df1c0a026f764642df70a8d31d05a14b94503124b17be64dbd095257c7"
+    },
+    {
+      "id": "research.compute.pooled_boards",
+      "kind": "research",
+      "revision": 2,
+      "semantic_hash": "4a2e591eda7ee65e4afb996484433400712828a1c5afe1d7b9f0e9b46bf91e27"
     },
     {
       "id": "research.compute.queue_metering",
       "kind": "research",
-      "revision": 1,
-      "semantic_hash": "4b19ef5f72e3c7852680ac16692210d85d1b484121c41522fcdd13a09a5db760"
+      "revision": 2,
+      "semantic_hash": "1604f2dbf82066cfb541ae9058be16ebabc1e7a1f81ca666654732911a27d452"
     },
     {
       "id": "research.compute.sparse_serving",
       "kind": "research",
+      "revision": 2,
+      "semantic_hash": "0af107efc871dfd8310e822e4a1f4fc85da565b6e2b1b577f1b124fe1fea2bc8"
+    },
+    {
+      "id": "research.compute.speculative_decoding",
+      "kind": "research",
       "revision": 1,
-      "semantic_hash": "015a83666bb5c6a455e0db31c8e7be76143550b6476a29ec7ccaee1e7972658f"
+      "semantic_hash": "98447f721ca930e522e46e921fde6f1e8f63269a52a2c58e03af7509e5678ca8"
     },
     {
       "id": "research.compute.thermal_profiles",
       "kind": "research",
+      "revision": 2,
+      "semantic_hash": "f5c51f9a2ca7fc4a47c191501644cee8192dce74199cc052dbd4b1e35c1a96ac"
+    },
+    {
+      "id": "research.compute.zero_redundancy_sharding",
+      "kind": "research",
       "revision": 1,
-      "semantic_hash": "e62de0284f55f99fcdd359a71952667f62a317b38a3771feef372bed894e36c2"
+      "semantic_hash": "ea6afd0bd4d57c39882fb2d6e727678ffbaf79bc908fa67a01e3c46ba05539c6"
+    },
+    {
+      "id": "research.data.active_curriculum_ordering",
+      "kind": "research",
+      "revision": 1,
+      "semantic_hash": "f09094a93e1109087b94e188b08f7c176c0836053d96c10c105764c79956703f"
     },
     {
       "id": "research.data.consent_registry",
       "kind": "research",
+      "revision": 2,
+      "semantic_hash": "6e53893cf630405aea3e4af6c9d264eff8d3545971c2bdfba11d24e1eff5df4f"
+    },
+    {
+      "id": "research.data.contamination_decontamination",
+      "kind": "research",
       "revision": 1,
-      "semantic_hash": "dbcc3ed782a5fbf766e6221262c48731e8f43b1d0890ee01f7f5eb38c7d13921"
+      "semantic_hash": "bbf09d1c6814cca80ca9a8ab274e7da8fee83e08ec78380ff3b72cc45941f104"
+    },
+    {
+      "id": "research.data.coverage_buckets",
+      "kind": "research",
+      "revision": 1,
+      "semantic_hash": "9dc8ee98559ca713fe1f79b8267d43a5394da5ebd6852a940ce1f289ca09cb15"
+    },
+    {
+      "id": "research.data.creative_pedagogy_schemas",
+      "kind": "research",
+      "revision": 1,
+      "semantic_hash": "4cfbf55ee3e2c2c675a13c25b2406aabcebdb2d62433300aa0ba92acf1bdd355"
+    },
+    {
+      "id": "research.data.curation_refinement_1",
+      "kind": "research",
+      "revision": 1,
+      "semantic_hash": "6e470f4aa2590f17649cc2891bb56d8cf40f857fcd9e052a81d2ae978056c574"
+    },
+    {
+      "id": "research.data.empirical_scaling_laws",
+      "kind": "research",
+      "revision": 1,
+      "semantic_hash": "5220421d4ebbabbae856beded6804c5431fcd7a0e0cd125066547c998fd6c0cd"
     },
     {
       "id": "research.data.exchange_protocol",
       "kind": "research",
-      "revision": 1,
-      "semantic_hash": "dc78af35bf0c1e67b66a21cb58bbc50ae1baa892a1f1ec5f08a180d9cd58646a"
+      "revision": 2,
+      "semantic_hash": "efd3774290fbd25c64c4f19524a4e4f5166036f0b3da9d2cfa333e5f6bd0a983"
     },
     {
       "id": "research.data.grid_normalization",
       "kind": "research",
+      "revision": 2,
+      "semantic_hash": "ac03b9562ed41ca443ad193e8f168a2da12f5d2f486e0d8c81ad0e709f26cad7"
+    },
+    {
+      "id": "research.data.information_theoretic_pruning",
+      "kind": "research",
       "revision": 1,
-      "semantic_hash": "ab0243935e947b62bed736b43586180e346a9d02b2e9058a523db1e3b85185ae"
+      "semantic_hash": "e8a1486db5525601b84ecb4710d664d3a83fa48f9751c627218e587798677ebf"
+    },
+    {
+      "id": "research.data.label_disagreement",
+      "kind": "research",
+      "revision": 1,
+      "semantic_hash": "cdcdc3955a23c180b95fe348901c9154f9639f1813631691c98b72616ab9007a"
+    },
+    {
+      "id": "research.data.multilingual_alignment",
+      "kind": "research",
+      "revision": 1,
+      "semantic_hash": "b3c8bf9fc474bcf6124e9e85192278f968662c7e1f6715f1ded7bd69e110b3f1"
     },
     {
       "id": "research.data.partition_audit",
       "kind": "research",
+      "revision": 2,
+      "semantic_hash": "ed1f6f30bf0de0cf47ac4e792886880d9c9fada8efd33a3b56f71e7d9675a7f0"
+    },
+    {
+      "id": "research.data.provenance_watermarking",
+      "kind": "research",
       "revision": 1,
-      "semantic_hash": "d85d407c08f745db068e63944dbe2fdc84c09017e1dff42e7640956f33d85ed9"
+      "semantic_hash": "a629994e2729cf164e567b835a6357b63414ad315904936536f655a1cfc1e424"
     },
     {
       "id": "research.data.receipt_layout",
       "kind": "research",
+      "revision": 2,
+      "semantic_hash": "4c95c705bad6339b8334c03c3859018c0c7eb37dc3535dc86cd1b896ee0e5bbe"
+    },
+    {
+      "id": "research.data.shift_watch",
+      "kind": "research",
       "revision": 1,
-      "semantic_hash": "d5e9049c1dac4ae626779898de8eca12d1f9fe510b0c259eff160be1aef29cb5"
+      "semantic_hash": "a4a270bcecebd8a9532d79c90ebea0936a19acfe01f2e1c658d45cad3ef9e9b2"
     },
     {
       "id": "research.data.sorting_adaptive",
       "kind": "research",
-      "revision": 1,
-      "semantic_hash": "8051538b45be7743a86a395055aae20a4e8fe727540e86d64a5fa388e3c76201"
+      "revision": 2,
+      "semantic_hash": "555f11296b176845d47f742fd104dffcd038de4f87ef3ac6822d61e37e49d5d6"
     },
     {
       "id": "research.data.sorting_external",
       "kind": "research",
+      "revision": 2,
+      "semantic_hash": "4d50dbff62edada20cef844b63a0717493146bf88681618459ae680550823399"
+    },
+    {
+      "id": "research.data.synthetic_critique_loops",
+      "kind": "research",
       "revision": 1,
-      "semantic_hash": "d9ce7909edb94dafac04d80cfa348cc19fe4d0a32f04ace272622eeba83cac53"
+      "semantic_hash": "60e957da5e8e95a5f815fe6f3273bf35fffcd4f942cbb90fd4d6d3cc15348676"
     },
     {
       "id": "research.data.table_indexing",
       "kind": "research",
-      "revision": 1,
-      "semantic_hash": "d4f07d066af257f169ee442aadfa3640dbc36f964865d08f829ddf89805173c0"
+      "revision": 2,
+      "semantic_hash": "ed3d410e178313fa82c72f036e3d0725b3469bbfd515f36a2775cfbfc623e77d"
     },
     {
       "id": "research.data_deduplication",
@@ -1035,10 +1227,142 @@
       "semantic_hash": "592e86905aee6d2e6d25bd8f59d54d7598547463e88171d1f5c82671d4f23ec2"
     },
     {
+      "id": "research.math.bayesian_uncertainty_calibration",
+      "kind": "research",
+      "revision": 1,
+      "semantic_hash": "1350e5cb56bdcea25c97a869adc0ecc8b2e5113f6e63496be403cc9989e9355a"
+    },
+    {
+      "id": "research.math.compact_distillation",
+      "kind": "research",
+      "revision": 1,
+      "semantic_hash": "5679d224dfd69ff7b1cc063c2cfe3e2a44049ecd5c0ca7c9b2202eed1a4dbb7c"
+    },
+    {
+      "id": "research.math.eff_refinement_1",
+      "kind": "research",
+      "revision": 1,
+      "semantic_hash": "175eabb6ea7138f2e78ec46c47ef689dcfb49586a10e25f4219d1efcb94f01a0"
+    },
+    {
+      "id": "research.math.eff_refinement_2",
+      "kind": "research",
+      "revision": 1,
+      "semantic_hash": "da36505c1cf7f102e6d9046462135ca5d0490d3f12ce55d6b259b0ee8229f5ff"
+    },
+    {
+      "id": "research.math.equivariant_representations",
+      "kind": "research",
+      "revision": 1,
+      "semantic_hash": "730d429ed44692ef0e84bced3c12ae8851f78bea950d91fcc6500479625ec453"
+    },
+    {
+      "id": "research.math.low_rank_factorization",
+      "kind": "research",
+      "revision": 1,
+      "semantic_hash": "5636ff7af34d40bc34faf9230f66a332ba0c3bee02e663d2e4adf11ec3341f42"
+    },
+    {
+      "id": "research.math.optimal_transport_alignment",
+      "kind": "research",
+      "revision": 1,
+      "semantic_hash": "4d0852ad02a4e4366c192d0054103eef19570df547cb7da4bcb9dfc492301ad8"
+    },
+    {
+      "id": "research.math.second_order_optimizers",
+      "kind": "research",
+      "revision": 1,
+      "semantic_hash": "d8899a9132c68746568ec0458ead8914034234862db12905e3b03f57c13b0132"
+    },
+    {
+      "id": "research.math.small_model_chinchilla",
+      "kind": "research",
+      "revision": 1,
+      "semantic_hash": "a1ff102344d956ca340221dca8ff45ee5f4b974fc9f78db7b553f12bcbb6aad0"
+    },
+    {
+      "id": "research.math.spectral_regularization",
+      "kind": "research",
+      "revision": 1,
+      "semantic_hash": "28394929f889bdc9094be293ef0ecd42409414c1870e450c11e4d363b9112ec3"
+    },
+    {
       "id": "research.methods_prototype",
       "kind": "research",
       "revision": 1,
       "semantic_hash": "66eae7704aae1305e099c1939afeb1609825bdbd863a710e1b2989b786d8a542"
+    },
+    {
+      "id": "research.ml.arch_refinement_1",
+      "kind": "research",
+      "revision": 1,
+      "semantic_hash": "0cbef05f7afff87c7cb703b9484de73a1848a9ed76958f67344f002f707c67ab"
+    },
+    {
+      "id": "research.ml.contrastive_embeddings",
+      "kind": "research",
+      "revision": 1,
+      "semantic_hash": "c06815dfef570a889b8fc2d365d39aff8911d7157117011e368a9be81aedb0b3"
+    },
+    {
+      "id": "research.ml.hierarchical_planning",
+      "kind": "research",
+      "revision": 1,
+      "semantic_hash": "f8471f816ab4d0aaad5e85f79e7048690924ec2a2a50953fe7eae35a02f4868f"
+    },
+    {
+      "id": "research.ml.long_horizon_memory",
+      "kind": "research",
+      "revision": 1,
+      "semantic_hash": "f1b05607fc40affba5b5a92f8768e0e427a393b5fdb7a281aed7186a27d6a6b6"
+    },
+    {
+      "id": "research.ml.modular_adapters",
+      "kind": "research",
+      "revision": 1,
+      "semantic_hash": "ddef20012cc992970e3b647500e7e2e2fd6ed82ff53e5301ab5cab15891a3780"
+    },
+    {
+      "id": "research.ml.neuro_symbolic_constraints",
+      "kind": "research",
+      "revision": 1,
+      "semantic_hash": "0067261c0b57575793f4af5a3616e2094b855120b672c3c105a3d9bd321d934b"
+    },
+    {
+      "id": "research.ml.rapid_prototyping_poc",
+      "kind": "research",
+      "revision": 1,
+      "semantic_hash": "aa6ba90ebbb50d11dc54baedbe6a0ce260b7b1f800ac14b9b59d2e8a82188dfb"
+    },
+    {
+      "id": "research.ml.retrieval_grounded_generation",
+      "kind": "research",
+      "revision": 1,
+      "semantic_hash": "4624984a7335f4aa5ce0b2fa9ec5c442ce1d757840366f59683cc85d9c463bcd"
+    },
+    {
+      "id": "research.ml.sparse_mixture_routing",
+      "kind": "research",
+      "revision": 1,
+      "semantic_hash": "d5c6d68a6b8af6842701381a1550c9aa123a7c7030f3b2b4a8c293baf904d432"
+    },
+    {
+      "id": "research.ml.state_space_recurrence",
+      "kind": "research",
+      "revision": 1,
+      "semantic_hash": "72c87ab599e498ac50bb593650b94655c0f8266764dfd35deb7c486615a54f40"
+    },
+    {
+      "id": "research.ml.unified_reasoning",
+      "kind": "research",
+      "revision": 1,
+      "semantic_hash": "1c1acbb4861e488f6284b8595499ed5b1299a38010592e7518c60d6f8bedf6d0"
+    },
+    {
+      "id": "research.ml.world_model_dynamics",
+      "kind": "research",
+      "revision": 1,
+      "semantic_hash": "f0ab68cbbe60e206a5b16586cd1b3e6a6eb65a3bfc8b7d23507af16cb27c094a"
     },
     {
       "id": "research.models.adapter_maps",
@@ -1119,6 +1443,42 @@
       "semantic_hash": "fa64f8468b0b3a4e13e15356bb8048cdd3d544721a9d7508d3fee11b9ec050ff"
     },
     {
+      "id": "research.product.edge_quantization_runtime",
+      "kind": "research",
+      "revision": 1,
+      "semantic_hash": "4dc0a63c61eb2505f31a0eddbb596d1c91af53ea863e9473c073937ee2e99189"
+    },
+    {
+      "id": "research.product.hybrid_local_cloud_routing",
+      "kind": "research",
+      "revision": 1,
+      "semantic_hash": "6bbec2e01c0d097a5d7579d0f1c9d1899a381bb52211f64fd1f4d82632ff8bbf"
+    },
+    {
+      "id": "research.product.interactive_copilot_ux",
+      "kind": "research",
+      "revision": 1,
+      "semantic_hash": "257e8bdb54a7ce641fc6afd42e7a847d0a9b6a2496d642d9d4263f8080672360"
+    },
+    {
+      "id": "research.product.privacy_preserving_federation",
+      "kind": "research",
+      "revision": 1,
+      "semantic_hash": "f183746ed3c9dadc33d7ba9a8e8bf01579327ac2f66026cc7a590aecf1cfc985"
+    },
+    {
+      "id": "research.product.sla_canary_observability",
+      "kind": "research",
+      "revision": 1,
+      "semantic_hash": "cfb53b8e8a575d926a7062a1b47335c7ae63e294b8d10b070b6a14bfba9c3b97"
+    },
+    {
+      "id": "research.product.structured_json_schema_engine",
+      "kind": "research",
+      "revision": 1,
+      "semantic_hash": "b6eba76293855e239c538fa502eeeb355ebfdb8884600f4a06a0e097eff2450b"
+    },
+    {
       "id": "research.public.benchmark_exchange",
       "kind": "research",
       "revision": 1,
@@ -1167,6 +1527,96 @@
       "semantic_hash": "9e0047d299bb39f33feeb70aec2ffeea21d783af23e15879396c164aa301dda0"
     },
     {
+      "id": "research.robotics.bimanual_manipulation",
+      "kind": "research",
+      "revision": 1,
+      "semantic_hash": "ed0240dbb4177c7952508fbfea4d71ef9558e47b4f836a22045b35580883aedc"
+    },
+    {
+      "id": "research.robotics.embodied_poc",
+      "kind": "research",
+      "revision": 1,
+      "semantic_hash": "0076312c2f08891e3f559fd1e06fbf8d3ca0804be53bb145c1d2e64eba03bc65"
+    },
+    {
+      "id": "research.robotics.fleet_teleop_learning",
+      "kind": "research",
+      "revision": 1,
+      "semantic_hash": "b0a96be7875eda75fcbae9f76e12957eb7a5305f73f28a26376ae2463a69ca50"
+    },
+    {
+      "id": "research.robotics.mobile_navigation_slam",
+      "kind": "research",
+      "revision": 1,
+      "semantic_hash": "ac604ed511e5ec2046930fec2cb8af6ef0b2c7de24c635d63de9120a82ab754d"
+    },
+    {
+      "id": "research.robotics.safety_control_barriers",
+      "kind": "research",
+      "revision": 1,
+      "semantic_hash": "ea6fce25513436def8a135a6cf0e41d34dd3792894729cb0f2c821c1abefd7ef"
+    },
+    {
+      "id": "research.robotics.sim_to_real_domain_rand",
+      "kind": "research",
+      "revision": 1,
+      "semantic_hash": "d830b87cfbd212586024a3fa42ad0a170e2b112c9baf57e7d21e762ce3c2e191"
+    },
+    {
+      "id": "research.robotics.tactile_force_feedback",
+      "kind": "research",
+      "revision": 1,
+      "semantic_hash": "8e09db04e32b72afa01db608aeeb18a061dd428143d25ba8020050ba4c139c6f"
+    },
+    {
+      "id": "research.robotics.visuomotor_policies",
+      "kind": "research",
+      "revision": 1,
+      "semantic_hash": "0432003080473e8010f3bdccc9b071c101b68fc8d00a3fb925e916bca82ea399"
+    },
+    {
+      "id": "research.safety.adversarial_probes",
+      "kind": "research",
+      "revision": 1,
+      "semantic_hash": "356db0d373c1a416a6a2cdc65df173f3c6e492067022585ed0a31441cb68f9fe"
+    },
+    {
+      "id": "research.safety.constitutional_rule_critique",
+      "kind": "research",
+      "revision": 1,
+      "semantic_hash": "d43a45f9a23898d4060e15fffd3a5f049e010f63cc8b94d16681e61006c5f2eb"
+    },
+    {
+      "id": "research.safety.formal_tool_sandboxing",
+      "kind": "research",
+      "revision": 1,
+      "semantic_hash": "bb712c375f2c8438e74abeae345792db30f006212cb64b60c44ab372fcd2b9ff"
+    },
+    {
+      "id": "research.safety.mechanistic_circuit_tracing",
+      "kind": "research",
+      "revision": 1,
+      "semantic_hash": "a11ef946cbe0465aaf605cd92fd16de62cbe47ea0d5234a868a5b055159ca1ec"
+    },
+    {
+      "id": "research.safety.scalable_debate_oversight",
+      "kind": "research",
+      "revision": 1,
+      "semantic_hash": "88f35636eda67cc0c785e3e80234f8d0f49afa2a992211797b8882a3d6f7b3be"
+    },
+    {
+      "id": "research.safety.unlearning_and_redaction",
+      "kind": "research",
+      "revision": 1,
+      "semantic_hash": "e38a548b1ac2e8d81f479526a709c72e8525398d2867a86d20969f9ab85944c6"
+    },
+    {
+      "id": "research.safety.verification_refinement_1",
+      "kind": "research",
+      "revision": 1,
+      "semantic_hash": "70038cfa652098dd9dd93311d990dd60007da5f14769a4dbd25ed11a1a2f483b"
+    },
+    {
       "id": "research.sequence_modeling",
       "kind": "research",
       "revision": 2,
@@ -1187,14 +1637,14 @@
     {
       "id": "scenario.century_frontier",
       "kind": "scenario",
-      "revision": 21,
-      "semantic_hash": "a341d266d95329049fdf7f7a35e8dcd7d9564237c58181eb580dac3907998920"
+      "revision": 22,
+      "semantic_hash": "c9002b43fc4cf74ddd46ca600faadfce56b9801fe95004ab8909833445fe57c7"
     },
     {
       "id": "scenario.century_plateau",
       "kind": "scenario",
-      "revision": 21,
-      "semantic_hash": "4b8ed699db2d3dcb1bad34ac0400212b84e94726fc7c78277f6f7619399a5ea9"
+      "revision": 22,
+      "semantic_hash": "54b87233f78509c9d58687ceb2b39457cc01877e7ed513e8c034d8c15735aac7"
     },
     {
       "id": "scenario.first_playable",
@@ -1205,8 +1655,8 @@
     {
       "id": "scenario.founder_campaign",
       "kind": "scenario",
-      "revision": 54,
-      "semantic_hash": "7661df638a4bea1457d3c8268b0d32e224a52fce1787cba9819f0b9b37ed9fdc"
+      "revision": 56,
+      "semantic_hash": "72f4203d5f966e5bedcfd5afa8aab88c668b691912765a0e6daecb8f05271e82"
     },
     {
       "id": "scenario.world_competition",
@@ -1341,16 +1791,10 @@
       "semantic_hash": "92d570b5995e8a822c3df99941ec4d3661a3a54bfade7c2e6a2d1f90e6f0cd33"
     },
     {
-      "id": "story.open_bench",
+      "id": "story.provenance_scrutiny_audit",
       "kind": "flow",
       "revision": 1,
-      "semantic_hash": "eb4e1934662df4db41378871b438129f398205b09653bce5bcdbbc855f687110"
-    },
-    {
-      "id": "story.the_missing_zero",
-      "kind": "flow",
-      "revision": 1,
-      "semantic_hash": "5ee2594f4c25a0a4d0d4d9fa4818bb9b69671a3242572e4fa9b80254747744ae"
+      "semantic_hash": "4f73aa0b953d8c61471a0c504a7cf0bd51433831e7f075956fcf7e468804a36e"
     },
     {
       "id": "story.willow_council",
@@ -1360,8 +1804,8 @@
     }
   ],
   "format": 1,
-  "generation": 86,
-  "messages_hash": "e5946984912b46eefc82ff435b92f90ca78084b9ca13abc105b735d6893507b4",
+  "generation": 88,
+  "messages_hash": "f3107dacf2e4cd38a9a527c0f46847efdc6f6a365408e2c7a738af2818795d72",
   "save_policy": "reject-prior-content",
   "scenario_flow_roots": {
     "scenario.century_frontier": [
@@ -1485,7 +1929,8 @@
       "century.product_customer.cedar_quarter",
       "century.product_customer.district_rollout",
       "century.product_customer.harbormark_cycle",
-      "deployment.incident_news"
+      "deployment.incident_news",
+      "story.provenance_scrutiny_audit"
     ],
     "scenario.century_plateau": [
       "slice.research_milestone",
@@ -1608,7 +2053,8 @@
       "century.product_customer.cedar_quarter",
       "century.product_customer.district_rollout",
       "century.product_customer.harbormark_cycle",
-      "deployment.incident_news"
+      "deployment.incident_news",
+      "story.provenance_scrutiny_audit"
     ],
     "scenario.first_playable": [
       "slice.research_milestone",
@@ -1757,8 +2203,7 @@
       "life.mission.concern",
       "life.mission.rival",
       "life.mission.resignation",
-      "story.the_missing_zero",
-      "story.open_bench"
+      "story.provenance_scrutiny_audit"
     ],
     "scenario.world_competition": [
       "slice.research_milestone",
@@ -1837,5 +2282,5 @@
       "deployment.incident_news"
     ]
   },
-  "source_hash": "b573667eee9dedb44c1461275d114e6da1857dc17722a6c9e85c473c328046d2"
+  "source_hash": "a4627d2595077c35d929daf8c19de8f3a039f71c28e7f07a2d4f2121b2d001df"
 }

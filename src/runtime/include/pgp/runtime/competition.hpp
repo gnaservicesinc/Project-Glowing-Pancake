@@ -10,6 +10,13 @@
 namespace pgp::runtime {
 struct WorldState;
 struct CompiledProgram;
+struct IndustryActivity {
+    std::int64_t publications = 0;
+    std::int64_t deployments = 0;
+    int stage = 0;
+};
+[[nodiscard]] IndustryActivity industry_activity(const WorldState& world);
+
 struct RivalObservation {
     core::OrdinalDay day{0};
     std::uint32_t public_providers=0;

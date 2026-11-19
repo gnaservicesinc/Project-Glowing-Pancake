@@ -40,7 +40,7 @@ Rectangle {
     }
     onCountiesChanged: {
         if (!counties.some(row=>row.id===selectedCounty)) selectedCounty=counties.length?counties[0].id:""
-        Qt.callLater(countyDraft.restoreDraft)
+        countyDraft?.scheduleRestore()
     }
     signal openApp(string app,string section)
     signal visitHeadquarters()

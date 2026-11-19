@@ -1,10 +1,13 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import "apps"
 
 ColumnLayout {
     id: panel
     property string room: "office"
+    property string deviceId: ""
+    property string application: ""
     property int textSize: 14
     property string section: "data"
     property string officeSection: "offers"
@@ -30,17 +33,28 @@ ColumnLayout {
     }
     DraftState {
         id: labPageDraft
-        draftKey: "pages/lab"
+        draftKey: panel.application ? "" : "pages/lab"
         accepts: value => ["data", "research", "train", "models", "evaluate", "deploy", "projects"].includes(value)
         onRestored: value => panel.section = value
         onReset: panel.section = "data"
     }
     DraftState {
         id: officePageDraft
-        draftKey: "pages/office"
+        draftKey: panel.application ? "" : "pages/office"
         accepts: value => ["software", "offers", "products", "contracts", "markets", "rivals", "accounts", "funding", "governance", "policies", "score"].includes(value)
         onRestored: value => panel.officeSection = value
         onReset: panel.officeSection = "offers"
+    }
+    Component.onCompleted: {
+        if (!application) return
+        const saved = campaign.world.deviceAppState(deviceId, application).section
+        if (saved && room === "lab") section = saved
+        if (saved && room === "office" && saved !== "overview") officeSection = saved
+    }
+    function rememberPage(value) {
+        if (application) campaign.world.setDeviceAppState(deviceId, application, "section", value)
+        else if (room === "lab") labPageDraft.remember(value)
+        else officePageDraft.remember(value)
     }
     readonly property bool editable: campaign.paused && !campaign.busy && campaign.companyEditable
     spacing: 10
@@ -143,11 +157,12 @@ ColumnLayout {
             WorldButton {
                 required property var modelData
                 objectName: "lab_" + modelData.id
+                visible: !panel.application || (panel.application === "data" ? modelData.id === "data" : ["train","models","evaluate","deploy","projects"].includes(modelData.id))
                 text: modelData.label
                 textSize: panel.textSize
                 checked: panel.section === modelData.id
                 Accessible.name: text
-                onClicked: { panel.section = modelData.id; labPageDraft.remember(modelData.id) }
+                onClicked: { panel.section = modelData.id; panel.rememberPage(modelData.id) }
             }
         }
     }
@@ -163,12 +178,12 @@ ColumnLayout {
                 required property var modelData
                 objectName: "office_" + modelData.id
                 text: modelData.label
-                visible: (modelData.id !== "software" || !!campaign.world.talent.briefs) && (modelData.id !== "markets" || manager.regionalMarkets.count > 0) &&
+                visible: (panel.application !== "accounts" || ["accounts","funding"].includes(modelData.id)) && (panel.application !== "products" || ["products","software","markets","contracts"].includes(modelData.id)) && (modelData.id !== "software" || !!campaign.world.talent.briefs) && (modelData.id !== "markets" || manager.regionalMarkets.count > 0) &&
                          (modelData.id !== "score" || !campaign.objectives.available)
                 textSize: panel.textSize
                 checked: panel.officeSection === modelData.id
                 Accessible.name: text
-                onClicked: { panel.officeSection = modelData.id; officePageDraft.remember(modelData.id) }
+                onClicked: { panel.officeSection = modelData.id; panel.rememberPage(modelData.id) }
             }
         }
     }
@@ -177,6 +192,11 @@ ColumnLayout {
     ColumnLayout {
         Layout.fillWidth: true
         visible: panel.room === "lab" && panel.section === "data"
+        DataApp {
+            Layout.fillWidth: true
+            textSize: panel.textSize
+            manager: panel.manager
+        }
         Copy { text: qsTr("License rights and coverage before training. Purchased data affects new training; an existing checkpoint keeps its original mixture.") }
         DraftField {
             objectName: "dataOfferFilter"
@@ -324,6 +344,7 @@ ColumnLayout {
         visible: panel.room === "lab" && panel.section === "research" && manager.groundedResearch
         textSize: panel.textSize
         editable: panel.editable && !campaign.storageBlocked
+        deviceId: panel.deviceId
         onSuppliersRequested: panel.openSuppliers()
     }
     ColumnLayout {
@@ -376,9 +397,11 @@ ColumnLayout {
         property var mix: ({})
         property bool refreshing: false
         readonly property string parentId: continueTraining.checked ? parentModel.value : ""
-        readonly property var selectedData: continueTraining.checked ? [] : panel.trainingData
+        readonly property bool parentIsPoc: continueTraining.checked && parentModel.value.length > 0 &&
+            !!((manager.models.row(parentModel.value).fields || {}).isProofOfConcept)
+        readonly property var selectedData: (!continueTraining.checked || parentIsPoc) ? panel.trainingData : []
         function weightsForRequest() {
-            if (continueTraining.checked || !recipe.selectedOption.sampleBudget) return ({})
+            if ((continueTraining.checked && !parentIsPoc) || !recipe.selectedOption.sampleBudget) return ({})
             const weights = {}
             for (const id of selectedData) weights[id] = panel.trainingWeights[id] || 10
             return weights
@@ -401,9 +424,9 @@ ColumnLayout {
         }
         Choice { id: recipe; objectName: "recipeChoice"; label: qsTr("Training recipe"); options: manager.recipes; onValueChanged: training.refresh() }
         Copy { text: recipe.selectedOption.detail || "" }
-        Copy { visible: !continueTraining.checked; text: qsTr("Select datasets") }
+        Copy { visible: !continueTraining.checked || training.parentIsPoc; text: qsTr("Select datasets") }
         Repeater {
-            model: continueTraining.checked ? null : manager.dataOffers
+            model: (!continueTraining.checked || training.parentIsPoc) ? manager.dataOffers : null
             GameCheck {
                 required property string entityId
                 objectName: "trainingData_" + entityId
@@ -484,6 +507,19 @@ ColumnLayout {
     ColumnLayout {
         Layout.fillWidth: true
         visible: panel.room === "lab" && panel.section === "models"
+        ModelsApp {
+            Layout.fillWidth: true
+            textSize: panel.textSize
+            manager: panel.manager
+            onContinueFromPocRequested: (pocModelId, recipeId) => {
+                if (recipeId) recipe.value = recipeId
+                continueTraining.checked = true
+                parentModel.value = pocModelId
+                panel.section = "train"
+                labPageDraft.remember("train")
+                training.refresh()
+            }
+        }
         Selection { objectName: "modelCheckpointSelection"; heading: qsTr("Training runs and immutable checkpoints"); rows: manager.models }
         Copy { text: qsTr("Pause releases compute and staff. Resume requests the original allocation. Save an immutable checkpoint to evaluate, deploy or continue elsewhere while the source keeps training. Spent work, licenses and existing bills remain.") }
         Action { objectName: "checkpointTrainingButton"; text: qsTr("Save checkpoint of selected model"); enabled: panel.editable && !!manager.models.selectedRow.fields && manager.models.selectedRow.fields.checkpointReady === true; onClicked: manager.checkpoint(manager.models.selectedId) }
@@ -685,6 +721,15 @@ ColumnLayout {
         property bool showWaitingGroups: false
         Layout.fillWidth: true
         visible: panel.room === "office" && panel.officeSection === "products"
+        ProductsApp {
+            Layout.fillWidth: true
+            textSize: panel.textSize
+            manager: panel.manager
+            onOpenSoftwareStudioRequested: {
+                panel.officeSection = "software"
+                officePageDraft.remember("software")
+            }
+        }
         Selection { objectName: "deployedServices"; heading: qsTr("Deployed services"); rows: manager.products }
         Copy { visible: !!serviceOffice.selected.deploymentRiskReport; text: qsTr("Deployment risk and controls"); font.bold: true }
         Copy {
@@ -1155,7 +1200,7 @@ ColumnLayout {
         modal: true
         anchors.centerIn: Overlay.overlay
         width: Math.min(720, Overlay.overlay.width - 36)
-        height: Math.min(620, Overlay.overlay.height - 60)
+        height: Math.min(620, (Overlay.overlay?.height || 680) - 60)
         standardButtons: confirmable ? (Dialog.Ok | Dialog.Cancel) : Dialog.Close
         contentItem: ScrollView {
             id: corporateTerms
@@ -1176,12 +1221,13 @@ ColumnLayout {
     GameDialog {
         id: fundingDialog
         objectName: "fundingConfirmation"
+        implicitHeight: Math.min(620, (Overlay.overlay?.height || 680) - 60)
         title: qsTr("Accept fixed financing terms?")
         modal: true
         anchors.centerIn: Overlay.overlay
-        width: Math.min(620, Overlay.overlay.width - 36)
+        width: Math.min(620, (Overlay.overlay?.width || 660) - 36)
         standardButtons: Dialog.Ok | Dialog.Cancel
-        height: Math.min(620, Overlay.overlay.height - 60)
+        height: Math.min(620, (Overlay.overlay?.height || 680) - 60)
         contentItem: ScrollView {
             id: fundingTerms
             clip: true
@@ -1244,7 +1290,7 @@ ColumnLayout {
         modal: true
         anchors.centerIn: Overlay.overlay
         width: Math.min(720, Overlay.overlay.width - 36)
-        height: Math.min(620, Overlay.overlay.height - 60)
+        height: Math.min(620, (Overlay.overlay?.height || 680) - 60)
         standardButtons: Dialog.Ok | Dialog.Cancel
         contentItem: ScrollView {
             id: competitiveTerms
@@ -1262,8 +1308,8 @@ ColumnLayout {
         title: qsTr("Accept contract and receive advance?")
         modal: true
         anchors.centerIn: Overlay.overlay
-        width: Math.min(620, Overlay.overlay.width - 36)
-        height: Math.min(620, Overlay.overlay.height - 60)
+        width: Math.min(620, (Overlay.overlay?.width || 660) - 36)
+        height: Math.min(620, (Overlay.overlay?.height || 680) - 60)
         standardButtons: Dialog.Ok | Dialog.Cancel
         contentItem: ScrollView {
             id: advanceTerms
@@ -1281,7 +1327,7 @@ ColumnLayout {
         title: qsTr("Cancel customer commitment?")
         modal: true
         anchors.centerIn: Overlay.overlay
-        width: Math.min(620, Overlay.overlay.width - 36)
+        width: Math.min(620, (Overlay.overlay?.width || 660) - 36)
         height: Math.min(560, Overlay.overlay.height - 60)
         standardButtons: Dialog.Ok | Dialog.Cancel
         contentItem: ScrollView {

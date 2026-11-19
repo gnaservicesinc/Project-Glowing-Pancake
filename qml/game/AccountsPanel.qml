@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import "apps"
 
 ColumnLayout {
     id: panel
@@ -90,6 +91,11 @@ ColumnLayout {
             Layout.fillWidth:true;columns:panel.width<700?1:2
             MoneyCard {Layout.fillWidth:true;textSize:panel.textSize;caption:qsTr("Company cash");amount:panel.statements.cashOnHand || "";detail:qsTr("The cash currently in the company's accounts. Bills, payroll and committed work still have claims on it.")}
             MoneyCard {Layout.fillWidth:true;textSize:panel.textSize;caption:qsTr("Room for a new idea");amount:panel.statements.spendable || "";detail:qsTr("Cash remaining after existing reservations and the operating reserve. Review the cash scenarios before making a large commitment.")}
+        }
+        AccountsApp {
+            Layout.fillWidth: true
+            textSize: panel.textSize
+            manager: panel.manager
         }
         Heading { text: qsTr("Balance sheet · %1").arg(panel.statements.date || "") }
         Line { objectName: "financeAssets"; text: panel.statements.assets || "" }

@@ -6,10 +6,10 @@ GameDialog {
         id:profileDialog;objectName:"employeeProfileDialog"
         property var person:({})
         property int textSize:14
-        readonly property real maximumHeight:Overlay.overlay.height-32
+        readonly property real maximumHeight:(Overlay.overlay?.height ?? 480)-32
         readonly property bool compact:maximumHeight<textSize*19
         anchors.centerIn:Overlay.overlay
-        width:Math.min(profileDialog.textSize*48,Overlay.overlay.width-32)
+        width:Math.min(profileDialog.textSize*48,(Overlay.overlay?.width ?? 650)-32)
         height:Math.min(implicitHeight,maximumHeight)
         modal:true;focus:true;title:person.name || qsTr("Employee profile")
         footer: DialogButtonBox {

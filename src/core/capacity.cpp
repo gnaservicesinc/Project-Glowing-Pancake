@@ -282,9 +282,11 @@ void validate_capacity(const CapacityState& state) {
         if((row.required_staff_days>0 && row.kind!=ProjectKind::research && row.kind!=ProjectKind::software) || row.required_staff_days>1'000'000 ||
             row.completed_staff_days>row.required_staff_days)
             invalid("Only research supports a bounded independent staff-day budget");
-        if(row.playtest_completed && (row.kind!=ProjectKind::research || row.status!=ProjectStatus::completed ||
-            !row.id.starts_with("lab/research/")))
-            invalid("Only Lab research can have an instant playtest result");
+        if(row.playtest_completed && (row.status!=ProjectStatus::completed ||
+            !((row.kind==ProjectKind::research && row.id.starts_with("lab/research/")) ||
+              (row.kind==ProjectKind::training && row.id.starts_with("lab/train/")) ||
+              (row.kind==ProjectKind::evaluation && row.id.starts_with("lab/evaluate/")))))
+            invalid("Only lab research, training or evaluation can have an instant playtest result");
         const bool open_pause=!row.pauses.empty() && !row.pauses.back().ends_before;
         if(open_pause!=(row.status==ProjectStatus::paused)) invalid("Project status differs from its open pause interval");
         switch (row.status) {

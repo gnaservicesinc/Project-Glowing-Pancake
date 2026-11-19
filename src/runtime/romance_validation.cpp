@@ -8,9 +8,12 @@ void validate_romance(const WorldState& w,bool deep) {
     const auto invalid=[](){throw std::invalid_argument("Romance history has invalid identities, adulthood, partners, consent replies or progression dates.");};
     const auto* rules=romance_rules(w);if(static_cast<bool>(rules)!=w.romance.has_value())invalid();if(!rules)return;
     if(!w.founding)invalid();const auto& state=*w.romance;const auto day=campaign_day(w);const auto people=romance_detail::roster(w);
-    validate_romantic_profile(state.founder,1997);
+    const int founder_birth = (w.developer_playtest && w.playtest_custom && w.simulation.management && w.simulation.management->catalog.succession)
+        ? w.simulation.management->catalog.succession->founder_birth_year
+        : 1997;
+    validate_romantic_profile(state.founder,founder_birth);
     for(const auto& e:w.simulation.management->people->employees)if(e.terms.profile.role=="Founder / researcher" && e.terms.profile.romantic!=std::optional{state.founder})invalid();
-    if(state.founder.born_on!=to_ordinal({1997,1,1}) || state.founder.preferences.minimum_friendship!=(w.founding->orientation=="demisexual"?rules->demisexual_friendship:rules->friendship) ||
+    if(state.founder.born_on!=to_ordinal({founder_birth,1,1}) || state.founder.preferences.minimum_friendship!=(w.founding->orientation=="demisexual"?rules->demisexual_friendship:rules->friendship) ||
        state.next_review<w.campaign_start || state.next_review>advance_days(day,Days{rules->interval_days}) || (state.last_action && (*state.last_action<w.campaign_start || *state.last_action>day)) ||
        state.active.size()>4096 || state.history.size()>romance_history_limit || state.replies.size()>romance_history_limit || state.next_id!=state.active.size()+state.history.size()+1 || state.next_id>romance_history_limit+1)invalid();
     if(state.known_identities.size()>8192)invalid();

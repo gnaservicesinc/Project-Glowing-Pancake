@@ -122,7 +122,7 @@ ColumnLayout {
     }
     GameDialog {
         id:review;objectName:"softwareReview";property var draft:({});property var terms:({})
-        anchors.centerIn:Overlay.overlay;width:Math.min(panel.textSize*38,Overlay.overlay.width-32);height:Math.min(panel.textSize*17,Overlay.overlay.height-32)
+        anchors.centerIn:Overlay.overlay;width:Math.min(panel.textSize*38,(Overlay.overlay?.width ?? 650)-32);height:Math.min(panel.textSize*17,(Overlay.overlay?.height ?? 480)-32)
         title:qsTr("Start software development?");modal:true;focus:true
         onAboutToShow:{draft=JSON.parse(JSON.stringify(panel.design));terms=panel.quote}
         contentItem:ScrollView {id:reviewScroll;contentWidth:availableWidth;clip:true;Label {width:reviewScroll.availableWidth;text:(review.draft.name || "")+"\n"+qsTr("Pay %1 now and reserve %2 people for %3 staff-days. Work pauses if their required equipment or skills become unavailable.").arg(review.terms.fee || "").arg((review.draft.workers || []).length).arg(review.terms.work || 0);wrapMode:Text.Wrap;font.pixelSize:panel.textSize}}

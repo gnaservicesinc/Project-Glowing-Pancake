@@ -97,9 +97,9 @@ bool DevelopmentTools::openContentStudio() {
     return true;
 }
 
-bool DevelopmentTools::openGodMode() {
+bool DevelopmentTools::openGodMode(bool showSetup) {
     auto arguments=launch_arguments_;
-    arguments.push_back(QStringLiteral("--god-mode"));
+    arguments.push_back(showSetup ? QStringLiteral("--playtest-setup") : QStringLiteral("--god-mode"));
     return QProcess::startDetached(QCoreApplication::applicationFilePath(),arguments);
 }
 }

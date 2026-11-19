@@ -86,6 +86,7 @@ struct PersonProfile {
     std::vector<std::string> skills{};
     std::string orientation="unrecorded";
     std::optional<RomanticProfile> romantic{};
+    std::uint32_t creative=0;
     auto operator<=>(const PersonProfile&) const = default;
 };
 struct IndustryPerson {

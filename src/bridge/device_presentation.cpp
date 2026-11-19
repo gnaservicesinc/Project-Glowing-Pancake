@@ -53,6 +53,8 @@ bool WorldController::appAvailableOn(QString app,QString device) const {
     if(device.isEmpty()) return false;
     if(!present(snapshot_)) return appAvailable(app,device);
     const auto& state=snapshot_->checkpoint.world.simulation;
+    if(device.startsWith("personal/") || device.startsWith("hq/"))
+        return core::physical_device_supports_app(state,device.toStdString(),app.toStdString(),atHeadquarters());
     return core::resolve_app_device(state,device.toStdString(),app.toStdString(),atHeadquarters())==device.toStdString();
 }
 void WorldController::buyDevice(QString offer,QString revision) {

@@ -59,7 +59,7 @@ ColumnLayout {
         property string action:""
         property var reviewed:({})
         property string detail:""
-        anchors.centerIn:Overlay.overlay;width:Math.min(panel.textSize*38,Overlay.overlay.width-32);modal:true;focus:true
+        anchors.centerIn:Overlay.overlay;width:Math.min(panel.textSize*38,(Overlay.overlay?.width || 800)-32);modal:true;focus:true
         title:reviewed.name || qsTr("Equipment")
         standardButtons:Dialog.Ok|Dialog.Cancel
         contentItem:Label {text:confirmation.detail;wrapMode:Text.Wrap;font.pixelSize:panel.textSize}

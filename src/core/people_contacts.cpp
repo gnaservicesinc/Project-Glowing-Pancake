@@ -48,7 +48,7 @@ std::string opening_reply(const SimulationState& state, const PeopleContact& con
         throw std::invalid_argument("Choose a topic for this opening conversation.");
     if (!state.management->governance) return "no_seat";
     const auto id=contact.person.substr(opening_contact_prefix.size());
-    const auto seat=id=="alder"?"board.cofounder":"board."+id;
+    const auto seat=id=="northstar"?"board.cofounder":"board."+id;
     const auto board=current_board(state);
     const bool opening_seat=contact.opening->outcome=="signed" && std::ranges::any_of(board,[&](const auto& row){return row.id==seat;});
     const bool followup_seat=std::ranges::any_of(contact.funding,[&](const auto& discussion) {
@@ -87,11 +87,17 @@ void manage_people_contact(SimulationState& state, const ContactAction& action,C
             if (request.room) {
                 require_room(state, request.person, request.room);
             } else {
-                if (request.device != "phone" && request.device != "tablet" && request.device != "laptop" && request.device != "desktop")
+                const bool is_physical = request.device.starts_with("personal/") || request.device.starts_with("hq/");
+                if (!is_physical && request.device != "phone" && request.device != "tablet" && request.device != "laptop" && request.device != "desktop")
                     throw std::invalid_argument("Choose a powered device that supports People.");
-                if (!state.infrastructure || !state.infrastructure->workplace || !state.infrastructure->workplace->devices ||
-                    resolve_app_device(state, request.device, "people", at_hq(state)) != request.device)
+                if (!state.infrastructure || !state.infrastructure->workplace || !state.infrastructure->workplace->devices)
                     throw std::invalid_argument("The selected device cannot send a message here.");
+                if (is_physical) {
+                    if (!physical_device_supports_app(state, request.device, "people", at_hq(state)))
+                        throw std::invalid_argument("The selected physical device cannot send a message here.");
+                } else if (resolve_app_device(state, request.device, "people", at_hq(state)) != request.device) {
+                    throw std::invalid_argument("The selected device cannot send a message here.");
+                }
             }
             if constexpr (std::is_same_v<Action,DismissPeopleContact>) {
                 // Keep an employment conversation available after an in-person departure.

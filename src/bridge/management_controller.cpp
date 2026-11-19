@@ -591,20 +591,42 @@ void ManagementController::update(CampaignSnapshotPtr snapshot,const runtime::Co
                 return job.offer_id==row.id && job.output.has_value();
             });
             const bool collected=collection!=s.lab->acquisitions.end();
-            const bool owned=synthetic || std::any_of(report.licenses.begin(),report.licenses.end(),[&](const auto& l){return l.offer_id==row.id;});
+            const auto proc_it=std::ranges::find_if(s.lab->processed,[&](const auto& job){
+                return job.id==row.id && job.output.has_value();
+            });
+            const bool is_processed=proc_it!=s.lab->processed.end();
+            const auto creat_it=std::ranges::find_if(s.lab->creative_jobs,[&](const auto& job){
+                return job.id==row.id && job.output.has_value();
+            });
+            const bool is_creative=creat_it!=s.lab->creative_jobs.end();
+            const bool owned=synthetic || is_processed || is_creative || std::any_of(report.licenses.begin(),report.licenses.end(),[&](const auto& l){return l.offer_id==row.id;});
+            const QString sp=text(row.source_path.empty()?std::string_view{"licensed"}:std::string_view{row.source_path});
             data.push_back({text(row.id),text(row.name),money(row.price)+QStringLiteral(" · ")+number(row.unique_units)+QStringLiteral(" unique records"),
-                tr("%1\n%2\nQuality %3 · contamination %4\nCoverage · %5\nDomain fit · %6\nCommercial use · %7")
-                .arg(text(row.provenance),text(row.rights),percent(row.quality),percent(row.contamination),
-                    lab_profile(row.coverage),lab_profile(row.relevance),row.commercial_use?tr("Permitted"):tr("Prohibited")),
-                synthetic?tr("Generated and verified"):collected?tr("Collected and reviewed"):owned?QStringLiteral("Licensed"):QStringLiteral("Unlicensed"),!owned,
-                {{QStringLiteral("owned"),owned},{QStringLiteral("synthetic"),synthetic}}});
+                tr("%1\n%2\nQuality %3 · duplication %4 · contamination %5\nProvenance confidence %6 · Controversy risk: %7\nCoverage · %8\nDomain fit · %9\nCommercial use · %10 · Open-weight release · %11")
+                .arg(text(row.provenance),text(row.rights),percent(row.quality),percent(row.duplication_bp),percent(row.contamination),
+                    percent(row.provenance_confidence_bp),row.third_party_controversy_risk?tr("Elevated (unconsented/disputed)"):tr("Low / cleared"),
+                    lab_profile(row.coverage),lab_profile(row.relevance),row.commercial_use?tr("Permitted"):tr("Prohibited"),
+                    row.open_weight_release?tr("Permitted"):tr("Restricted")),
+                is_creative?tr("In-house creative"):is_processed?tr("Processed (%1)").arg(text(row.processing_step)):synthetic?tr("Generated and verified"):collected?tr("Collected and reviewed"):owned?QStringLiteral("Licensed"):QStringLiteral("Unlicensed"),!owned,
+                {{QStringLiteral("owned"),owned},{QStringLiteral("synthetic"),synthetic},{QStringLiteral("collected"),collected},
+                 {QStringLiteral("processed"),is_processed},{QStringLiteral("creative"),is_creative},
+                 {QStringLiteral("sourcePath"),sp},{QStringLiteral("supplier"),text(row.supplier_or_publisher.empty() ? row.name : row.supplier_or_publisher)},
+                 {QStringLiteral("history"),text(row.underlying_history.empty() ? row.provenance : row.underlying_history)},{QStringLiteral("collectionMethod"),text(row.collection_method)},
+                 {QStringLiteral("rawUnits"),number(row.raw_units?row.raw_units:row.unique_units)},
+                 {QStringLiteral("uniqueUnits"),number(row.unique_units)},
+                 {QStringLiteral("qualityPct"),percent(row.quality)},{QStringLiteral("duplicationPct"),percent(row.duplication_bp)},
+                 {QStringLiteral("contaminationPct"),percent(row.contamination)},{QStringLiteral("provenanceConfidencePct"),percent(row.provenance_confidence_bp)},
+                 {QStringLiteral("controversyRisk"),row.third_party_controversy_risk},
+                 {QStringLiteral("commercialUse"),row.commercial_use},{QStringLiteral("openWeightRelease"),row.open_weight_release},
+                 {QStringLiteral("parentDatasetId"),text(row.parent_dataset_id)},{QStringLiteral("processingStep"),text(row.processing_step)}}});
             if (synthetic) data.back().detail+=tr("\nTeacher %1 · report %2\nVerification source %3\n%4 attempted records · %5 retained after filtering")
                 .arg(text(generated->teacher_id),text(generated->evidence_id),readable(generated->verification_id),
                     number(generated->attempted_units),number(row.unique_units));
             if (collected) {
                 const auto* work=find(s.capacity->projects,collection->project_id);
-                data.back().detail+=tr("\nCollection %1 · completed %2")
-                    .arg(text(collection->project_id),text(core::iso_date(*work->stopped_on)));
+                if (work && work->stopped_on)
+                    data.back().detail+=tr("\nCollection %1 · completed %2")
+                        .arg(text(collection->project_id),text(core::iso_date(*work->stopped_on)));
                 if (collection->settled_deliveries)
                     data.back().detail+=tr("\n%1 settled customer deliveries yielded %2 opted-in records.")
                         .arg(number(*collection->settled_deliveries),number(row.unique_units));
@@ -664,14 +686,58 @@ void ManagementController::update(CampaignSnapshotPtr snapshot,const runtime::Co
             if (has_insight) research.back().detail+=QStringLiteral("\nPublic work credit has been adopted for this company's later research.");
         }
         for (const auto& row:report.models) {
-            const auto* actual=find(s.lab->models,row.id); QStringList mixture;
-            for (const auto& id:actual->data_ids) mixture.push_back(text(core::lab_data(*s.lab,id).name));
+            const auto* actual=find(s.lab->models,row.id);
+            QStringList mixture, data_ids_list, authors_list;
+            for (const auto& id:actual->data_ids) {
+                mixture.push_back(text(core::lab_data(*s.lab,id).name));
+                data_ids_list.push_back(text(id));
+            }
+            for (const auto& a:actual->authors) authors_list.push_back(text(a));
             const auto* work=find(s.capacity->projects,actual->project_id);
-            models.push_back({text(row.id),text(row.id),readable(row.recipe_id)+QStringLiteral(" · ")+cu(row.consumed_work.value())+QStringLiteral(" CU consumed"),
-                QStringLiteral("Data: %1\nParent checkpoint: %2\n%3\nServing cost %4 CU/task. True capability remains unknown until measured. A clone copies consumed work; it adds no training.")
-                    .arg(mixture.join(QStringLiteral(", ")),row.parent_id.empty()?QStringLiteral("none"):text(row.parent_id),work?text(work->cause):QString{},cu(find(s.lab->catalog.recipes,row.recipe_id)->inference_per_task.value())),
-                row.paused?QStringLiteral("Paused training"):row.training?QStringLiteral("Training"):QStringLiteral("Immutable checkpoint"),!row.training && row.consumed_work.value()>0,
-                {{QStringLiteral("projectId"),text(actual->project_id)},{QStringLiteral("training"),row.training},{QStringLiteral("paused"),row.paused},{QStringLiteral("checkpointReady"),row.consumed_work.value()>0}}});
+            const auto tech_prof=core::product_technical_profile(s,actual->id);
+            const QString status_str = actual->is_proof_of_concept ? tr("Proof-of-concept prototype")
+                : row.paused ? QStringLiteral("Paused training")
+                : row.training ? QStringLiteral("Training")
+                : QStringLiteral("Immutable checkpoint");
+            QString detail_str;
+            if (actual->is_proof_of_concept) {
+                detail_str = tr("Proof-of-concept from research: %1\nMethod: %2 · Scope: %3\nData used: %4\nPreliminary benchmark only. Not directly deployable to customer services; continue into a production training run with production data and an independent evaluation.")
+                    .arg(text(actual->origin_research_id), text(actual->method_label), text(actual->task_scope),
+                         mixture.isEmpty() ? tr("synthetic/theoretical") : mixture.join(QStringLiteral(", ")));
+            } else {
+                detail_str = QStringLiteral("Data: %1\nParent checkpoint: %2\n%3\nData efficiency +%5% · Compute efficiency +%6% · Provenance: %7\nServing cost %4 CU/task. True capability remains unknown until measured. A clone copies consumed work; it adds no training.")
+                    .arg(mixture.join(QStringLiteral(", ")),
+                         row.parent_id.empty()?QStringLiteral("none"):text(row.parent_id),
+                         work?text(work->cause):QString{},
+                         cu(find(s.lab->catalog.recipes,row.recipe_id)->inference_per_task.value()),
+                         QString::number(static_cast<double>(actual->data_efficiency_bp)/100.0, 'f', 1),
+                         QString::number(static_cast<double>(actual->compute_efficiency_bp)/100.0, 'f', 1),
+                         tech_prof.clean_provenance ? tr("Clean & verified") : tr("Contains unconsented/disputed sources"));
+            }
+            models.push_back({text(row.id),
+                actual->is_proof_of_concept && !actual->method_label.empty() ? (text(actual->method_label) + QStringLiteral(" (") + text(row.id) + QStringLiteral(")")) : text(row.id),
+                readable(row.recipe_id)+QStringLiteral(" · ")+cu(row.consumed_work.value())+QStringLiteral(" CU consumed"),
+                std::move(detail_str),
+                status_str,
+                !row.training && row.consumed_work.value()>0,
+                {{QStringLiteral("projectId"),text(actual->project_id)},
+                 {QStringLiteral("training"),row.training},
+                 {QStringLiteral("paused"),row.paused},
+                 {QStringLiteral("checkpointReady"),row.consumed_work.value()>0},
+                 {QStringLiteral("isProofOfConcept"),actual->is_proof_of_concept},
+                 {QStringLiteral("originResearchId"),text(actual->origin_research_id)},
+                 {QStringLiteral("taskScope"),text(actual->task_scope)},
+                 {QStringLiteral("methodLabel"),text(actual->method_label)},
+                 {QStringLiteral("authors"),authors_list},
+                 {QStringLiteral("recipeId"),text(row.recipe_id)},
+                 {QStringLiteral("parentId"),text(row.parent_id)},
+                 {QStringLiteral("dataIds"),data_ids_list},
+                 {QStringLiteral("dataNames"),mixture.join(QStringLiteral(", "))},
+                 {QStringLiteral("dataEfficiencyPct"),static_cast<double>(actual->data_efficiency_bp)/100.0},
+                 {QStringLiteral("computeEfficiencyPct"),static_cast<double>(actual->compute_efficiency_bp)/100.0},
+                 {QStringLiteral("latencyBonusPct"),static_cast<double>(tech_prof.latency_bonus_bp)/100.0},
+                 {QStringLiteral("robustnessBonusPct"),static_cast<double>(tech_prof.robustness_bonus_bp)/100.0},
+                 {QStringLiteral("cleanProvenance"),tech_prof.clean_provenance}}});
         }
         for (const auto& row:report.evidence) {
             QStringList findings; for (const auto& finding:row.findings) findings.push_back(text(finding));
@@ -685,7 +751,7 @@ void ManagementController::update(CampaignSnapshotPtr snapshot,const runtime::Co
                 {{QStringLiteral("modelId"),text(row.model_id)},{QStringLiteral("completed"),row.completed},{QStringLiteral("independent"),row.independent}}});
             const auto* actual=find(s.lab->evaluations,row.id);
             const auto* work=find(s.capacity->projects,actual->project_id);
-            if (!work->specialist_id.empty()) evidence.back().detail+=tr("\nSpecialist assignment reduced the experiment to %1 CU. This test consumed %2 CU.")
+            if (work && !work->specialist_id.empty()) evidence.back().detail+=tr("\nSpecialist assignment reduced the experiment to %1 CU. This test consumed %2 CU.")
                 .arg(cu(work->total_work.value()),cu(work->completed_work.value()));
         }
     }

@@ -41,7 +41,7 @@ company and world conditions, public response, other major labs, named personal
 relationships, decisions and their observed consequences. First ASI is a dated
 industry event. It does not end the player's life story.
 
-The [2026-11-09 selected refinements](FEEDBACK_REFINEMENTS.md) supersede the
+The [2026-11-09 selected refinements](IMMERSIVE_COMPANY_PLAN.md) supersede the
 earlier setup assumptions below. Starting conditions determine challenge; there
 is no difficulty choice. Hiring, premises shopping and experiments belong in play.
 

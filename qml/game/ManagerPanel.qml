@@ -34,7 +34,7 @@ ColumnLayout {
     GameDialog {
         id:quote;objectName:"operationsManagerQuote";property var reviewed:({})
         title:reviewed.error?qsTr("This assignment needs a change"):qsTr("HQ operations assignment")
-        anchors.centerIn:Overlay.overlay;width:Math.min(panel.textSize*43,Overlay.overlay.width-32);height:Math.min(panel.textSize*34,Overlay.overlay.height-32);modal:true;focus:true
+        anchors.centerIn:Overlay.overlay;width:Math.min(panel.textSize*43,(Overlay.overlay?.width ?? 650)-32);height:Math.min(panel.textSize*34,(Overlay.overlay?.height ?? 480)-32);modal:true;focus:true
         standardButtons:reviewed.error?Dialog.Close:Dialog.Ok|Dialog.Cancel
         contentItem:ScrollView {id:quoteScroll;contentWidth:availableWidth;clip:true;Label {width:quoteScroll.availableWidth;text:quote.reviewed.error || quote.reviewed.detail || "";wrapMode:Text.Wrap;textFormat:Text.PlainText;font.pixelSize:panel.textSize}}
         onAccepted:campaign.world.assignOperationsManager(reviewed)

@@ -20,6 +20,7 @@ void run() {
     management.update(snapshot,program,true);
     check(management.funding()->rowCount()==4 && management.specialists()->rowCount()==1 && management.policyDefaults().value(QStringLiteral("budget")).toString()==QStringLiteral("100000.00"),"Player funding/team/policy defaults differ from content");
     check(management.available() && management.dataOffers()->rowCount()==9 && management.researchTopics()->rowCount()==6,"Player catalog missing authored options");
+    check(management.industryStage().value(QStringLiteral("level")).toInt()==0,"Initial scenario must start at Observed Industry Stage 0 (Early Frontier)");
     check(management.recipes().front().toMap().value(QStringLiteral("id")).toString()==QStringLiteral("recipe.document_baseline"),"Opening recipe starts on a locked research branch");
     check(management.evaluations().front().toMap().value(QStringLiteral("id")).toString()==QStringLiteral("evaluation.held_out"),"Default evaluation cannot qualify the opening service");
     check(management.servicePreview(QStringLiteral("product.coding_api"),{},false).contains(QStringLiteral("software and reasoning ≥ 58.00%")),
@@ -99,6 +100,21 @@ void run() {
     check(pricing.decisions()->rowCount()==1 && pricing.decisions()->idAt(0)==QStringLiteral("decision:65536"),"Older decisions are inaccessible");
     pricing.setDecisionPage(0);check(pricing.decisions()->rowCount()==128,"Newest decision page could not be restored");
     check(management.scoreText().contains(QStringLiteral("Company record through")) && management.scoreText().contains(QStringLiteral("Founder ownership")),"The dated company record must show founder ownership.");
+    // F-08F: Observed industry stage progression & interactive expense breakdown drill-down
+    check(management.industryStage().value(QStringLiteral("level")).toInt()>=1 &&
+        management.industryStage().value(QStringLiteral("deployedServices")).toLongLong()>=1,
+        "Observed industry stage must advance once public services or breakthroughs exist");
+    const auto breakdown=management.expenseBreakdown();
+    check(breakdown.size()==7,"Expense breakdown must expose all 7 categories");
+    qint64 breakdown_total=0;
+    for(const auto& b:breakdown) breakdown_total+=b.toMap().value(QStringLiteral("cents")).toLongLong();
+    check(breakdown_total>0,"Expense breakdown must sum real settled cash outlays");
+    const auto data_postings=management.ledgerPostingsByCategory(QStringLiteral("data_licenses"));
+    check(!data_postings.isEmpty(),"Category drill-down must filter real data license postings");
+    const auto tech_prof=management.modelTechnicalProfile(QStringLiteral("baseline"));
+    check(tech_prof.value(QStringLiteral("modelId")).toString()==QStringLiteral("baseline") &&
+        tech_prof.value(QStringLiteral("cleanProvenance")).toBool() && later->checkpoint==advanced,
+        "Model technical profile query must report clean provenance without mutating state");
     bridge::SocietyController society;
     society.update(later,true);society.regions()->setSelectedId(QStringLiteral("region.us"));
     check(society.regions()->rowCount()==8 && society.global().contains(QStringLiteral("lowest region")) &&

@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="810" viewBox="0 0 1440 810">
+  <title>Shared courtyard at the co-op</title>
+  <defs><linearGradient id="light" x2="0" y2="1"><stop stop-color="#304d54"/><stop offset="1" stop-color="#c4b082"/></linearGradient></defs>
+  <rect width="1440" height="810" fill="url(#light)"/>
+  <circle cx="1090" cy="232" r="90" fill="#ead2a2" opacity=".78"/>
+  <path fill="#596b68" d="M0 412l254-102 204 42 244-100 250 45 232-54 256 21v467H0z"/>
+  <path fill="#536963" d="M481 392l468-47v219l-468 10z"/><path fill="#3f5554" d="M918 318l369-70 153 45v275l-522 27z"/>
+  <path fill="#ddc091" d="M974 385l84-13v84l-84 10zm136-25l79-12v86l-79 11zm142-26l37-6v126l-37 4z"/>
+  <path fill="#a9ae89" d="M509 438l75-6v70l-75 4zm113-12l74-6v72l-74 3zm132-12l78-7v74l-78 3z"/>
+  <path fill="#839185" d="M259 810l594-246 587-14v67l-467 46-299 147z"/>
+  <path fill="#574d40" d="M831 620l254-27 55 16-260 34zm28 22h10v30h-10zm245-26h10v30h-10z"/>
+  <path fill="#3a534a" d="M685 582l17-101-32-45 12-3 26 27 11-81 13 5-2 92 38-25 7 9-47 39-12 83z"/>
+  <g fill="#597058"><ellipse cx="694" cy="416" rx="65" ry="42"/><ellipse cx="752" cy="396" rx="69" ry="59"/><ellipse cx="773" cy="445" rx="46" ry="33"/></g>
+  <path d="M820 324q186 82 449-26" stroke="#485758" fill="none" stroke-width="3"/>
+  <path fill="#e7ce9f" d="M881 346l26 7-5 25-25-6zm56 13l31 4-3 38-32-4z"/><path fill="#ad7969" d="M1010 366l29-2 3 23-29 2z"/>
+  <path fill="#384e48" d="M0 712l237-66 217 33 125 27-194 104H0zm1165-27l275-73v198h-400z"/>
+</svg>

@@ -69,6 +69,12 @@ std::uint64_t settled_feedback(const MarketState& market,const FeedbackConsent& 
 }
 std::optional<DataOffer> deliver(const DataAcquisitionOffer& terms,std::uint64_t tasks) {
     auto output=terms.dataset;
+    if (terms.feedback) {
+        output.source_path="user_feedback";
+        output.collection_method="Consented service feedback";
+    }
+    if (output.supplier_or_publisher.empty()) output.supplier_or_publisher=output.name;
+    if (output.underlying_history.empty()) output.underlying_history=output.provenance;
     if(terms.feedback)
         output.unique_units=std::min(output.unique_units,
             mul_div_floor(tasks,static_cast<std::uint64_t>(terms.feedback->opted_in_share.value()),10000).quotient);

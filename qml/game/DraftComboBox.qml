@@ -22,6 +22,8 @@ GameSelect {
             draftOwner[draftProperty] = draftResetValue
         saved.restoreDraft()
     }
+    function scheduleRestore() { restoreTimer.restart() }
+    Timer { id: restoreTimer; interval: 0; onTriggered: picker.restoreDraft() }
     DraftState {
         id: saved
         draftKey: picker.draftOwner && picker.draftProperty === "selectedId" && typeof picker.draftOwner.containsSourceId === "function"
@@ -40,7 +42,7 @@ GameSelect {
     Connections {
         target: picker
         function onActivated(index) { saved.remember(picker.stableId(index)) }
-        function onModelChanged() { Qt.callLater(picker.restoreDraft) }
-        function onCountChanged() { Qt.callLater(picker.restoreDraft) }
+        function onModelChanged() { picker.scheduleRestore() }
+        function onCountChanged() { picker.scheduleRestore() }
     }
 }

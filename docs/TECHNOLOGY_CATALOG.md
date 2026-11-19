@@ -6,7 +6,7 @@ This is a reviewed seed catalog for [the technology design](TECHNOLOGY.md),
 not finalized content, an implemented schema or a commitment to ship 140 nodes.
 Each selected entry must add a meaningful decision, use an implemented effect,
 receive balance values and pass authoring validation. Merge entries that merely
-repeat the same choice. The existing 60-topic prototype remains unchanged.
+repeat the same choice. The playable catalog is recorded in [current implementation](STATUS.md).
 
 **Kinds:** B = baseline public knowledge/practice available in 2015; E = an
 established concept or authored combination of established methods; S = a

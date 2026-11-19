@@ -52,9 +52,9 @@ The executable vocabulary also includes explicit narrative-stream weighted
 random nodes. Canonical identity retains ordered branch IDs, weights and edges;
 compilation and pure condition inspection consume no randomness. Execution and
 exact saved outcomes are documented in the
-[weighted-branch evidence](../../docs/evidence/M1-06-weighted-branches.md).
+weighted-branch evidence (`git show 589bf46:docs/evidence/M1-06-weighted-branches.md`).
 Daily duration predicates also compile and execute through the
-[saved temporal contract](../../docs/evidence/M1-06-duration.md). Pure inspection
+saved temporal contract (`git show 589bf46:docs/evidence/M1-06-duration.md`). Pure inspection
 accepts a read-only observation reader/date and emits start/elapsed/result
 traces. A missing reader/date is unknown; explicit absent history is unsatisfied;
 stale samples are unknown. Hidden descendants redact temporal history without

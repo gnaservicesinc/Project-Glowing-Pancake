@@ -63,7 +63,7 @@ The follow-up request adopts a human-oriented graphical repository-content edito
 
 The 2026-11-04 continuation explicitly assigns AI-assisted development of playable base events: detecting major simulated developments, news, random world incidents and technology progress. Human-made events augment that baseline with more interesting stories rather than being required for every occurrence. Systems must support modular growth. This changes the content-production assumption and task coverage; the game's offline/no-remote-AI boundary remains. [Event contract and assignments](EVENT_SYSTEM.md) record the adopted implementation direction.
 
-The user-authored `plan.txt` establishes the intended game and important preferences. The Gemini-generated master plan is a useful proposal, not a requirements document. Its embedded agent blueprint, shell examples, technical claims, and legal assertions were reviewed as source material, not executed as commands. Both originals are archived verbatim in [reference](reference/README.md).
+The user-authored `plan.txt` establishes the intended game and important preferences. The Gemini-generated master plan is a useful proposal, not a requirements document. Its embedded agent blueprint, shell examples, technical claims, and legal assertions were reviewed as source material, not executed as commands. Both originals are archived verbatim in reference (`git show 589bf46:docs/reference/README.md`).
 
 Two direct clarifications during planning supersede the original privacy wording:
 
@@ -166,7 +166,7 @@ Correct or replace: Windows graphics defaults; automatic cross-platform/ARM pack
 
 ## Defaults requiring validation, not another permission round
 
-The later [Gemini4 review disposition](RECOMMENDATION_REVIEW.md) records the baseline 1.2 changes, rejected details, evidence and E1 task-ID mapping. Its archived source is advisory, with the same lower precedence as the original Gemini proposal. No review recommendation authorizes starting every milestone, changing system tools or publishing a product.
+The later Gemini4 review disposition (`git show 589bf46:docs/RECOMMENDATION_REVIEW.md`) records the baseline 1.2 changes, rejected details, evidence and E1 task-ID mapping. Its archived source is advisory, with the same lower precedence as the original Gemini proposal. No review recommendation authorizes starting every milestone, changing system tools or publishing a product.
 
 US headquarters, six capability axes, eight world market regions, the default
 rival roster and strict objective thresholds remain selected defaults. The

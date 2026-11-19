@@ -73,8 +73,8 @@ ColumnLayout {
         property string skillId:""
         property string revision:""
         property string copy:""
-        anchors.centerIn:Overlay.overlay;width:Math.min(panel.textSize*38,Overlay.overlay.width-32)
-        height:Math.min(panel.textSize*18,Overlay.overlay.height-32)
+        anchors.centerIn:Overlay.overlay;width:Math.min(panel.textSize*38,(Overlay.overlay?.width ?? 650)-32)
+        height:Math.min(panel.textSize*18,(Overlay.overlay?.height ?? 480)-32)
         modal:true;focus:true;title:qsTr("Enroll in this course?")
         onAboutToShow:{studentId=panel.student.id;skillId=panel.course.id;revision=campaign.world.reviewToken;copy=panel.student.name+"\n"+panel.course.name+"\n"+panel.course.detail+"\n"+(payer==="personal"?(studentId==="founder"?qsTr("Tuition leaves your personal savings now."):qsTr("They agreed to pay from their learning jar. Company funds and your savings are untouched.")):qsTr("Tuition is a company expense paid now."))}
         contentItem:ScrollView { id:reviewScroll;contentWidth:availableWidth;clip:true;Label { id:details;width:reviewScroll.availableWidth;text:review.copy;wrapMode:Text.Wrap;font.pixelSize:panel.textSize } }

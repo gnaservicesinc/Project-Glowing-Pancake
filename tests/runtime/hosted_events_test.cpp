@@ -15,7 +15,7 @@ int main() {
         selection.family="rich";selection.advantages={"political"};selection.route="hired_ceo";selection.office="shared";selection.researcher="none";
         for(const auto& scene:scenario.founding->scenes)selection.choices[scene.id]=scene.choices.front().id;
         runtime::ScenarioOptions options;options.founding=selection;
-        options.identity=runtime::CampaignIdentity{"Alder Research","Alex Vale","they/them"};
+        options.identity=runtime::CampaignIdentity{"Northstar Applied Labs","Alex Vale","they/them"};
         options.opening_contacts.push_back({"opening/frontier",scenario.starts_on,{},core::OpeningConversation{"pitch","unsigned"}});
         auto opening=runtime::begin_scenario(program,"scenario.founder_campaign","US-CA",core::ObjectiveSelection{core::ObjectiveKind::survival,{}},options);
         opening.world.enabled_flows=std::vector<std::string>{};runtime::Runtime game{program,opening};

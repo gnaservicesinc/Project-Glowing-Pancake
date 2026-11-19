@@ -1,6 +1,7 @@
 #include <pgp/core/workplace_research.hpp>
 #include <pgp/core/simulation.hpp>
 
+#include <pgp/core/research_data.hpp>
 #include <algorithm>
 #include <set>
 #include <stdexcept>
@@ -13,7 +14,7 @@ const CapacityProject *project(const SimulationState &state, std::string_view id
     return found == projects.end() ? nullptr : &*found;
 }
 LabAllocation allocation(const ResearchRun &run, const CapacityProject &work) {
-    return {work.source_id, work.requested, work.staff, run.researchers};
+    return {work.source_id, work.requested, work.staff, run.researchers, run.data_ids};
 }
 } // namespace
 
@@ -116,6 +117,10 @@ std::string research_workplace_blocker(const SimulationState &state, std::string
         const auto team=research_team(state,plan.researchers);
         if(threshold==UINT32_MAX) return "Complete the required technology levels and prerequisites.";
         if(team.creativity<threshold) return "Team creativity is "+std::to_string(team.creativity)+" distinct traits; this research needs "+std::to_string(threshold)+". Add new perspectives or complete more prerequisites.";
+        const auto node=std::ranges::find(state.lab->catalog.research,topic,&LabResearch::id);
+        if(node!=state.lab->catalog.research.end() && node->data_requirement.required) {
+            if (const auto why = research_data_blocker(*state.lab, *state.capacity, state.date, *node, plan.data_ids); !why.empty()) return why;
+        }
     }
     if (!hq_has_lab_equipment(state, equipment)) {
         const auto &offers = state.infrastructure->catalog.workplace->headquarters->equipment;

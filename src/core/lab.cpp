@@ -1,4 +1,5 @@
 #include <pgp/core/lab.hpp>
+#include <pgp/core/research_data.hpp>
 #include <pgp/core/people.hpp>
 
 #include <algorithm>
@@ -40,26 +41,46 @@ const DataAcquisition* acquired_data(std::span<const DataAcquisition> rows,std::
     return row==rows.end()?nullptr:&*row;
 }
 const DataOffer& lookup_data(const LabCatalog& catalog,std::span<const GeneratedDataset> generated,
-                             std::span<const DataAcquisition> acquired,std::string_view id) {
+                             std::span<const DataAcquisition> acquired,
+                             std::span<const ProcessedDataset> processed,
+                             std::span<const CreativeProductionJob> creative,
+                             std::string_view id) {
     const auto authored=std::ranges::find(catalog.data,id,&DataOffer::id);
     if(authored!=catalog.data.end()) return *authored;
     const auto job=std::ranges::find(generated,id,&GeneratedDataset::id);
     if(job!=generated.end() && job->output) return *job->output;
     if(const auto* collection=acquired_data(acquired,id)) return *collection->output;
+    const auto proc=std::ranges::find(processed,id,&ProcessedDataset::id);
+    if(proc!=processed.end() && proc->output) return *proc->output;
+    const auto cr=std::ranges::find(creative,id,&CreativeProductionJob::id);
+    if(cr!=creative.end() && cr->output) return *cr->output;
     invalid("Choose a catalog dataset or wait for the data job to deliver its corpus");
 }
 bool licensed(const LabState& state, std::string_view id) {
     return std::any_of(state.licenses.begin(), state.licenses.end(), [&](const auto& row) { return row.offer_id == id; }) ||
         std::ranges::any_of(state.generated,[&](const auto& row) { return row.id==id && row.output.has_value(); }) ||
-        acquired_data(state.acquisitions,id);
+        acquired_data(state.acquisitions,id) ||
+        std::ranges::any_of(state.processed,[&](const auto& row) { return row.id==id && row.output.has_value(); }) ||
+        std::ranges::any_of(state.creative_jobs,[&](const auto& row) { return row.id==id && row.output.has_value(); });
 }
 bool completed(const LabState& state, std::string_view id) {
     return std::any_of(state.research.begin(), state.research.end(), [&](const auto& row) {
         return row.research_id == id && row.completed;
     });
 }
+bool licensed_tech_on(const LabState& state, std::string_view id, OrdinalDay day) {
+    return std::ranges::any_of(state.tech_licenses, [&](const auto& lic) {
+        return lic.research_id == id && lic.active_on <= day && day < lic.expires_on;
+    });
+}
+bool requires_met_on(const LabState& state, const CapacityState& capacity, const std::vector<std::string>& required, OrdinalDay day) {
+    return std::all_of(required.begin(), required.end(), [&](const auto& id) { return has_research_access(state, capacity, id, day); });
+}
 bool requires_met(const LabState& state, const std::vector<std::string>& required) {
-    return std::all_of(required.begin(), required.end(), [&](const auto& id) { return completed(state, id); });
+    const auto today = state.closed_through ? advance_days(*state.closed_through, Days{1}) : state.starts_on;
+    return std::all_of(required.begin(), required.end(), [&](const auto& id) {
+        return completed(state, id) || licensed_tech_on(state, id, today);
+    });
 }
 bool knowledge_on(const LabState& state, const CapacityState& capacity, std::string_view id, OrdinalDay day) {
     return std::any_of(state.research.begin(), state.research.end(), [&](const auto& row) {
@@ -130,11 +151,15 @@ std::vector<std::string> data_union(const LabState& state, const TrainingRequest
         if (!unique.insert(id).second) invalid("A dataset cannot contribute twice to one mixture");
     if (!request.parent_id.empty()) {
         const auto& parent = find(state.models, request.parent_id);
-        if (parent.recipe_id != request.recipe_id) invalid("Checkpoint continuation must retain its recipe");
-        for (const auto& id : ids)
-            if (std::find(parent.data_ids.begin(), parent.data_ids.end(), id) == parent.data_ids.end())
-                invalid("Checkpoint continuation retains its original data; train a fresh candidate to learn a new mixture");
-        ids.insert(ids.end(), parent.data_ids.begin(), parent.data_ids.end());
+        if (!parent.is_proof_of_concept) {
+            if (parent.recipe_id != request.recipe_id) invalid("Checkpoint continuation must retain its recipe");
+            for (const auto& id : ids)
+                if (std::find(parent.data_ids.begin(), parent.data_ids.end(), id) == parent.data_ids.end())
+                    invalid("Checkpoint continuation retains its original data; train a fresh candidate to learn a new mixture");
+            ids.insert(ids.end(), parent.data_ids.begin(), parent.data_ids.end());
+        } else if (ids.empty()) {
+            invalid("Continuing a proof-of-concept into production requires production training datasets");
+        }
     }
     std::sort(ids.begin(), ids.end()); ids.erase(std::unique(ids.begin(), ids.end()), ids.end());
     if (ids.empty()) invalid("A training mixture needs at least one data source");
@@ -157,7 +182,7 @@ LabModel training_mixture(const LabState& state,const TrainingRequest& request) 
     LabModel model;
     model.recipe_id=request.recipe_id;
     model.data_ids=data_union(state,request);
-    if(!request.parent_id.empty()) {
+    if(!request.parent_id.empty() && !find(state.models,request.parent_id).is_proof_of_concept) {
         if(!request.data_weights.empty())invalid("Continue with the checkpoint's saved data balance");
         model.data_weights=find(state.models,request.parent_id).data_weights;
     } else if(!even_weights(find(state.catalog.recipes,request.recipe_id),model.data_ids,request.data_weights)) {
@@ -175,12 +200,13 @@ struct SampleAllocation {
 
 using Allocations=std::array<SampleAllocation,lab_catalog_limit>;
 void allocate_samples(std::span<SampleAllocation> allocations,const TrainingRecipe& recipe,const LabCatalog& catalog,
-        const LabModel& model,std::span<const GeneratedDataset> generated,std::span<const DataAcquisition> acquired) {
+        const LabModel& model,std::span<const GeneratedDataset> generated,std::span<const DataAcquisition> acquired,
+        std::span<const ProcessedDataset> processed,std::span<const CreativeProductionJob> creative) {
     std::uint64_t total_weight=0;
     for(std::size_t i=0;i<allocations.size();++i) {
         const auto& id=model.data_ids[i];
         auto& source=allocations[i];
-        source.offer=&lookup_data(catalog,generated,acquired,id);
+        source.offer=&lookup_data(catalog,generated,acquired,processed,creative,id);
         source.weight=model.data_weights.empty()?1U:model.data_weights.at(id);
         source.planned=source.offer->unique_units;
         total_weight+=source.weight;
@@ -219,10 +245,11 @@ std::array<std::uint64_t,lab_domain_count> effective_data(std::span<const Sample
 }
 
 std::array<std::uint64_t,lab_domain_count> effective_data(const TrainingRecipe& recipe,const LabCatalog& catalog,const LabModel& model,
-        std::span<const GeneratedDataset> generated,std::span<const DataAcquisition> acquired) {
+        std::span<const GeneratedDataset> generated,std::span<const DataAcquisition> acquired,
+        std::span<const ProcessedDataset> processed,std::span<const CreativeProductionJob> creative) {
     Allocations storage;
     auto allocations=std::span{storage}.first(model.data_ids.size());
-    allocate_samples(allocations,recipe,catalog,model,generated,acquired);
+    allocate_samples(allocations,recipe,catalog,model,generated,acquired,processed,creative);
     return effective_data(allocations);
 }
 std::uint64_t saturation(std::uint64_t amount, std::uint64_t scale) {
@@ -258,7 +285,22 @@ void resolve_evidence(const LabState& state, EvaluationEvidence& evidence, Split
 } // namespace
 
 const DataOffer& lab_data(const LabState& state,std::string_view id) {
-    return lookup_data(state.catalog,state.generated,state.acquisitions,id);
+    return lookup_data(state.catalog,state.generated,state.acquisitions,state.processed,state.creative_jobs,id);
+}
+
+bool has_research_access(const LabState& state, const CapacityState& capacity, std::string_view research_id, OrdinalDay day) {
+    return knowledge_on(state, capacity, research_id, day) || licensed_tech_on(state, research_id, day);
+}
+
+std::pair<std::uint32_t, std::uint32_t> research_efficiency_bonuses(const LabState& state, const CapacityState& capacity, OrdinalDay day) {
+    std::uint32_t data_bp = 0, compute_bp = 0;
+    for (const auto& topic : state.catalog.research) {
+        if (topic.technical_effect.data_efficiency_bp == 0 && topic.technical_effect.compute_efficiency_bp == 0) continue;
+        if (!has_research_access(state, capacity, topic.id, day)) continue;
+        data_bp = std::min<std::uint32_t>(4500, data_bp + topic.technical_effect.data_efficiency_bp);
+        compute_bp = std::min<std::uint32_t>(4000, compute_bp + topic.technical_effect.compute_efficiency_bp);
+    }
+    return {data_bp, compute_bp};
 }
 
 std::optional<OrdinalDay> data_available_on(const LabState& state,const CapacityState& capacity,std::string_view id) {
@@ -266,9 +308,13 @@ std::optional<OrdinalDay> data_available_on(const LabState& state,const Capacity
     if(license!=state.licenses.end()) return license->acquired_on;
     const auto generated=std::ranges::find(state.generated,id,&GeneratedDataset::id);
     const auto* acquired=acquired_data(state.acquisitions,id);
+    const auto proc=std::ranges::find(state.processed,id,&ProcessedDataset::id);
+    const auto cr=std::ranges::find(state.creative_jobs,id,&CreativeProductionJob::id);
     std::string_view project;
     if(generated!=state.generated.end() && generated->output) project=generated->project_id;
     else if(acquired) project=acquired->project_id;
+    else if(proc!=state.processed.end() && proc->output) project=proc->project_id;
+    else if(cr!=state.creative_jobs.end() && cr->output) project=cr->project_id;
     else return std::nullopt;
     const auto& work=find(capacity.projects,project);
     if(work.status!=ProjectStatus::completed || !work.stopped_on) return std::nullopt;
@@ -303,6 +349,8 @@ void validate_lab_catalog(const LabCatalog& catalog) {
         marks[node.id] = 1;
         for (const auto* edges : {&node.all_of, &node.any_of})
             for (const auto& edge : *edges) visit(find(catalog.research, edge), depth + 1);
+        for (const auto& group : node.any_of_groups)
+            for (const auto& edge : group) visit(find(catalog.research, edge), depth + 1);
         marks[node.id] = 2;
     };
     if(catalog.creative_research.size()>lab_catalog_limit || (!catalog.creative_research.empty() && !catalog.research_workplaces)) invalid("Creative research needs equipped named teams.");
@@ -324,6 +372,20 @@ void validate_lab_catalog(const LabCatalog& catalog) {
     std::map<std::string,std::int64_t> total_inference_savings;
     for (const auto& node : catalog.research) {
         references(node.all_of); references(node.any_of);
+        if (node.any_of_groups.size() > 8) invalid("Research compound OR-group count exceeds bound");
+        for (const auto& group : node.any_of_groups) {
+            if (group.empty()) invalid("Compound OR prerequisite group must not be empty");
+            references(group);
+        }
+        if (node.poc_spec.produces_poc) {
+            label(node.poc_spec.task_scope);
+            label(node.poc_spec.method_label);
+            (void)find(catalog.recipes, node.poc_spec.recipe_id);
+        }
+        if (node.technical_effect.data_efficiency_bp > 2500 || node.technical_effect.compute_efficiency_bp > 2500 ||
+            node.technical_effect.latency_bonus_bp > 2000 || node.technical_effect.robustness_bonus_bp > 2000 ||
+            node.technical_effect.diminishing_tier > 6)
+            invalid("Research technical effect bonus exceeds its per-topic bound");
         if (node.cash.value() < 0 || (catalog.research_workplaces && !node.innovation && node.cash.value()!=0) || node.staff_days.value() == 0 || node.staff_days.value() > 1'000'000 ||
             node.repeat_limit<1 || node.repeat_limit>12 ||
             node.experiment_work.value() == 0 || node.experiment_work.value() > 1'000'000'000'000LL)
@@ -373,18 +435,34 @@ void validate_lab_catalog(const LabCatalog& catalog) {
             std::all_of(plan.coverage.begin(), plan.coverage.end(), [](auto bp) { return bp.value() == 0; }))
             invalid("Evaluation needs finite work and at least one covered subgroup");
     }
+    identities(catalog.tech_licenses, lab_catalog_limit);
+    for (const auto& lic : catalog.tech_licenses) {
+        (void)find(catalog.research, lic.research_id);
+        label(lic.licensor); label(lic.scope_label);
+        if (lic.upfront_fee.value() < 0 || lic.monthly_royalty.value() < 0 ||
+            lic.term_days.value() < 30 || lic.term_days.value() > 3650 ||
+            lic.integration_days.value() < 0 || lic.integration_days.value() > 90 || lic.royalty_bp > 2500)
+            invalid("Technology license offer has invalid fees, integration window or term");
+    }
 }
 
 LabProfile model_capability(const LabCatalog& catalog, const LabModel& model,
-        std::span<const GeneratedDataset> generated,std::span<const DataAcquisition> acquired) {
+        std::span<const GeneratedDataset> generated,std::span<const DataAcquisition> acquired,
+        std::span<const ProcessedDataset> processed,std::span<const CreativeProductionJob> creative) {
+    if (model.is_proof_of_concept) return model.capability;
     const auto& recipe = find(catalog.recipes, model.recipe_id);
-    const auto units = effective_data(recipe,catalog,model,generated,acquired);
-    const auto compute = saturation(static_cast<std::uint64_t>(model.consumed_work.value()),
-                                    static_cast<std::uint64_t>(recipe.compute_scale.value()));
+    const auto units = effective_data(recipe,catalog,model,generated,acquired,processed,creative);
+    const auto eff_compute_scale = std::max<std::uint64_t>(1, mul_div_round_half_up(
+        static_cast<std::uint64_t>(recipe.compute_scale.value()),
+        static_cast<std::uint64_t>(10000 - std::min<std::uint32_t>(4000, model.compute_efficiency_bp)), 10000));
+    const auto compute = saturation(static_cast<std::uint64_t>(model.consumed_work.value()), eff_compute_scale);
     LabProfile result = empty_lab_profile;
     for (std::size_t j = 0; j < lab_domain_count; ++j) {
         if (recipe.data_scale[j]==0) continue;
-        const auto bottleneck = std::min(compute, saturation(units[j], recipe.data_scale[j]));
+        const auto eff_data_scale = std::max<std::uint64_t>(1, mul_div_round_half_up(
+            recipe.data_scale[j],
+            static_cast<std::uint64_t>(10000 - std::min<std::uint32_t>(4500, model.data_efficiency_bp)), 10000));
+        const auto bottleneck = std::min(compute, saturation(units[j], eff_data_scale));
         const std::uint64_t factors[]{static_cast<std::uint64_t>(recipe.gain[j].value()), bottleneck,
                                       static_cast<std::uint64_t>(recipe.fit[j].value())};
         const auto gain = mul_div_round_half_up(factors, 100'000'000);
@@ -398,7 +476,7 @@ DataMixPreview preview_data_mix(const LabState& state,const TrainingRequest& req
     const auto model=training_mixture(state,request);
     Allocations storage;
     auto allocations=std::span{storage}.first(model.data_ids.size());
-    allocate_samples(allocations,recipe,state.catalog,model,state.generated,state.acquisitions);
+    allocate_samples(allocations,recipe,state.catalog,model,state.generated,state.acquisitions,state.processed,state.creative_jobs);
     DataMixPreview result;
     result.budget=recipe.sample_budget;
     result.effective_units=effective_data(allocations);
@@ -417,7 +495,11 @@ TrainingPreview preview_training(const LabState& state, const TrainingRequest& r
         invalid("Training allocation is outside the recipe's finite work limits");
     auto model=training_mixture(state,request);
     model.consumed_work = request.work;
-    if (!request.parent_id.empty()) model.consumed_work = checked_unit_add(model.consumed_work, find(state.models, request.parent_id).consumed_work);
+    if (!request.parent_id.empty()) {
+        const auto& parent = find(state.models, request.parent_id);
+        const auto head_start = parent.is_proof_of_concept ? MilliCU{std::min(parent.consumed_work.value(), recipe.minimum_work.value() / 4)} : parent.consumed_work;
+        model.consumed_work = checked_unit_add(model.consumed_work, head_start);
+    }
     TrainingPreview result;
     const auto quotient = request.work.value() / request.daily_compute.value();
     result.minimum_days = Days{checked_add(quotient, request.work.value() % request.daily_compute.value() != 0 ? 1 : 0)};
@@ -427,8 +509,8 @@ TrainingPreview preview_training(const LabState& state, const TrainingRequest& r
         result.unowned_data_cost = checked_unit_add(result.unowned_data_cost, find(state.catalog.data, id).price);
     }
     result.prerequisites_met = requires_met(state, recipe.requires_research);
-    const auto profile = model_capability(state.catalog,model,state.generated,state.acquisitions);
-    const auto units = effective_data(recipe,state.catalog,model,state.generated,state.acquisitions);
+    const auto profile = model_capability(state.catalog,model,state.generated,state.acquisitions,state.processed,state.creative_jobs);
+    const auto units = effective_data(recipe,state.catalog,model,state.generated,state.acquisitions,state.processed,state.creative_jobs);
     const auto compute = saturation(static_cast<std::uint64_t>(model.consumed_work.value()), static_cast<std::uint64_t>(recipe.compute_scale.value()));
     for (std::size_t j = 0; j < lab_domain_count; ++j) {
         if (recipe.data_scale[j]==0) continue;
@@ -479,16 +561,22 @@ bool experiment_failed(const LabState& state, const CapacityState& capacity, con
 ResearchPacing research_pacing(const LabState& state,const CapacityState& capacity,std::string_view id,OrdinalDay day) {
     const auto& node=find(state.catalog.research,id);
     ResearchPacing pacing;
-    pacing.prerequisite_groups=static_cast<std::uint32_t>(node.all_of.size())+(node.any_of.empty()?0U:1U);
+    pacing.prerequisite_groups=static_cast<std::uint32_t>(node.all_of.size())+(node.any_of.empty()?0U:1U)+static_cast<std::uint32_t>(node.any_of_groups.size());
     const auto level_required=[&](const auto& required){return find(state.catalog.research,required).innovation.has_value();};
     bool strict_missing=false;
-    for(const auto& required:node.all_of) if(!knowledge_on(state,capacity,required,day)) {
+    for(const auto& required:node.all_of) if(!has_research_access(state,capacity,required,day)) {
         ++pacing.missing_groups;
         strict_missing=strict_missing || level_required(required);
     }
-    if(!node.any_of.empty() && std::ranges::none_of(node.any_of,[&](const auto& required){return knowledge_on(state,capacity,required,day);})) {
+    if(!node.any_of.empty() && std::ranges::none_of(node.any_of,[&](const auto& required){return has_research_access(state,capacity,required,day);})) {
         ++pacing.missing_groups;
         strict_missing=strict_missing || std::ranges::any_of(node.any_of,level_required);
+    }
+    for(const auto& group:node.any_of_groups) {
+        if(std::ranges::none_of(group,[&](const auto& required){return has_research_access(state,capacity,required,day);})) {
+            ++pacing.missing_groups;
+            strict_missing=strict_missing || std::ranges::any_of(group,level_required);
+        }
     }
     if(pacing.missing_groups && (strict_missing || node.innovation)) {
         pacing.threshold=UINT32_MAX;
@@ -531,6 +619,31 @@ std::uint32_t coordinated_staff_days(const LabCatalog& catalog,const LabResearch
     const auto coordinated=(numerator+10000+bonus-1)/(10000+bonus);
     return static_cast<std::uint32_t>(insight_work(MilliCU{static_cast<std::int64_t>(coordinated)},cooperation).value());
 }
+bool research_data_fits(const ResearchDataRequirement& req, const DataOffer& data) {
+    const auto domain = std::ranges::find(lab_domain_names, req.domain_hint);
+    return data.quality.value() >= req.minimum_quality_bp &&
+        (req.domain_hint.empty() || (domain != lab_domain_names.end() && data.relevance[static_cast<std::size_t>(domain - lab_domain_names.begin())].value() > 0));
+}
+
+std::string research_data_blocker(const LabState& state, const CapacityState& capacity, OrdinalDay day,
+                                  const LabResearch& topic, const std::vector<std::string>& ids) {
+    if (!topic.data_requirement.required) return {};
+    if (ids.empty() || ids.size() > 16) return "Select one to sixteen owned datasets for this empirical topic.";
+    std::set<std::string_view> distinct;
+    std::uint64_t units = 0;
+    for (const auto& id : ids) {
+        if (!distinct.insert(id).second) return "Each dataset can contribute only once.";
+        const auto date = data_available_on(state, capacity, id);
+        if (!date || *date > day) return "Selected research data must be owned and delivered.";
+        const auto& data = lab_data(state, id);
+        if (!research_data_fits(topic.data_requirement, data)) return "Selected research data needs the requested domain and quality.";
+        units += data.unique_units;
+    }
+    if (units < topic.data_requirement.minimum_unique_units) return "Select at least " +
+        std::to_string(topic.data_requirement.minimum_unique_units) + " usable records for this research.";
+    return {};
+}
+
 void start_research(LabState& state, AccountsState& accounts, CapacityState& capacity, OrdinalDay day,
                     std::string_view research_id, const LabAllocation& allocation, Cents protected_cash,Cents sponsored_fee,std::uint32_t creativity,std::uint32_t compatibility_bp,std::optional<ResearchCooperation> cooperation) {
     require_day(state, day);
@@ -553,6 +666,8 @@ void start_research(LabState& state, AccountsState& accounts, CapacityState& cap
     if (completed_runs>=node.repeat_limit) invalid("This topic has reached its limit for successful research results");
     if (state.research.size() >= lab_record_limit) invalid("Research run record limit was reached");
     if (allocation.staff == 0) invalid("Research needs assigned staff");
+    if (const auto why = research_data_blocker(state, capacity, day, node, allocation.data_ids); !why.empty())
+        throw std::invalid_argument(why);
     const auto credit=insight_on(state,research_id,day);
     const auto retry_credit = node.setback && has_failure && completed_runs == 0 ? node.setback->retry_credit : BasisPoints{0};
     const bool grounded=state.catalog.research_workplaces.has_value();
@@ -565,7 +680,8 @@ void start_research(LabState& state, AccountsState& accounts, CapacityState& cap
     if(grounded) row.required_staff_days=coordinated_staff_days(state.catalog,node,compatibility_bp,cooperative);
     reserve_project(capacity, day, row);
     charge(accounts, day, checked_unit_subtract(node.cash,sponsored_fee), protected_cash, row.id);
-    state.research.push_back({node.id, row.id, false,credit,sponsored_fee,false,retry_credit,allocation.researchers,creativity,compatibility_bp,std::move(cooperation)});
+    ResearchRun run{node.id, row.id, false,credit,sponsored_fee,false,retry_credit,allocation.researchers,creativity,compatibility_bp,std::move(cooperation),{},allocation.data_ids};
+    state.research.push_back(std::move(run));
 }
 void publish_research(LabState& state,const CapacityState& capacity,OrdinalDay day,std::string_view id) {
     require_day(state,day);
@@ -585,16 +701,22 @@ void start_training(LabState& state, CapacityState& capacity, OrdinalDay day, co
     if (state.models.size() >= lab_record_limit || std::any_of(state.models.begin(), state.models.end(),
         [&](const auto& row) { return row.id == request.model_id; })) invalid("Model identity is already used or the record limit was reached");
     const auto preview = preview_training(state, request);
-    if (!preview.licensed || !preview.prerequisites_met) invalid("Acquire the data licenses and complete recipe research before training");
     const auto& recipe = find(state.catalog.recipes, request.recipe_id);
+    if (!preview.licensed || !requires_met_on(state, capacity, recipe.requires_research, day))
+        invalid("Acquire the data licenses and complete or license recipe research before training");
     auto model=training_mixture(state,request);
     model.id=request.model_id; model.parent_id=request.parent_id; model.created_on=day;
+    const auto [data_eff, compute_eff] = research_efficiency_bonuses(state, capacity, day);
+    model.data_efficiency_bp = data_eff;
+    model.compute_efficiency_bp = compute_eff;
     if (!model.parent_id.empty()) {
         const auto& parent = find(state.models, model.parent_id); frozen(parent, capacity);
-        model.inherited_work = parent.consumed_work;
+        model.inherited_work = parent.is_proof_of_concept
+            ? MilliCU{std::min(parent.consumed_work.value(), recipe.minimum_work.value() / 4)}
+            : parent.consumed_work;
     }
     model.consumed_work = model.inherited_work;
-    model.capability = model_capability(state.catalog,model,state.generated,state.acquisitions);
+    model.capability = model_capability(state.catalog,model,state.generated,state.acquisitions,state.processed,state.creative_jobs);
     auto row = project("lab/train/" + model.id, ProjectKind::training, day,
         {request.source_id, request.daily_compute, request.staff}, request.work);
     row.minimum_memory_mib = recipe.minimum_memory_mib; row.interconnect = recipe.interconnect;
@@ -639,10 +761,66 @@ void start_evaluation(LabState& state, AccountsState& accounts, CapacityState& c
     evidence.project_id = row.id; evidence.model_work = model.consumed_work;
     state.evaluations.push_back(std::move(evidence));
 }
+#if !PGP_DISTRIBUTION
+void finish_playtest_evaluation(LabState& lab, CapacityState& capacity, RandomSnapshot& random, OrdinalDay day) {
+    auto& evidence = lab.evaluations.back();
+    const auto found = std::ranges::find(capacity.projects, evidence.project_id, &CapacityProject::id);
+    if (found == capacity.projects.end() || evidence.completed || found->starts_on != day)
+        invalid("Expected the starter model's new evaluation project");
+    auto& project = *found;
+    project.playtest_completed = true;
+    project.completed_work = project.total_work;
+    project.status = ProjectStatus::completed;
+    project.stopped_on = day;
+    auto streams = RandomStreams::restore(random);
+    resolve_evidence(lab, evidence, streams.stream(RandomStream::research));
+    random = streams.snapshot();
+}
+#endif
+void record_research_prototype(LabState& state, const LabResearch& node, const ResearchRun& run,
+                               const CapacityProject& work, OrdinalDay day) {
+    if (run.completed && node.poc_spec.produces_poc && state.models.size() < lab_record_limit) {
+        const std::string poc_id = "poc." + node.id;
+        if (std::ranges::none_of(state.models, [&](const auto& m) { return m.id == poc_id; })) {
+            LabModel poc;
+            poc.id = poc_id;
+            poc.recipe_id = node.poc_spec.recipe_id;
+            poc.data_ids = run.data_ids;
+            std::sort(poc.data_ids.begin(), poc.data_ids.end());
+            poc.created_on = day;
+            poc.consumed_work = std::max(MilliCU{1}, work.completed_work);
+            poc.capability = node.poc_spec.max_capability;
+            poc.is_proof_of_concept = true;
+            poc.origin_research_id = node.id;
+            poc.task_scope = node.poc_spec.task_scope;
+            poc.method_label = node.poc_spec.method_label;
+            poc.authors = run.researchers;
+            state.models.push_back(std::move(poc));
+            if (!state.catalog.evaluations.empty() && state.evaluations.size() < lab_record_limit) {
+                EvaluationEvidence prelim;
+                prelim.id = "eval." + poc_id;
+                prelim.model_id = poc_id;
+                prelim.plan_id = state.catalog.evaluations.front().id;
+                prelim.project_id = "";
+                prelim.model_work = std::max(MilliCU{1}, work.completed_work);
+                prelim.completed = true;
+                prelim.measured = node.poc_spec.max_capability;
+                for (std::size_t j = 0; j < lab_domain_count; ++j) {
+                    prelim.lower[j] = BasisPoints{std::max<std::int64_t>(0, prelim.measured[j].value() - 500)};
+                    prelim.upper[j] = BasisPoints{std::min<std::int64_t>(10000, prelim.measured[j].value() + 500)};
+                }
+                prelim.findings = {"Proof-of-concept benchmark only; continue into a production training run with production data and an independent evaluation before customer deployment."};
+                state.evaluations.push_back(std::move(prelim));
+            }
+        }
+    }
+}
 void close_lab_day(LabState& state, const CapacityState& capacity, OrdinalDay day, RandomSnapshot& random) {
     require_day(state, day);
     if (capacity.closed_through != day) invalid("Lab outcomes require settled actual capacity work");
     close_synthetic_data(state,capacity,day);
+    close_data_processing(state,capacity,day);
+    close_creative_production(state,capacity,day);
     for (auto& run : state.research) if (!run.completed && !run.failed) {
         const auto& work = find(capacity.projects, run.project_id);
         if (work.status != ProjectStatus::completed) continue;
@@ -652,14 +830,15 @@ void close_lab_day(LabState& state, const CapacityState& capacity, OrdinalDay da
         });
         run.failed = experiment_failed(state, capacity, node, work, has_result);
         run.completed = !run.failed;
+        record_research_prototype(state, node, run, work, day);
     }
     for (auto& model : state.models) if (!model.project_id.empty()) {
         model.consumed_work = checked_unit_add(model.inherited_work, find(capacity.projects, model.project_id).completed_work);
-        model.capability = model_capability(state.catalog,model,state.generated,state.acquisitions);
+        model.capability = model_capability(state.catalog,model,state.generated,state.acquisitions,state.processed,state.creative_jobs);
     }
     auto streams = RandomStreams::restore(random);
     for (auto& evidence : state.evaluations)
-        if (!evidence.completed && find(capacity.projects, evidence.project_id).status == ProjectStatus::completed)
+        if (!evidence.completed && !evidence.project_id.empty() && find(capacity.projects, evidence.project_id).status == ProjectStatus::completed)
             resolve_evidence(state, evidence, streams.stream(RandomStream::research));
     random = streams.snapshot(); state.closed_through = day;
 }
@@ -743,13 +922,30 @@ void validate_lab(const LabState& state, const CapacityState& capacity, const Ac
             invalid("Research began without prerequisites or its recorded creative team threshold.");
     }
     validate_synthetic_data(state,capacity,accounts,deep);
+    validate_data_processing(state,capacity,accounts,deep);
+    validate_creative_production(state,capacity,accounts,deep);
+    validate_tech_licenses(state,accounts,deep);
     for (const auto& row:state.generated)
         if (!projects.insert(row.project_id).second) invalid("Synthetic data duplicated a lab project owner");
     for (const auto& row:state.acquisitions)
         if (!projects.insert(row.project_id).second) invalid("Data collection duplicated a Lab project owner");
+    for (const auto& row:state.processed)
+        if (!projects.insert(row.project_id).second) invalid("Processed dataset duplicated a Lab project owner");
+    for (const auto& row:state.creative_jobs)
+        if (!projects.insert(row.project_id).second) invalid("Creative production duplicated a Lab project owner");
     const auto snapshots=deep?checkpoint_work(state,capacity):std::unordered_map<std::string_view,MilliCU>{};
     for (const auto& model : state.models) {
         const auto& recipe = find(state.catalog.recipes, model.recipe_id);
+        if (model.is_proof_of_concept) {
+            if (model.origin_research_id.empty() || !model.project_id.empty() || !model.parent_id.empty() ||
+                model.created_on < state.starts_on || model.created_on > today || model.consumed_work.value() <= 0)
+                invalid("Proof-of-concept model has invalid origin or metadata");
+            const auto& origin = find(state.catalog.research, model.origin_research_id);
+            if (!origin.poc_spec.produces_poc || model.capability != origin.poc_spec.max_capability)
+                invalid("Proof-of-concept capability differs from its originating research specification");
+            prior_models.insert(model.id);
+            continue;
+        }
         if (model.created_on < state.starts_on || model.created_on > today || model.data_ids.empty() || model.data_ids.size() > lab_catalog_limit ||
             !std::is_sorted(model.data_ids.begin(), model.data_ids.end()) || std::adjacent_find(model.data_ids.begin(), model.data_ids.end()) != model.data_ids.end())
             invalid("Model creation or unique data mixture is invalid");
@@ -760,22 +956,28 @@ void validate_lab(const LabState& state, const CapacityState& capacity, const Ac
                 invalid("Model used data before its actual license acquisition or delivery");
         }
         for (const auto& id : recipe.requires_research)
-            if (!knowledge_on(state,capacity,id,model.created_on)) invalid("Model used research before it completed");
+            if (!has_research_access(state,capacity,id,model.created_on)) invalid("Model used research before it completed or was licensed");
         if (!model.parent_id.empty()) {
             if (!prior_models.contains(model.parent_id)) invalid("Model lineage is cyclic or references a later model");
             const auto& parent = find(state.models, model.parent_id);
-            if (model.recipe_id != parent.recipe_id || model.data_ids != parent.data_ids || model.data_weights!=parent.data_weights || parent.created_on > model.created_on)
-                invalid("Model lineage changed its recipe, data rights or creation order");
-            if(model.checkpoint_cursor) {
-                if(!model.project_id.empty() || model.consumed_work.value()==0 || *model.checkpoint_cursor>capacity.days.size() ||
-                    *model.checkpoint_cursor!=static_cast<std::uint64_t>(model.created_on.value()-capacity.starts_on.value()) ||
-                    model.inherited_work<parent.inherited_work || model.inherited_work>parent.consumed_work ||
-                    (deep && model.inherited_work!=snapshots.at(model.id))) invalid("Checkpoint inherited work outside its actual settled snapshot");
+            if (parent.is_proof_of_concept) {
+                const auto expected_head_start = MilliCU{std::min(parent.consumed_work.value(), recipe.minimum_work.value() / 4)};
+                if (parent.created_on > model.created_on || model.inherited_work != expected_head_start || model.checkpoint_cursor)
+                    invalid("Production continuation from a proof-of-concept has invalid inherited work or date");
             } else {
-                if(model.inherited_work!=parent.consumed_work) invalid("Model lineage added free inherited work");
-                if (!parent.project_id.empty()) {
-                    const auto& work = find(capacity.projects,parent.project_id);
-                    if (!work.stopped_on || *work.stopped_on > model.created_on) invalid("Model inherited an unfinished checkpoint");
+                if (model.recipe_id != parent.recipe_id || model.data_ids != parent.data_ids || model.data_weights!=parent.data_weights || parent.created_on > model.created_on)
+                    invalid("Model lineage changed its recipe, data rights or creation order");
+                if(model.checkpoint_cursor) {
+                    if(!model.project_id.empty() || model.consumed_work.value()==0 || *model.checkpoint_cursor>capacity.days.size() ||
+                        *model.checkpoint_cursor!=static_cast<std::uint64_t>(model.created_on.value()-capacity.starts_on.value()) ||
+                        model.inherited_work<parent.inherited_work || model.inherited_work>parent.consumed_work ||
+                        (deep && model.inherited_work!=snapshots.at(model.id))) invalid("Checkpoint inherited work outside its actual settled snapshot");
+                } else {
+                    if(model.inherited_work!=parent.consumed_work) invalid("Model lineage added free inherited work");
+                    if (!parent.project_id.empty()) {
+                        const auto& work = find(capacity.projects,parent.project_id);
+                        if (!work.stopped_on || *work.stopped_on > model.created_on) invalid("Model inherited an unfinished checkpoint");
+                    }
                 }
             }
         } else if (model.inherited_work.value() != 0 || model.checkpoint_cursor) invalid("New model invented inherited work or a checkpoint origin");
@@ -788,7 +990,7 @@ void validate_lab(const LabState& state, const CapacityState& capacity, const Ac
                 !projects.insert(work.id).second) invalid("Model has a foreign, incompatible or duplicate training commitment");
             expected = checked_unit_add(expected, work.completed_work);
         } else if (model.parent_id.empty()) invalid("Model has neither training nor a checkpoint parent");
-        if (model.consumed_work != expected || model.capability != model_capability(state.catalog,model,state.generated,state.acquisitions))
+        if (model.consumed_work != expected || model.capability != model_capability(state.catalog,model,state.generated,state.acquisitions,state.processed,state.creative_jobs))
             invalid("Model capability differs from actual cumulative resources");
         prior_models.insert(model.id);
     }
@@ -797,6 +999,11 @@ void validate_lab(const LabState& state, const CapacityState& capacity, const Ac
         const auto& evidence = state.evaluations[i];
         const auto& model = find(state.models, evidence.model_id);
         const auto& plan = find(state.catalog.evaluations, evidence.plan_id);
+        if (model.is_proof_of_concept && evidence.project_id.empty()) {
+            if (!evidence.completed || evidence.stream_before != 0 || evidence.stream_after != 0 || evidence.measured != model.capability)
+                invalid("Preliminary proof-of-concept evaluation was tampered with");
+            continue;
+        }
         const auto& work = find(capacity.projects, evidence.project_id);
         if (work.id != "lab/evaluate/" + evidence.id || work.kind != ProjectKind::evaluation ||
             work.total_work != evaluation_work(capacity,work.starts_on,plan.work,work.specialist_id) ||
@@ -808,7 +1015,7 @@ void validate_lab(const LabState& state, const CapacityState& capacity, const Ac
             if (!training.stopped_on || *training.stopped_on > work.starts_on) invalid("Evaluation used an unfinished training run");
         }
         for (const auto& id : plan.requires_research)
-            if (!knowledge_on(state,capacity,id,work.starts_on)) invalid("Evaluation methodology was not researched at acceptance");
+            if (!has_research_access(state,capacity,id,work.starts_on)) invalid("Evaluation methodology was not researched or licensed at acceptance");
         payment(work.id,plan.cash,work.starts_on);
         if (evidence.completed) resolved.push_back({{*work.stopped_on, i}, &evidence});
         else if (evidence.measured != empty_lab_profile || evidence.lower != empty_lab_profile || evidence.upper != empty_lab_profile ||
@@ -840,6 +1047,16 @@ LabReport lab_report(const LabState& state, const CapacityState& capacity) {
         result.data_offers.push_back(*row.output);
         const auto& work=find(capacity.projects,row.project_id);
         result.licenses.push_back({row.offer_id,advance_days(*work.stopped_on,Days{1})});
+    }
+    for (const auto& row:state.processed) if (row.output) {
+        result.data_offers.push_back(*row.output);
+        const auto& work=find(capacity.projects,row.project_id);
+        result.licenses.push_back({row.id,advance_days(*work.stopped_on,Days{1})});
+    }
+    for (const auto& row:state.creative_jobs) if (row.output) {
+        result.data_offers.push_back(*row.output);
+        const auto& work=find(capacity.projects,row.project_id);
+        result.licenses.push_back({row.id,advance_days(*work.stopped_on,Days{1})});
     }
     for (const auto& model : state.models)
         result.models.push_back({model.id, model.recipe_id, model.parent_id, model.consumed_work,

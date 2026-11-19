@@ -76,12 +76,27 @@ core::DataOffer parse_data(const Json& row) {
     auto shape=row;
     const bool open_release=shape.contains("open_weight_release") && boolean(shape.at("open_weight_release"));
     shape.erase("open_weight_release");
+    for (const auto* opt : {"source_path","supplier_or_publisher","underlying_history","collection_method",
+                            "raw_units","duplication_bp","provenance_confidence_bp","third_party_controversy_risk",
+                            "parent_dataset_id","processing_step"})
+        shape.erase(opt);
     fields(shape,{"id","name","provenance","rights","price_cents","unique_units","quality_bp","relevance_bp",
         "coverage_bp","contamination_bp","commercial_use"});
-    return {text(row.at("id")),text(row.at("name")),text(row.at("provenance")),text(row.at("rights")),
+    core::DataOffer out{text(row.at("id")),text(row.at("name")),text(row.at("provenance")),text(row.at("rights")),
         core::Cents{integer(row.at("price_cents"))},integer(row.at("unique_units")),core::BasisPoints{integer(row.at("quality_bp"))},
         profile(row.at("relevance_bp")),profile(row.at("coverage_bp")),core::BasisPoints{integer(row.at("contamination_bp"))},
         boolean(row.at("commercial_use")),open_release};
+    if (row.contains("source_path")) out.source_path = text(row.at("source_path"));
+    if (row.contains("supplier_or_publisher")) out.supplier_or_publisher = text(row.at("supplier_or_publisher"));
+    if (row.contains("underlying_history")) out.underlying_history = text(row.at("underlying_history"));
+    if (row.contains("collection_method")) out.collection_method = text(row.at("collection_method"));
+    if (row.contains("raw_units")) out.raw_units = integer(row.at("raw_units"));
+    if (row.contains("duplication_bp")) out.duplication_bp = core::BasisPoints{integer(row.at("duplication_bp"))};
+    if (row.contains("provenance_confidence_bp")) out.provenance_confidence_bp = core::BasisPoints{integer(row.at("provenance_confidence_bp"))};
+    if (row.contains("third_party_controversy_risk")) out.third_party_controversy_risk = boolean(row.at("third_party_controversy_risk"));
+    if (row.contains("parent_dataset_id")) out.parent_dataset_id = text(row.at("parent_dataset_id"));
+    if (row.contains("processing_step")) out.processing_step = text(row.at("processing_step"));
+    return out;
 }
 Json encode_data(const core::DataOffer& row) {
     Json result{{"id",row.id},{"name",row.name},{"provenance",row.provenance},{"rights",row.rights},
@@ -89,6 +104,16 @@ Json encode_data(const core::DataOffer& row) {
         {"relevance_bp",profile_json(row.relevance)},{"coverage_bp",profile_json(row.coverage)},
         {"contamination_bp",row.contamination.value()},{"commercial_use",row.commercial_use}};
     if(row.open_weight_release) result["open_weight_release"]=true;
+    if(!row.source_path.empty() && row.source_path != "licensed") result["source_path"]=row.source_path;
+    if(!row.supplier_or_publisher.empty()) result["supplier_or_publisher"]=row.supplier_or_publisher;
+    if(!row.underlying_history.empty()) result["underlying_history"]=row.underlying_history;
+    if(!row.collection_method.empty()) result["collection_method"]=row.collection_method;
+    if(row.raw_units>0) result["raw_units"]=row.raw_units;
+    if(row.duplication_bp.value()>0) result["duplication_bp"]=row.duplication_bp.value();
+    if(row.provenance_confidence_bp.value()!=10000) result["provenance_confidence_bp"]=row.provenance_confidence_bp.value();
+    if(row.third_party_controversy_risk) result["third_party_controversy_risk"]=true;
+    if(!row.parent_dataset_id.empty()) result["parent_dataset_id"]=row.parent_dataset_id;
+    if(!row.processing_step.empty()) result["processing_step"]=row.processing_step;
     return result;
 }
 template<class Rows> auto ordered(const Rows& rows) {
@@ -103,7 +128,7 @@ core::LabCatalog load_lab_catalog(std::string_view bytes) {
     std::vector<std::set<std::string>> keys;
     std::size_t tokens = 0;
     const auto callback = [&](int depth, Json::parse_event_t event, Json& value) {
-        if (depth > 32 || ++tokens > 65536) invalid("Lab JSON exceeds depth or token bounds");
+        if (depth > 32 || ++tokens > 262144) invalid("Lab JSON exceeds depth or token bounds");
         if (event == Json::parse_event_t::object_start) keys.emplace_back();
         else if (event == Json::parse_event_t::object_end) keys.pop_back();
         else if (event == Json::parse_event_t::key && !keys.back().insert(value.get<std::string>()).second)
@@ -117,6 +142,7 @@ core::LabCatalog load_lab_catalog(std::string_view bytes) {
     document_shape.erase("acquisition");
     document_shape.erase("research_workplaces");
     document_shape.erase("creative_research");
+    document_shape.erase("tech_licenses");
     fields(document_shape, {"data", "research", "recipes", "evaluations"});
     core::LabCatalog catalog;
     if(doc.contains("research_workplaces")) {
@@ -149,10 +175,46 @@ core::LabCatalog load_lab_catalog(std::string_view bytes) {
         shape.erase("repeat_limit");
         shape.erase("setback");
         shape.erase("innovation");
+        shape.erase("any_of_groups");
+        shape.erase("data_requirement");
+        shape.erase("poc_spec");
+        shape.erase("technical_effect");
         fields(shape, {"id", "all_of", "any_of", "cash_cents", "staff_days", "experiment_milli_CU"});
         core::LabResearch topic{text(row.at("id")), ids(row.at("all_of")), ids(row.at("any_of")),
             core::Cents{integer(row.at("cash_cents"))}, core::Days{integer(row.at("staff_days"))},
             core::MilliCU{integer(row.at("experiment_milli_CU"))},static_cast<std::uint32_t>(repeats)};
+        if (row.contains("any_of_groups")) {
+            const auto& groups = row.at("any_of_groups");
+            if (!groups.is_array() || groups.size() > 8) invalid("Compound OR prerequisite groups exceed bound");
+            for (const auto& g : groups) topic.any_of_groups.push_back(ids(g));
+        }
+        if (row.contains("data_requirement")) {
+            const auto& req = row.at("data_requirement");
+            topic.data_requirement.required = boolean(req.at("required"));
+            if (req.contains("minimum_unique_units")) topic.data_requirement.minimum_unique_units = integer(req.at("minimum_unique_units"));
+            if (req.contains("minimum_quality_bp")) topic.data_requirement.minimum_quality_bp = static_cast<std::uint32_t>(integer(req.at("minimum_quality_bp")));
+            if (req.contains("domain_hint")) topic.data_requirement.domain_hint = text(req.at("domain_hint"));
+        }
+        if (row.contains("poc_spec")) {
+            const auto& poc = row.at("poc_spec");
+            fields(poc, {"produces_poc", "task_scope", "method_label", "recipe_id", "max_capability_bp"});
+            topic.poc_spec.produces_poc = boolean(poc.at("produces_poc"));
+            topic.poc_spec.task_scope = text(poc.at("task_scope"));
+            topic.poc_spec.method_label = text(poc.at("method_label"));
+            topic.poc_spec.recipe_id = text(poc.at("recipe_id"));
+            topic.poc_spec.max_capability = profile(poc.at("max_capability_bp"));
+        }
+        if (row.contains("technical_effect")) {
+            const auto& te = row.at("technical_effect");
+            if (te.contains("data_efficiency_bp")) topic.technical_effect.data_efficiency_bp = static_cast<std::uint32_t>(integer(te.at("data_efficiency_bp")));
+            if (te.contains("compute_efficiency_bp")) topic.technical_effect.compute_efficiency_bp = static_cast<std::uint32_t>(integer(te.at("compute_efficiency_bp")));
+            if (te.contains("latency_bonus_bp")) topic.technical_effect.latency_bonus_bp = static_cast<std::uint32_t>(integer(te.at("latency_bonus_bp")));
+            if (te.contains("robustness_bonus_bp")) topic.technical_effect.robustness_bonus_bp = static_cast<std::uint32_t>(integer(te.at("robustness_bonus_bp")));
+            if (te.contains("modality_unlock")) topic.technical_effect.modality_unlock = text(te.at("modality_unlock"));
+            if (te.contains("deployment_setting_unlock")) topic.technical_effect.deployment_setting_unlock = text(te.at("deployment_setting_unlock"));
+            if (te.contains("refinement_family")) topic.technical_effect.refinement_family = text(te.at("refinement_family"));
+            if (te.contains("diminishing_tier")) topic.technical_effect.diminishing_tier = static_cast<std::uint32_t>(integer(te.at("diminishing_tier")));
+        }
         if(row.contains("innovation")) {
             const auto& level=row.at("innovation");
             fields(level,{"previous","inference_savings_bp"});
@@ -225,6 +287,18 @@ core::LabCatalog load_lab_catalog(std::string_view bytes) {
             catalog.acquisition.push_back(std::move(offer));
         }
     }
+    if (doc.contains("tech_licenses")) {
+        array(doc.at("tech_licenses"));
+        for (const auto& row : doc.at("tech_licenses")) {
+            fields(row, {"id", "research_id", "licensor", "scope_label", "upfront_fee_cents",
+                         "monthly_royalty_cents", "term_days", "integration_days", "royalty_bp", "renewable"});
+            catalog.tech_licenses.push_back({text(row.at("id")), text(row.at("research_id")),
+                text(row.at("licensor")), text(row.at("scope_label")),
+                core::Cents{integer(row.at("upfront_fee_cents"))}, core::Cents{integer(row.at("monthly_royalty_cents"))},
+                core::Days{integer(row.at("term_days"))}, core::Days{integer(row.at("integration_days"))},
+                static_cast<std::uint32_t>(integer(row.at("royalty_bp"))), boolean(row.at("renewable"))});
+        }
+    }
     return catalog;
 }
 std::string canonical_lab_catalog(const core::LabCatalog& catalog) {
@@ -234,6 +308,30 @@ std::string canonical_lab_catalog(const core::LabCatalog& catalog) {
         research.push_back({{"id",row->id},{"all_of",row->all_of},{"any_of",row->any_of},
             {"cash_cents",row->cash.value()},{"staff_days",row->staff_days.value()},{"experiment_milli_CU",row->experiment_work.value()}});
         if (row->repeat_limit!=1) research.back()["repeat_limit"]=row->repeat_limit;
+        if (!row->any_of_groups.empty()) research.back()["any_of_groups"]=row->any_of_groups;
+        if (row->data_requirement.required) {
+            Json req{{"required",true},{"minimum_unique_units",row->data_requirement.minimum_unique_units},{"minimum_quality_bp",row->data_requirement.minimum_quality_bp}};
+            if (!row->data_requirement.domain_hint.empty()) req["domain_hint"]=row->data_requirement.domain_hint;
+            research.back()["data_requirement"]=std::move(req);
+        }
+        if (row->poc_spec.produces_poc) {
+            research.back()["poc_spec"]={{"produces_poc",true},{"task_scope",row->poc_spec.task_scope},
+                {"method_label",row->poc_spec.method_label},{"recipe_id",row->poc_spec.recipe_id},
+                {"max_capability_bp",profile_json(row->poc_spec.max_capability)}};
+        }
+        const auto& te = row->technical_effect;
+        if (te != core::ResearchTechnicalEffect{}) {
+            Json tej = Json::object();
+            if (te.data_efficiency_bp) tej["data_efficiency_bp"] = te.data_efficiency_bp;
+            if (te.compute_efficiency_bp) tej["compute_efficiency_bp"] = te.compute_efficiency_bp;
+            if (te.latency_bonus_bp) tej["latency_bonus_bp"] = te.latency_bonus_bp;
+            if (te.robustness_bonus_bp) tej["robustness_bonus_bp"] = te.robustness_bonus_bp;
+            if (!te.modality_unlock.empty()) tej["modality_unlock"] = te.modality_unlock;
+            if (!te.deployment_setting_unlock.empty()) tej["deployment_setting_unlock"] = te.deployment_setting_unlock;
+            if (!te.refinement_family.empty()) tej["refinement_family"] = te.refinement_family;
+            if (te.diminishing_tier) tej["diminishing_tier"] = te.diminishing_tier;
+            research.back()["technical_effect"] = std::move(tej);
+        }
         if (const auto& level=row->innovation) {
             Json savings=Json::object();
             for(const auto& [recipe,amount]:level->inference_savings) savings[recipe]=amount.value();
@@ -288,6 +386,16 @@ std::string canonical_lab_catalog(const core::LabCatalog& catalog) {
             if(r.replaces_frontier_calendar) row["replaces_frontier_calendar"]=true;
         }
     }
+    if (!catalog.tech_licenses.empty()) {
+        auto& rows = result["tech_licenses"] = Json::array();
+        for (const auto* row : ordered(catalog.tech_licenses)) {
+            rows.push_back({{"id", row->id}, {"research_id", row->research_id},
+                {"licensor", row->licensor}, {"scope_label", row->scope_label},
+                {"upfront_fee_cents", row->upfront_fee.value()}, {"monthly_royalty_cents", row->monthly_royalty.value()},
+                {"term_days", row->term_days.value()}, {"integration_days", row->integration_days.value()},
+                {"royalty_bp", row->royalty_bp}, {"renewable", row->renewable}});
+        }
+    }
     return result.dump();
 }
 core::LabCatalog scenario_lab_catalog(const Collection& collection, const ScenarioDefinition& scenario) {
@@ -298,7 +406,7 @@ core::LabCatalog scenario_lab_catalog(const Collection& collection, const Scenar
         const auto* definition = collection.find(id);
         if (!definition || !std::holds_alternative<ResearchDefinition>(definition->data)) invalid("Scenario research reference is not a research node");
         const auto& node = std::get<ResearchDefinition>(definition->data);
-        result.research.push_back({id, node.all_of, node.any_of, node.innovation || !result.research_workplaces?node.cash:core::Cents{0}, node.staff_days, node.work, node.repeat_limit, node.setback,node.innovation});
+        result.research.push_back({id, node.all_of, node.any_of, node.innovation || !result.research_workplaces?node.cash:core::Cents{0}, node.staff_days, node.work, node.repeat_limit, node.setback, node.innovation, node.any_of_groups, node.data_requirement, node.poc_spec, node.technical_effect});
     }
     if(result.research_workplaces) {
         if(!scenario.management || !scenario.management->people || !scenario.infrastructure ||

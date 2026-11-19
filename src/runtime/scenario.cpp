@@ -23,15 +23,34 @@ Checkpoint begin_scenario(const CompiledProgram& program, std::string_view scena
     if (options.identity) validate_campaign_identity(*options.identity);
     const auto seed = options.seed.value_or(scenario->seed);
     const auto founding=options.founding?&*options.founding:nullptr;
-    if (founding && founding->mode != "campaign")
+    bool custom_setup = false;
+#if !PGP_DISTRIBUTION
+    custom_setup = founding && founding->mode == "playtest" && options.playtest_start.has_value();
+#endif
+    if (founding && founding->mode != "campaign" && !custom_setup)
         throw std::invalid_argument("New games start with the founder campaign.");
-    const auto opening=content::scenario_opening(*scenario,options.background,"company.player",options.difficulty,founding);
+    auto opening=content::scenario_opening(*scenario,options.background,"company.player",options.difficulty,founding);
+#if !PGP_DISTRIBUTION
+    if (custom_setup) opening.launch_day = *options.playtest_start;
+#endif
     const auto management=content::scenario_management(*scenario,options.difficulty,founding);
     const auto* partner=founding && scenario->founding?content::founding_partner(*scenario->founding,founding->partner):nullptr;
     if(partner) {
         const auto mission=*core::objective_kind(partner->objective);
         if(objectives && objectives->primary!=mission) throw std::invalid_argument("The signed cofounder offer sets the opening company mission.");
         if(!objectives) objectives=core::ObjectiveSelection{mission,{}};
+    }
+    const auto employer=(!custom_setup && founding && scenario->founding && founding->route=="hired_ceo")
+        ? std::optional{content::effective_employer(*scenario->founding)}
+        : std::nullopt;
+    if(employer) {
+        const auto mission=*core::objective_kind(employer->objective);
+        if(objectives && objectives->primary!=mission)
+            throw std::invalid_argument("An appointed CEO inherits the company's existing mission.");
+        if(!objectives) objectives=core::ObjectiveSelection{mission,{}};
+        if(!options.charter.empty() && options.charter!=employer->charter)
+            throw std::invalid_argument("An appointed CEO inherits the company's existing bylaws and charter.");
+        options.charter=employer->charter;
     }
     if(founding && founding->legal_form=="nonprofit" && objectives &&
         (objectives->primary==core::ObjectiveKind::profit || std::find(objectives->secondary.begin(),objectives->secondary.end(),core::ObjectiveKind::profit)!=objectives->secondary.end()))
@@ -44,6 +63,8 @@ Checkpoint begin_scenario(const CompiledProgram& program, std::string_view scena
     Checkpoint checkpoint;
     auto& world = checkpoint.world;
     world = foundation_world(opening.cash);
+    world.developer_playtest = custom_setup;
+    world.playtest_custom = custom_setup;
     world.scenario_id=std::string(scenario_id);
     world.root_seed = seed;
     world.identity = std::move(options.identity);
@@ -222,7 +243,10 @@ Checkpoint begin_scenario(const CompiledProgram& program, std::string_view scena
     }
     std::uint32_t founding_prestige=world.founding && world.founding->has_advantage("genius")?3U:0U;
     std::string recruiting_mission="research";
-    if(world.founding && management && management->people && management->people->mood) {
+    if(employer) {
+        founding_prestige=std::min(100U, terms ? terms->prestige : founding_prestige);
+        recruiting_mission=employer->mission;
+    } else if(world.founding && management && management->people && management->people->mood) {
         founding_prestige=std::min(100U, terms->prestige);
         if(world.founding->legal_form=="nonprofit" || (objectives && objectives->primary==core::ObjectiveKind::utopia))
             recruiting_mission="public benefit";
@@ -231,6 +255,10 @@ Checkpoint begin_scenario(const CompiledProgram& program, std::string_view scena
     }
     core::initialize_people(world.simulation,seed,world.identity?world.identity->founder_name:std::string{},world.identity?world.identity->founder_pronouns:std::string{},
         terms && terms->founder_researcher,founding_prestige,std::move(recruiting_mission));
+    if(employer && world.simulation.management && world.simulation.management->people &&
+       world.simulation.management->people->social && world.simulation.management->people->social->mission_conflict) {
+        world.simulation.management->people->social->mission_conflict->inherited_purpose=true;
+    }
     if(world.founding && scenario->founding && world.simulation.management && world.simulation.management->people && content::queer_founder(*world.founding)) {
         auto& people=*world.simulation.management->people;
         people.community_prestige=scenario->founding->queer_community_prestige;

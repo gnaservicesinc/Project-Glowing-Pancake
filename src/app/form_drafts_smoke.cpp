@@ -51,7 +51,19 @@ void schedule_form_drafts_smoke(QQuickWindow& window,pgp::bridge::CampaignContro
             check->phase=data_mix_only?2:1;return;
         }
         if(check->phase==1) {
-            if(!check->resumed) {
+            if(campaign.management()->groundedResearch()) {
+                const auto selectedTopic=[&] {
+                    const auto device=campaign.world()->resolvePhysicalDevice("laptop","lab");
+                    return campaign.world()->deviceAppState(device,"lab").value("selectedTopic").toString();
+                };
+                if(!check->resumed) {
+                    auto* choice=item("technology_research.reproducible_tooling");
+                    if(!key(window,choice,Qt::Key_Space)) {fail("Choose a founder research topic by keyboard");return;}
+                    const auto topic=selectedTopic();
+                    if(topic.isEmpty()) {fail("Preserve the selected graph topic");return;}
+                    remember("topic",topic);
+                } else if(selectedTopic()!=expected("topic")) {fail("Graph topic did not resume");return;}
+            } else if(!check->resumed) {
                 auto* list=item("researchTopicSelectionList");
                 if(!key(window,list,Qt::Key_Down) || campaign.management()->researchTopics()->indexOf(campaign.management()->researchTopics()->selectedId())<1){fail("keyboard topic selection");return;}
                 remember("topic",campaign.management()->researchTopics()->selectedId());

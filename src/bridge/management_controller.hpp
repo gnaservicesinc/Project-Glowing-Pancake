@@ -73,6 +73,12 @@ class ManagementController final : public QObject {
     Q_PROPERTY(StableListModel* boardMotions READ boardMotions CONSTANT)
     Q_PROPERTY(StableListModel* corporateDisputes READ corporateDisputes CONSTANT)
     Q_PROPERTY(StableListModel* mergerTargets READ mergerTargets CONSTANT)
+    Q_PROPERTY(QVariantList processedDatasets READ processedDatasets NOTIFY changed)
+    Q_PROPERTY(QVariantList creativeJobs READ creativeJobs NOTIFY changed)
+    Q_PROPERTY(QVariantList creativeWorkers READ creativeWorkers NOTIFY changed)
+    Q_PROPERTY(QVariantList techLicenses READ techLicenses NOTIFY changed)
+    Q_PROPERTY(QVariantMap industryStage READ industryStage NOTIFY changed)
+    Q_PROPERTY(QVariantList expenseBreakdown READ expenseBreakdown NOTIFY changed)
 public:
     explicit ManagementController(QObject* parent=nullptr);
     void update(CampaignSnapshotPtr snapshot,const runtime::CompiledProgram& program,bool replace);
@@ -110,8 +116,22 @@ public:
     QVariantList researchRentals() const;
     Q_INVOKABLE QVariantMap researchTopic(QString id) const;
     Q_INVOKABLE QVariantMap researchTeam(QString id,QStringList workers) const;
-    Q_INVOKABLE QString researchBlocker(QString id,QString source,QString rate,QStringList workers) const;
-    Q_INVOKABLE void beginGroundedResearch(QString id,QString source,QString rate,QStringList workers);
+    Q_INVOKABLE QString researchBlocker(QString id,QString source,QString rate,QStringList workers,QStringList dataIds={}) const;
+    Q_INVOKABLE void beginGroundedResearch(QString id,QString source,QString rate,QStringList workers,QStringList dataIds={});
+    QVariantList processedDatasets() const;
+    QVariantList creativeJobs() const;
+    QVariantList creativeWorkers() const;
+    QVariantList techLicenses() const;
+    QVariantMap industryStage() const;
+    QVariantList expenseBreakdown() const;
+    Q_INVOKABLE QVariantList ledgerPostingsByCategory(QString category) const;
+    Q_INVOKABLE QVariantMap dataProcessingQuote(QString sourceDatasetId,QString operation,QString source,QString rate,QString staff) const;
+    Q_INVOKABLE void processDataset(QString sourceDatasetId,QString operation,QString source,QString rate,QString staff);
+    Q_INVOKABLE QVariantMap creativeProductionQuote(QString domain,QString units,QString source,QString rate,QStringList workers) const;
+    Q_INVOKABLE void startCreativeProduction(QString domain,QString units,QString source,QString rate,QStringList workers);
+    Q_INVOKABLE void licenseTechnology(QString offerId);
+    Q_INVOKABLE void renewTechLicense(QString offerId);
+    Q_INVOKABLE QVariantMap modelTechnicalProfile(QString modelId) const;
     StableListModel* models() const { return models_; }
     StableListModel* evidence() const { return evidence_; }
     StableListModel* offers() const { return offers_; }

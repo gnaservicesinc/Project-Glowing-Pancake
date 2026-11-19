@@ -74,6 +74,7 @@ std::vector<CampaignRow> StableListModel::visibleRows(const std::vector<Campaign
     std::vector<CampaignRow> visible;
     for (const auto& value : rows) {
         if (required_only_ && !value.required) continue;
+        if (!filter_field_.isEmpty() && value.fields.value(filter_field_).toString() != field_value_) continue;
         if (!filter_text_.isEmpty() && !value.title.contains(filter_text_,Qt::CaseInsensitive) &&
             !value.subtitle.contains(filter_text_,Qt::CaseInsensitive) && !value.status.contains(filter_text_,Qt::CaseInsensitive) &&
             (!journal_ || !value.detail.contains(filter_text_,Qt::CaseInsensitive))) continue;
@@ -190,6 +191,13 @@ void StableListModel::setFilterText(QString value) {
     filter_text_ = std::move(value);
     reconcile(visibleRows(source_rows_));
     emit filterTextChanged();
+}
+void StableListModel::filterField(QString field, QString value) {
+    requireOwningThread();
+    if (filter_field_ == field && field_value_ == value) return;
+    filter_field_ = std::move(field);
+    field_value_ = std::move(value);
+    reconcile(visibleRows(source_rows_));
 }
 void StableListModel::setRequiredOnly(bool value) {
     requireOwningThread();

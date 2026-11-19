@@ -39,7 +39,7 @@ ColumnLayout {
     Connections {
         target:campaign.world
         function onDraftsReset(){Qt.callLater(panel.restore)}
-        function onNavigationChanged(){const n=campaign.world.navigation;if(n.app==="facilities" && ["equipment","property","build"].includes(n.section))panel.tab=n.section}
+        function onNavigationChanged(){const n=campaign.world.navigation;if(n.app==="facilities" && ["equipment","property","build","branches"].includes(n.section))panel.tab=n.section}
     }
     function preservePlan() {campaign.world.setDraft("hq/build-plan",JSON.stringify({land:landId,width:planWidth,depth:planDepth,rooms:planRooms}));bids=[]}
     function resetPlan() {
@@ -94,8 +94,14 @@ ColumnLayout {
     Copy {text:headquarters.summary || ""}
     Flow {
         Layout.fillWidth:true;spacing:8
-        Repeater {model:[{id:"equipment",name:qsTr("Equipment & suppliers")},{id:"property",name:qsTr("Realtor")},{id:"build",name:qsTr("Land & construction")}];WorldButton {required property var modelData;objectName:"hqTab_"+modelData.id;text:modelData.name;textSize:panel.textSize;checked:panel.tab===modelData.id;onClicked:{panel.tab=modelData.id;const n=campaign.world.navigation;campaign.world.navigate(n.place,n.scale,n.device,"facilities",modelData.id)}}}
+        Repeater {model:[{id:"equipment",name:qsTr("Equipment & suppliers")},{id:"property",name:qsTr("Realtor")},{id:"build",name:qsTr("Land & construction")},{id:"branches",name:qsTr("Branch design")}];WorldButton {required property var modelData;objectName:"hqTab_"+modelData.id;text:modelData.name;textSize:panel.textSize;checked:panel.tab===modelData.id;onClicked:{panel.tab=modelData.id;const n=campaign.world.navigation;campaign.world.navigate(n.place,n.scale,n.device,"facilities",modelData.id)}}}
         WorldButton {text:qsTr("Return to the room");textSize:panel.textSize;onClicked:panel.visitRoom("workspace")}
+    }
+    Loader {
+        Layout.fillWidth:true
+        active:panel.tab==="branches"
+        visible:active
+        sourceComponent:Component {FacilityBlueprints {textSize:panel.textSize}}
     }
     ColumnLayout {
         visible:panel.tab==="equipment";Layout.fillWidth:true;spacing:12

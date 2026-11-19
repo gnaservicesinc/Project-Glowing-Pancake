@@ -49,10 +49,10 @@ QString skillNames(const core::SimulationState& s,const core::PersonProfile& p) 
 }
 QVariantMap profileRow(const core::PersonProfile& p,core::OrdinalDay now,QString status) {
     return {{"id",q(p.id)},{"portrait",portrait_url(p,now)},{"name",q(p.name)},{"initials",q(p.name).section(' ',0,0).left(1)+q(p.name).section(' ',-1).left(1)}, {"role",q(p.role)},
-        {"detail",QObject::tr("%1 · %2 · Age %3 · %4 years of experience\n%5\nResearch %6 · Engineering %7 · Evaluation %8\n%9")
+        {"detail",QObject::tr("%1 · %2 · Age %3 · %4 years of experience\n%5\nResearch %6 · Engineering %7 · Evaluation %8 · Creative %9\n%10")
             .arg(q(p.gender),q(p.pronouns)).arg(portrait_person_age(p,now))
             .arg(p.experience+static_cast<unsigned>(std::max(0,core::from_ordinal(now).year-core::from_ordinal(p.applied_on).year)))
-            .arg(q(p.education)).arg(p.research).arg(p.engineering).arg(p.evaluation).arg(status)}, {"bio",q(p.bio)}};
+            .arg(q(p.education)).arg(p.research).arg(p.engineering).arg(p.evaluation).arg(p.creative).arg(status)}, {"bio",q(p.bio)}};
 }
 QVariantMap openingOffer(const runtime::CompiledProgram* program,const runtime::WorldState& world,const core::PeopleContact& contact) {
     if(!program || !world.founding || !contact.opening) return {};
@@ -75,11 +75,18 @@ QString city(std::string_view state) {
     return cities.value(key).toObject().value("name").toString(q(std::string{state}));
 }
 QVariantMap navDefault() {return {{"place","workspace"},{"scale","hq"},{"device",""},{"app",""},{"section",""}};}
+bool valid_device_key(const QString& d) {
+    if (QStringList{"","desktop","laptop","phone","tablet"}.contains(d)) return true;
+    if (d.size() > 48) return false;
+    if (d.startsWith("personal/")) { bool ok=false; return d.mid(9).toULongLong(&ok)>0 && ok; }
+    if (d.startsWith("hq/")) { bool ok=false; return d.mid(3).toULongLong(&ok)>0 && ok; }
+    return false;
+}
 bool valid(const QVariantMap& n) {
     return QStringList{"workspace","lab","meeting","compute","map","research_annex","evaluation_suite","collaboration"}.contains(n.value("place").toString()) &&
         QStringList{"hq","city","state","country","world"}.contains(n.value("scale").toString()) &&
-        QStringList{"","desktop","laptop","phone","tablet"}.contains(n.value("device").toString()) &&
-        QStringList{"","devices","office","lab","people","facilities","inbox","operations","civic","society","institutions","frontier","leadership","objectives"}.contains(n.value("app").toString()) &&
+        valid_device_key(n.value("device").toString()) &&
+        QStringList{"","devices","office","lab","people","facilities","inbox","operations","civic","society","institutions","frontier","leadership","objectives","research","data","models","accounts","products","messages","world","personal"}.contains(n.value("app").toString()) &&
         n.value("section").toString().size()<=40;
 }
 }
@@ -107,6 +114,7 @@ void WorldController::update(CampaignSnapshotPtr snapshot,const runtime::Compile
         navigation_["app"]="";navigation_["device"]="";navigation_["section"]="";emit navigationChanged();
     }
     emit changed();
+    emit workspacesChanged();
 }
 void WorldController::restore() {
     navigation_=navDefault();
@@ -122,6 +130,7 @@ void WorldController::restore() {
         if(values.size()<=512) for(auto it=values.begin();it!=values.end();++it)
             if(it.key().size()<=192 && it.value().metaType().id()==QMetaType::QString && it.value().toString().size()<=8192) drafts_[it.key()]=it.value();
     }
+    restoreWorkspaces();
     emit navigationChanged();
     emit draftsReset();
 }
@@ -148,11 +157,28 @@ bool WorldController::navigate(QString place,QString scale,QString device,QStrin
     const auto& s=snapshot_->checkpoint.world.simulation;
     if(app=="devices" || app.isEmpty() || (app=="inbox" && device.isEmpty()) || companyArchive()) next["device"]="";
     else if(s.infrastructure && s.infrastructure->workplace && s.infrastructure->workplace->devices) {
-        const auto resolved=core::resolve_app_device(s,device.toStdString(),app.toStdString(),atHeadquarters());
-        if(resolved.empty()) {
-            emit noticeRaised(tr("No working device here supports that application. Turn on a device, arrange service or choose equipment."));
-            next["app"]="devices";next["device"]="";next["section"]="";
-        } else next["device"]=q(resolved);
+        if(device.startsWith("personal/") || device.startsWith("hq/")) {
+            const auto inspected=core::inspect_physical_device(s,device.toStdString(),atHeadquarters());
+            if(!inspected) {
+                emit noticeRaised(tr("That device is no longer in inventory."));
+                next["app"]="devices";next["device"]="";next["section"]="";
+            } else {
+                next["device"]=device;
+                if (inspected->available && !core::physical_device_supports_app(s,device.toStdString(),app.toStdString(),atHeadquarters())) {
+                    emit noticeRaised(tr("This device does not support that application."));
+                    return false;
+                }
+            }
+        } else {
+            const auto resolved=core::resolve_app_device(s,device.toStdString(),app.toStdString(),atHeadquarters());
+            if(resolved.empty()) {
+                emit noticeRaised(tr("No working device here supports that application. Turn on a device, arrange service or choose equipment."));
+                next["app"]="devices";next["device"]="";next["section"]="";
+            } else {
+                next["device"]=q(resolved);
+
+            }
+        }
     } else if(!device.isEmpty() && std::ranges::none_of(devices(),[&](const QVariant& row){return row.toMap().value("id")==device;})) return false;
     if(next==navigation_) return true;
     if(snapshot_->current_campaign) {
@@ -222,7 +248,7 @@ QVariantMap WorldController::founder() const {
     if(w.simulation.management && w.simulation.management->people) for(const auto& employee:w.simulation.management->people->employees)
         if(employee.terms.profile.role=="Founder / researcher") {
             const auto& p=employee.terms.profile;portrait=p.portrait;managing=manager && manager->person==p.id;
-            detail+=tr("\n%1\nResearch %2 · Engineering %3 · Evaluation %4").arg(q(p.education)).arg(p.research).arg(p.engineering).arg(p.evaluation);
+            detail+=tr("\n%1\nResearch %2 · Engineering %3 · Evaluation %4 · Creative %5").arg(q(p.education)).arg(p.research).arg(p.engineering).arg(p.evaluation).arg(p.creative);
         }
     if(core::talent_rules(w.simulation)) {
         QStringList names;for(const auto& id:core::person_skills(w.simulation,"founder"))
@@ -291,9 +317,9 @@ QVariantList WorldController::people() const {
                 .arg(QLocale{QLocale::English,QLocale::UnitedStates}.toCurrencyString(static_cast<double>(core::employee_monthly_salary(s,employee).value())/100));
             const auto years=std::max(0,core::from_ordinal(s.date).year-core::from_ordinal(p.applied_on).year);
             auto row=QVariantMap{{"id",q(p.id)},{"portrait",portrait_url(p,s.date)},{"name",q(p.name)},{"initials",q(p.name).section(' ',0,0).left(1)+q(p.name).section(' ',-1).left(1)}, {"role",managing?tr("HQ operations manager"):q(p.role)},
-                {"detail",tr("%1 · %2 · Age %3 · %4 years of experience\n%5\nResearch %6 · Engineering %7 · Evaluation %8\n%9")
+                {"detail",tr("%1 · %2 · Age %3 · %4 years of experience\n%5\nResearch %6 · Engineering %7 · Evaluation %8 · Creative %9\n%10")
                     .arg(q(p.gender),q(p.pronouns)).arg(portrait_person_age(p,s.date)).arg(p.experience+static_cast<unsigned>(years))
-                    .arg(q(p.education)).arg(p.research).arg(p.engineering).arg(p.evaluation)
+                    .arg(q(p.education)).arg(p.research).arg(p.engineering).arg(p.evaluation).arg(p.creative)
                     .arg(s.date<employee.ready_on?tr("Onboarding until %1").arg(q(core::iso_date(employee.ready_on))):managing?tr("Dedicated to branch coordination; one staff allocation is reserved"):tr("Onboarding complete"))+workplace+([&]{QStringList traits;for(const auto& t:core::visible_traits(s,p))traits.push_back(q(t));return QStringLiteral("\n")+traits.join(" · ")+skillNames(s,p);})()}, {"bio",q(p.bio)}};
             if(const auto mood=moods.find(p.id);mood!=moods.end()) {
                 auto report=moodRow(mood->second);const auto known=core::visible_traits(s,p);
@@ -382,7 +408,7 @@ QVariantMap WorldController::contactThread(QString person) const {
         const auto& outcome=contact->opening->outcome;
         const bool signed_offer=outcome=="signed";
         const bool followup=std::ranges::any_of(contact->funding,[](const auto& discussion){return discussion.status=="submitted";});
-        const bool alder=id==std::string{core::opening_contact_prefix}+"alder";
+        const bool career_employer = offer.value("kind")=="career";
         const auto original=offer.value("body").toString();
         QVariantList messages{QVariantMap{{"incoming",true},{"prompt",offer.value("subject")},
             {"reply",outcome=="rejected"?original:original+"\n\n"+offer.value("terms").toString()}}};
@@ -397,7 +423,7 @@ QVariantMap WorldController::contactThread(QString person) const {
             else if(message.reply=="rejected") reply=tr("The leadership application closed before your company began.");
             else if(message.reply=="unsigned") reply=tr("The opening offer closed when you signed other paperwork.");
             else if(message.reply=="has_seat") reply=offer.value("kind")=="partner"?tr("I vote on the board under the terms we signed."):
-                alder?tr("Alder's existing owners have a seat on the current board."):
+                career_employer?tr("The company's existing owners hold controlling seats on the current board."):
                 tr("Our organization has a seat on the current board under the signed agreement.");
             else reply=tr("Our organization has no seat on the current board.");
             messages.push_back(QVariantMap{{"topic",q(message.topic)},{"date",q(core::iso_date(message.day))},{"prompt",opening?opening_label:board_label},{"reply",reply}});
@@ -509,9 +535,9 @@ QVariantList WorldController::applicants() const {
     for(const auto& [candidate,queued]:candidates) {
         const auto& applicant=*candidate;const auto& p=applicant.profile;
         auto row=QVariantMap{{"id",q(p.id)},{"portrait",portrait_url(p,s.date)},{"name",q(p.name)},{"role",q(p.role)},{"initials",q(p.name).left(1)},
-            {"detail",tr("%1 · %2 · Age %3 · %4 years of experience\n%5\nResearch %6 · Engineering %7 · Evaluation %8 · Mission fit %9/100\n%10/month · %11 signing · %12 days onboarding\nEvaluation work credit: %13%")
+            {"detail",tr("%1 · %2 · Age %3 · %4 years of experience\n%5\nResearch %6 · Engineering %7 · Evaluation %8 · Creative %9 · Mission fit %10/100\n%11/month · %12 signing · %13 days onboarding\nEvaluation work credit: %14%")
                 .arg(q(p.gender),q(p.pronouns)).arg(portrait_person_age(p,s.date)).arg(p.experience).arg(q(p.education))
-                .arg(p.research).arg(p.engineering).arg(p.evaluation).arg(p.mission_fit).arg(money(applicant.salary),money(applicant.signing))
+                .arg(p.research).arg(p.engineering).arg(p.evaluation).arg(p.creative).arg(p.mission_fit).arg(money(applicant.salary),money(applicant.signing))
                 .arg(s.management->catalog.people->onboarding.value()).arg(static_cast<double>(applicant.evaluation_credit.value())/100)}, {"bio",q(p.bio)}};
         std::vector<const core::PersonProfile*> team;
         for(const auto& employee:s.management->people->employees) if(!employee.departed_on) team.push_back(&employee.terms.profile);

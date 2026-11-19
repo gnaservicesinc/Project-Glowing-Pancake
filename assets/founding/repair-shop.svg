@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="810" viewBox="0 0 1440 810">
+  <title>The flat above the repair shop</title>
+  <defs><linearGradient id="light" x2="0" y2="1"><stop stop-color="#333447"/><stop offset="1" stop-color="#b07b61"/></linearGradient></defs>
+  <rect width="1440" height="810" fill="url(#light)"/>
+  <circle cx="1090" cy="232" r="90" fill="#ead2a2" opacity=".78"/>
+  <path fill="#554956" d="M0 490l220-60 155 43 183-66 240 61 210-75 432-18v435H0z"/>
+  <path fill="#51434b" d="M687 290l600-55 153 43v346l-753 49z"/>
+  <path fill="#2b313a" d="M665 290l628-66 147 45v19l-148-39-627 65z"/>
+  <path fill="#775b55" d="M702 324l570-51v146l-570 41z"/>
+  <path fill="#cfaa83" d="M745 338l84-7v82l-84 6zm135-12l83-7v82l-83 6zm160-15l88-7v83l-88 6z"/>
+  <path fill="#493e49" d="M788 333h5v83h-5zm133-12h5v82h-5zm161-14h5v84h-5z"/>
+  <path fill="#222d35" d="M718 488l355-24v166l-355 25zm395-31l117-8v168l-117 9z"/>
+  <path fill="#8a7770" d="M731 495l328-22v59l-328 22z"/>
+  <path d="M737 509l316-22m-316 36l316-22m-317 37l317-22" stroke="#514950" stroke-width="4"/>
+  <path fill="#be926d" d="M1127 468l88-6v104l-88 6z"/>
+  <path fill="#b68e6a" d="M766 600l224-16v10l-224 16zm17 7h8v32h-8zm178-13h9v34h-9z"/>
+  <path fill="#6c7875" d="M839 575l30-2 7 19-45 3zm66-12l25-2 7 27-38 2z"/>
+  <path fill="#29353c" d="M0 683l1440-100v32L0 750z"/>
+  <path d="M0 220q394 124 750 32t690-81m-1440 83q393 107 746 19t694-72" stroke="#413e48" stroke-width="4" fill="none"/>
+</svg>

@@ -92,6 +92,16 @@ void apply_capital(std::vector<EquityHolding>& h,std::vector<OptionGrant>& grant
     } else if(e.kind=="donation") {
         if(e.shares.value()!=0 || e.consideration.value()<=0 || shares_of(h,"institution_endowment")!=BasisPoints{10000})
             invalid("A nonprofit gift must leave the institutional endowment intact.");
+    } else if(e.kind=="secondary_transfer") {
+        if(e.shares.value()<=0 || shares_of(h,"institution_endowment").value()>0)
+            invalid("Secondary share transfers apply to private corporate shares.");
+        const auto seller_it=std::ranges::find(h,e.subject,&EquityHolding::holder);
+        if(seller_it==h.end() || seller_it->reserved_pool || seller_it->shares<e.shares)
+            invalid("Secondary share transfer exceeds seller holdings.");
+        seller_it->shares=BasisPoints{checked_subtract(seller_it->shares.value(),e.shares.value())};
+        auto buyer_it=std::ranges::find(h,std::string_view{"founder_trust"},&EquityHolding::holder);
+        if(buyer_it==h.end()) h.push_back({"founder_trust",e.shares,false});
+        else buyer_it->shares=BasisPoints{checked_add(buyer_it->shares.value(),e.shares.value())};
     } else if (e.kind=="grant") {
         const auto& candidate=find(c.executives,e.subject);const auto& appointment=find(appointments,e.subject);
         if (!appointment.hybrid || appointment.hired_on!=e.day || e.shares!=candidate.hybrid_grant ||
@@ -150,6 +160,25 @@ void apply_charter(SimulationState& s,std::string_view id,std::string motion) {
     add_recurring(*s.accounts,{key,charter.monthly_employee_budget,s.date,{},"Employee program under "+charter.name});
     g.charters.push_back({std::string(id),std::move(motion),s.date});
 }
+std::vector<BoardMember> control_board(const SimulationState& s,std::vector<BoardMember> members,OrdinalDay on_day) {
+    if(!s.management || !s.management->governance) return members;
+    for(const auto& transfer:s.management->governance->control_transfers) {
+        if(!transfer.voting_granted || transfer.transferred_seats==0 || transfer.day>on_day) continue;
+        std::uint32_t moved=0;
+        for(auto& member:members) {
+            if(!member.player && (member.id=="board.cofounder" || member.id=="board."+transfer.seller) && moved<transfer.transferred_seats) {
+                const auto take=std::min(member.seats,transfer.transferred_seats-moved);
+                member.seats-=take;
+                moved+=take;
+            }
+        }
+        std::erase_if(members,[](const BoardMember& m){return !m.player && m.seats==0;});
+        if(moved>0) {
+            for(auto& member:members) if(member.player) { member.seats+=moved; break; }
+        }
+    }
+    return members;
+}
 std::vector<BoardBallot> ballots_for(const SimulationState& s,const BoardMotion& motion,bool player,Cents cash) {
     const auto after=motion.kind==BoardMotionKind::financing?checked_unit_add(cash,motion.cash):checked_unit_subtract(cash,motion.cash);
     const auto& rules=catalog(s);
@@ -164,6 +193,7 @@ std::vector<BoardBallot> ballots_for(const SimulationState& s,const BoardMotion&
     }
     members=succession_board(s,std::move(members),motion.leadership_cursor);
     members=charter_board(s,std::move(members),motion.charter_cursor);
+    members=control_board(s,std::move(members),motion.resolved_on.value_or(s.date));
     if(motion.kind==BoardMotionKind::charter) {
         const auto& proposed=find(catalog(s).charters,motion.subject);
         for(auto& member:members) if(!member.player) member.cash_floor=std::max(member.cash_floor,proposed.cash_floor);
@@ -200,7 +230,111 @@ std::vector<BoardMember> current_board(const SimulationState& s) {
         const auto& f=find(rules.financing,m.subject);
         if (f.board_seat) rows.push_back(financing_director(rules,f));
     }
-    return charter_board(s,succession_board(s,std::move(rows),s.succession?s.succession->controls.size():0),s.management->governance->charters.size());
+    return control_board(s,charter_board(s,succession_board(s,std::move(rows),s.succession?s.succession->controls.size():0),s.management->governance->charters.size()),s.date);
+}
+namespace {
+std::int64_t company_control_valuation_cents(const SimulationState& s) {
+    const auto report=s.accounts?accounts_report(*s.accounts):AccountsReport{};
+    return std::max<std::int64_t>(20'000'000,std::max<std::int64_t>(report.cash.value(),report.equity.value()));
+}
+}
+CompanyAuthoritySummary company_authority(const SimulationState& s) {
+    CompanyAuthoritySummary summary;
+    if(!s.management || !s.management->governance || !s.management->catalog.governance || !s.accounts) {
+        summary.has_economic_control=true;
+        summary.has_voting_control=true;
+        summary.can_change_mission=true;
+        return summary;
+    }
+    const auto& g=*s.management->governance;
+    const bool nonprofit=nonprofit_organization(s);
+    summary.inherited_company=std::ranges::any_of(g.opening_holdings,[](const EquityHolding& h){
+        return h.holder=="existing_owners" && h.shares.value()>0;
+    });
+    const auto board=current_board(s);
+    for(const auto& member:board) {
+        summary.total_voting_seats+=member.seats;
+        if(member.player) summary.player_voting_seats+=member.seats;
+    }
+    summary.has_voting_control=summary.total_voting_seats>0 && summary.player_voting_seats*2>summary.total_voting_seats;
+    const auto founder_holder=s.management->catalog.scoring.founder;
+    summary.player_economic_bp=nonprofit?BasisPoints{0}:BasisPoints{
+        std::max(shares_of(s.accounts->holdings,"founder_trust").value(),shares_of(s.accounts->holdings,founder_holder).value())};
+    summary.seller_economic_bp=nonprofit?BasisPoints{0}:shares_of(s.accounts->holdings,"existing_owners");
+    summary.has_economic_control=nonprofit?true:(summary.player_economic_bp.value()>5000);
+    summary.can_change_mission=nonprofit?summary.has_voting_control:(summary.has_voting_control && (!summary.inherited_company || summary.has_economic_control));
+
+    if(const auto* charter=active_charter(s)) {
+        summary.charter_constraints="Active bylaws ("+charter->name+"): cash floor $"+std::to_string(charter->cash_floor.value()/100)+
+            ", max dilution "+std::to_string(charter->maximum_dilution.value()/100)+"%, employee program $"+
+            std::to_string(charter->monthly_employee_budget.value()/100)+"/mo remain in force until amended by board vote.";
+    }
+    const auto valuation=company_control_valuation_cents(s);
+    if(!nonprofit && summary.seller_economic_bp.value()>0 && !summary.has_economic_control) {
+        const auto needed=std::min<std::int64_t>(summary.seller_economic_bp.value(),5100-summary.player_economic_bp.value());
+        if(summary.player_economic_bp.value()+needed>5000) {
+            summary.can_buy_economic_stake=true;
+            summary.economic_buyout_shares=BasisPoints{needed};
+            summary.economic_buyout_price=Cents{static_cast<std::int64_t>(
+                mul_div_round_half_up(static_cast<std::uint64_t>(valuation),static_cast<std::uint64_t>(needed),10000))};
+        }
+    }
+    if(!nonprofit && !summary.has_voting_control) {
+        const auto seller_seat=std::ranges::find(board,std::string_view{"board.cofounder"},&BoardMember::id);
+        const auto needed_seats=summary.total_voting_seats/2+1-summary.player_voting_seats;
+        if(seller_seat!=board.end() && seller_seat->seats>=needed_seats) {
+            summary.voting_transfer_seats=needed_seats;
+            summary.voting_control_price=Cents{static_cast<std::int64_t>(
+                mul_div_round_half_up(static_cast<std::uint64_t>(valuation),2500,10000))};
+            summary.voting_company_fee=Cents{2'500'000};
+            summary.can_acquire_voting_control=summary.has_economic_control;
+        }
+    }
+    if(!summary.can_change_mission) {
+        if(nonprofit) {
+            summary.authority_blocker="Changing the institution's mission requires a voting majority of trustees ("+
+                std::to_string(summary.player_voting_seats)+" of "+std::to_string(summary.total_voting_seats)+" seats held).";
+        } else if(!summary.has_economic_control && !summary.has_voting_control) {
+            summary.authority_blocker="As an appointed executive with "+std::to_string(summary.player_economic_bp.value()/100)+
+                "% ownership and "+std::to_string(summary.player_voting_seats)+" of "+std::to_string(summary.total_voting_seats)+
+                " board votes, you lack authority to reverse the company's purpose. Acquire >50% economic ownership and then negotiate voting control on the board.";
+        } else if(summary.has_economic_control && !summary.has_voting_control) {
+            summary.authority_blocker="You hold "+std::to_string(summary.player_economic_bp.value()/100)+
+                "% economic equity, but economic shares do not carry board seats ("+std::to_string(summary.player_voting_seats)+" of "+
+                std::to_string(summary.total_voting_seats)+" votes). Complete the board voting control transfer before changing the company's mission.";
+        } else {
+            summary.authority_blocker="Changing the inherited mission requires controlling ownership (>50%) as well as board voting control.";
+        }
+    }
+    return summary;
+}
+void acquire_company_control(SimulationState& s,const AcquireCompanyControl& request,Cents protected_cash) {
+    if(!s.management || !s.management->governance || !s.management->catalog.governance || !s.accounts || !s.succession)
+        invalid("Corporate control transfers require company governance and personal accounts.");
+    auto& g=*s.management->governance;
+    if(g.control_transfers.size()>=16) invalid("Corporate control transfer register is full.");
+    const auto summary=company_authority(s);
+    const auto id="control/"+std::to_string(g.control_transfers.size()+1);
+    if(request.step=="buy_economic_stake") {
+        if(!summary.can_buy_economic_stake) invalid("No controlling economic stake purchase from existing owners is available.");
+        if(s.succession->personal_cash<summary.economic_buyout_price)
+            invalid("Personal savings are insufficient for the controlling economic stake purchase.");
+        s.succession->personal_cash=checked_unit_subtract(s.succession->personal_cash,summary.economic_buyout_price);
+        record_capital(s,{"secondary_transfer","existing_owners",id,s.date,summary.economic_buyout_shares,Cents{0}});
+        g.control_transfers.push_back({id,"economic_stake","existing_owners",s.date,summary.economic_buyout_shares,0,
+            summary.economic_buyout_price,Cents{0},false});
+    } else if(request.step=="acquire_voting_control") {
+        if(!summary.has_economic_control) invalid("Acquire a controlling economic stake (>50%) before negotiating board voting control.");
+        if(!summary.can_acquire_voting_control) invalid("Board voting control transfer is unavailable under the current board.");
+        if(s.succession->personal_cash<summary.voting_control_price)
+            invalid("Personal savings are insufficient for the voting-control buyout premium.");
+        pay(s,summary.voting_company_fee,protected_cash,"control.legal/"+id,"Governance control transfer legal fees");
+        s.succession->personal_cash=checked_unit_subtract(s.succession->personal_cash,summary.voting_control_price);
+        g.control_transfers.push_back({id,"voting_control","existing_owners",s.date,BasisPoints{0},summary.voting_transfer_seats,
+            summary.voting_control_price,summary.voting_company_fee,true});
+    } else {
+        invalid("Choose a supported corporate control step.");
+    }
 }
 void transfer_to_acquirer(SimulationState& s,std::string buyer,Cents consideration,Cents founder_proceeds,std::string key) {
     if(!s.succession || founder_proceeds.value()<0 || founder_proceeds>consideration || s.succession->sale_proceeds.value()!=0)

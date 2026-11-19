@@ -68,6 +68,7 @@ int main(int argc, char* argv[]) {
     parser.addOption({QStringLiteral("software"),QStringLiteral("Use the explicit software renderer." )});
     parser.addOption({QStringLiteral("build-info"),QStringLiteral("Print configure-time identity, then exit.")});
 #if !PGP_DISTRIBUTION
+    parser.addOption({QStringLiteral("playtest-setup"),QStringLiteral("Open the custom setup in the isolated playtest environment.")});
     parser.addOption({QStringLiteral("god-mode"),QStringLiteral("Open the isolated God mode playtest campaign.")});
     parser.addOption({QStringLiteral("smoke-test"),QStringLiteral("Explicit keyboard/campaign/save check, then exit; requires --portable-root.")});
     parser.addOption({QStringLiteral("competition-smoke"),QStringLiteral("Use the standard rival roster, publication/adoption and pricing path in the explicit playable smoke.")});
@@ -82,7 +83,6 @@ int main(int argc, char* argv[]) {
     parser.addOption({QStringLiteral("menu-smoke"),QStringLiteral("Exercise the Mac menu, settings, media, New Game entry and recovery.")});
     parser.addOption({QStringLiteral("screenshot"),QStringLiteral("Capture the smoke-test window."),QStringLiteral("file")});
     parser.addOption({QStringLiteral("founding-smoke"),QStringLiteral("Exercise the actual New Game biography, funding and first morning with an isolated local save.")});
-    parser.addOption({QStringLiteral("newsroom-smoke"),QStringLiteral("Play the prepared appointment and newsroom. Run again in the same isolated root to resume the choice and collect the dataset.")});
     parser.addOption({QStringLiteral("founding-partner-smoke"),QStringLiteral("Exercise the New Game cofounder conversation, signing and first morning.")});
     parser.addOption({QStringLiteral("device-interface-smoke"),QStringLiteral("Exercise the laptop launcher, device app switching and a compact workspace.")});
     parser.addOption({QStringLiteral("life-report-smoke"),QStringLiteral("Exercise the live newspaper in an isolated continuing company.")});
@@ -135,8 +135,7 @@ int main(int argc, char* argv[]) {
     const bool music_smoke = parser.isSet(QStringLiteral("music-smoke"));
     const bool menu_smoke = parser.isSet(QStringLiteral("menu-smoke")) || parser.isSet(QStringLiteral("settings-smoke")) || parser.isSet(QStringLiteral("development-menu-smoke"));
     const bool partner_smoke = parser.isSet(QStringLiteral("founding-partner-smoke"));
-    const bool newsroom_smoke = parser.isSet(QStringLiteral("newsroom-smoke"));
-    const bool founding_smoke = parser.isSet(QStringLiteral("founding-smoke")) || partner_smoke || newsroom_smoke;
+    const bool founding_smoke = parser.isSet(QStringLiteral("founding-smoke")) || partner_smoke;
     const bool prototype_smoke = parser.isSet(QStringLiteral("smoke-test")) && !menu_smoke && !founding_smoke && !world_smoke;
     const auto variants = static_cast<int>(world_smoke) + static_cast<int>(society_smoke) + static_cast<int>(institutions_smoke) +
         static_cast<int>(civic_smoke) + static_cast<int>(infrastructure_smoke) + static_cast<int>(competition_smoke) + static_cast<int>(frontier_smoke) + static_cast<int>(leadership_smoke) + static_cast<int>(objectives_smoke) + static_cast<int>(music_smoke) + static_cast<int>(menu_smoke) + static_cast<int>(founding_smoke);
@@ -150,7 +149,7 @@ int main(int argc, char* argv[]) {
     }
 #else
     if(!parser.positionalArguments().isEmpty()) parser.showHelp(2);
-    constexpr bool prototype_smoke=false,world_smoke=false,founding_smoke=false,newsroom_smoke=false,menu_smoke=false;
+    constexpr bool prototype_smoke=false,world_smoke=false,founding_smoke=false,menu_smoke=false;
     constexpr bool competition_smoke=false,infrastructure_smoke=false,institutions_smoke=false,music_smoke=false;
 #endif
     try {
@@ -175,7 +174,8 @@ int main(int argc, char* argv[]) {
         auto paths = persistence::local_paths(parser.isSet(QStringLiteral("portable-root")) ?
             std::optional{path(parser.value(QStringLiteral("portable-root")))} : std::nullopt);
 #if !PGP_DISTRIBUTION
-        const bool god_mode=parser.isSet(QStringLiteral("god-mode"));
+        const bool setup_requested=parser.isSet(QStringLiteral("playtest-setup"));
+        const bool god_mode=setup_requested || parser.isSet(QStringLiteral("god-mode"));
         QStringList god_arguments;
         for(const auto* option:{"portable-root","content","scenario","headquarters","text-scale"}) {
             const auto name=QString::fromLatin1(option);
@@ -209,7 +209,7 @@ int main(int argc, char* argv[]) {
         QQuickStyle::setStyle(QStringLiteral("Basic"));
         bridge::CampaignController campaign{std::move(program),std::move(initial),paths,settings,nullptr,
             bundled || competition_smoke || infrastructure_smoke || institutions_smoke || founding_smoke, !prototype_smoke};
-        const auto audio_mode=prototype_smoke || world_smoke || newsroom_smoke || ((menu_smoke || founding_smoke) && parser.isSet(QStringLiteral("software")))
+        const auto audio_mode=prototype_smoke || world_smoke || ((menu_smoke || founding_smoke) && parser.isSet(QStringLiteral("software")))
             ? audio::DeviceMode::Silent : audio::DeviceMode::NativeIfAvailable;
         MusicController music{nullptr,music_smoke ? audio::DeviceMode::NativeIfAvailable : audio_mode};
         MenuAudio menu_audio{campaign,audio_mode};
@@ -245,6 +245,7 @@ int main(int argc, char* argv[]) {
         engine.rootContext()->setContextProperty(QStringLiteral("campaign"),&campaign);
 #if !PGP_DISTRIBUTION
         engine.rootContext()->setContextProperty(QStringLiteral("developmentTools"),&development_tools);
+        engine.rootContext()->setContextProperty(QStringLiteral("setupRequested"),setup_requested);
         engine.rootContext()->setContextProperty(QStringLiteral("godMode"),god_mode);
         engine.rootContext()->setContextProperty(QStringLiteral("sessionLabel"),god_mode?QCoreApplication::translate("Game","God mode · Playtest"):QString{});
         engine.rootContext()->setContextProperty(QStringLiteral("optionalMenuSource"),QStringLiteral("qrc:/pgp/game/DevelopmentMenu.qml"));
@@ -323,8 +324,6 @@ int main(int argc, char* argv[]) {
                     schedule_departure_smoke(*window,campaign,parser.value(QStringLiteral("screenshot")));
                 else if (world_smoke)
                     schedule_world_smoke(*window,campaign,paths,parser.value(QStringLiteral("screenshot")),parser.isSet(QStringLiteral("portrait-smoke")),parser.isSet(QStringLiteral("workplace-smoke")),parser.isSet(QStringLiteral("device-smoke")),parser.isSet(QStringLiteral("contacts-smoke")),parser.isSet(QStringLiteral("manager-smoke")));
-                else if (newsroom_smoke)
-                    schedule_newsroom_smoke(*window,campaign,paths,parser.value(QStringLiteral("screenshot")));
                 else if (founding_smoke)
                     schedule_founding_smoke(*window,campaign,paths,parser.value(QStringLiteral("screenshot")),partner_smoke);
                 else if(god_mode && parser.isSet(QStringLiteral("development-menu-smoke")))

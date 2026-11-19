@@ -190,6 +190,76 @@ void WorldController::respondToMissionConcern(QString person,QString mediator,QS
     emit actionRequested(core::RespondToMissionConcern{person.toStdString(),mediator.toStdString()});
 }
 
+QVariantMap WorldController::companyAuthority() const {
+    if(!snapshot_) return {};
+    const auto& s=snapshot_->checkpoint.world.simulation;
+    const auto auth=core::company_authority(s);
+    const auto money=[](core::Cents v) {
+        const auto mag=v.value()<0?-v.value():v.value();
+        auto n=QString::number(mag/100);
+        for(auto i=n.size()-3;i>0;i-=3) n.insert(i,QLatin1Char(','));
+        return (v.value()<0?QStringLiteral("−$"):QStringLiteral("$"))+n+QStringLiteral(".%1").arg(mag%100,2,10,QLatin1Char('0'));
+    };
+    const auto* scandal=core::mission_scandal(s);
+    const bool inherited=core::mission_conflict_rules(s) && s.management->people->social->mission_conflict->inherited_purpose;
+    const auto personal_cash=s.succession?s.succession->personal_cash:core::Cents{0};
+    QVariantMap out{
+        {"canChangeMission",auth.can_change_mission},
+        {"hasEconomicControl",auth.has_economic_control},
+        {"hasVotingControl",auth.has_voting_control},
+        {"inheritedPurpose",inherited},
+        {"founderEquityBp",static_cast<int>(auth.player_economic_bp.value())},
+        {"founderEquityText",QStringLiteral("%1.%2%").arg(auth.player_economic_bp.value()/100).arg(auth.player_economic_bp.value()%100,2,10,QLatin1Char('0'))},
+        {"founderSeats",static_cast<int>(auth.player_voting_seats)},
+        {"totalSeats",static_cast<int>(auth.total_voting_seats)},
+        {"outsideSeats",static_cast<int>(auth.total_voting_seats - auth.player_voting_seats)},
+        {"blocker",q(auth.authority_blocker)},
+        {"charterConstraints",q(auth.charter_constraints)},
+        {"economicStakePrice",money(auth.economic_buyout_price)},
+        {"economicStakeShares",static_cast<int>(auth.economic_buyout_shares.value())},
+        {"votingControlPrice",money(auth.voting_control_price)},
+        {"legalFee",money(auth.voting_company_fee)},
+        {"personalCash",money(personal_cash)},
+        {"canBuyEconomicStake",auth.can_buy_economic_stake && personal_cash>=auth.economic_buyout_price},
+        {"canAcquireVotingControl",auth.can_acquire_voting_control && personal_cash>=auth.voting_control_price},
+        {"revision",reviewToken()},
+        {"scandalActive",scandal && !scandal->responded_on.has_value()}
+    };
+    if(scandal) {
+        out["scandalPreviousMission"]=q(scandal->previous_mission);
+        out["scandalNewMission"]=q(scandal->new_mission);
+        out["scandalDate"]=q(core::iso_date(scandal->triggered_on));
+        out["scandalResolved"]=scandal->responded_on.has_value();
+        out["scandalResponse"]=q(scandal->response);
+        out["scandalMoraleHit"]=scandal->employee_morale_hit;
+        out["scandalDemandHit"]=static_cast<int>(-scandal->donor_customer_reaction_bp);
+        out["scandalInvestorReaction"]=scandal->investor_reaction_bp;
+        out["scandalSummary"]=scandal->responded_on
+            ? tr("Public backlash over reversing the inherited %1 mission was addressed (%2). Historical records and remaining staff concerns remain visible.")
+                .arg(q(scandal->previous_mission), q(scandal->response))
+            : tr("Reversing the company's inherited %1 mission to %2 triggered public scrutiny, temporary demand backlash (%3%), and aligned staff morale loss (%4). Choose a response to stabilize operations.")
+                .arg(q(scandal->previous_mission), q(scandal->new_mission))
+                .arg(scandal->donor_customer_reaction_bp/100).arg(scandal->employee_morale_hit);
+    }
+    return out;
+}
+
+void WorldController::acquireCompanyControl(QString step,QString revision) {
+    if(!snapshot_ || companyArchive() || revision!=reviewToken()){
+        emit noticeRaised(tr("Review current ownership and board authority first."));
+        return;
+    }
+    emit actionRequested(core::AcquireCompanyControl{step.toStdString()});
+}
+
+void WorldController::respondToMissionScandal(QString choice,QString revision) {
+    if(!snapshot_ || companyArchive() || revision!=reviewToken()){
+        emit noticeRaised(tr("Review the current mission-reversal response options."));
+        return;
+    }
+    emit actionRequested(core::RespondToMissionScandal{choice.toStdString()});
+}
+
 void WorldController::socialize(QString person,QString activity,QString revision) {
     if(!snapshot_ || companyArchive() || revision!=reviewToken()){emit noticeRaised(tr("Circumstances changed. Review your plans again."));return;}
     emit actionRequested(core::Socialize{person.toStdString(),activity.toStdString()});

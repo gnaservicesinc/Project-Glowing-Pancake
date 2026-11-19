@@ -488,10 +488,10 @@ void validate_headquarters_rules(const HeadquartersRules& r) {
     const auto text=[](const std::string& v){return !v.empty() && v.size()<=128 && v.find('\0')==v.npos;};
     const auto ids=[&](const auto& rows){std::set<std::string> seen;for(const auto& row:rows) if(!text(row.id) || !seen.insert(row.id).second) invalid("Headquarters catalog identities must be unique.");};
     if(!r.homes.empty()) {
-        if(r.homes.size()!=3) invalid("Provide poor, middle and rich family home plans.");
+        if(r.homes.size()>32 || std::ranges::none_of(r.homes, [](const auto& home){return home.family=="middle";})) invalid("Home plans need a default family home and at most 32 backgrounds.");
         std::set<std::string> families;
         for(const auto& home:r.homes) {
-            if((home.family!="poor" && home.family!="middle" && home.family!="rich") || !families.insert(home.family).second || !text(home.plan.id) || !text(home.plan.name)) invalid("Home plans need distinct family backgrounds and names.");
+            if(!text(home.family) || !families.insert(home.family).second || !text(home.plan.id) || !text(home.plan.name)) invalid("Home plans need distinct family backgrounds and names.");
             validate_hq_plan(home.plan.width,home.plan.depth,home.plan.rooms,r.maximum_edge);
             if(home.room_names.size()<3 || static_cast<std::ptrdiff_t>(home.room_names.size())!=std::ranges::count(home.plan.rooms,false,&HQRoom::passage))
                 invalid("Every home needs at least three named free workspaces.");
@@ -738,7 +738,6 @@ void validate_headquarters(const SimulationState& s,bool deep) {
     const auto& p=current_headquarters(s);if(p.left_on) invalid("The current headquarters cannot have a departure date.");
     const auto home=headquarters_home(s);
     const auto& home_city=find(r.markets,h.home_market);
-    if(!h.home_family.empty() && h.home_family!="poor" && h.home_family!="middle" && h.home_family!="rich") invalid("The family home background is invalid.");
     if(!h.home_family.empty() && home_city.state!="US-CA") invalid("The founder's family home remains in California.");
     validate_hq_plan(p.width,p.depth,p.rooms,r.maximum_edge);
     std::vector<std::uint32_t> occupancy(static_cast<std::size_t>(p.width*p.depth));std::set<std::string> people,laptop_people;std::set<std::uint32_t> mounts;

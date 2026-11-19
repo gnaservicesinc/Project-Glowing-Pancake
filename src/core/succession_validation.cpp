@@ -119,6 +119,10 @@ void validate_succession(const SimulationState& s,bool deep) {
         cash_prefix.push_back(cash);
     }
     if(actor.personal_life) paid=checked_unit_subtract(paid,actor.personal_life->spent);
+    if(s.management && s.management->governance) {
+        for(const auto& transfer:s.management->governance->control_transfers)
+            paid=checked_unit_subtract(paid,transfer.personal_price);
+    }
     if(paid!=actor.personal_cash) invalid("Founder personal cash differs from paid compensation and private spending.");
     const auto in_time=[&](OrdinalDay day){return day>=s.accounts->starts_on && day<=s.date;};
     std::set<std::string> salaries,projects;

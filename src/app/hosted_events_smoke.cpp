@@ -37,7 +37,7 @@ void schedule_hosted_events_smoke(QQuickWindow& window,pgp::bridge::CampaignCont
             auto* story=campaign.founding();story->setField("family","rich");story->setAdvantage("political",true);
             pgp::bridge::complete_formative_fixture(*story);
             story->setBeat("home");
-            if(!story->contactHomeOffer("alder").isEmpty() || !story->respondHomeOffer("alder","accept").isEmpty()){fail("Accept an actual appointment");return;}
+            if(!story->contactHomeOffer("northstar").isEmpty() || !story->respondHomeOffer("northstar","accept").isEmpty()){fail("Accept an actual appointment");return;}
             campaign.startFounderCampaign();break;
         }
         case 1:
@@ -53,7 +53,7 @@ void schedule_hosted_events_smoke(QQuickWindow& window,pgp::bridge::CampaignCont
         case 5:
             if(!press("personalPage_events")){fail("Open the gatherings calendar");return;}break;
         case 6:
-            if(!press("gatheringGuest_"+run->employee) || !press("gatheringGuest_opening/alder")){fail("Choose employee and opening contacts");return;}
+            if(!press("gatheringGuest_"+run->employee) || !press("gatheringGuest_opening/northstar")){fail("Choose employee and opening contacts");return;}
             run->cash=state.cash;run->personal=state.succession->personal_cash;break;
         case 7:
             if(!press("gatheringBook")){fail("Review the quoted gathering");return;}run->frames=0;break;

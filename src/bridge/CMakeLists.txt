@@ -1,4 +1,4 @@
-add_library(pgp_bridge STATIC campaign_content_recovery.cpp content_recovery_controller.cpp decision_people.cpp department_presentation.cpp access_presentation.cpp recruitment_presentation.cpp device_presentation.cpp workplace_presentation.cpp world_controller.cpp world_controller.hpp founding_controller.cpp founding_controller.hpp reservation_model.cpp reservation_model.hpp
+add_library(pgp_bridge STATIC campaign_content_recovery.cpp content_recovery_controller.cpp decision_people.cpp department_presentation.cpp access_presentation.cpp recruitment_presentation.cpp device_presentation.cpp device_workspace.cpp workplace_presentation.cpp world_controller.cpp world_controller.hpp founding_controller.cpp founding_controller.hpp reservation_model.cpp reservation_model.hpp
     simulation_worker.cpp simulation_worker.hpp campaign_model.cpp campaign_model.hpp
     campaign_worker.cpp campaign_worker.hpp campaign_controller.cpp campaign_controller.hpp
     management_controller.cpp management_controller.hpp research_presentation.cpp heavyweight_presentation.cpp governance_presentation.cpp heavyweight_presentation.hpp
@@ -13,11 +13,11 @@ add_library(pgp_bridge STATIC campaign_content_recovery.cpp content_recovery_con
 add_library(pgp::bridge ALIAS pgp_bridge)
 target_sources(pgp_bridge PRIVATE family_presentation.cpp romance_presentation.cpp collaboration_presentation.cpp industry_people_presentation.cpp social_presentation.cpp talent_presentation.cpp headquarters_presentation.cpp personal_life_presentation.cpp contact_finance_presentation.cpp)
 if(NOT PGP_DISTRIBUTION)
-    target_sources(pgp_bridge PRIVATE development_reset.cpp playtest_founder.cpp)
+    target_sources(pgp_bridge PRIVATE development_reset.cpp playtest_founder.cpp playtest_setup_bridge.cpp)
 endif()
 set_target_properties(pgp_bridge PROPERTIES AUTOMOC ON)
 target_include_directories(pgp_bridge PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")
-target_link_libraries(pgp_bridge PUBLIC pgp::session Qt6::Core)
+target_link_libraries(pgp_bridge PUBLIC pgp::session Qt6::Core Qt6::Gui)
 pgp_project_target(pgp_bridge)
 
 qt_add_resources(pgp_bridge world_baseline

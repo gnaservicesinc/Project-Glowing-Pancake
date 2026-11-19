@@ -67,7 +67,7 @@ range are checked without coercions. Missing vocabulary is an explicit error.
 trigger and exit condition; another flow has its own namespace. Existing
 condition depth/count limits include duration wrappers. Runtime uses elapsed
 daily observations and persists resets; see the
-[duration evidence](../../docs/evidence/M1-06-duration.md).
+duration evidence (`git show 589bf46:docs/evidence/M1-06-duration.md`).
 
 A related-entity predicate binds its `where` condition to each member of a
 registered relation. This example requires exactly one active project:

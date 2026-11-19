@@ -71,7 +71,7 @@ Build only the interfaces demanded by the next system. This contract does not au
 
 ## AI implementation assignments
 
-The ordered [backlog](BACKLOG.md) owns task completion and dependencies. [The implementation brief](../agents/tasks/base-events.md) makes these assignments concrete:
+The ordered [backlog](BACKLOG.md) owns task completion and dependencies. [The implementation brief](EVENT_SYSTEM.md) makes these assignments concrete:
 
 - **M1-07:** Implement base-event detection, occurrence dispatch and truthful news projection after the shared runtime and save system. Test causal receipts, threshold edges, overlay deduplication, persisted random outcomes, digest priority and bounded queues.
 - **M3-05:** Create and validate the eight-definition baseline after the slice mechanics and shared forms/inspection exist. Supply bounded rival/visible-warning producers through shared commands. Coding agents author the rules/templates/fixtures and inspect them through Studio. Internal snapshot/version finalization follows E1A-04/05 after M3-03 in the current Mac queue. Attach richer story treatment selectively. Run a seeded headless demonstration and pending-occurrence reload checks.
@@ -81,7 +81,7 @@ M1-07 now supports `on_committed` subscriptions for settled project completion
 and missed contract starts. The next prepared opening resolves these sources
 with the existing flow lifecycle. Saved activations carry the actual source
 result and a saved cursor preserves pending work through choices. The inbox
-projects this cause from the activation. [Committed-fact evidence](evidence/M1-07-committed-facts.md)
+projects this cause from the activation. Committed-fact evidence (`git show 589bf46:docs/evidence/M1-07-committed-facts.md`)
 
 Scheduled and bounded interval roots can use the markets or hazards stream at
 entry, with an explicit quiet outcome. Those samples share the existing graph,
@@ -90,4 +90,4 @@ decisions and active liquidity deadlines in the action tier. The eight-flow
 playable pack now supplies concrete research/evaluation/pilot providers, real
 supplier/recovery terms, demand expiry and bounded rivals. Its complete three-year
 baseline and interrupted continuation match. [Implementation contract, limits
-and seeds](../src/runtime/BASE_EVENTS.md). [Original seeded-incident evidence](evidence/M1-07-seeded-digest.md)
+and seeds](../src/runtime/BASE_EVENTS.md). Original seeded-incident evidence (`git show 589bf46:docs/evidence/M1-07-seeded-digest.md`)

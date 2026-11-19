@@ -2,7 +2,7 @@
 
 Design baseline 1.3 · 2026-11-07 · Working title · Campaign/technology revision selected; prototype retains earlier rules
 
-This is the product design for the full 1.0 game. Numeric balance targets are starting values to test, not claims about the real world. [Decisions and requirements](DECISIONS_AND_REQUIREMENTS.md) explains the relationship to the two drafts. [The roadmap](ROADMAP.md) separates the complete design from the first playable release.
+This is the product design for the full 1.0 game. Numeric balance targets are starting values to test, not claims about the real world. [Decisions and requirements](DECISIONS_AND_REQUIREMENTS.md) explains the relationship to the two drafts. [The roadmap](BACKLOG.md) separates the complete design from the first playable release.
 
 The 2026-11-11 [life and development revision](LIFE_AND_DEVELOPMENT_PLAN.md)
 supersedes the victory conditions and age-118 ending below. The founder's death
@@ -275,7 +275,7 @@ Example: a supplier offers 40% cheaper compute for exclusivity, a board observer
 
 Replayability comes from rival strategy, geography, discovery pathways, demand, funding conditions, institutional choices, objectives, and world response. Authored scenario packs may add crises, starting conditions, or constraints after the base game. No procedural text generation or external service is needed.
 
-For minimum content counts, example event data, privacy rules, release criteria, and development order, use [content and assets](CONTENT_AND_ASSETS.md), [QA and release](QA_AND_RELEASE.md), and [the roadmap](ROADMAP.md).
+For minimum content counts, example event data, privacy rules, release criteria, and development order, use [content and assets](CONTENT_AND_ASSETS.md), [QA and release](QA_AND_RELEASE.md), and [the roadmap](BACKLOG.md).
 
 ## 13. Content production and the separate Studio
 

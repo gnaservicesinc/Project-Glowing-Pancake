@@ -14,6 +14,9 @@ struct ScenarioOptions {
     std::string difficulty;
     std::optional<content::FoundingSelection> founding{};
     std::vector<core::PeopleContact> opening_contacts{};
+#if !PGP_DISTRIBUTION
+    std::optional<core::OrdinalDay> playtest_start{};
+#endif
 };
 
 // Initialize implemented foundation fields from validated authored data. No

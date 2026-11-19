@@ -1,5 +1,8 @@
 #include "../../src/bridge/founding_fixture.hpp"
 #include "founding_controller.hpp"
+#if !PGP_DISTRIBUTION
+#include <pgp/runtime/playtest_setup.hpp>
+#endif
 #include "world_controller.hpp"
 #include "management_controller.hpp"
 #include <pgp/runtime/campaign_identity.hpp>
@@ -83,23 +86,23 @@ int main(int argc,char** argv) {
         };
         bridge::FoundingController applicant{program.collection,path.parent_path()/"applicant.json"};
         applicant.setAdvantage("charisma",true);applicant.setBeat("home");
-        check(offer(applicant,"alder").value("status")=="listed" && applicant.contactHomeOffer("alder").isEmpty(),"An ordinary founder can apply to the lab.");
-        check(offer(applicant,"alder").value("status")=="rejected" && !applicant.respondHomeOffer("alder","accept").isEmpty(),"A rejected application must close without an appointment.");
+        check(offer(applicant,"northstar").value("status")=="listed" && applicant.contactHomeOffer("northstar").isEmpty(),"An ordinary founder can apply to the lab.");
+        check(offer(applicant,"northstar").value("status")=="rejected" && !applicant.respondHomeOffer("northstar","accept").isEmpty(),"A rejected application must close without an appointment.");
         bridge::FoundingController rejected{program.collection,path.parent_path()/"applicant.json"};
-        check(offer(rejected,"alder").value("status")=="rejected" && rejected.form().value("home_offer")=="alder","A rejection and its selected thread must survive restart.");
+        check(offer(rejected,"northstar").value("status")=="rejected" && rejected.form().value("home_offer")=="northstar","A rejection and its selected thread must survive restart.");
         bridge::FoundingController invited{program.collection,path.parent_path()/"invited.json"};
         invited.setField("family","poor");invited.setAdvantage("genius",true);invited.setBeat("home");
-        check(offer(invited,"alder").value("source")=="recruiter" && offer(invited,"frontier").value("source")=="introduction","A genius without family wealth should receive both approaches.");
-        check(!invited.respondHomeOffer("alder","accept").isEmpty(),"Review a message before responding.");
-        check(invited.contactHomeOffer("alder").isEmpty() && invited.respondHomeOffer("alder","later").isEmpty(),"An invitation can be kept for later.");
+        check(offer(invited,"northstar").value("source")=="recruiter" && offer(invited,"frontier").value("source")=="introduction","A genius without family wealth should receive both approaches.");
+        check(!invited.respondHomeOffer("northstar","accept").isEmpty(),"Review a message before responding.");
+        check(invited.contactHomeOffer("northstar").isEmpty() && invited.respondHomeOffer("northstar","later").isEmpty(),"An invitation can be kept for later.");
         check(invited.contactHomeOffer("frontier").isEmpty() && invited.respondHomeOffer("frontier","decline").isEmpty(),"An investor can be turned down.");
         bridge::FoundingController inbox{program.collection,path.parent_path()/"invited.json"};
-        check(offer(inbox,"alder").value("status")=="considering" && offer(inbox,"frontier").value("status")=="declined" &&
+        check(offer(inbox,"northstar").value("status")=="considering" && offer(inbox,"frontier").value("status")=="declined" &&
               inbox.form().value("home_offer")=="frontier" && !inbox.respondHomeOffer("frontier","accept").isEmpty(),"Held and declined replies must resume with their original choices.");
         bridge::FoundingController unwritable{program.collection,path/"unwritable.json"};
         unwritable.setBeat("home");
         const auto before_failure=unwritable.form();
-        check(!unwritable.contactHomeOffer("alder").isEmpty() && unwritable.form()==before_failure,
+        check(!unwritable.contactHomeOffer("northstar").isEmpty() && unwritable.form()==before_failure,
             "A failed draft write must report the error and keep the previous conversation state.");
         runtime::ScenarioOptions options;
         options.founding=setup.selection();
@@ -166,11 +169,15 @@ int main(int argc,char** argv) {
         refuse("opening/commercial","workstation");
         check(send("opening/commercial","opening_terms").accepted() && send("opening/commercial","board_role").accepted(),
             "The signed investor must answer about the real agreement and board.");
-        check(conversation.current_state().world.simulation.management->people->contacts.back().messages.back().reply=="has_seat",
+        const auto commercial_contact = std::ranges::find(
+            conversation.current_state().world.simulation.management->people->contacts,
+            std::string{"opening/commercial"}, &core::PeopleContact::person);
+        check(commercial_contact != conversation.current_state().world.simulation.management->people->contacts.end() &&
+              !commercial_contact->messages.empty() && commercial_contact->messages.back().reply == "has_seat",
             "The investor's board reply must reflect the actual seat created by their signed agreement.");
         refuse("opening/commercial","opening_terms");
-        refuse("opening/alder","board_role");
-        check(send("opening/alder","opening_terms").accepted(),"An unsigned invitation must remain accessible with its recorded outcome.");
+        refuse("opening/northstar","board_role");
+        check(send("opening/northstar","opening_terms").accepted(),"An unsigned invitation must remain accessible with its recorded outcome.");
         const auto update=[&](const runtime::Checkpoint& saved) {
             world.update(std::make_shared<const bridge::CampaignSnapshot>(bridge::CampaignSnapshot{2,saved,{},true,false}),program,true);
         };
@@ -184,33 +191,86 @@ int main(int argc,char** argv) {
         update(continued.checkpoint);
         check(world.contactThread("opening/commercial")==commercial,"Reload must preserve the projected conversation and topic states.");
         auto forged=financed;
-        forged.world.simulation.management->people->contacts.front().opening->outcome="signed";
+        const auto unsigned_contact = std::ranges::find(
+            forged.world.simulation.management->people->contacts,
+            std::string{"opening/northstar"}, &core::PeopleContact::person);
+        check(unsigned_contact != forged.world.simulation.management->people->contacts.end(),
+              "Expected unsigned opening/northstar contact in funded fixture.");
+        unsigned_contact->opening->outcome="signed";
         bool rejected_forgery=false;
         try {runtime::validate_checkpoint(program,forged);}catch(const std::invalid_argument&){rejected_forgery=true;}
         check(rejected_forgery,"A saved contact must not invent a signed agreement absent from the founding selection.");
         setup.setField("route","hired_ceo");
         check(setup.selection().route=="investment","A home form cannot bypass the recruiter's reply.");
-        check(setup.contactHomeOffer("alder").isEmpty() && setup.respondHomeOffer("alder","accept").isEmpty(),"An active invitation can open the appointment paperwork.");
-        check(setup.form().value("charter").toString().isEmpty(),"A CEO application must clear optional founding bylaws rather than rewriting an existing company.");
-        check(setup.backers().empty() && setup.form().value("backers").toStringList().empty() && setup.form().value("company")=="Alder Research","Changing route must discard incompatible funding and identify the existing company.");
+        check(setup.contactHomeOffer("northstar").isEmpty() && setup.respondHomeOffer("northstar","accept").isEmpty(),"An active invitation can open the appointment paperwork.");
+        check(setup.form().value("charter").toString()=="charter.independent_lab","A CEO appointment must inherit the company's existing bylaws.");
+        setup.setField("company","Hijacked Name");
+        setup.setField("mission","profit");
+        check(setup.form().value("company")=="Northstar Applied Labs" && setup.form().value("mission")=="survival",
+            "An appointment letter must refuse edits to the existing company's name and mission.");
+        check(setup.backers().empty() && setup.form().value("backers").toStringList().empty() && setup.form().value("company")=="Northstar Applied Labs","Changing route must discard incompatible funding and identify the existing company.");
         const auto appointment=content::founding_terms(catalog,setup.selection());
         check(setup.signingError().isEmpty() && appointment.contributed_cents==65000000 && appointment.founder_bp==500 &&
             appointment.personal_contribution_cents==0,"Accepting the appointment must use the existing lab's capitalization and leave personal cash alone.");
         runtime::ScenarioOptions appointment_options;
         appointment_options.founding=setup.selection();
         appointment_options.opening_contacts=setup.openingContacts();
-        appointment_options.identity=runtime::CampaignIdentity{"Alder Research","Alex Vale","xe/xem"};
+        appointment_options.identity=runtime::CampaignIdentity{"Northstar Applied Labs","Alex Vale","xe/xem"};
         const auto appointed=runtime::begin_scenario(program,"scenario.founder_campaign","US-CA",core::ObjectiveSelection{core::ObjectiveKind::survival,{}},appointment_options);
         const auto& lab=appointed.world.simulation;
         check(lab.management->people->employees.size()==appointment.opening_staff && lab.cash==core::Cents{appointment.contributed_cents} &&
             lab.succession->personal_cash==core::Cents{appointment.personal_remaining_cents} &&
             persistence::decode_save(program,persistence::encode_save(program,appointed)).checkpoint==appointed,
             "The appointment from the inbox must open and reload an existing lab with its staff and separate personal savings.");
+        // F-08A: Inherited mission authority, economic-vs-voting control distinction, and survivable mission-reversal scandal.
+        {
+            auto auth_check = core::company_authority(appointed.world.simulation);
+            check(!auth_check.can_change_mission && !auth_check.has_economic_control && !auth_check.has_voting_control &&
+                  auth_check.player_voting_seats == 1 && auth_check.total_voting_seats == 4,
+                  "An appointed CEO must inherit 1 of 4 board votes and lack authority to rewrite mission.");
+            auto ceo_start = appointed;
+            ceo_start.world.developer_playtest = true;
+            ceo_start.world.enabled_flows = std::vector<std::string>{};
+            // Give personal cash to test buyout path (via playtest cash for exact personal cash conservation)
+            ceo_start.world.simulation.succession->playtest_cash = core::Cents{5000000000LL};
+            ceo_start.world.simulation.succession->personal_cash = core::checked_unit_add(
+                ceo_start.world.simulation.succession->personal_cash, core::Cents{5000000000LL});
+            runtime::Runtime ceo_rt{program, ceo_start};
+            check(ceo_rt.prepare_opening(ceo_rt.current_state().world.simulation.revision).accepted(), "Prepare CEO first morning.");
+            // Refuses mission rewrite before control
+            check(!ceo_rt.submit({ceo_rt.current_state().world.simulation.revision, core::ChangeCompanyMission{"commercial"}}).accepted(),
+                  "Appointed CEO without voting control must be refused from rewriting company mission.");
+            // Buy economic stake (>50% equity) — must NOT grant voting control
+            check(ceo_rt.submit({ceo_rt.current_state().world.simulation.revision, core::AcquireCompanyControl{"buy_economic_stake"}}).accepted(),
+                  "Economic stake buyout should succeed with sufficient personal funds.");
+            const auto after_econ = core::company_authority(ceo_rt.current_state().world.simulation);
+            check(after_econ.has_economic_control && !after_econ.has_voting_control && !after_econ.can_change_mission,
+                  "Economic majority alone must NOT grant board voting control or mission-change authority.");
+            check(!ceo_rt.submit({ceo_rt.current_state().world.simulation.revision, core::ChangeCompanyMission{"commercial"}}).accepted(),
+                  "Mission rewrite must still be refused until board voting control is acquired.");
+            // Acquire voting control
+            check(ceo_rt.submit({ceo_rt.current_state().world.simulation.revision, core::AcquireCompanyControl{"acquire_voting_control"}}).accepted(),
+                  "Board voting control buyout should succeed after acquiring controlling economic stake.");
+            const auto after_vote = core::company_authority(ceo_rt.current_state().world.simulation);
+            check(after_vote.has_voting_control && after_vote.can_change_mission,
+                  "Acquiring board voting control must unlock fundamental mission change authority.");
+            // Reversing inherited purpose succeeds and triggers survivable scandal
+            check(ceo_rt.submit({ceo_rt.current_state().world.simulation.revision, core::ChangeCompanyMission{"commercial"}}).accepted(),
+                  "Mission change should succeed once controlling voting seats are held.");
+            const auto* scandal = core::mission_scandal(ceo_rt.current_state().world.simulation);
+            check(scandal && !scandal->responded_on && scandal->employee_morale_hit < 0 && scandal->donor_customer_reaction_bp < 0,
+                  "Reversing inherited company purpose must trigger a visible scandal with morale and demand backlash.");
+            check(ceo_rt.submit({ceo_rt.current_state().world.simulation.revision, core::RespondToMissionScandal{"transition_reserve"}}).accepted(),
+                  "Survivable scandal response must be accepted.");
+            check(core::mission_scandal(ceo_rt.current_state().world.simulation)->responded_on.has_value() &&
+                  persistence::decode_save(program, persistence::encode_save(program, ceo_rt.checkpoint())).checkpoint == ceo_rt.checkpoint(),
+                  "Control acquisition, scandal, and scandal response must reload identically.");
+        }
         update(appointed);
-        check(world.contactThread("opening/alder").value("status")=="Signed at opening" &&
+        check(world.contactThread("opening/northstar").value("status")=="Signed at opening" &&
             world.contactThread("opening/commercial").value("status")=="Expired at opening",
-            "Accepting Alder must preserve the signed appointment and the unsigned investor conversation.");
-        check(setup.respondHomeOffer("alder","later").isEmpty() && setup.selection().route=="investment" &&
+            "Accepting Northstar must preserve the signed appointment and the unsigned investor conversation.");
+        check(setup.respondHomeOffer("northstar","later").isEmpty() && setup.selection().route=="investment" &&
             setup.form().value("company")=="Daybreak Research" && offer(setup,"commercial").value("status")=="considering", "Setting a selected appointment aside must restore the player's own company draft and preserve conversations.");
         {
             const auto find_opt=[](const QVariantMap& chapter,const QString& id) {
@@ -346,6 +406,65 @@ int main(int argc,char** argv) {
             check(bully_cards>=4 && bully_cards<=8 && bully_edges==bully_cards,
                   "Unresolved school bullies must appear in both SocialPanel people cards and relationship graph edges.");
         }
+#if !PGP_DISTRIBUTION
+        // F-08A: Playtester one-screen freely configurable setup & start (two contrasting configs + invalid refusal + exact reload).
+        {
+            auto invalid_cfg = runtime::default_playtest_setup(program);
+            invalid_cfg.birth_year = invalid_cfg.launch_year - 12; // underage
+            invalid_cfg.legal_form = "nonprofit";
+            invalid_cfg.objective = "profit";
+            const auto errs = runtime::validate_playtest_setup(program, invalid_cfg);
+            check(errs.size() >= 2, "Playtest setup validation must report underage start and nonprofit profit conflict.");
+
+            auto cfg_a = runtime::default_playtest_setup(program);
+            cfg_a.first_name = "Sora";
+            cfg_a.last_name = "Lin";
+            cfg_a.company_name = "Sora Garage Labs";
+            cfg_a.headquarters = "US-TX";
+            cfg_a.office = "home";
+            cfg_a.company_cash = core::Cents{25000000};
+            cfg_a.personal_cash = core::Cents{5000000};
+            cfg_a.company_debt = core::Cents{1500000};
+            cfg_a.industry_stage = 2;
+            cfg_a.family = "workshop";
+            cfg_a.launch_year += 1;
+            cfg_a.personal_debt = core::Cents{340000};
+            cfg_a.extra_staff_count = 0;
+            cfg_a.completed_research_ids.clear();
+            cfg_a.owned_dataset_ids.clear();
+            const auto cp_a = runtime::begin_playtest_scenario(program, cfg_a);
+            check(cp_a.world.developer_playtest && cp_a.world.playtest_custom && cp_a.world.simulation.paused, "Direct starts must open paused.");
+            check(core::headquarters_home(cp_a.world.simulation).plan.id == "home.workshop" &&
+                  cp_a.world.founding->family == "workshop" && cp_a.world.founding->advantages.empty(), "Keep the repair-shop home and requested advantages.");
+            check(core::from_ordinal(cp_a.world.simulation.date).year == cfg_a.launch_year, "Start on the chosen launch year.");
+            check(runtime::industry_activity(cp_a.world).stage == 2, "Apply the selected initial industry conditions.");
+            check(cp_a.world.state_id == "state.us_tx" && cp_a.world.simulation.cash == cfg_a.company_cash, "Preserve selected state and company cash after debt.");
+            check(persistence::decode_save(program, persistence::encode_save(program, cp_a)).checkpoint == cp_a, "Reload the custom founder and term balances exactly.");
+
+            auto cfg_b = runtime::default_playtest_setup(program);
+            cfg_b.first_name = "Elena";
+            cfg_b.last_name = "Vance";
+            cfg_b.company_name = "Cascade Frontier Institute";
+            cfg_b.headquarters = "US-WA";
+            cfg_b.office = "leased";
+            cfg_b.company_cash = core::Cents{450000000};
+            cfg_b.personal_cash = core::Cents{120000000};
+            cfg_b.extra_staff_count = 3;
+            cfg_b.extra_laptops = 2;
+            cfg_b.extra_desktops = 2;
+            cfg_b.starting_compute = core::MilliCUPerDay{250000};
+            cfg_b.include_starter_model = true;
+            cfg_b.include_starter_product = true;
+            cfg_b.completed_research_ids = {"research.held_out_evaluation", "research.reproducible_tooling"};
+            cfg_b.owned_dataset_ids = {"data.licensed_documents", "data.claims_redacted"};
+            const auto cp_b = runtime::begin_playtest_scenario(program, cfg_b);
+            check(cp_b.world.developer_playtest && cp_b.world.playtest_custom && cp_b.world.simulation.paused &&
+                  cp_b.world.state_id == "state.us_wa" && cp_b.world.simulation.cash == cfg_b.company_cash &&
+                  !cp_b.world.simulation.lab->models.empty() && !cp_b.world.simulation.deployments->records.empty() &&
+                  persistence::decode_save(program, persistence::encode_save(program, cp_b)).checkpoint == cp_b,
+                  "Playtest custom setup B (funded WA lab with starter model) must start paused and reload identically.");
+        }
+#endif
         std::cout<<"Structured identity, appearance editing, current drafts, founder profile and route dependencies passed\n";
     } catch(const std::exception& e) {std::cerr<<e.what()<<'\n';return 1;}
 }

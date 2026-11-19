@@ -18,8 +18,8 @@ ColumnLayout {
         checkedGoals = Array.from(defaultSecondary || [])
         if (choices.length > 0)
             primaryChoice.currentIndex = Math.max(0, choices.findIndex(row => row.id === defaultPrimary))
-        Qt.callLater(primaryChoice.restoreDraft)
-        Qt.callLater(secondaryDraft.restoreDraft)
+        primaryChoice?.scheduleRestore()
+        secondaryDraft?.scheduleRestore()
     }
     DraftState {
         id: secondaryDraft

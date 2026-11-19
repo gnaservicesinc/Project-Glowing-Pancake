@@ -418,8 +418,8 @@ void validate_checkpoint_with_simulation(const CompiledProgram& program, const C
              std::ranges::any_of(company.capacity->projects,[](const auto& work){return work.playtest_completed;}));
         const bool altered_funds=company.accounts && validate_core_simulation &&
             std::ranges::any_of(company.accounts->postings,[](const auto& posting){return posting.key.starts_with("playtest.capital/");});
-        if(world.playtest_unlimited || altered_capacity || altered_funds || (company.succession && company.succession->playtest_cash.value()!=0))
-            invalid("God mode resources and completed work require a playtest campaign.");
+        if(world.playtest_unlimited || world.playtest_custom || altered_capacity || altered_funds || (company.succession && company.succession->playtest_cash.value()!=0))
+            invalid("God mode resources, custom playtest setups, and completed work require a playtest campaign.");
     }
     if (world.competition && !world.competition->setup)
         for (const auto& rival:world.competition->companies)
@@ -437,6 +437,7 @@ void validate_checkpoint_with_simulation(const CompiledProgram& program, const C
     if ((!world.founding || world.scenario_id.empty()) && world.simulation.management && world.simulation.management->people &&
         std::ranges::any_of(world.simulation.management->people->contacts,[](const auto& contact){return contact.opening.has_value();}))
         invalid("Opening conversations require a saved founding biography.");
+    if (world.starting_industry_stage < 0 || world.starting_industry_stage > 3 || (!world.playtest_custom && world.starting_industry_stage)) invalid("Invalid starting industry conditions");
     if (!world.scenario_id.empty()) {
         const auto* definition=program.collection.find(world.scenario_id);
         const auto* scenario=definition?std::get_if<content::ScenarioDefinition>(&definition->data):nullptr;
@@ -446,11 +447,16 @@ void validate_checkpoint_with_simulation(const CompiledProgram& program, const C
         if(world.founding) {
             if(!scenario->founding || !world.identity || world.identity->founder_name!=world.founding->first_name+" "+world.founding->last_name)
                 invalid("The saved biography must match the founder and authored campaign.");
+            if ((world.founding->mode == "playtest") != world.playtest_custom) invalid("Playtest biography requires a custom playtest campaign.");
             const auto terms=content::founding_terms(*scenario->founding,*world.founding);
             const auto* partner=content::founding_partner(*scenario->founding,world.founding->partner);
-            if(partner && (!world.objectives || world.objectives->selections.empty() ||
+            const auto employer=content::effective_employer(*scenario->founding);
+            if(!world.playtest_custom && partner && (!world.objectives || world.objectives->selections.empty() ||
                 core::objective_key(world.objectives->selections.front().selection.primary)!=partner->objective))
                 invalid("The initial mission must match the signed cofounder agreement.");
+            if(!world.playtest_custom && world.founding->route=="hired_ceo" && (!world.objectives || world.objectives->selections.empty() ||
+                core::objective_key(world.objectives->selections.front().selection.primary)!=employer.objective))
+                invalid("An appointed CEO must start under the company's existing mission.");
             if(!world.difficulty.empty()) invalid("Founding conditions cannot be overridden by a difficulty setting.");
             if(world.simulation.management && world.simulation.management->people) {
                 const auto& management=*world.simulation.management;
@@ -461,7 +467,7 @@ void validate_checkpoint_with_simulation(const CompiledProgram& program, const C
                         invalid("Invalid register of opening conversations.");
                     const auto id=std::string_view{contact.person}.substr(core::opening_contact_prefix.size());
                     const auto& opening=*contact.opening;
-                    const bool career=id=="alder";
+                    const bool career=id==employer.id;
                     const auto* candidate=content::founding_partner(*scenario->founding,id);
                     const bool signed_at_opening=career?world.founding->route=="hired_ceo":candidate?candidate==partner:
                         std::ranges::find(world.founding->backers,id)!=world.founding->backers.end();
@@ -474,42 +480,46 @@ void validate_checkpoint_with_simulation(const CompiledProgram& program, const C
                             (opening.source!="pitch" && (opening.source!="introduction" || id!="frontier")))))
                         invalid("The opening conversation must match a real founding option and its signed outcome.");
                 }
-                if(partner) {
-                    const auto count=std::ranges::count_if(management.people->employees,[&](const auto& employee) {
+                if(!world.playtest_custom) {
+                    if(partner) {
+                        const auto count=std::ranges::count_if(management.people->employees,[&](const auto& employee) {
+                            const auto& p=employee.terms.profile;
+                            return employee.opening && p.role=="Cofounder / researcher" && p.name==partner->name &&
+                                p.gender==partner->gender && p.pronouns==partner->pronouns && p.traits==partner->traits &&
+                                p.bio==partner->letter && p.portrait==core::make_portrait(19972015,"cofounder/"+partner->id);
+                        });
+                        if(!partner_contact || count!=1) invalid("The signed cofounder must match the saved contact and opening team.");
+                    }
+                    const bool recognized=content::queer_founder(*world.founding);
+                    if(management.people->community_prestige!=(recognized?scenario->founding->queer_community_prestige:0) ||
+                        management.people->community_buzz!=(recognized?scenario->founding->queer_community_buzz:0))
+                        invalid("Community recognition must match the saved identity and authored audience response.");
+                    if(management.catalog.people && management.catalog.people->mood && management.people->founding_prestige!=std::min(100U,terms.prestige))
+                        invalid("The founder's reputation differs from the saved biography.");
+                    for(const auto& employee:management.people->employees) if(employee.terms.profile.role=="Founder / researcher") {
                         const auto& p=employee.terms.profile;
-                        return employee.opening && p.role=="Cofounder / researcher" && p.name==partner->name &&
-                            p.gender==partner->gender && p.pronouns==partner->pronouns && p.traits==partner->traits &&
-                            p.bio==partner->letter && p.portrait==core::make_portrait(19972015,"cofounder/"+partner->id);
-                    });
-                    if(!partner_contact || count!=1) invalid("The signed cofounder must match the saved contact and opening team.");
-                }
-                const bool recognized=content::queer_founder(*world.founding);
-                if(management.people->community_prestige!=(recognized?scenario->founding->queer_community_prestige:0) ||
-                    management.people->community_buzz!=(recognized?scenario->founding->queer_community_buzz:0))
-                    invalid("Community recognition must match the saved identity and authored audience response.");
-                if(management.catalog.people && management.catalog.people->mood && management.people->founding_prestige!=std::min(100U,terms.prestige))
-                    invalid("The founder's reputation differs from the saved biography.");
-                for(const auto& employee:management.people->employees) if(employee.terms.profile.role=="Founder / researcher") {
-                    const auto& p=employee.terms.profile;
-                    if(p.portrait!=world.founding->appearance || p.gender!=world.founding->gender || p.pronouns!=world.identity->founder_pronouns || p.name!=world.identity->founder_name)
-                        invalid("The founder's employee record differs from their saved identity and appearance.");
+                        if(p.portrait!=world.founding->appearance || p.gender!=world.founding->gender || p.pronouns!=world.identity->founder_pronouns || p.name!=world.identity->founder_name)
+                            invalid("The founder's employee record differs from their saved identity and appearance.");
+                    }
                 }
             }
         }
-        if(const auto& management=world.simulation.management;management && management->people) {
-            const auto uses_audiences=management->catalog.people && !management->catalog.people->founder_audiences.empty();
-            if(management->people->founder_gender!=(world.founding && uses_audiences?world.founding->gender:""))
-                invalid("Founder audience reactions must use the saved biography.");
-        }
-        if(world.simulation.infrastructure && world.simulation.infrastructure->workplace) {
-            const auto& workplace=*world.simulation.infrastructure->workplace;
-            if(workplace.opening_office!=(world.founding?world.founding->office:"leased") ||
-                workplace.nonresearch_founder!=(world.founding && world.founding->researcher!="founder"))
-                invalid("The headquarters plan differs from the saved founding office and staffing terms.");
-            if(workplace.access && workplace.access->connected_background!=(world.founding && world.founding->has_advantage("wealthy")))
-                invalid("National contacts differ from the founder's saved family and early opportunities.");
-            if(workplace.headquarters && workplace.headquarters->home_family!=(world.founding?world.founding->family:""))
-                invalid("The family home's available rooms differ from the founder's background.");
+        if(!world.playtest_custom) {
+            if(const auto& management=world.simulation.management;management && management->people) {
+                const auto uses_audiences=management->catalog.people && !management->catalog.people->founder_audiences.empty();
+                if(management->people->founder_gender!=(world.founding && uses_audiences?world.founding->gender:""))
+                    invalid("Founder audience reactions must use the saved biography.");
+            }
+            if(world.simulation.infrastructure && world.simulation.infrastructure->workplace) {
+                const auto& workplace=*world.simulation.infrastructure->workplace;
+                if(workplace.opening_office!=(world.founding?world.founding->office:"leased") ||
+                    workplace.nonresearch_founder!=(world.founding && world.founding->researcher!="founder"))
+                    invalid("The headquarters plan differs from the saved founding office and staffing terms.");
+                if(workplace.access && workplace.access->connected_background!=(world.founding && world.founding->has_advantage("wealthy")))
+                    invalid("National contacts differ from the founder's saved family and early opportunities.");
+                if(workplace.headquarters && workplace.headquarters->home_family!=(world.founding?world.founding->family:""))
+                    invalid("The family home's available rooms differ from the founder's background.");
+            }
         }
         (void)content::scenario_difficulty(*scenario,world.difficulty);
         if(scenario->counties.has_value()!=world.counties.has_value()) invalid("County model differs from the authored scenario.");
@@ -574,6 +584,7 @@ void validate_checkpoint_with_simulation(const CompiledProgram& program, const C
                 const auto opening=content::scenario_opening(*scenario,world.background,world.company_id,world.difficulty,founding);
                 const auto management=content::scenario_management(*scenario,world.difficulty,founding);
                 const auto competition=content::scenario_competition(*scenario,world.difficulty);
+                if (!world.playtest_custom) {
                 if(world.simulation.accounts) {
                     const auto& accounts=*world.simulation.accounts;
                     const auto debt=std::ranges::find(accounts.debts,content::startup_debt_id,&core::Debt::id);
@@ -636,6 +647,7 @@ void validate_checkpoint_with_simulation(const CompiledProgram& program, const C
                     std::vector<core::EquityHolding> initial;
                     for (const auto& [holder,shares]:content::scenario_ownership(*scenario,founding)) initial.push_back({holder,shares,holder=="option_pool"});
                     if (world.simulation.management->governance->opening_holdings!=initial) invalid("Corporate opening ownership differs from the scenario");
+                }
                 }
                 if (scenario->service_catalog ? (!world.simulation.deployments || world.simulation.deployments->catalog!=content::scenario_services(program.collection,*scenario)) : world.simulation.deployments.has_value())
                     invalid("Saved service catalog differs from its authored qualification rules");

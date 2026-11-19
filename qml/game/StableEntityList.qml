@@ -31,7 +31,7 @@ ListView {
     Connections {
         target: list
         function onSelected(entityId) { selectionDraft.remember(entityId) }
-        function onCountChanged() { Qt.callLater(selectionDraft.restoreDraft) }
+        function onCountChanged() { selectionDraft?.scheduleRestore() }
     }
 
     function revealFocus() {

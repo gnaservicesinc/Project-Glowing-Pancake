@@ -61,14 +61,12 @@ std::optional<AgentPlan> agent_plan(const ServiceDefinition& definition,const La
 CapacityProject qualified_project(const ServiceDefinition& definition,const LabState& lab,const CapacityState& capacity,
                                  const DeployModel& request,OrdinalDay day,std::string id) {
     const auto& model=find(lab.models,request.model_id);
+    if (model.is_proof_of_concept)
+        invalid("Proof-of-concept models cannot be deployed directly to customers; continue into a full production training run with production datasets and an independent evaluation");
     if (!definition.required_recipe.empty() && model.recipe_id!=definition.required_recipe) invalid("This specialist service requires its efficient recipe and research");
     for (const auto& required : definition.required_research) {
-        const auto research = std::find_if(lab.research.begin(), lab.research.end(), [&](const auto& row) {
-            if (row.research_id != required || !row.completed) return false;
-            const auto& work = find(capacity.projects, row.project_id);
-            return work.stopped_on && *work.stopped_on < day;
-        });
-        if (research == lab.research.end()) invalid("Complete the distribution channel's required research before launch");
+        if (!has_research_access(lab, capacity, required, day))
+            invalid("Complete or license the distribution channel's required research before launch");
     }
     const auto& evidence=find(lab.evaluations,request.evidence_id);
     const auto& plan=find(lab.catalog.evaluations,evidence.plan_id);

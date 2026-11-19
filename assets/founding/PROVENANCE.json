@@ -135,6 +135,30 @@
       "license_id": "GPL-3.0-only",
       "references": [],
       "sha256": "089609f63482c1aa1ce747aa86fb29f001cb28f60da9aebbf80a3d96c50493ee"
+    },
+    {
+      "path": "assets/founding/repair-shop.svg",
+      "creation": "Original SVG geometry authored with Codex assistance",
+      "created_on": "2026-11-18",
+      "license_id": "GPL-3.0-only",
+      "references": [],
+      "sha256": "81946d078aec368840e3c7cc4d738f7afec30e14659b770dad8963c16131cd15"
+    },
+    {
+      "path": "assets/founding/courtyard.svg",
+      "creation": "Original SVG geometry authored with Codex assistance",
+      "created_on": "2026-11-18",
+      "license_id": "GPL-3.0-only",
+      "references": [],
+      "sha256": "0b26ad2a2f8cd1ae593c7bae46e833998764115645914dc516123cab4d099219"
+    },
+    {
+      "path": "assets/founding/bookshop.svg",
+      "creation": "Original SVG geometry authored with Codex assistance",
+      "created_on": "2026-11-18",
+      "license_id": "GPL-3.0-only",
+      "references": [],
+      "sha256": "4a3503ead8852f691b8c6243fb3a73e85a5b2d7c13b2b91a784a19c6ba290f70"
     }
   ]
 }

@@ -12,6 +12,9 @@ from [GameInk.qml](../../qml/game/GameInk.qml).
 | `street.svg` | Ochre bungalow street and a low morning sun. |
 | `street-apartments.svg` | Blue apartment row for the tight-budget family background. |
 | `street-hillside.svg` | Olive ridge and a long window wall for the wealthy background. |
+| `repair-shop.svg` | A workbench and open service bay below the family flat. |
+| `courtyard.svg` | Shared workrooms and a bench around the housing co-op courtyard. |
+| `bookshop.svg` | Stocked display windows below the booksellers’ home. |
 | `library.svg` | Jade shadows, a CRT and the light at the end of the shelves. |
 | `workshop.svg` | Plum dusk around the founder's borrowed desk. |
 | `company.svg` | Amber window light on a corporation's term sheet. |

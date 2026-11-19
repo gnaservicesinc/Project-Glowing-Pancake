@@ -187,6 +187,161 @@ int main() {
             if (!core::research_workplace_blocker(hw, specialized, alloc, active_project).empty())
                 throw std::runtime_error("Hardware engineering skill (cpu_design) must qualify when equipment is placed.");
         }
+        // Settle the active specialized research project before F-08D/E checks.
+        for (int n = 0; n < 30 && project(state().lab->research.back().project_id).status == core::ProjectStatus::active; ++n)
+            advance(1);
+
+        // F-08D & F-08E: Broad 120+ catalog, data-free vs data-dependent research, 6 data paths, processing non-laundering,
+        // creative workforce, PoC production/refusal/continuation, compound AND-of-ORs, and commercial tech licensing.
+        {
+            check(state().lab->catalog.research.size() >= 120, "Catalog must provide 120+ validated research topics across domains.");
+
+            // 1. Commercial Technology Licensing vs Internal R&D:
+            // License data_deduplication (instead of researching it internally) to unlock downstream empirical research.
+            check(!core::has_research_access(*state().lab, *state().capacity, "research.data_deduplication", state().date),
+                  "Deduplication is not yet known or licensed.");
+            apply(core::LicenseTechnology{"license.data_deduplication"});
+            // Before integration_days (2 days), license is not yet active.
+            check(!core::has_research_access(*state().lab, *state().capacity, "research.data_deduplication", state().date),
+                  "Technology license requires its integration window before becoming active.");
+            advance(2);
+            check(core::has_research_access(*state().lab, *state().capacity, "research.data_deduplication", state().date),
+                  "Active technology license satisfies prerequisite access within its term.");
+            // Cannot publish a licensed technology as an original discovery!
+            refuse(core::PublishResearch{"research.data_deduplication"}, "completed, previously private research result");
+
+            // 2. Data-free theoretical research vs Data-dependent empirical research:
+            // research.data.information_theoretic_pruning is data-free and runs with zero owned datasets.
+            check(state().lab->licenses.empty(), "No datasets owned yet.");
+            apply(core::StartResearch{"research.data.information_theoretic_pruning", cloud});
+            for (int n = 0; n < 25 && project(state().lab->research.back().project_id).status == core::ProjectStatus::active; ++n)
+                advance(1);
+            check(state().lab->research.back().completed, "Data-free theoretical research completes with zero datasets owned.");
+
+            // research.data.empirical_scaling_laws requires an owned dataset (>= 50,000 units, >= 5,000 bp quality).
+            refuse(core::StartResearch{"research.data.empirical_scaling_laws", cloud}, "dataset");
+            apply(core::BuyData{"data.public_civic_registry_clean"});
+            auto empirical_alloc = cloud;
+            empirical_alloc.data_ids = {"data.public_civic_registry_clean"};
+            apply(core::StartResearch{"research.data.empirical_scaling_laws", empirical_alloc});
+            for (int n = 0; n < 25 && project(state().lab->research.back().project_id).status == core::ProjectStatus::active; ++n)
+                advance(1);
+            check(state().lab->research.back().completed, "Data-dependent research completes once qualifying dataset is supplied.");
+
+            // 3. Six data acquisition paths + Dataset Processing (volume vs quality, non-laundering of rights/provenance/controversy):
+            apply(core::BuyData{"data.torrent_shadow_archive"});
+            apply(core::BuyData{"data.company_internal_logs"});
+            apply(core::BuyData{"data.licensed_editorial_gold"});
+            apply(core::BuyData{"data.licensed_bulk_syndicate_noisy"});
+            apply(core::BuyData{"data.public_common_dump_noisy"});
+            const auto &torrent_raw = core::lab_data(*state().lab, "data.torrent_shadow_archive");
+            check(torrent_raw.third_party_controversy_risk && !torrent_raw.commercial_use &&
+                      torrent_raw.provenance_confidence_bp.value() < 5000,
+                  "Torrent archive carries controversy risk, low provenance confidence, and no commercial clearance.");
+            const core::ProcessDataset filter_req{"data.torrent_shadow_archive", "filter", "data.torrent_filtered", cloud};
+            const auto proc_preview = core::preview_data_processing(*state().lab, *state().capacity, filter_req);
+            check(proc_preview.estimated_unique_units < torrent_raw.unique_units &&
+                      proc_preview.estimated_quality > torrent_raw.quality &&
+                      !proc_preview.commercial_use && proc_preview.third_party_controversy_risk &&
+                      proc_preview.provenance_confidence == torrent_raw.provenance_confidence_bp,
+                  "Processing preview must show volume-for-quality tradeoff and unchanged rights/provenance/controversy.");
+            apply(filter_req);
+            for (int n = 0; n < 20 && project(state().lab->processed.back().project_id).status == core::ProjectStatus::active; ++n)
+                advance(1);
+            const auto &torrent_filtered = core::lab_data(*state().lab, "data.torrent_filtered");
+            check(torrent_filtered.unique_units < torrent_raw.unique_units &&
+                      torrent_filtered.quality > torrent_raw.quality &&
+                      !torrent_filtered.commercial_use && torrent_filtered.third_party_controversy_risk &&
+                      torrent_filtered.provenance_confidence_bp == torrent_raw.provenance_confidence_bp &&
+                      torrent_filtered.parent_dataset_id == "data.torrent_shadow_archive",
+                  "Completed dataset processing must never launder rights, provenance confidence, or controversy risk.");
+            check(core::dataset_lineage_has_controversy(*state().lab, "data.torrent_filtered"),
+                  "Lineage controversy check must trace back through processed datasets.");
+
+            // 4. Dedicated Creative Workforce & In-House Creative Data Production:
+            std::string creative_worker;
+            for (const auto &emp : state().management->people->employees) {
+                if (emp.terms.profile.creative >= 40) {
+                    creative_worker = emp.terms.profile.id;
+                    break;
+                }
+            }
+            if (creative_worker.empty()) {
+                for (const auto &app : state().management->people->applicants) {
+                    if (app.profile.creative >= 40) {
+                        apply(core::HireEmployee{app.profile.id});
+                        creative_worker = app.profile.id;
+                        advance(8);
+                        break;
+                    }
+                }
+            }
+            check(!creative_worker.empty(), "At least one employee or hireable applicant must qualify for creative production.");
+            core::LabAllocation creative_alloc = cloud;
+            creative_alloc.staff = 1;
+            creative_alloc.researchers = {creative_worker};
+            apply(core::StartCreativeProduction{"data.creative_docs_v1", "documents", 25000, creative_alloc});
+            for (int n = 0; n < 15 && project(state().lab->creative_jobs.back().project_id).status == core::ProjectStatus::active; ++n)
+                advance(1);
+            const auto &creative_corpus = core::lab_data(*state().lab, "data.creative_docs_v1");
+            check(creative_corpus.source_path == "in_house_creative" && creative_corpus.commercial_use &&
+                      creative_corpus.open_weight_release && !creative_corpus.third_party_controversy_risk &&
+                      creative_corpus.provenance_confidence_bp == core::BasisPoints{10000} &&
+                      creative_corpus.quality.value() >= 8000 && creative_corpus.quality.value() <= 9700,
+                  "In-house creative data must be clean, commercially cleared, controversy-free, and skill-scaled below 100%.");
+
+            // 5. Proof-of-Concept (PoC) Research Outcome -> Deploy Refusal -> Production Continuation:
+            apply(core::StartResearch{"research.ml.rapid_prototyping_poc", cloud});
+            for (int n = 0; n < 20 && project(state().lab->research.back().project_id).status == core::ProjectStatus::active; ++n)
+                advance(1);
+            const auto poc_it = std::ranges::find(state().lab->models, "poc.research.ml.rapid_prototyping_poc", &core::LabModel::id);
+            check(poc_it != state().lab->models.end() && poc_it->is_proof_of_concept &&
+                      poc_it->origin_research_id == "research.ml.rapid_prototyping_poc",
+                  "Completing PoC research must materialize a real PoC model artifact.");
+            const std::string poc_id = poc_it->id;
+            const auto &first_service_id = state().deployments->catalog.front().product.id;
+            refuse(core::DeployModel{first_service_id, poc_id, "eval.poc.research.ml.rapid_prototyping_poc",
+                                     "lease/offer.supplier_small", false},
+                   "Proof-of-concept");
+            // Continue PoC into a full production training run with clean creative data!
+            apply(core::StartTraining{{"model.from_poc_prod", "recipe.sequence", poc_id, {"data.creative_docs_v1"},
+                                       "lease/offer.supplier_small", core::MilliCUPerDay{30000}, 1, core::MilliCU{250000}}});
+            const auto &prod_model = state().lab->models.back();
+            check(!prod_model.is_proof_of_concept && prod_model.parent_id == poc_id &&
+                      prod_model.inherited_work.value() > 0,
+                  "Production continuation from PoC must preserve lineage and grant bounded head-start work.");
+
+            // 6. Compound AND-of-OR prerequisites (A AND (B OR C) AND (D OR E)):
+            // License state_space_recurrence (Branch B) while completely skipping attention_systems (Branch C)!
+            check(!core::has_research_access(*state().lab, *state().capacity, "research.attention_systems", state().date),
+                  "Branch C (attention_systems) is completely skipped.");
+            apply(core::LicenseTechnology{"license.state_space_recurrence"});
+            advance(5);
+            check(core::has_research_access(*state().lab, *state().capacity, "research.ml.state_space_recurrence", state().date),
+                  "Branch B (state_space_recurrence) is active via license.");
+            // research.ml.unified_reasoning requires reproducible_tooling AND (attention_systems OR state_space_recurrence) AND (held_out_evaluation OR workflow_verification).
+            check(core::research_creativity_threshold(*state().lab, *state().capacity, "research.ml.unified_reasoning", state().date) == 0,
+                  "Compound AND-of-OR prerequisites must unlock unified_reasoning via Branch B while skipping Branch C!");
+
+            // 7. Product technical profile & provenance scrutiny event:
+            const auto clean_prof = core::product_technical_profile(state(), "model.from_poc_prod");
+            check(clean_prof.clean_provenance, "Model trained on in-house creative data must report clean provenance.");
+            apply(core::CancelProject{"lab/train/model.from_poc_prod"});
+            apply(core::StartTraining{{"model.from_processed_noisy", "recipe.sequence", "", {"data.torrent_filtered"},
+                                       "lease/offer.supplier_small", core::MilliCUPerDay{10000}, 1, core::MilliCU{250000}}});
+            const auto noisy_prof = core::product_technical_profile(state(), "model.from_processed_noisy");
+            check(!noisy_prof.clean_provenance,
+                  "Model trained on filtered noisy web dump must still carry unconsented provenance risk.");
+            auto story_checkpoint = game.current_state();
+            story_checkpoint.world.enabled_flows = std::vector<std::string>{"story.provenance_scrutiny_audit"};
+            runtime::Runtime story_game{program, story_checkpoint};
+            check(story_game.submit({story_game.current_state().world.simulation.revision, core::AdvanceDay{}}).accepted(),
+                  "Advancing day with provenance scrutiny flow enabled must succeed.");
+            const bool scrutiny_fired = std::ranges::any_of(story_game.current_state().runtime.presentations, [](const auto &msg) {
+                return msg.flow_id == "story.provenance_scrutiny_audit";
+            });
+            check(scrutiny_fired, "Training on controversial data must trigger story.provenance_scrutiny_audit.");
+        }
         exact_save();
         std::cout << "Named labor, prerequisites, equipment, paid compute, independent work budgets, power loss and "
                      "innovation fees, equipment, strict level prerequisites, dated serving savings and fresh saves passed\n";

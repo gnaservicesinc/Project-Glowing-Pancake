@@ -59,6 +59,21 @@ void WorldController::createBlueprint(QString name,QString hardware,QString grid
     const auto next=snapshot_->checkpoint.world.simulation.infrastructure->workplace->blueprints.size()+1;
     emit actionRequested(core::CreateFacilityBlueprint{{"blueprint_"+std::to_string(next),name.trimmed().toStdString(),hardware.toStdString(),static_cast<std::uint64_t>(kw)*1000,people,evaporative}});
 }
+QVariantMap WorldController::blueprintDesignPreview(QString hardware,QString gridKw,QString operators,bool evaporative,QString state) const {
+    if(!available(snapshot_)) return {};
+    bool gridOk=false,staffOk=false;
+    const auto kw=gridKw.toUInt(&gridOk),staff=operators.toUInt(&staffOk);
+    if(!gridOk || !staffOk) return {{"error",tr("Enter whole kilowatts and an operator headcount.")}};
+    try {
+        const auto& sim=snapshot_->checkpoint.world.simulation;
+        const core::FacilityBlueprint design{"preview","Branch design",hardware.toStdString(),static_cast<std::uint64_t>(kw)*1000,staff,evaporative};
+        const auto site="branch_"+std::to_string(sim.infrastructure->sites.size()+1);
+        const auto estimate=core::preview_blueprint_design(sim,design,{design.id,site,design.name,state.toStdString()});
+        return {{"detail",tr("Network %1/35 · cooling %2/35 · redundancy %3/30\nBuild %4 · fixed monthly cost %5")
+            .arg(estimate.network_score).arg(estimate.cooling_score).arg(estimate.redundancy_score)
+            .arg(money(estimate.total),money(estimate.monthly))}};
+    } catch(const std::exception& error) {return {{"error",QString::fromUtf8(error.what())}};}
+}
 QVariantMap WorldController::blueprintQuote(QString blueprint,QString state) const {
     if(!available(snapshot_)) return {{"error",tr("No facility planning office is available.")}};
     try {

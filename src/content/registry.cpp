@@ -346,6 +346,10 @@ Registry foundation_registry() {
     boolean("company.regional_recovery_eligible","The shorter regional recovery pilot can actually be accepted.",Scope::company,"campaign");
     boolean("company.cooperative_burst_eligible","The cooperative's short power-included lease can actually be accepted.",Scope::company,"campaign");
     boolean("company.independent_lab_eligible","The independent compute lab's annual term can actually be accepted.",Scope::company,"campaign");
+    boolean("company.uses_controversial_data","The company owns or trained on a dataset with third-party provenance or rights controversy risk.",Scope::company,"campaign");
+    boolean("company.controversial_model_deployed","An active customer service is backed by a model trained on controversial third-party data.",Scope::company,"campaign");
+    boolean("company.has_clean_creative_data","The company has delivered an in-house creative dataset with clean work-for-hire provenance.",Scope::company,"campaign");
+    number("world.industry_stage_level",Scope::world,Unit::count,0,3,"Observed industry maturity stage (0 early frontier, 1 rising interest, 2 industry boom, 3 maturing market) derived from publications and active services.","campaign");
     result.register_relation({"company.capacity_sources", Scope::company, Scope::capacity_source, core::capacity_source_limit,
         "Compute sources controlled by this company, including leased supply."});
     result.register_relation({"company.projects", Scope::company, Scope::project, core::capacity_project_limit,

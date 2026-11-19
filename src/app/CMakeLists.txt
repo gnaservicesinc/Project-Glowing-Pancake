@@ -27,7 +27,8 @@ qt_add_executable(pgp-game game_main.cpp music_controller.cpp music_controller.h
 if(NOT PGP_DISTRIBUTION)
     target_sources(pgp-game PRIVATE development_tools.cpp development_tools.hpp)
     qt_add_resources(pgp-game development_ui PREFIX "/pgp" BASE "${PROJECT_SOURCE_DIR}/qml"
-        FILES "${PROJECT_SOURCE_DIR}/qml/game/DevelopmentMenu.qml")
+        FILES "${PROJECT_SOURCE_DIR}/qml/game/DevelopmentMenu.qml"
+              "${PROJECT_SOURCE_DIR}/qml/game/PlaytestSetupPage.qml")
 endif()
 set(pgp_game_test_hooks OFF)
 if(BUILD_TESTING AND NOT PGP_DISTRIBUTION)
@@ -54,6 +55,7 @@ qt_add_resources(pgp-game game_ui
           "${PROJECT_SOURCE_DIR}/qml/game/HeadquartersTools.qml"
           "${PROJECT_SOURCE_DIR}/qml/game/HeadquartersPanel.qml"
           "${PROJECT_SOURCE_DIR}/qml/game/LegacyWorkplacePanel.qml"
+          "${PROJECT_SOURCE_DIR}/qml/game/FacilityBlueprints.qml"
           "${PROJECT_SOURCE_DIR}/qml/game/GameSelect.qml"
           "${PROJECT_SOURCE_DIR}/qml/game/GameCheck.qml"
           "${PROJECT_SOURCE_DIR}/qml/game/GameSlider.qml"
@@ -128,7 +130,18 @@ qt_add_resources(pgp-game game_ui
           "${PROJECT_SOURCE_DIR}/qml/game/LifeReport.qml"
           "${PROJECT_SOURCE_DIR}/qml/game/MusicCredits.qml"
           "${PROJECT_SOURCE_DIR}/qml/game/RoomScene.qml"
-          "${PROJECT_SOURCE_DIR}/qml/game/DomesticMap.qml")
+          "${PROJECT_SOURCE_DIR}/qml/game/DomesticMap.qml"
+          "${PROJECT_SOURCE_DIR}/qml/game/apps/AppShell.qml"
+          "${PROJECT_SOURCE_DIR}/qml/game/apps/DeviceSurfaceHost.qml"
+          "${PROJECT_SOURCE_DIR}/qml/game/apps/DetachedDeviceWindow.qml"
+          "${PROJECT_SOURCE_DIR}/qml/game/apps/DetachedResearchTreeWindow.qml"
+          "${PROJECT_SOURCE_DIR}/qml/game/apps/ResearchGraphCanvas.qml"
+          "${PROJECT_SOURCE_DIR}/qml/game/apps/ResearchTopicInspector.qml"
+          "${PROJECT_SOURCE_DIR}/qml/game/apps/ResearchApp.qml"
+          "${PROJECT_SOURCE_DIR}/qml/game/apps/DataApp.qml"
+          "${PROJECT_SOURCE_DIR}/qml/game/apps/ModelsApp.qml"
+          "${PROJECT_SOURCE_DIR}/qml/game/apps/AccountsApp.qml"
+          "${PROJECT_SOURCE_DIR}/qml/game/apps/ProductsApp.qml")
 qt_add_resources(pgp-game menu_assets
     PREFIX "/pgp/assets" BASE "${PROJECT_SOURCE_DIR}/assets"
     FILES "${PROJECT_SOURCE_DIR}/assets/menu/horizon.jpg"
@@ -138,6 +151,9 @@ qt_add_resources(pgp-game founding_images
     PREFIX "/pgp/assets" BASE "${PROJECT_SOURCE_DIR}/assets"
     FILES "${PROJECT_SOURCE_DIR}/assets/founding/hospital.svg"
           "${PROJECT_SOURCE_DIR}/assets/founding/birth-certificate.svg"
+          "${PROJECT_SOURCE_DIR}/assets/founding/repair-shop.svg"
+          "${PROJECT_SOURCE_DIR}/assets/founding/courtyard.svg"
+          "${PROJECT_SOURCE_DIR}/assets/founding/bookshop.svg"
           "${PROJECT_SOURCE_DIR}/assets/founding/street.svg"
           "${PROJECT_SOURCE_DIR}/assets/founding/street-apartments.svg"
           "${PROJECT_SOURCE_DIR}/assets/founding/street-hillside.svg"

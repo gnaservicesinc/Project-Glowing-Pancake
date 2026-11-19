@@ -220,7 +220,42 @@ Item {
                 WorldButton {objectName:"hudNewspaperButton";visible:desktop.newspaperReady;text:qsTr("Read the newspaper");textSize:desktop.textSize;primary:true;onClicked:desktop.newspaperRequested()}
                 WorldButton {visible:!desktop.shortLayout;text:qsTr("Advance…");textSize:desktop.textSize;onClicked:advanceMenu.open()}
                 WorldButton {visible:desktop.shortLayout && campaign.requiredKind==="none" && !desktop.newspaperReady;text:qsTr("Time & funds");textSize:desktop.textSize;onClicked:compactTime.open()}
+                WorldButton {objectName:"compactDirectMenuButton";visible:desktop.shortLayout;text:qsTr("Manage…");textSize:desktop.textSize;onClicked:directManagePopup.open()}
                 Label {visible:desktop.compact && !desktop.shortLayout;height:42*desktop.uiScale;text:qsTr("Available %1").arg(campaign.availableText);font.pixelSize:desktop.textSize;color:"#b7dfc7";verticalAlignment:Text.AlignVCenter}
+            }
+            Flow {
+                id: directManagementBar
+                objectName: "directManagementBar"
+                Layout.fillWidth: true
+                visible: !desktop.shortLayout
+                spacing: 5
+                Repeater {
+                    model: [
+                        {id:"dm_research",label:qsTr("Research"),app:"lab",section:"research"},
+                        {id:"dm_data",label:qsTr("Data"),app:"lab",section:"data"},
+                        {id:"dm_models",label:qsTr("Models"),app:"lab",section:"models"},
+                        {id:"dm_accounts",label:qsTr("Accounts"),app:"office",section:"accounts"},
+                        {id:"dm_people",label:qsTr("People"),app:"people",section:""},
+                        {id:"dm_products",label:qsTr("Products"),app:"office",section:"products"},
+                        {id:"dm_messages",label:qsTr("Messages"),app:"people",section:"messages"},
+                        {id:"dm_hq",label:qsTr("HQ"),app:"facilities",section:""},
+                        {id:"dm_operations",label:qsTr("Operations"),app:"operations",section:""},
+                        {id:"dm_world",label:qsTr("World"),app:"society",section:""},
+                        {id:"dm_leadership",label:qsTr("Leadership"),app:"leadership",section:""},
+                        {id:"dm_personal",label:qsTr("Personal"),app:"leadership",section:"personal"},
+                        {id:"dm_equipment",label:qsTr("Equipment"),app:"devices",section:""}
+                    ]
+                    WorldButton {
+                        required property var modelData
+                        objectName: modelData.id
+                        text: modelData.label
+                        textSize: desktop.textSize * 0.82
+                        quiet: true
+                        padding: 6
+                        enabled: modelData.app === "devices" || campaign.world.appAvailable(modelData.app, "laptop")
+                        onClicked: desktop.openApp(modelData.app, modelData.section, modelData.app === "devices" ? "" : "laptop")
+                    }
+                }
             }
         }
     }
@@ -577,6 +612,41 @@ Item {
                 GameSelect {Layout.fillWidth:true;model:[1,10,30,60];currentIndex:model.indexOf(campaign.daysPerSecond);displayText:qsTr("%1 days/s").arg(campaign.daysPerSecond);font.pixelSize:desktop.textSize;Accessible.name:qsTr("Days per second");onActivated:campaign.daysPerSecond=model[currentIndex]}
                 WorldButton {text:qsTr("Advance until…");textSize:desktop.textSize;onClicked:{compactTime.close();advanceMenu.open()}}
                 WorldButton {text:qsTr("Close");textSize:desktop.textSize;onClicked:compactTime.close()}
+            }
+        }
+    }
+    Popup {
+        id:directManagePopup;anchors.centerIn:Overlay.overlay;width:Math.min(440,desktop.width-24);height:Math.min(420,desktop.height-24);modal:true;focus:true;padding:14
+        background:Rectangle {radius:12;color:"#1a2b3d";border.color:"#8d9d7e"}
+        contentItem:ScrollView {
+            contentWidth:availableWidth;clip:true
+            ColumnLayout {
+                width:parent.width;spacing:6
+                Label {Layout.fillWidth:true;text:qsTr("Direct management");font.pixelSize:desktop.textSize*1.1;font.bold:true;color:"#f2e8d3"}
+                Repeater {
+                    model: [
+                        {label:qsTr("Research"),app:"lab",section:"research"},
+                        {label:qsTr("Data"),app:"lab",section:"data"},
+                        {label:qsTr("Models"),app:"lab",section:"models"},
+                        {label:qsTr("Accounts"),app:"office",section:"accounts"},
+                        {label:qsTr("People"),app:"people",section:""},
+                        {label:qsTr("Products"),app:"office",section:"products"},
+                        {label:qsTr("Messages"),app:"people",section:"messages"},
+                        {label:qsTr("HQ"),app:"facilities",section:""},
+                        {label:qsTr("Operations"),app:"operations",section:""},
+                        {label:qsTr("World"),app:"society",section:""},
+                        {label:qsTr("Leadership"),app:"leadership",section:""},
+                        {label:qsTr("Personal"),app:"leadership",section:"personal"},
+                        {label:qsTr("Equipment"),app:"devices",section:""}
+                    ]
+                    WorldButton {
+                        required property var modelData
+                        Layout.fillWidth:true;text:modelData.label;textSize:desktop.textSize
+                        enabled:modelData.app === "devices" || campaign.world.appAvailable(modelData.app, "laptop")
+                        onClicked:{directManagePopup.close();desktop.openApp(modelData.app,modelData.section,modelData.app==="devices"?"":"laptop")}
+                    }
+                }
+                WorldButton {Layout.fillWidth:true;text:qsTr("Close");textSize:desktop.textSize;onClicked:directManagePopup.close()}
             }
         }
     }

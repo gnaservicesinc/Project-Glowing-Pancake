@@ -47,8 +47,24 @@ std::optional<core::ManagementCatalog> scenario_management(const ScenarioDefinit
             board.erase(std::remove_if(board.begin(),board.end(),[&](const auto& b) {
                 return !b.player && b.id!="board.independent" && !(b.id=="board.cofounder" && terms.partner_bp>0);
             }),board.end());
-            if(terms.partner_bp>0)
-                for(auto& member:board) if(member.id=="board.cofounder") member.name=founding->route=="hired_ceo"?"Existing company owners":"Founding partner";
+            if(terms.partner_bp>0) {
+                for(auto& member:board) {
+                    if(founding->route=="hired_ceo") {
+                        const auto emp=effective_employer(*s.founding);
+                        if(member.player) member.seats=emp.ceo_seats;
+                        else if(member.id=="board.cofounder") {
+                            member.name=emp.owners_label;
+                            member.seats=emp.owner_seats;
+                            member.cash_floor=core::Cents{emp.owner_cash_floor_cents};
+                            member.maximum_dilution=core::BasisPoints{emp.owner_maximum_dilution_bp};
+                        } else if(member.id=="board.independent") {
+                            member.seats=emp.independent_seats;
+                        }
+                    } else if(member.id=="board.cofounder") {
+                        member.name="Founding partner";
+                    }
+                }
+            }
             if(const auto* partner=founding_partner(*s.founding,founding->partner)) {
                 const auto seat=std::ranges::find(board,std::string_view{"board.cofounder"},&core::BoardMember::id);
                 if(seat==board.end()) throw std::invalid_argument("The partnership requires a founding board position.");

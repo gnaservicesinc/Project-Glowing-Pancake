@@ -94,6 +94,7 @@ NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(FormativePool,minimum,maximum)
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(FoundingOpeningRules,inherited_staff,cofounder_staff,ceo_equity_bp)
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(FoundingLoan,lender,principal_cents,minimum_investment_cents,monthly_interest_bp,term_days)
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(FoundingPartner,id,name,pronouns,gender,letter,access,objective,traits,capital_cents,monthly_salary_cents,cash_floor_cents,shares_bp,seats,maximum_dilution_bp)
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(FoundingEmployer,id,name,recruiter_name,legal_form,mission,objective,charter,owners_label,delegated_authority,facilities_summary,current_commitments,owner_seats,ceo_seats,independent_seats,owner_cash_floor_cents,owner_maximum_dilution_bp)
 void to_json(Json& j,const FoundingCatalog& c) {
     j={{"families",c.families},{"legs",c.legs},{"routes",c.routes},{"backers",c.backers},{"offices",c.offices},{"researchers",c.researchers},{"scenes",c.scenes},
         {"formation_cents",c.formation_cents},{"compute_monthly_cents",c.compute_monthly_cents},{"founder_salary_cents",c.founder_salary_cents},
@@ -103,6 +104,7 @@ void to_json(Json& j,const FoundingCatalog& c) {
     if(!c.scene_pools.empty())j["scene_pools"]=c.scene_pools;
     if(c.opening) j["opening"]=*c.opening;
     if(c.appointment) j["appointment"]=Json::parse(canonical_founding_selection(*c.appointment));
+    if(c.employer) j["employer"]=*c.employer;
     if(c.startup_loan) j["startup_loan"]=*c.startup_loan;
     if(!c.partners.empty()) j["partners"]=c.partners;
     if(c.queer_community_buzz) j["queer_community_buzz"]=c.queer_community_buzz;
@@ -117,6 +119,7 @@ void from_json(const Json& j,FoundingCatalog& c) {
     if(j.contains("skill_rewards"))j.at("skill_rewards").get_to(c.skill_rewards);
     if(j.contains("scene_pools"))j.at("scene_pools").get_to(c.scene_pools);
     if(j.contains("appointment")) c.appointment=load_founding_selection(j.at("appointment").dump());
+    if(j.contains("employer")) c.employer=j.at("employer").get<FoundingEmployer>();
     if(j.contains("opening")) c.opening=j.at("opening").get<FoundingOpeningRules>();
     if(j.contains("startup_loan")) c.startup_loan=j.at("startup_loan").get<FoundingLoan>();
     if(j.contains("partners")) c.partners=j.at("partners").get<std::vector<FoundingPartner>>();
@@ -167,7 +170,7 @@ void shape(const FoundingSelection& s) {
     if(s.gender!="woman" && s.gender!="man" && s.gender!="nonbinary") invalid("Choose a supported gender option.");
     if(s.birth_sex!="female" && s.birth_sex!="male" && s.birth_sex!="indeterminate") invalid("Choose a supported sex at birth.");
     if(std::ranges::find(founder_orientations,s.orientation)==founder_orientations.end()) invalid("Choose a supported orientation option.");
-    if(s.mode!="campaign") invalid("New companies use the founder campaign.");
+    if(s.mode!="campaign" && s.mode!="playtest") invalid("New companies use the founder campaign.");
     if(s.sociability!="introverted" && s.sociability!="outgoing") invalid("Choose a sociability tendency.");
     if(s.activity!="athletic" && s.activity!="sedentary") invalid("Choose an activity tendency.");
     if(s.disposition!="deliberate" && s.disposition!="impulsive") invalid("Choose a decision-making tendency.");
@@ -179,7 +182,7 @@ void shape(const FoundingSelection& s) {
     for(const auto& id:s.advantages) {
         text(id,64);
         if(id=="wealthy") invalid("Wealthy Elite follows the family background.");
-        if(id=="political" && s.family!="rich") invalid("Child of Political Elite requires a wealthy family.");
+        if(s.mode!="playtest" && id=="political" && s.family!="rich") invalid("Child of Political Elite requires a wealthy family.");
         if(!advantages.insert(id).second) invalid("Each early advantage can be selected only once.");
     }
     text(s.partner,64,false);
@@ -331,7 +334,7 @@ FoundingCatalog load_founding_catalog(std::string_view bytes) {
         const auto& route=founding_option(c.routes,"partnership");
         if(!c.opening || c.opening->cofounder_staff!=1 || c.partners.size()>8 || route.capital_cents!=0 || route.shares_bp!=0)
             invalid("Named partnership terms require one working cofounder and no generic contribution.");
-        std::set<std::string> ids{"alder"};
+        std::set<std::string> ids{"alder", effective_employer(c).id};
         for(const auto& backer:c.backers) ids.insert(backer.id);
         for(const auto& partner:c.partners) {
             text(partner.id,56);text(partner.name);text(partner.pronouns,64);text(partner.letter,512);
@@ -425,16 +428,23 @@ FoundingCatalog load_founding_catalog(std::string_view bytes) {
         std::set<std::string> unique;for(const auto& id:rewards){text(id,table==&c.trait_rewards?80:64);if(!unique.insert(id).second)invalid("Duplicate formative reward.");}
     }
     }
-    if(c.appointment) {
-        const auto& biography=*c.appointment;
-        if(!c.opening || biography.route!="hired_ceo" || !founding_ceo_eligible(biography) ||
-           biography.mode!="campaign" || !biography.backers.empty() || biography.personal_investment_cents!=0)
-            invalid("A prepared appointment must qualify for the existing CEO offer.");
-        if(biography.choices.size()!=formative_scenes(c,biography).size())
-            invalid("A prepared biography must contain exactly the chapters that happened.");
-        (void)founding_terms(c,biography);
+    if(c.employer) {
+        const auto& emp=*c.employer;
+        text(emp.id,56);text(emp.name,128);text(emp.recruiter_name,128);
+        text(emp.owners_label,128);text(emp.delegated_authority,512);text(emp.facilities_summary,512);text(emp.current_commitments,512);
+        text(emp.charter,64,false);
+        amount(emp.owner_cash_floor_cents);
+        if((emp.legal_form!="corporation" && emp.legal_form!="nonprofit") ||
+           (emp.mission!="research" && emp.mission!="public benefit" && emp.mission!="commercial") ||
+           !core::objective_kind(emp.objective) || emp.owner_seats==0 || emp.owner_seats>3 ||
+           emp.ceo_seats==0 || emp.ceo_seats>3 || emp.independent_seats>3 ||
+           emp.owner_maximum_dilution_bp>3000)
+            invalid("Authored existing-company appointment terms exceed supported bounds.");
     }
     return c;
+}
+FoundingEmployer effective_employer(const FoundingCatalog& c) {
+    return c.employer.value_or(FoundingEmployer{});
 }
 std::vector<const FormativeScene*> formative_scenes(const FoundingCatalog& c,const FoundingSelection& s) {
     return resolve_formative_path(c,s).scenes;
@@ -561,6 +571,21 @@ FoundingTerms founding_formative_terms(const FoundingCatalog& c,const FoundingSe
 
 FoundingTerms founding_terms(const FoundingCatalog& c,const FoundingSelection& s,bool complete) {
     shape(s);
+#if !PGP_DISTRIBUTION
+    if (s.mode == "playtest") {
+        FoundingTerms terms;
+        (void)founding_option(c.families, s.family);
+        (void)founding_option(c.routes, s.route);
+        for (const auto& id : s.advantages) (void)founding_option(c.legs, id);
+        terms.nonprofit = s.legal_form == "nonprofit";
+        terms.founder_bp = terms.nonprofit ? 0 : 10000;
+        terms.office_cents = founding_option(c.offices, s.office).monthly_cents;
+        terms.founder_researcher = true;
+        terms.opening_staff = 1;
+        terms.contributed_cents = c.formation_cents;
+        return terms;
+    }
+#endif
     for(const auto& id:s.advantages) {
         const auto& option=founding_option(c.legs,id);
         if(const auto why=founding_ineligibility(option,s);!why.empty()) invalid(why);

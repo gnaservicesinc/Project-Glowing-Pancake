@@ -3,6 +3,7 @@
 #include "campaign_controller.hpp"
 #include <pgp/persistence/current_campaign.hpp>
 #include <QCoreApplication>
+#include <QGuiApplication>
 #include <QQuickItem>
 #include <QQuickWindow>
 #include <QTimer>
@@ -58,13 +59,20 @@ void schedule_device_interface_smoke(QQuickWindow &window, pgp::bridge::Campaign
         if (!window.isSceneGraphInitialized() || !campaign.ready() || campaign.busy())
             return;
         const auto frame = [&](const char *kind) {
-            auto *device = item("activeDeviceFrame");
+            auto *device = item("workspaceDeviceFrame");
             return device && device->property("kind").toString() == QLatin1String{kind};
         };
         auto *world = campaign.world();
-        const auto app = world->navigation().value("app").toString();
+        const auto activeApp = [&](const QString& kind) {
+            return world->deviceWorkspace(world->resolvePhysicalDevice(kind, "")).value("activeApp").toString();
+        };
         switch (run->phase) {
         case 0: {
+            if (QCoreApplication::arguments().contains("--playtest-setup")) {
+                if (!item("playtestSetupStartButton")) return;
+                if (!capture("setup") || !press("playtestSetupStartButton")) { fail("Start custom playtest"); return; }
+                break;
+            }
             if (!press("menuNewGameButton")) {
                 fail("New Game");
                 return;
@@ -99,11 +107,11 @@ void schedule_device_interface_smoke(QQuickWindow &window, pgp::bridge::Campaign
             run->frames = 0;
             break;
         case 3:
-            if (app != "lab" || !frame("laptop") || !item("technologyGraph") || !capture("laptop-research")) {
+            if (activeApp("laptop") != "lab" || !frame("laptop") || !item("technologyGraph") || !capture("laptop-research")) {
                 fail("Research must open in the laptop screen");
                 return;
             }
-            if (!press("deviceHomeButton")) {
+            if (!press("surfaceHomeButton")) {
                 fail("Switch apps inside the laptop");
                 return;
             }
@@ -123,13 +131,13 @@ void schedule_device_interface_smoke(QQuickWindow &window, pgp::bridge::Campaign
             break;
         }
         case 6:
-            if (app != "inbox" || !frame("phone") || !capture("phone-inbox") || !press("closeDeviceButton")) {
+            if (activeApp("phone") != "inbox" || !frame("phone") || !capture("phone-inbox") || !press("workspaceCloseButton")) {
                 fail("Phone app and return to workspace");
                 return;
             }
             break;
         case 7:
-            if (!app.isEmpty() || item("activeDeviceFrame")) {
+            if (item("workspaceDeviceFrame")) {
                 fail("Returning restores the world view");
                 return;
             }
@@ -162,7 +170,7 @@ void schedule_device_interface_smoke(QQuickWindow &window, pgp::bridge::Campaign
             }
             break;
         case 10:
-            if (app != "people" || !frame("laptop") || !item("deviceTimeButton") || !press("closeDeviceButton")) {
+            if (activeApp("laptop") != "people" || !frame("laptop") || !item("workspaceTimeButton") || !press("workspaceCloseButton")) {
                 fail("Compact app frame and reachable time controls");
                 return;
             }
@@ -172,6 +180,52 @@ void schedule_device_interface_smoke(QQuickWindow &window, pgp::bridge::Campaign
                 fail("Compact dock scroll buttons must reveal apps in both directions");
                 return;
             }
+            if (!press("devicesButton") || !press("launcherDevice_laptop") || !press("surfaceHomeButton") || !press("dataApp")) {
+                fail("Open the corpus library in the laptop workspace");
+                return;
+            }
+            break;
+        case 12:
+            if (!item("dataAppRoot") || !press("surfacePopOutButton")) { fail("Detach the Data app"); return; }
+            break;
+        case 13: {
+            QQuickWindow* native = nullptr;
+            for (auto* candidate : QGuiApplication::topLevelWindows())
+                if (candidate->isVisible() && candidate->objectName().startsWith("detachedDeviceWindow_"))
+                    native = qobject_cast<QQuickWindow*>(candidate);
+            if (!native || !visible_item(native->contentItem(), "dataAppRoot")) { fail("Native window hosts the live corpus library"); return; }
+            const auto before = native;
+            auto* tab = visible_item(native->contentItem(), "deviceTab_lab");
+            if (!tab) { fail("Open research from detached switcher"); return; }
+            tab->forceActiveFocus(Qt::TabFocusReason);
+            QTest::keyClick(native, Qt::Key_Space);
+            if (!before->close() && activeApp("laptop") != "lab") { fail("Detached application selection"); return; }
+            break;
+        }
+        case 14:
+            if (activeApp("laptop") != "lab" || !item("technologyGraph")) { fail("Docked research resumes in the popup"); return; }
+            if (!press("researchPopOutTree")) { fail("Expand the selected research tree"); return; }
+            break;
+        case 15: {
+            QQuickWindow* tree = nullptr;
+            for (auto* candidate : QGuiApplication::topLevelWindows())
+                if (candidate->isVisible() && candidate->objectName() == "detachedResearchTreeWindow")
+                    tree = qobject_cast<QQuickWindow*>(candidate);
+            if (!tree || !visible_item(tree->contentItem(), "technologyGraph")) { fail("Expanded research workspace"); return; }
+            tree->close();
+            break;
+        }
+        case 16:
+            if (!press("surfaceHomeButton") || !press("modelsApp")) { fail("Open model checkpoints"); return; }
+            break;
+        case 17:
+            if (!item("modelsAppRoot") || !press("surfaceHomeButton") || !press("accountsApp")) { fail("Inspect model checkpoints and open accounts"); return; }
+            break;
+        case 18:
+            if (!item("accountsAppRoot") || !press("surfaceHomeButton") || !press("productsApp")) { fail("Inspect financial statements and open products"); return; }
+            break;
+        case 19:
+            if (!item("productsAppRoot")) { fail("Inspect product designs"); return; }
             if (run->fingerprint !=
                 pgp::persistence::CurrentCampaign{paths.saves_directory / "continuing"}.fingerprint()) {
                 fail("Device navigation must not mutate the company");

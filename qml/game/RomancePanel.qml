@@ -69,7 +69,7 @@ ColumnLayout {
     }
     GameDialog {
         id:review;objectName:"romanceReviewDialog";property string person:"";property string action:"";property string revision:"";property string explanation:""
-        title:romance.plannedTitle;anchors.centerIn:Overlay.overlay;width:Math.min(romance.textSize*36,Overlay.overlay.width-32);height:Math.min(romance.textSize*20,Overlay.overlay.height-32);modal:true;focus:true
+        title:romance.plannedTitle;anchors.centerIn:Overlay.overlay;width:Math.min(romance.textSize*36,(Overlay.overlay?.width ?? 650)-32);height:Math.min(romance.textSize*20,(Overlay.overlay?.height ?? 480)-32);modal:true;focus:true
         onAboutToShow:{person=romance.contact.id;action=romance.plannedAction;revision=campaign.world.reviewToken;explanation=(romance.story[action] || {}).explanation || ""}
         contentItem:ScrollView {id:reviewScroll;contentWidth:availableWidth;clip:true;Label {width:reviewScroll.availableWidth;text:(romance.contact.name || "")+"\n\n"+review.explanation;wrapMode:Text.Wrap;font.pixelSize:romance.textSize}}
         footer:Flow {spacing:8;padding:10
@@ -79,7 +79,7 @@ ColumnLayout {
     }
     GameDialog {
         id:preferences;objectName:"romancePreferencesDialog";property bool interested:true;property var genders:[];property string revision:""
-        title:qsTr("My romantic preferences");anchors.centerIn:Overlay.overlay;width:Math.min(romance.textSize*38,Overlay.overlay.width-32);height:Math.min(romance.textSize*30,Overlay.overlay.height-32);modal:true;focus:true
+        title:qsTr("My romantic preferences");anchors.centerIn:Overlay.overlay;width:Math.min(romance.textSize*38,(Overlay.overlay?.width ?? 650)-32);height:Math.min(romance.textSize*30,(Overlay.overlay?.height ?? 480)-32);modal:true;focus:true
         onAboutToShow:{interested=romance.personal.interested;genders=(romance.personal.genders || []).slice();revision=campaign.world.reviewToken}
         function toggle(id,on){genders=on?genders.concat([id]):genders.filter(g=>g!==id)}
         contentItem:ScrollView {id:prefsScroll;contentWidth:availableWidth;clip:true;ColumnLayout {width:prefsScroll.availableWidth;spacing:12

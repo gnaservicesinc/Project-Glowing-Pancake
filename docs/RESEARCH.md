@@ -55,7 +55,7 @@ Local URLAlchemist reference root: `/opt/URLAlchemist/Repo/URLAlchemist`. Read i
 
 ## Baseline 1.2 review verification
 
-Checked 2026-11-03 for [the recommendation review](RECOMMENDATION_REVIEW.md). These sources verify API/platform claims; gameplay changes and effort ranges remain project judgments requiring implementation/playtests.
+Checked 2026-11-03 for the recommendation review (`git show 589bf46:docs/RECOMMENDATION_REVIEW.md`). These sources verify API/platform claims; gameplay changes and effort ranges remain project judgments requiring implementation/playtests.
 
 | Primary source | Verified point | Applied limit |
 | --- | --- | --- |
