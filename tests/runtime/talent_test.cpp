@@ -83,7 +83,17 @@ int main(){using namespace pgp;try{
     const auto save=[&]{check(persistence::decode_save(program,persistence::encode_save(program,game.current_state())).checkpoint==game.current_state(),"Exact talent save/reload");};
     check(game.prepare_opening(state().revision).accepted(),"Opening");
     check(core::person_has_skill(state(),"founder","programming"),"Childhood programming skill");
-    for(const auto& a:state().management->people->applicants){const auto& rules=*core::talent_rules(state());check(core::has_skill(a.profile,rules.roles.at(a.profile.role)),"Applicants qualified for advertised role");check(a.profile.orientation!="unrecorded","Stable full adult identity");}
+    const auto& role_skills = core::talent_rules(state())->roles;
+    for (const auto& applicant : state().management->people->applicants) {
+        const auto& profile = applicant.profile;
+        if (profile.role == "Data Creative") {
+            check(profile.creative >= 65, "Creative applicants qualify through their measured production skill");
+        } else {
+            const auto role = role_skills.find(profile.role);
+            check(role != role_skills.end() && core::has_skill(profile, role->second), "Applicants qualified for advertised role");
+        }
+        check(profile.orientation != "unrecorded", "Stable full adult identity");
+    }
     core::SoftwareDesign d;d.brief="chat";d.name="Clear Chat";d.workers={"founder"};
     refuse(core::StartSoftware{d},"desk");
     apply(core::ManageHeadquarters{core::BuyHQEquipment{"desk"}});apply(core::ManageHeadquarters{core::BuyHQEquipment{"desktop"}});advance(3);
