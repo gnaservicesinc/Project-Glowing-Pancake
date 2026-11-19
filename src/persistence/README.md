@@ -140,7 +140,7 @@ progress and both sides of each fee. Limits are 8,192 reviews and 512 transition
 per response, 40 agreements and 4,096 public notices. Legacy competition cannot
 carry undeclared response/offer state. Capacity saves retain at most 64 dated
 staff additions and 64 departures, preserving historical assignments and costs
-after withdrawal. [Response contract](../runtime/HEAVYWEIGHTS.md).
+after withdrawal. [Response implementation](../runtime/heavyweights.cpp).
 
 Corporate continuations retain the scenario opening cap table, compensation,
 cumulative grant/dilution movements, board evidence/votes and warned disputes.
@@ -150,7 +150,7 @@ opening-earnings cursors, control and up to 2,048 actual group transfers per
 record. Both payment legs and post-acquisition dividend limits are checked;
 group reports eliminate investment assets and internal dividends. The optional
 extension preserves legacy scenarios, while exact content identity still gates
-development saves. [Corporate contract and bounds](../runtime/CORPORATE.md).
+development saves. [Governance validation](../core/governance_validation.cpp).
 
 ## Local writes and recovery
 

@@ -10,7 +10,7 @@ Read alongside [the game design](GAME_DESIGN.md). The simulation models fictiona
 
 ## 1. Time, units, and reproducibility
 
-One authoritative step is a day. The normal decision snapshot dated `t` is that day's morning briefing, after opening deliveries/rules/flows but before staff/compute assignment and work. Advancing one day finishes activity over `[t, t+1)` and prepares the next morning. The new default starts company play at age 18 on 2015-01-01 and stops at age 118 on 2115-01-01 after settling 2114-12-31; it executes no new opening deliveries/work before freezing the campaign result. Weekly reviews occur every seventh day from the scenario epoch; monthly and annual settlements follow the Gregorian calendar. Deadlines name a date and phase. Save the day cursor as well as the date: a partially resolved morning differs from a morning ready for work. Existing 2014–2114 scenarios retain their own epochs and deadlines.
+One authoritative step is a day. The normal decision snapshot dated `t` is that day's morning briefing, after opening deliveries/rules/flows but before staff/compute assignment and work. Advancing one day finishes activity over `[t, t+1)` and prepares the next morning. The ordinary founder starts company play at age 18 on 2015-01-01. The life retrospective takes place at age 100 in 2097 using the company's recorded history. Each authored scenario supplies its own final date. Weekly reviews occur every seventh day from the scenario epoch; monthly and annual settlements follow the Gregorian calendar. Deadlines name a date and phase. Save the day cursor as well as the date: a partially resolved morning differs from a morning ready for work. Existing 2014–2114 scenarios retain their own epochs and deadlines.
 
 | Quantity | Stored unit | Display |
 | --- | --- | --- |
@@ -349,3 +349,15 @@ Benchmark initial worlds up to 32 AI institutions, 51 domestic jurisdictions, ei
 Century pacing includes a bounded research queue (revalidate prerequisites/budget when each item starts), optional standing policies for repeatable research, and mature-product refresh within explicit cash/staff/idle-compute ceilings. Refresh uses licensed eligible data, creates a candidate version, and must pass the policy's held-out evaluation/rollout gate; it cannot silently broaden rights, release weights or bypass serving commitments. Notifications distinguish required decision/auto-pause, actionable inbox with an authored simulated deadline/reminder, and informational digest. Do not invent a deadline for routine news or repeatedly interrupt fastest speed. M3 proves basic routing/policy bounds; M7/M8 qualify mature-year workload.
 
 Balance changes require a named content version, recorded seeds, financial reconciliation, and comparable policy runs. Human playtests judge clarity, variety, pacing, and recovery. Winning all seeded bot runs is not evidence that the game is fun or that its view of AI is correct.
+
+## Implementation reference
+
+| System | Source of current rules |
+| --- | --- |
+| Cash, commitments and recovery | [Accounts](../src/core/accounts.cpp), [liquidity](../src/core/liquidity.cpp) and [management](../src/core/management.cpp) |
+| Compute, facilities and contracts | [Capacity reservations](../src/core/capacity.cpp), [infrastructure](../src/core/infrastructure.cpp), [markets](../src/core/market.cpp) and [resilience](../src/core/resilience.cpp) |
+| Research, datasets and technical outcomes | [Laboratory](../src/core/lab.cpp), [data processing](../src/core/data_processing.cpp), [frontier assessments](../src/core/frontier.cpp) and the [device and research design](DEVICE_RESEARCH_REDESIGN.md) |
+| Company control, rivals and succession | [Governance](../src/core/governance.cpp), [succession](../src/core/succession.cpp), [competition](../src/runtime/competition.cpp) and [heavyweight programs](../src/runtime/heavyweights.cpp) |
+| Public institutions and campaign outcomes | [Civic simulation](../src/core/civic.cpp), [authority](../src/runtime/authority.cpp), [society](../src/runtime/society.cpp), [objectives](../src/runtime/objectives.cpp) and the [life retrospective](LIFE_AND_DEVELOPMENT_PLAN.md) |
+
+The [runtime tests](../tests/runtime/CMakeLists.txt) identify the executable checks for each system. Historical implementation notes are available in the source tree at Git revision `589bf46`.

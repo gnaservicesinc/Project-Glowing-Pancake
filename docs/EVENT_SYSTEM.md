@@ -89,5 +89,4 @@ rollback and save rules. The weekly digest groups ordinary headlines and keeps
 decisions and active liquidity deadlines in the action tier. The eight-flow
 playable pack now supplies concrete research/evaluation/pilot providers, real
 supplier/recovery terms, demand expiry and bounded rivals. Its complete three-year
-baseline and interrupted continuation match. [Implementation contract, limits
-and seeds](../src/runtime/BASE_EVENTS.md). Original seeded-incident evidence (`git show 589bf46:docs/evidence/M1-07-seeded-digest.md`)
+baseline and interrupted continuation match. [Base-event regression checks](../tests/runtime/base_events_test.cpp).
