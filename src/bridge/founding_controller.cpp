@@ -1,5 +1,6 @@
 #include "founding_controller.hpp"
 #include "portrait_url.hpp"
+#include <pgp/core/person_name.hpp>
 #include <QFile>
 #include <QJsonDocument>
 #include <QJsonObject>
@@ -29,17 +30,6 @@ QString money(std::int64_t cents) {
 constexpr auto story_seed_attempts = 16;
 constexpr auto last_school_opening_key = "intro/lastSchoolOpening";
 
-QVariantMap defaults() {
-    return {{"first_name","Alex"},{"last_name","Vale"},{"birth_sex","indeterminate"},{"gender","nonbinary"},{"pronouns","they/them"},{"orientation","questioning"},
-        {"home_app","room"},{"home_room","Bedroom"},{"home_guide",""},{"home_offer",""},{"home_replies",QVariantMap{}},{"company_draft","Daybreak Research"},
-        {"investment","-1"},{"charter",""},{"company","Daybreak Research"},{"seed",QString::number(QRandomGenerator::system()->generate64())},{"headquarters","US-CA"},{"difficulty","difficulty.standard"},
-        {"sociability","introverted"},{"activity","sedentary"},{"disposition","deliberate"},
-        {"family","middle"},{"advantages",QStringList{}},{"route","investment"},{"legal_form","corporation"},
-        {"office","home"},{"researcher","founder"},{"mission","survival"},{"mission_draft","survival"},
-        {"style",QVariantList{0,0,0,0,0,0,0,0,0,0,0,0}},{"appearance",QVariantList{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}},
-        {"story_seed",QString::number(QRandomGenerator::system()->generate64())},{"choices",QVariantMap{}},{"backers",QStringList{}},{"partner",""}};
-}
-
 std::vector<std::string> selected_advantages(const QVariantMap& form) {
     std::vector<std::string> result;
     for(const auto& id:form.value("advantages").toStringList()) result.push_back(id.toStdString());
@@ -67,8 +57,30 @@ void prepare_offer(content::FoundingSelection& selected, std::string legal_form,
 }
 }
 
+QString FoundingController::suggestName(bool given, const QString& previous) const {
+    core::SplitMix64 random{QRandomGenerator::global()->generate64()};
+    return text(core::draw_name_part(given ? first_names_ : last_names_, random, previous.toStdString()));
+}
+
+QVariantMap FoundingController::defaults() const {
+    const bool female = QRandomGenerator::global()->bounded(2) == 0;
+    core::SplitMix64 random{QRandomGenerator::global()->generate64()};
+    const auto company = catalog_ && catalog_->generation
+        ? text(core::draw_name_part(catalog_->generation->company_prefixes,random) + " " +
+               core::draw_name_part(catalog_->generation->company_suffixes,random))
+        : text(runtime::generate_campaign_identity(random.next()).company_name);
+    return {{"first_name",suggestName(true, {})},{"last_name",suggestName(false, {})},{"birth_sex",female ? "female" : "male"},{"gender","nonbinary"},{"pronouns","they/them"},{"orientation","questioning"},
+        {"home_app","room"},{"home_room","Bedroom"},{"home_guide",""},{"home_offer",""},{"home_replies",QVariantMap{}},{"company_draft",company},
+        {"investment","-1"},{"charter",""},{"company",company},{"seed",QString::number(QRandomGenerator::system()->generate64())},{"headquarters","US-CA"},{"difficulty","difficulty.standard"},
+        {"sociability","introverted"},{"activity","sedentary"},{"disposition","deliberate"},
+        {"family","middle"},{"advantages",QStringList{}},{"route","investment"},{"legal_form","corporation"},
+        {"office","home"},{"researcher","founder"},{"mission","survival"},{"mission_draft","survival"},
+        {"style",QVariantList{female ? 5 : 0,0,0,0,0,0,0,0,0,0,0,0}},{"appearance",QVariantList{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}},
+        {"story_seed",QString::number(QRandomGenerator::system()->generate64())},{"choices",QVariantMap{}},{"backers",QStringList{}},{"partner",""}};
+}
+
 FoundingController::FoundingController(const content::Collection& collection, std::filesystem::path path, QObject* parent)
-    : QObject(parent), draft_path_(std::move(path)), form_(defaults()) {
+    : QObject(parent), draft_path_(std::move(path)) {
     if (const auto* definition = collection.find("scenario.founder_campaign")) {
         const auto& scenario = std::get<content::ScenarioDefinition>(definition->data);
         catalog_ = scenario.founding;
@@ -76,8 +88,14 @@ FoundingController::FoundingController(const content::Collection& collection, st
         headquarters_ = scenario.headquarters_choices;
         if(scenario.infrastructure && scenario.infrastructure->workplace) premises_rules_=scenario.infrastructure->workplace->headquarters;
         if(scenario.management && scenario.management->governance)charters_=scenario.management->governance->charters;
-        if(scenario.management && scenario.management->people)audiences_=scenario.management->people->founder_audiences;
+        if (scenario.management && scenario.management->people) {
+            const auto& people = *scenario.management->people;
+            first_names_ = people.first_names;
+            last_names_ = people.last_names;
+            audiences_ = people.founder_audiences;
+        }
     }
+    form_ = defaults();
     deriveOpening();
     if (!available()) return;
     QFile file{QString::fromStdU16String(draft_path_.u16string())};
@@ -282,7 +300,7 @@ QVariantMap FoundingController::presentOffer(const content::FoundingCatalog& cat
         row["kind"]="career";
         row["name"]=text(emp.recruiter_name);
         row["organization"]=tr("%1 · Board Search").arg(text(emp.name));
-        row["subject"]=tr("Executive appointment offer — %1").arg(text(emp.name));
+        row["subject"]=(status=="rejected" ? tr("Your application to %1") : tr("Executive appointment offer — %1")).arg(text(emp.name));
         row["available"]=true;
         row["body"]=status=="rejected"
             ? tr("Thank you for applying. The board is looking for an executive with a different background for %1 and cannot extend an appointment offer right now.").arg(text(emp.name))

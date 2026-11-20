@@ -52,7 +52,7 @@ std::vector<SellerSettlement> settle_sellers(const AcquisitionRecord& q) {
 std::vector<EquityHolding> historical_sellers(const WorldState& w,const CompiledProgram& p,const AcquisitionRecord& q) {
     const auto& r=target(w,q.target);
     if (!r.planning || !r.planning->entered_on || !r.simulation.accounts || q.target_posting_cursor>r.simulation.accounts->postings.size()) invalid("Seller due diligence predates its financed company");
-    auto h=competition_detail::opening_rival(w,p,rival_definition(p,q.target),*r.planning->entered_on).accounts->holdings;
+    auto h=competition_detail::opening_rival(w,p,rival_definition(w,p,q.target),*r.planning->entered_on).accounts->holdings;
     for (std::size_t i=0;i<q.target_posting_cursor;++i) {
         const auto& posting=r.simulation.accounts->postings[i];if (posting.day>q.quoted_on) invalid("Seller quote reads future financial data");
         if (posting.credit!=Account::equity || posting.key=="opening") continue;
@@ -67,7 +67,7 @@ std::vector<EquityHolding> historical_sellers(const WorldState& w,const Compiled
 }
 AcquisitionRecord quote_acquisition(const WorldState& w,const CompiledProgram& p,std::string_view id,bool equity) {
     const auto& c=rules(w);const auto& r=target(w,id);
-    if (!r.planning || !r.planning->entered_on || r.response || rival_definition(p,id).planning->group=="heavyweight" ||
+    if (!r.planning || !r.planning->entered_on || r.response || rival_definition(w,p,id).planning->group=="heavyweight" ||
         !r.parent_company.empty() || r.simulation.phase!=DayPhase::work_ready || r.simulation.management->governance)
         invalid("Only an operating independent startup without outstanding executive grants offers this simple merger");
     const auto& a=*r.simulation.accounts;AcquisitionRecord q;q.target=std::string(id);q.quoted_on=w.simulation.date;

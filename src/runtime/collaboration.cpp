@@ -52,7 +52,7 @@ LabAllocation allocation(const SimulationState& s,std::string_view worker,std::s
 }
 Cents available(const WorldState& w,const CompiledProgram& program,std::string_view id,const SimulationState& s) {
     if(id==w.company_id)return discretionary_cash(s);
-    const auto& policy=*rival_definition(program,id).planning;
+    const auto& policy=*rival_definition(w,program,id).planning;
     Cents monthly{0};for(const auto& cost:s.accounts->recurring)if(cost.starts_on<=s.date && (!cost.ends_before || s.date<*cost.ends_before))monthly=checked_unit_add(monthly,cost.monthly_amount);
     const auto runway=checked_unit_add(policy.reserve_floor,Cents{mul_div_floor(static_cast<std::uint64_t>(monthly.value()),policy.runway_months,1).quotient});
     return std::max(Cents{0},checked_unit_subtract(uncommitted_cash(s),std::max(runway,operating_reserve_target(s))));
@@ -163,7 +163,7 @@ void publish_collaboration(WorldState& w,std::string_view id) {
 void publish_industry_collaborations(WorldState& w,const CompiledProgram& program) {
     if(!w.competition)return;
     for(const auto& c:w.competition->collaborations)if(c.first_company!=w.company_id && c.second_company!=w.company_id && !c.published_on && collaboration_status(w,c)=="completed" &&
-        rival_definition(program,c.first_company).planning->publish_results && rival_definition(program,c.second_company).planning->publish_results)publish_collaboration(w,c.id);
+        rival_definition(w,program,c.first_company).planning->publish_results && rival_definition(w,program,c.second_company).planning->publish_results)publish_collaboration(w,c.id);
 }
 
 std::string plan_research_collaboration(WorldState& w,const CompiledProgram& program,std::string_view initiator) {
@@ -174,7 +174,7 @@ std::string plan_research_collaboration(WorldState& w,const CompiledProgram& pro
         const auto mine=link.first.starts_with(prefix)?link.first:link.second.starts_with(prefix)?link.second:std::string{};
         const auto peer=link.first==mine?link.second:link.first;
         if(link.affinity<s->management->catalog.people->collaboration->minimum_friendship || mine.empty() || peer=="founder" || peer.starts_with(prefix) || !w.simulation.management->people->industry.contains(peer))continue;
-        for(const auto& topic:rival_definition(program,initiator).planning->research) {
+        for(const auto& topic:rival_definition(w,program,initiator).planning->research) {
             if(std::ranges::any_of(s->lab->research,[&](const auto& run){return run.research_id==topic && (run.completed || project(*s,run.project_id).status==ProjectStatus::active || project(*s,run.project_id).status==ProjectStatus::paused);}))continue;
             if(++examined>16)return {};
             CollaborationRequest request{peer,topic,mine.substr(prefix.size()),{},MilliCUPerDay{4000}};

@@ -172,7 +172,7 @@ void InfrastructureController::update(CampaignSnapshotPtr snapshot,const runtime
         for (const auto& rival:world.competition->companies) {
             if (!rival.planning->entered_on || rival.response || !rival.parent_company.empty() ||
                 rival.simulation.phase==DayPhase::closed || rival.simulation.phase==DayPhase::finished) continue;
-            wholesale_buyers_.push_back(option(rival.definition_id,text(runtime::rival_definition(program,rival.definition_id).name)));
+            wholesale_buyers_.push_back(option(rival.definition_id,text(runtime::rival_definition(world,program,rival.definition_id).name)));
         }
         for (const auto& contract:world.competition->wholesale) {
             const auto& plan=find(plans,contract.plan_id);
@@ -190,7 +190,7 @@ void InfrastructureController::update(CampaignSnapshotPtr snapshot,const runtime
                     .arg(cu(last.available.value()),cu(last.used.value()),money(last.service_credit),money(last.electricity));
             }
             if (contract.terminated_on) detail+=QStringLiteral("\nOperations ceased on %1. The buyer's unused funds were released.").arg(date(*contract.terminated_on));
-            contracts.push_back({text(contract.id),text(runtime::rival_definition(program,contract.buyer_id).name),text(plan.name),std::move(detail),
+            contracts.push_back({text(contract.id),text(runtime::rival_definition(world,program,contract.buyer_id).name),text(plan.name),std::move(detail),
                 active?QStringLiteral("Active"):contract.terminated_on?QStringLiteral("Ended early"):QStringLiteral("Term complete")});
         }
     }
@@ -316,7 +316,7 @@ void InfrastructureController::reviewWholesale(QString plan_id,QString source_id
         const auto& world=snapshot_->checkpoint.world;
         const auto quote=runtime::wholesale_quote(world,*program_,plan_id.toStdString(),source_id.toStdString(),buyer_id.toStdString());
         const auto& plan=find(runtime::wholesale_plans(world,*program_),plan_id.toStdString());
-        const auto& buyer=runtime::rival_definition(*program_,buyer_id.toStdString());
+        const auto& buyer=runtime::rival_definition(world,*program_,buyer_id.toStdString());
         review_text_=QStringLiteral("%1 will reserve %2 CU/day on %3 through %4 (exclusive).\n"
             "%5/day · %6 MiB minimum · %7 interconnect. %8\n"
             "The buyer protects up to %9 in cash. Availability below %10% earns a proportional fee credit. "

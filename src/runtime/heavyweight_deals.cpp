@@ -32,7 +32,7 @@ namespace competition_detail {
 void issue_competitive_offers(WorldState& world,const CompiledProgram& program,RivalCompany& rival) {
     auto& response=*rival.response;if (response.offers_issued || campaign_day(world).value()>=campaign_calendar_limit(world).value()-1) return;
     if(observing_world(world)) {response.offers_issued=true;return;}
-    const auto& definition=rival_definition(program,rival.definition_id);const auto& policy=*definition.response;
+    const auto& definition=rival_definition(world,program,rival.definition_id);const auto& policy=*definition.response;
     response.offers_issued=true;
     for (const auto kind:{CompetitiveOfferKind::publication,CompetitiveOfferKind::pilot}) {
         const auto subject=kind==CompetitiveOfferKind::publication?policy.publication_node:policy.pilot_product;
@@ -67,7 +67,7 @@ void respond_to_competitive_offer(WorldState& world,const CompiledProgram& progr
     if (it->kind==CompetitiveOfferKind::publication && std::any_of(world.simulation.lab->publications.begin(),world.simulation.lab->publications.end(),[&](const auto& row){return row.research_id==it->subject;})) invalid("This result is already public; the offer requests a new publication");
     if (it->kind==CompetitiveOfferKind::pilot && std::none_of(world.simulation.market->products.begin(),world.simulation.market->products.end(),[&](const auto& row){return row.id==it->subject;})) invalid("Qualify the offered pilot service before accepting its delivery commitment");
     it->status=CompetitiveOfferStatus::active;it->accepted_on=campaign_day(world);
-    it->due_on=std::min(OrdinalDay{campaign_calendar_limit(world).value()-1},advance_days(*it->accepted_on,rival_definition(program,rival.definition_id).response->offer_term));
+    it->due_on=std::min(OrdinalDay{campaign_calendar_limit(world).value()-1},advance_days(*it->accepted_on,rival_definition(world,program,rival.definition_id).response->offer_term));
 }
 void update_competitive_offers(WorldState& world,const CompiledProgram&) {
     if (!world.competition || world.competition->offers.empty()) return;

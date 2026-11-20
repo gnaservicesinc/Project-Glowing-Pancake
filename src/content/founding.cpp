@@ -95,6 +95,7 @@ NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(FoundingOpeningRules,inherited_staff,cofounde
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(FoundingLoan,lender,principal_cents,minimum_investment_cents,monthly_interest_bp,term_days)
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(FoundingPartner,id,name,pronouns,gender,letter,access,objective,traits,capital_cents,monthly_salary_cents,cash_floor_cents,shares_bp,seats,maximum_dilution_bp)
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(FoundingEmployer,id,name,recruiter_name,legal_form,mission,objective,charter,owners_label,delegated_authority,facilities_summary,current_commitments,owner_seats,ceo_seats,independent_seats,owner_cash_floor_cents,owner_maximum_dilution_bp)
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(CampaignGenerationRules,company_prefixes,company_suffixes,rival_budget_spread_pct,dataset_spread_pct)
 void to_json(Json& j,const FoundingCatalog& c) {
     j={{"families",c.families},{"legs",c.legs},{"routes",c.routes},{"backers",c.backers},{"offices",c.offices},{"researchers",c.researchers},{"scenes",c.scenes},
         {"formation_cents",c.formation_cents},{"compute_monthly_cents",c.compute_monthly_cents},{"founder_salary_cents",c.founder_salary_cents},
@@ -102,6 +103,7 @@ void to_json(Json& j,const FoundingCatalog& c) {
     if(!c.trait_rewards.empty())j["trait_rewards"]=c.trait_rewards;
     if(!c.skill_rewards.empty())j["skill_rewards"]=c.skill_rewards;
     if(!c.scene_pools.empty())j["scene_pools"]=c.scene_pools;
+    if(c.generation) j["generation"]=*c.generation;
     if(c.opening) j["opening"]=*c.opening;
     if(c.appointment) j["appointment"]=Json::parse(canonical_founding_selection(*c.appointment));
     if(c.employer) j["employer"]=*c.employer;
@@ -120,6 +122,7 @@ void from_json(const Json& j,FoundingCatalog& c) {
     if(j.contains("scene_pools"))j.at("scene_pools").get_to(c.scene_pools);
     if(j.contains("appointment")) c.appointment=load_founding_selection(j.at("appointment").dump());
     if(j.contains("employer")) c.employer=j.at("employer").get<FoundingEmployer>();
+    if(j.contains("generation")) c.generation=j.at("generation").get<CampaignGenerationRules>();
     if(j.contains("opening")) c.opening=j.at("opening").get<FoundingOpeningRules>();
     if(j.contains("startup_loan")) c.startup_loan=j.at("startup_loan").get<FoundingLoan>();
     if(j.contains("partners")) c.partners=j.at("partners").get<std::vector<FoundingPartner>>();
@@ -329,6 +332,19 @@ FoundingCatalog load_founding_catalog(std::string_view bytes) {
     for(const auto* rows:{&c.families,&c.legs,&c.routes,&c.backers,&c.offices,&c.researchers}) options(*rows);
     amount(c.formation_cents);amount(c.compute_monthly_cents);amount(c.founder_salary_cents);
     if(c.prestige_finance_bp>1000 || c.buzz_finance_bp>1000 || c.maximum_finance_bonus_bp>5000 || c.queer_community_buzz>20 || c.queer_community_prestige>10) invalid("Founding reputation effects exceed their bounded terms.");
+    if (c.generation) {
+        const auto& rules = *c.generation;
+        if (rules.rival_budget_spread_pct > 50 || rules.dataset_spread_pct > 50)
+            invalid("Campaign variation must be between zero and fifty percent.");
+        for (const auto* names : {&rules.company_prefixes, &rules.company_suffixes}) {
+            if (names->empty() || names->size() > 128) invalid("Supply 1 to 128 company name parts.");
+            std::set<std::string> distinct;
+            for (const auto& name : *names) {
+                text(name, 30);
+                if (!distinct.insert(name).second) invalid("Company name parts must be distinct.");
+            }
+        }
+    }
     if(c.opening && (c.opening->inherited_staff<2 || c.opening->inherited_staff>6 || c.opening->cofounder_staff<1 || c.opening->cofounder_staff>3 || c.opening->ceo_equity_bp>1500)) invalid("Opening company terms exceed their bounds.");
     if(!c.partners.empty()) {
         const auto& route=founding_option(c.routes,"partnership");

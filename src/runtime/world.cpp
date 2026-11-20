@@ -1,3 +1,4 @@
+#include <pgp/runtime/scenario.hpp>
 #include <pgp/runtime/runtime.hpp>
 #include <pgp/runtime/career.hpp>
 #include <pgp/runtime/society.hpp>
@@ -423,7 +424,7 @@ void validate_checkpoint_with_simulation(const CompiledProgram& program, const C
     }
     if (world.competition && !world.competition->setup)
         for (const auto& rival:world.competition->companies)
-            validate_risk_seed(rival.simulation,rival_definition(program,rival.definition_id).seed);
+            validate_risk_seed(rival.simulation,rival_definition(world,program,rival.definition_id).seed);
     if((!world.background.empty() || !world.difficulty.empty()) && world.scenario_id.empty()) invalid("Campaign setup needs its authored source scenario");
     if (world.identity) {
         validate_campaign_identity(*world.identity);
@@ -578,11 +579,11 @@ void validate_checkpoint_with_simulation(const CompiledProgram& program, const C
             if (!scenario || !scenario->lab || scenario->starts_on != world.campaign_start ||
                 scenario->ends_before != authored_deadline) continue;
             matching_lab_scenario = true;
-            if (world.simulation.lab && world.simulation.lab->catalog == content::scenario_lab_catalog(program.collection, *scenario)) {
+            if (world.simulation.lab && world.simulation.lab->catalog == campaign_lab_catalog(program.collection, *scenario, world)) {
                 matching_catalog = true;
                 const auto founding=world.founding?&*world.founding:nullptr;
                 const auto opening=content::scenario_opening(*scenario,world.background,world.company_id,world.difficulty,founding);
-                const auto management=content::scenario_management(*scenario,world.difficulty,founding);
+                const auto management=campaign_management(*scenario,world);
                 const auto competition=content::scenario_competition(*scenario,world.difficulty);
                 if (!world.playtest_custom) {
                 if(world.simulation.accounts) {
@@ -665,7 +666,7 @@ void validate_checkpoint_with_simulation(const CompiledProgram& program, const C
                 std::vector<std::string> expected,actual;
                 for (const auto& rival:scenario->rivals) if (!competition || content::selected_rival(rival,*competition)) expected.push_back(rival.id);
                 if(world.objectives && world.objectives->career) for(const auto& job:*world.objectives->career)
-                    if(career_entry_definition(rival_definition(program,job.employer))) expected.push_back(job.employer);
+                    if(career_entry_definition(rival_definition(world,program,job.employer))) expected.push_back(job.employer);
                 if (world.competition) for (const auto& rival:world.competition->companies) actual.push_back(rival.definition_id);
                 if (expected!=actual || (!competition && scenario->rivals.empty() && world.competition) ||
                     (competition && (!world.competition || world.competition->setup!=competition))) invalid("Saved rival roster/settings differ from their scenario");

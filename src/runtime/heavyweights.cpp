@@ -47,11 +47,11 @@ void mobilize(WorldState& world,const CompiledProgram& program,RivalCompany& riv
 }
 }
 PressureReview observe_heavyweight_pressure(const WorldState& world,const CompiledProgram& program,std::string_view id,OrdinalDay day) {
-    const auto& policy=*rival_definition(program,id).response;PressureReview result;result.day=day;
+    const auto& policy=*rival_definition(world,program,id).response;PressureReview result;result.day=day;
     const auto begin=OrdinalDay{std::max(world.campaign_start.value(),day.value()-policy.review_interval.value())};
     const auto finance_begin=OrdinalDay{std::max(world.campaign_start.value(),day.value()-6*policy.review_interval.value())};
     std::vector<const SimulationState*> public_sources{&world.simulation};
-    for (const auto& rival:world.competition->companies) if (rival.planning->entered_on && rival_definition(program,rival.definition_id).planning->group!="heavyweight") public_sources.push_back(&rival.simulation);
+    for (const auto& rival:world.competition->companies) if (rival.planning->entered_on && rival_definition(world,program,rival.definition_id).planning->group!="heavyweight") public_sources.push_back(&rival.simulation);
     public_days(world.simulation,begin,day,[&](const auto& record) {
         for (const auto& observed:record.segments) {
             const auto& segments=world.simulation.market->segments;
@@ -97,7 +97,7 @@ void update_heavyweight_responses(WorldState& world,const CompiledProgram& progr
     if (!world.competition || !world.competition->setup || campaign_day(world)>=campaign_calendar_limit(world)) return;
     const auto day=campaign_day(world);
     for (auto& rival:world.competition->companies) if (rival.response) {
-        auto& response=*rival.response;const auto& definition=rival_definition(program,rival.definition_id);const auto& policy=*definition.response;
+        auto& response=*rival.response;const auto& definition=rival_definition(world,program,rival.definition_id);const auto& policy=*definition.response;
         if (rival.planning->entered_on && !response.retired_on && rival.simulation.phase==DayPhase::closed && response.phase!=HeavyweightPhase::consolidate)
             transition(world,rival,HeavyweightPhase::consolidate,"insolvency");
         if (day>=response.next_review) {

@@ -54,12 +54,14 @@ ColumnLayout {
         spacing: 6
         Repeater {
             model: [
-                {id: "catalog", label: qsTr("Catalog & Provenance")},
+                {id: "catalog", label: qsTr("Catalog & licenses")},
+                {id: "collect", label: qsTr("Build a dataset")},
                 {id: "process", label: qsTr("Process & Clean Data")},
                 {id: "creative", label: qsTr("In-House Creative Studio")}
             ]
             WorldButton {
                 required property var modelData
+                visible: modelData.id !== "collect" || root.manager.datasetSources.length > 0
                 objectName: "dataAppTab_" + modelData.id
                 text: modelData.label
                 textSize: root.textSize * 0.9

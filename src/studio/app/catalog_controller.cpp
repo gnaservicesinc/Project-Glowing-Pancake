@@ -1,4 +1,5 @@
 #include "world_controller.hpp"
+#include <pgp/runtime/career.hpp>
 #include <algorithm>
 
 namespace pgp::studio {
@@ -97,6 +98,18 @@ void WorldController::project_catalog() {
         if(entry.family=="flow" && owner) clean_title=event_name(draft_->collection(),*owner);
         else if(entry.family=="text") clean_title=entry.id;
         else if(clean_title.empty() || clean_title==entry.id) clean_title=short_name(entry.id);
+        const auto* scenario = owner ? std::get_if<content::ScenarioDefinition>(&owner->data) : nullptr;
+        if (scenario && scenario->founding && scenario->founding->generation) {
+            if (entry.family == "executive" && scenario->management && scenario->management->governance) {
+                for (const auto& role : scenario->management->governance->executives)
+                    if (role.id == entry.id) clean_title = role.role;
+            }
+            if (entry.family == "company") {
+                for (const auto& rival : scenario->rivals)
+                    if (rival.id == entry.id && rival.planning && !runtime::career_entry_definition(rival))
+                        clean_title = readable_name(rival.planning->group) + " · " + short_name(rival.id.substr(rival.id.rfind('.')+1));
+            }
+        }
         if(!target_family.empty() && entry.family==target_family && entry.path.ends_with("/id")) {
             const auto owner_title=owner?event_name(draft_->collection(),*owner):short_name(entry.owner);
             catalog_templates_.push_back(QVariantMap{{"value",text(record)},{"label",text(clean_title+" · "+owner_title)}});
@@ -117,6 +130,7 @@ void WorldController::project_catalog() {
         const auto selected_depth=family_=="text" || family_=="owner"?identity_path_.size():path_parent(identity_path_).size();
         if((path_==record || path_.starts_with(record+"/")) && record.size()>selected_depth) {
             identity_=entry.id;family_=entry.family;identity_path_=entry.path;
+            if (path_ == record && (family_ == "company" || family_ == "executive")) section_title_ = label;
         }
     }
     if(!identity_.empty()) for(const auto& use:content_uses(index,family_,identity_,true)) {

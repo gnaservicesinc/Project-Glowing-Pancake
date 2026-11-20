@@ -7,7 +7,7 @@ For a direct start, open **Playtest Environment → Custom playtest setup & star
 ## From a research question to a product
 
 1. Open **Devices & apps**, select a working laptop or workstation and open **Research**. Use the list or graph to choose a topic. The inspector explains the experiment, prerequisites, eligible data, staff and compute.
-2. In **Data**, acquire or produce a suitable corpus. Processing changes its properties while retaining the original source and rights. In Research, select the team and data, check the quote and start. Advance the clock to do the work.
+2. In **Data**, name a collection, select its sources and review the fee, staff, compute and rights before starting. Finished collections can earn license revenue when the company owns the IP in every contributing source. You can also buy a published dataset or license one from another company. Processing changes its properties while retaining the original source and rights. In Research, select the team and data, check the quote and start. Advance the clock to do the work.
 3. In **Models**, choose a recipe and balance source weights against sample coverage. Train the model and evaluate it. Some research produces an early demonstration model that can seed later production training.
 4. In **Products**, review evidence and commercial rights before deploying. In **Accounts**, select a spending category to inspect its ledger entries. Personal education debt belongs in **My life**.
 

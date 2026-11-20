@@ -28,6 +28,7 @@ void schedule_device_interface_smoke(QQuickWindow &window, pgp::bridge::Campaign
                                      pgp::persistence::LocalPaths paths, QString screenshot) {
     struct Run {
         int phase = 0, ticks = 0, frames = 0;
+        bool reviewed_sources = false;
         std::string fingerprint;
     };
     const auto run = std::make_shared<Run>();
@@ -185,9 +186,23 @@ void schedule_device_interface_smoke(QQuickWindow &window, pgp::bridge::Campaign
                 return;
             }
             break;
-        case 12:
-            if (!item("dataAppRoot") || !press("surfacePopOutButton")) { fail("Detach the Data app"); return; }
-            break;
+        case 12: {
+            if (run->reviewed_sources) {
+                if (!press("surfacePopOutButton")) { fail("Detach the Data app"); return; }
+                break;
+            }
+            if (!press("dataAppTab_collect") || !press("datasetSource_collected.source_original") ||
+                !press("datasetSource_collected.source_commission")) { fail("Select two sources in the dataset builder"); return; }
+            auto* name = item("newDatasetNameInput");
+            if (!name || !name->setProperty("text",QStringLiteral("Studio collection")) ||
+                !press("reviewSourceCollection")) { fail("Review the named dataset before committing"); return; }
+            const auto dialogs = window.findChildren<QObject*>("serviceReleaseConfirmation");
+            const auto open = std::ranges::find_if(dialogs,[](const auto* dialog) { return dialog->property("visible").toBool(); });
+            if (open==dialogs.end() || (*open)->property("terms").toString().isEmpty() ||
+                !QMetaObject::invokeMethod(*open,"reject")) { fail("Inspect and dismiss the live collection quote"); return; }
+            run->reviewed_sources = true;
+            return;
+        }
         case 13: {
             QQuickWindow* native = nullptr;
             for (auto* candidate : QGuiApplication::topLevelWindows())

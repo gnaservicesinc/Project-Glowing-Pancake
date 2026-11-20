@@ -49,6 +49,8 @@ ApplicationWindow {
         if (studio.saving) return
         if (eventStory.changed && !eventStory.applyEdits()) return
         if (childhoodScene.changed && !childhoodScene.applyEdits()) return
+        if (worldForms.hasPending && !worldForms.applySection()) return
+        if (studio.worldController.hasStaged && !studio.worldController.applyStaged()) return
         if (studio.draftDirty && !studio.saveEvent()) return
         if (studio.canvasController.layoutDirty) studio.canvasController.saveLayout()
     }
@@ -86,7 +88,7 @@ ApplicationWindow {
                 onClicked: {
                     if (eventStory.changed && !eventStory.applyEdits()) return
                     if (childhoodScene.changed && !childhoodScene.applyEdits()) return
-                    if (studio.openGameContent()) window.showLibrary = false
+                    if (studio.openGameContent()) { window.showLibrary = false; worldForms.openRules() }
                 }
             }
             Button {
@@ -117,7 +119,7 @@ ApplicationWindow {
                         onTriggered: {
                             if (eventStory.changed && !eventStory.applyEdits()) return
                             if (childhoodScene.changed && !childhoodScene.applyEdits()) return
-                            if (studio.openGameContent()) window.showLibrary = false
+                            if (studio.openGameContent()) { window.showLibrary = false; worldForms.openRules() }
                         }
                     }
                     MenuItem {
@@ -363,8 +365,8 @@ ApplicationWindow {
                     }
                     onCurrentIndexChanged: switchTo(currentIndex)
                     TabButton { text: qsTr("Story"); width: implicitWidth; onClicked: eventTabs.switchTo(0) }
-                    TabButton { text: qsTr("Steps"); width: implicitWidth; onClicked: eventTabs.switchTo(1) }
-                    TabButton { objectName: "showStudioCanvas"; text: qsTr("Graph"); width: implicitWidth; onClicked: eventTabs.switchTo(2) }
+                    TabButton { text: qsTr("Conditions & actions"); width: implicitWidth; onClicked: eventTabs.switchTo(1) }
+                    TabButton { objectName: "showStudioCanvas"; text: qsTr("Flow diagram"); width: implicitWidth; onClicked: eventTabs.switchTo(2) }
                     TabButton { objectName: "showStudioSettings"; text: qsTr("Preview in game"); width: implicitWidth; onClicked: eventTabs.switchTo(3) }
                 }
                 Connections {
@@ -388,6 +390,8 @@ ApplicationWindow {
                 author: studio
             }
             WorldForms {
+                id: worldForms
+                objectName: "worldForms"
                 visible: studio.worldMode
                 Layout.fillWidth: true
                 Layout.fillHeight: true

@@ -9,6 +9,30 @@ ColumnLayout {
     signal closeRequested()
     property var pending: ({})
     property string observedTicket: ""
+    property bool ruleMode: false
+    readonly property string base: "/definitions/" + author.scenario
+    readonly property var rulePages: [
+        {key: base + "/founding/generation", label: qsTr("New campaign rules")},
+        {key: base + "/management/people/first_names", label: qsTr("Given names")},
+        {key: base + "/management/people/last_names", label: qsTr("Surnames")},
+        {key: base + "/founding/generation/company_prefixes", label: qsTr("Company name beginnings")},
+        {key: base + "/founding/generation/company_suffixes", label: qsTr("Company name endings")}
+    ].filter(row => author.sections.some(section => section.key === row.key)).concat(sourceRules())
+    function sourceRules() {
+        const sections = author.sections
+        const sources = new Set(sections.filter(row => row.key.startsWith(base + "/lab/acquisition/") && row.key.endsWith("/source"))
+                                        .map(row => row.key.slice(0, -7)))
+        return sections.filter(row => sources.has(row.key)).map(row => ({key: row.key, label: qsTr("Data source · %1").arg(row.label.trim())}))
+    }
+    function openRules() {
+        if (!author.catalogMode && !author.setCatalogMode(true)) return
+        author.filter("")
+        if (!rulePages.length) return
+        ruleMode = true
+        mapMode = false
+        catalogRecords = false
+        author.selectSection(rulePages[0].key)
+    }
     property bool mapMode: false
     property bool catalogRecords: true
     property bool wasCatalogMode: false
@@ -89,11 +113,19 @@ ColumnLayout {
     }
     Connections {
         target: forms.author
+        function onDocumentReplaced() {
+            forms.mapMode = false
+            forms.ruleMode = false
+            forms.wasCatalogMode = false
+            forms.catalogRecords = true
+            forms.showFields = false
+        }
         function onChanged() {
             if (forms.author.catalogMode) forms.wasCatalogMode = true
             if (forms.observedTicket !== forms.author.ticket) {
                 forms.observedTicket = forms.author.ticket
                 forms.pending = ({})
+                if (inspector.contentItem) inspector.contentItem.contentY = 0
             }
             Qt.callLater(forms.syncSectionSelection)
         }
@@ -101,9 +133,9 @@ ColumnLayout {
     onCatalogRecordsChanged: Qt.callLater(forms.syncSectionSelection)
     onMapModeChanged: Qt.callLater(forms.syncSectionSelection)
     RowLayout {
-        visible: !author.catalogMode
+        visible: !author.catalogMode && !forms.mapMode && !forms.wasCatalogMode
         Layout.fillWidth: true
-        Label { text: qsTr("Scenario"); font.bold: true }
+        Label { text: qsTr("Test preset"); font.bold: true }
         ComboBox {
             objectName: "worldScenario"
             Layout.fillWidth: true
@@ -143,29 +175,40 @@ ColumnLayout {
             visible: forms.width >= 1000 || !forms.showFields
             Layout.fillWidth: true; Layout.fillHeight: true
             Layout.preferredWidth: forms.width * 0.38
-            RowLayout {
+            Flow {
+                Layout.fillWidth: true
+                spacing: 4
+                Button {
+                    text: qsTr("Campaign rules")
+                    visible: author.catalogMode || forms.wasCatalogMode
+                    checked: forms.ruleMode
+                    enabled: !forms.hasPending && !author.adding && !author.hasStaged
+                    onClicked: forms.openRules()
+                }
                 Button {
                     visible: author.catalogMode || forms.wasCatalogMode
-                    text: qsTr("Game records")
+                    text: qsTr("Templates")
                     checkable: true
                     checked: author.catalogMode && forms.catalogRecords && !forms.mapMode
                     enabled: !forms.hasPending && !author.adding && !author.hasStaged
                     onClicked: {
                         if (!author.catalogMode) author.setCatalogMode(true)
                         forms.mapMode = false
+                        forms.ruleMode = false
                         forms.catalogRecords = true
                         if (author.catalogEntries.length && (!author.selectedIdentity || author.selectedFamily === "flow"))
                             author.selectCatalogEntry(author.catalogEntries[0].key)
                     }
                 }
                 Button {
-                    text: qsTr("Sections")
+                    text: qsTr("All settings")
                     checkable: true
-                    checked: !forms.mapMode && (!author.catalogMode || !forms.catalogRecords)
+                    checked: !forms.ruleMode && !forms.mapMode && (!author.catalogMode || !forms.catalogRecords)
                     enabled: !forms.hasPending && !author.adding && !author.hasStaged
                     onClicked: {
                         if (forms.wasCatalogMode && !author.catalogMode) author.setCatalogMode(true)
                         forms.mapMode = false
+                        forms.ruleMode = false
                         forms.catalogRecords = false
                         if (author.sections.length && !author.sections.some(r => r.key === author.path))
                             author.selectSection(author.sections[0].key)
@@ -180,7 +223,10 @@ ColumnLayout {
                     enabled: !forms.hasPending && !author.adding && !author.hasStaged && author.states.length > 0
                     onClicked: {
                         if (author.catalogMode) author.setCatalogMode(false)
+                        forms.ruleMode = false
                         forms.mapMode = true
+                        const selected = author.selectedState || author.states[0].id
+                        author.selectState(selected)
                     }
                 }
             }
@@ -208,11 +254,14 @@ ColumnLayout {
                 currentIndex: forms.optionIndex(model, author.familyFilter)
                 popup.height: Math.min(320, popup.contentItem.implicitHeight + 16)
                 Accessible.name: qsTr("Filter game records by category")
-                onActivated: author.setFamilyFilter(currentValue)
+                onActivated: {
+                    author.setFamilyFilter(currentValue)
+                    if (author.catalogEntries.length) author.selectCatalogEntry(author.catalogEntries[0].key)
+                }
             }
             TextField {
                 objectName: "worldSectionSearch"
-                visible: author.catalogMode || !forms.mapMode
+                visible: !forms.ruleMode && (author.catalogMode || !forms.mapMode)
                 Layout.fillWidth: true
                 maximumLength: 256
                 enabled: !forms.hasPending && !author.adding
@@ -237,7 +286,7 @@ ColumnLayout {
                     clip: true
                     activeFocusOnTab: true
                     enabled: !forms.hasPending && !author.adding
-                    model: author.catalogMode ? (forms.catalogRecords ? author.catalogEntries : author.sections) : (forms.mapMode ? author.states : author.sections)
+                    model: forms.ruleMode ? forms.rulePages : author.catalogMode ? (forms.catalogRecords ? author.catalogEntries : author.sections) : (forms.mapMode ? author.states : author.sections)
                     keyNavigationEnabled: true
                     Accessible.name: forms.mapMode ? qsTr("Domestic state profiles") : qsTr("Scenario and world sections")
                     Keys.onReturnPressed: {
@@ -298,7 +347,7 @@ ColumnLayout {
                     spacing: 10
                     Label {
                         Layout.fillWidth: true
-                        text: author.sectionTitle || author.path
+                        text: forms.ruleMode ? (forms.rulePages.find(row => row.key === author.path) || {}).label || author.sectionTitle : author.sectionTitle || author.path
                         wrapMode: Text.Wrap
                         font.bold: true
                         font.pixelSize: 18
@@ -395,7 +444,7 @@ ColumnLayout {
                     Layout.fillWidth: true
                     spacing: 8
                     Button { objectName: "applyWorldSection"; visible: forms.hasEditableFields; text: author.adding ? qsTr("Add reviewed entry") : author.hasStaged ? qsTr("Apply section with staged changes") : qsTr("Apply section"); enabled: forms.hasPending; onClicked: forms.applySection() }
-                    Button { objectName: "stageWorldSection"; visible: forms.hasEditableFields && !author.adding; text: qsTr("Stage section"); enabled: forms.hasPending; onClicked: author.stage(author.ticket, forms.pending) }
+                    Button { objectName: "stageWorldSection"; visible: forms.hasEditableFields && !author.adding && !forms.ruleMode; text: qsTr("Stage section"); enabled: forms.hasPending; onClicked: author.stage(author.ticket, forms.pending) }
                     Button { visible: forms.hasEditableFields; text: qsTr("Reset unapplied fields"); enabled: forms.hasPending; onClicked: forms.pending = ({}) }
                     Button { text: qsTr("Cancel new entry"); visible: author.adding; onClicked: author.cancelAppend() }
                     Button { objectName: "removeWorldEntry"; text: qsTr("Remove selected entry"); visible: author.canRemove; enabled: !forms.hasPending && !author.hasStaged; onClicked: author.removeEntry() }
@@ -417,7 +466,7 @@ ColumnLayout {
                 Label { Layout.fillWidth: true; text: author.message || session.draftMessage; visible: text.length > 0; wrapMode: Text.WrapAnywhere; font.bold: true }
                 Label { Layout.fillWidth: true; text: author.stagedSummary; visible: text.length > 0; wrapMode: Text.WrapAnywhere }
                 CatalogActions {
-                    visible: author.catalogMode && !author.adding
+                    visible: author.catalogMode && !forms.ruleMode && !author.adding
                     Layout.fillWidth: true
                     author: forms.author
                     ready: !forms.hasPending && !author.hasStaged

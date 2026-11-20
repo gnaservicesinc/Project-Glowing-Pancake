@@ -94,6 +94,11 @@ struct FoundingSelection {
     [[nodiscard]] bool has_advantage(std::string_view id) const;
     auto operator<=>(const FoundingSelection&) const = default;
 };
+struct CampaignGenerationRules {
+    std::vector<std::string> company_prefixes, company_suffixes;
+    std::uint32_t rival_budget_spread_pct = 0, dataset_spread_pct = 0;
+    auto operator<=>(const CampaignGenerationRules&) const = default;
+};
 struct FoundingCatalog {
     std::vector<FoundingOption> families, legs, routes, backers, offices, researchers;
     std::vector<FormativeScene> scenes;
@@ -107,6 +112,7 @@ struct FoundingCatalog {
     std::map<std::string,std::vector<std::string>> skill_rewards,trait_rewards;
     std::optional<FoundingSelection> appointment{};
     std::optional<FoundingEmployer> employer{};
+    std::optional<CampaignGenerationRules> generation{};
     auto operator<=>(const FoundingCatalog&) const = default;
 };
 [[nodiscard]] FoundingEmployer effective_employer(const FoundingCatalog&);

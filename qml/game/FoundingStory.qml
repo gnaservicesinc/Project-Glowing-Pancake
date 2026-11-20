@@ -171,11 +171,11 @@ QtObject {
             qsTr("A name, a date, the beginning of a life."),"","certificate")
         question("family", street, qsTr("HOME  /  1997"), qsTr("The house you come home to"),
             qsTr("By morning, the rain has passed. Your parents take you home, to the street where your earliest memories will begin."),
-            qsTr("How much did your family have?"), story.families.map(row => ({
+            qsTr("How much did your family have?"), story.families.filter(row => ["poor", "middle", "rich"].includes(row.id)).map(row => ({
                 id: row.id,
                 name: row.id === "poor" ? qsTr("We counted every dollar") :
                     row.id === "middle" ? qsTr("We had enough to get by") :
-                    row.id === "rich" ? qsTr("We were rich / wealthy") : row.name,
+                    row.id === "rich" ? qsTr("We were wealthy") : row.name,
                 detail: row.detail
             })))
         add("advantages", homeArt, qsTr("GROWING UP"), qsTr("An early advantage"),

@@ -19,6 +19,13 @@ struct ScenarioOptions {
 #endif
 };
 
+// Reproduce the opening offers and profiles from this campaign's saved seed.
+void generate_rival_roster(WorldState&, const CompiledProgram&);
+[[nodiscard]] core::LabCatalog campaign_lab_catalog(const content::Collection&, const content::ScenarioDefinition&,
+                                                    const WorldState&);
+[[nodiscard]] std::optional<core::ManagementCatalog> campaign_management(const content::ScenarioDefinition&,
+                                                                        const WorldState&);
+
 // Initialize implemented foundation fields from validated authored data. No
 // ledger/work/business result is inferred before its owning system exists.
 [[nodiscard]] Checkpoint begin_scenario(const CompiledProgram& program,

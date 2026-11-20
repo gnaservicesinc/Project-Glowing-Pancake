@@ -10,7 +10,7 @@
     "music.weitblick": "9da14349e75eaa6e799a45522c2c8cb00046372efefd2a6121caf1959b10140b"
   },
   "content_schema": 1,
-  "content_version": "0.85.0-dev.1",
+  "content_version": "0.86.0-dev.1",
   "currency_basis": "constant_2014_cents",
   "definitions": [
     {
@@ -72095,6 +72095,38 @@
         ],
         "formation_cents": 250000,
         "founder_salary_cents": 200000,
+        "generation": {
+          "company_prefixes": [
+            "Trestle",
+            "Ember",
+            "Wren",
+            "Larch",
+            "Headland",
+            "Arbor",
+            "Sundial",
+            "Linden",
+            "Wayfarer",
+            "Aster",
+            "Kestrel",
+            "Flint",
+            "Brookside",
+            "Keel",
+            "Beacon",
+            "Cinder"
+          ],
+          "company_suffixes": [
+            "Research",
+            "Systems",
+            "Instruments",
+            "Computing",
+            "Labs",
+            "Logic",
+            "Technologies",
+            "Works"
+          ],
+          "dataset_spread_pct": 25,
+          "rival_budget_spread_pct": 20
+        },
         "legs": [
           {
             "buzz": 0,
@@ -81152,6 +81184,251 @@
             "staff_days": 4
           },
           {
+            "collection_days": 6,
+            "dataset": {
+              "commercial_use": true,
+              "contamination_bp": 100,
+              "coverage_bp": {
+                "documents": 9100,
+                "scanned_tables": 800,
+                "science_industry": 3600
+              },
+              "id": "collected.source_books",
+              "name": "Published books",
+              "price_cents": 125000,
+              "provenance": "License a publisher selection and align chapters.",
+              "quality_bp": 9500,
+              "relevance_bp": {
+                "documents": 9100,
+                "scanned_tables": 800,
+                "science_industry": 3600
+              },
+              "rights": "Publisher grants commercial training rights only.",
+              "unique_units": 40000
+            },
+            "review_work_milli_CU": 32000,
+            "source": {
+              "minimum_quality_bp": 7000,
+              "transfers_ip": false
+            },
+            "staff_days": 8
+          },
+          {
+            "collection_days": 8,
+            "dataset": {
+              "commercial_use": true,
+              "contamination_bp": 100,
+              "coverage_bp": {
+                "documents": 5000,
+                "scanned_tables": 9100,
+                "science_industry": 2500
+              },
+              "id": "collected.source_commission",
+              "name": "Commissioned artwork and captions",
+              "open_weight_release": true,
+              "price_cents": 200000,
+              "provenance": "Commission original work and review captions.",
+              "quality_bp": 9800,
+              "relevance_bp": {
+                "documents": 5000,
+                "scanned_tables": 9100,
+                "science_industry": 2500
+              },
+              "rights": "Creators assign the commissioned works and dataset licensing rights to the company.",
+              "unique_units": 13000
+            },
+            "review_work_milli_CU": 25000,
+            "source": {
+              "minimum_quality_bp": 7900,
+              "transfers_ip": true
+            },
+            "staff_days": 12
+          },
+          {
+            "collection_days": 3,
+            "dataset": {
+              "commercial_use": true,
+              "contamination_bp": 100,
+              "coverage_bp": {
+                "documents": 9500,
+                "scanned_tables": 2000,
+                "science_industry": 5000
+              },
+              "id": "collected.source_encyclopedia",
+              "name": "Open encyclopedia articles",
+              "open_weight_release": true,
+              "price_cents": 0,
+              "provenance": "Download and parse a revision snapshot.",
+              "quality_bp": 8900,
+              "relevance_bp": {
+                "documents": 9500,
+                "scanned_tables": 2000,
+                "science_industry": 5000
+              },
+              "rights": "Attribution and share-alike apply to the source text.",
+              "unique_units": 110000
+            },
+            "review_work_milli_CU": 15000,
+            "source": {
+              "minimum_quality_bp": 6500,
+              "transfers_ip": false
+            },
+            "staff_days": 4
+          },
+          {
+            "collection_days": 4,
+            "dataset": {
+              "commercial_use": false,
+              "contamination_bp": 100,
+              "coverage_bp": {
+                "documents": 6500,
+                "scanned_tables": 4500,
+                "science_industry": 9800
+              },
+              "id": "collected.source_journals",
+              "name": "Academic journal articles",
+              "price_cents": 90000,
+              "provenance": "License a journal archive and extract text and tables.",
+              "quality_bp": 9700,
+              "relevance_bp": {
+                "documents": 6500,
+                "scanned_tables": 4500,
+                "science_industry": 9800
+              },
+              "rights": "Research-only institutional subscription.",
+              "unique_units": 28000
+            },
+            "review_work_milli_CU": 28000,
+            "source": {
+              "minimum_quality_bp": 8100,
+              "transfers_ip": false
+            },
+            "staff_days": 6
+          },
+          {
+            "collection_days": 4,
+            "dataset": {
+              "commercial_use": true,
+              "contamination_bp": 100,
+              "coverage_bp": {
+                "documents": 6700,
+                "scanned_tables": 8500,
+                "science_industry": 9000
+              },
+              "id": "collected.source_manuals",
+              "name": "Technical manuals",
+              "price_cents": 55000,
+              "provenance": "License manuals and align diagrams with instructions.",
+              "quality_bp": 9500,
+              "relevance_bp": {
+                "documents": 6700,
+                "scanned_tables": 8500,
+                "science_industry": 9000
+              },
+              "rights": "Technical publishers reserve the right to redistribute the manuals.",
+              "unique_units": 62000
+            },
+            "review_work_milli_CU": 24000,
+            "source": {
+              "minimum_quality_bp": 7500,
+              "transfers_ip": false
+            },
+            "staff_days": 5
+          },
+          {
+            "collection_days": 3,
+            "dataset": {
+              "commercial_use": true,
+              "contamination_bp": 100,
+              "coverage_bp": {
+                "documents": 9500,
+                "scanned_tables": 1500,
+                "science_industry": 2000
+              },
+              "id": "collected.source_news",
+              "name": "News archives",
+              "price_cents": 65000,
+              "provenance": "Purchase archive access and review article metadata.",
+              "quality_bp": 9000,
+              "relevance_bp": {
+                "documents": 9500,
+                "scanned_tables": 1500,
+                "science_industry": 2000
+              },
+              "rights": "Commercial training is permitted. Redistribution of the articles is reserved.",
+              "unique_units": 74000
+            },
+            "review_work_milli_CU": 16000,
+            "source": {
+              "minimum_quality_bp": 6600,
+              "transfers_ip": false
+            },
+            "staff_days": 4
+          },
+          {
+            "collection_days": 7,
+            "dataset": {
+              "commercial_use": true,
+              "contamination_bp": 100,
+              "coverage_bp": {
+                "documents": 9000,
+                "scanned_tables": 6500,
+                "science_industry": 8500
+              },
+              "id": "collected.source_original",
+              "name": "Commissioned technical examples",
+              "open_weight_release": true,
+              "price_cents": 240000,
+              "provenance": "Pay technical authors to write and review original examples.",
+              "quality_bp": 9800,
+              "relevance_bp": {
+                "documents": 9000,
+                "scanned_tables": 6500,
+                "science_industry": 8500
+              },
+              "rights": "Authors assign all IP in these original examples to the commissioning company.",
+              "unique_units": 21000
+            },
+            "review_work_milli_CU": 30000,
+            "source": {
+              "minimum_quality_bp": 8300,
+              "transfers_ip": true
+            },
+            "staff_days": 9
+          },
+          {
+            "collection_days": 4,
+            "dataset": {
+              "commercial_use": false,
+              "contamination_bp": 1200,
+              "coverage_bp": {
+                "documents": 8500,
+                "scanned_tables": 1000,
+                "science_industry": 300
+              },
+              "id": "collected.source_social",
+              "name": "Public social posts",
+              "price_cents": 0,
+              "provenance": "Collect and screen public posts under the simulated platform agreement.",
+              "provenance_confidence_bp": 4500,
+              "quality_bp": 6500,
+              "relevance_bp": {
+                "documents": 8500,
+                "scanned_tables": 1000,
+                "science_industry": 300
+              },
+              "rights": "Research access under a limited collection agreement.",
+              "third_party_controversy_risk": true,
+              "unique_units": 180000
+            },
+            "review_work_milli_CU": 22000,
+            "source": {
+              "minimum_quality_bp": 2500,
+              "transfers_ip": false
+            },
+            "staff_days": 5
+          },
+          {
             "collection_days": 10,
             "dataset": {
               "commercial_use": true,
@@ -86529,7 +86806,7 @@
         "research.workflow_verification"
       ],
       "resilience": "resilience.domestic",
-      "revision": 57,
+      "revision": 58,
       "rivals": [
         {
           "capacity_milli_CU_per_day": 380000,

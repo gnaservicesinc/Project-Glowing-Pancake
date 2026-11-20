@@ -34,6 +34,7 @@
 
 #include <QCommandLineParser>
 #include <QGuiApplication>
+#include <QJSValue>
 #include <QFont>
 #include <QElapsedTimer>
 #include <QJsonDocument>
@@ -229,6 +230,14 @@ public:
             case content::LifecycleMode::scheduled: timing = QStringLiteral("Checks on %1.").arg(text(core::iso_date(*event.lifecycle.due_date))); break;
             case content::LifecycleMode::continuous: timing = QStringLiteral("Stays active until its end conditions are met."); break;
         }
+        if (!event.group && event.trigger.clause) {
+            const auto& clause = *event.trigger.clause;
+            const auto* fact = draft_->registry().fact(clause.fact);
+            const auto outline = studio::flow_outline(*draft_, flow_);
+            const auto trigger = std::ranges::find(outline, std::string{"trigger"}, &studio::OutlineRow::key);
+            if (trigger != outline.end()) timing += "\n" + text(trigger->label);
+            if (fact) timing += "\n" + text(fact->help);
+        }
         QStringList scenarios;
         for (const auto& [id, item] : collection.definitions) {
             const auto* scenario = std::get_if<content::ScenarioDefinition>(&item.data);
@@ -386,7 +395,7 @@ public:
                     row.value(QStringLiteral("kind")).toString() == QStringLiteral("document")) continue;
                 const auto file = row.value(QStringLiteral("file")).toString();
                 const auto id = row.value(QStringLiteral("id")).toString();
-                if (id == QStringLiteral("scenario.founder_campaign")) {
+                if (file == QStringLiteral("data/runtime/first-playable.json") && id == QStringLiteral("scenario.founder_campaign")) {
                     targetFile = file;
                     targetId = id;
                     break;
@@ -400,6 +409,8 @@ public:
         }
         chapter_owner_.clear();
         chapter_id_.clear();
+        if (draft_->collection().find("scenario.founder_campaign") && world_.scenario() != "scenario.founder_campaign")
+            world_.selectScenario(QStringLiteral("scenario.founder_campaign"));
         selectWorkspace(true, true);
         return editing() && worldMode();
     }
@@ -1042,6 +1053,23 @@ int main(int argc, char* argv[]) {
             browser.filter({}, QStringLiteral("events"), QStringLiteral("Reviewed"));
             if (list->property("count").toLongLong() != all_rows) throw std::runtime_error("Studio view check: Library filter reset failed.");
             const auto reviewed=QStringLiteral("data/runtime/first-playable.json");
+            if (browser.openGameContent()) {
+                auto* author = qobject_cast<studio::WorldController*>(browser.worldController());
+                auto* forms = window->findChild<QObject*>(QStringLiteral("worldForms"));
+                if (!forms || !QMetaObject::invokeMethod(forms, "openRules") || !forms->property("ruleMode").toBool() ||
+                    !author->path().endsWith("/founding/generation"))
+                    throw std::runtime_error("Game content must open on the campaign generation rules.");
+                const auto pages = forms->property("rulePages").value<QJSValue>().toVariant().toList();
+                const auto source = std::ranges::find_if(pages, [](const auto& page) {
+                    return page.toMap().value("label").toString().contains("Public social posts");
+                });
+                if (source == pages.end()) throw std::runtime_error("Missing social posts collection rule.");
+                author->selectSection(source->toMap().value("key").toString());
+                if (!author->apply(author->ticket(),{{"source/minimum_quality_bp","2400"}}))
+                    throw std::runtime_error("Open and edit a source quality range from Campaign rules.");
+                browser.undo();
+                browser.closeDraft();
+            }
             if(browser.beginDraft(reviewed,"scenario.founder_campaign")) {
                 auto* author=qobject_cast<studio::WorldController*>(browser.worldController());
                 author->filter("coworker voice");

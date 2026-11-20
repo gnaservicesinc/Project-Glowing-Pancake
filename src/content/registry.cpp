@@ -236,7 +236,7 @@ Registry foundation_registry() {
     number("world.authority_output_coverage_bp",Scope::world,Unit::basis_points,0,10000,"Output covered by at least 60/100 actual governing authority.","authority");
     boolean("company.frontier_era_today","The conditional future opens on this prepared morning.",Scope::company,"frontier");
     boolean("company.game_agi_today","Independent assessments establish the game AGI requirements today.",Scope::company,"frontier");
-    boolean("company.game_asi_today","Independent experiments establish the game ASI requirements today.",Scope::company,"frontier");
+    boolean("company.game_asi_today","True on the first day a deployed system qualifies for artificial superintelligence. Three independent assessments spanning at least 90 days must score at least 90% in every domain and 95% for novelty. Three successfully replicated improvements must span at least 180 days.",Scope::company,"frontier");
     boolean("company.has_succession_charter","This institution has a finite executive succession charter.",Scope::company,"succession");
     boolean("company.leadership_handover_today","A prepared successor or charter caretaker took office on this morning.",Scope::company,"succession");
     boolean("company.founder_is_chair","The original founder currently holds the personal chair role.",Scope::company,"succession");

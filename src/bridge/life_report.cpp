@@ -82,7 +82,7 @@ QVariantMap lifeReport(const runtime::Checkpoint& checkpoint,const runtime::Comp
             company_record.push_back(QStringLiteral("The board replaced the founder as chief executive after missed commitments and a cash shortfall."));break;
         case runtime::CampaignEndCause::acquisition:
             company_record.push_back(QStringLiteral("%1 bought the company for %2. The founder received %3.")
-                .arg(text(runtime::rival_definition(program,world.objectives->end->source).name),
+                .arg(text(runtime::rival_definition(world,program,world.objectives->end->source).name),
                      money(world.objectives->transitions.back().consideration),money(world.objectives->transitions.back().personal_proceeds)));break;
         case runtime::CampaignEndCause::uscif:
             company_record.push_back(QStringLiteral("A fictional federal intervention followed withheld independent AGI evidence and sustained regulator mistrust."));break;
@@ -127,7 +127,7 @@ QVariantMap lifeReport(const runtime::Checkpoint& checkpoint,const runtime::Comp
 
     QStringList competitors;
     if(world.competition) for(const auto& rival:world.competition->companies) {
-        const auto& label=runtime::rival_definition(program,rival.definition_id);
+        const auto& label=runtime::rival_definition(world,program,rival.definition_id);
         const auto& actor=rival.simulation;
         if(!actor.accounts) continue;
         const auto staff=actor.management && actor.management->people?
@@ -139,7 +139,7 @@ QVariantMap lifeReport(const runtime::Checkpoint& checkpoint,const runtime::Comp
     if(world.objectives && world.objectives->race) {
         QStringList qualifiers;
         for(const auto& id:world.objectives->race->winners) {
-            qualifiers.push_back(id==world.company_id?company:text(runtime::rival_definition(program,id).name));
+            qualifiers.push_back(id==world.company_id?company:text(runtime::rival_definition(world,program,id).name));
         }
         competitors.push_back(QStringLiteral("The first independently recorded ASI qualification was %1, credited to %2.")
             .arg(date(world.objectives->race->day),qualifiers.join(QStringLiteral(" and "))));
@@ -204,7 +204,7 @@ QVariantMap lifeReport(const runtime::Checkpoint& checkpoint,const runtime::Comp
     QStringList career;
     if(world.objectives && world.objectives->career) {
         for(const auto& job:*world.objectives->career) {
-            const auto& employer=runtime::rival_definition(program,job.employer);
+            const auto& employer=runtime::rival_definition(world,program,job.employer);
             if(employer.planning->group=="restart")
                 career.push_back(QStringLiteral("Founded %1 on %2.").arg(text(job.organization_name),date(job.accepted_on)));
             else if(employer.planning->group=="uscif")

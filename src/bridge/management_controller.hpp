@@ -43,6 +43,8 @@ class ManagementController final : public QObject {
     Q_PROPERTY(QVariantList evaluations READ evaluations NOTIFY changed)
     Q_PROPERTY(QVariantList evaluationSpecialists READ evaluationSpecialists NOTIFY changed)
     Q_PROPERTY(QVariantList synthesisRecipes READ synthesisRecipes NOTIFY changed)
+    Q_PROPERTY(QVariantList datasetSources READ datasetSources NOTIFY changed)
+    Q_PROPERTY(QVariantList datasetDeals READ datasetDeals NOTIFY changed)
     Q_PROPERTY(QVariantList collectionOffers READ collectionOffers NOTIFY changed)
     Q_PROPERTY(QVariantList collectionJobs READ collectionJobs NOTIFY changed)
     Q_PROPERTY(QString staffWorkload READ staffWorkload NOTIFY changed)
@@ -175,6 +177,11 @@ public:
     QVariantList evaluations() const;
     QVariantList evaluationSpecialists() const;
     QVariantList synthesisRecipes() const;
+    QVariantList datasetSources() const;
+    QVariantList datasetDeals() const;
+    Q_INVOKABLE void licenseCompanyDataset(QString seller, QString buyer, QString id);
+    Q_INVOKABLE QVariantMap sourceCollectionQuote(QString name, QStringList sources, QString supply, QString rate, QString staff) const;
+    Q_INVOKABLE void collectSources(QString name, QStringList sources, QString supply, QString rate, QString staff);
     QVariantList collectionOffers() const;
     QVariantList collectionJobs() const;
     QString staffWorkload() const;

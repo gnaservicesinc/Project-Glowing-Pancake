@@ -114,7 +114,7 @@ std::vector<ResearchJobOffer> research_job_offers(const WorldState& world,const 
         const auto& company=employer.simulation;
         if(company.liquidity->status==LiquidityStatus::workout || company.accounts->recurring.size()>=accounts_terms_limit ||
             career_payroll(employer)) continue;
-        const auto& definition=rival_definition(program,employer.definition_id);
+        const auto& definition=rival_definition(world,program,employer.definition_id);
         const auto monthly=salary(world,definition,day).monthly_amount;
         if(monthly.value()>0 && uncommitted_cash(company)>=reserve(company,*definition.planning,monthly) &&
             std::ranges::any_of(research_workers(company),[](const auto& worker){return worker.unavailable.empty();})) {
@@ -135,7 +135,7 @@ std::vector<CareerResearchOption> career_research_options(const WorldState& worl
     const auto* employer=career_employer(world);
     if(!employer || world.objectives->career->back().projects.size()>=career_project_limit) return {};
     const auto& state=employer->simulation;
-    const auto& definition=rival_definition(program,employer->definition_id);
+    const auto& definition=rival_definition(world,program,employer->definition_id);
     const auto report=capacity_report(*state.capacity);
     if(state.liquidity->status==LiquidityStatus::workout) return {};
     auto assigned=report.assigned_staff;
@@ -235,7 +235,7 @@ void accept_research_appointment(WorldState& world,const CompiledProgram& progra
     auto& history=world.objectives->career;
     if(!history) history.emplace();
     const auto day=campaign_day(world);
-    const auto& definition=rival_definition(program,id);
+    const auto& definition=rival_definition(world,program,id);
     if(definition.planning->group=="restart") {
         if(name.size()<3 || name.size()>80 || std::ranges::any_of(name,[](unsigned char ch){return ch<32;}))
             throw std::invalid_argument("Enter a company name of 3 to 80 bytes.");
@@ -331,7 +331,7 @@ void validate_career(const WorldState& world,const CompiledProgram& program,bool
             job.projects.size()>career_project_limit) invalid();
         previous=employer;
         const auto& state=employer->simulation;
-        const auto& definition=rival_definition(program,job.employer);
+        const auto& definition=rival_definition(world,program,job.employer);
         if((definition.planning->group=="restart")!=(!job.organization_name.empty()) || job.organization_name.size()>80 ||
            (definition.planning->group=="uscif" && objectives.end->cause!=CampaignEndCause::uscif)) invalid();
         const auto* bill=career_payroll(*employer);

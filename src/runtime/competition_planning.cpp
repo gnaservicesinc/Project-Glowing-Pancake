@@ -56,7 +56,7 @@ void enter_due(WorldState& world,const CompiledProgram& program) {
     const auto day=campaign_day(world);
     for (auto& rival:world.competition->companies) {
         auto& plan=*rival.planning;if (plan.entered_on) continue;
-        const auto& definition=rival_definition(program,rival.definition_id);
+        const auto& definition=rival_definition(world,program,rival.definition_id);
         if (definition.response) continue;
         const auto earliest=advance_days(world.campaign_start,definition.start_after);
         if (day<earliest || day>=campaign_calendar_limit(world)) continue;
@@ -135,6 +135,24 @@ std::vector<Candidate> candidates(const RivalCompany& rival,const content::Rival
     }
     const LabAllocation allocation{source,MilliCUPerDay{std::min(compute.value(),definition.training_rate.value())},std::min(staff,2U)};
     const bool can_work=staff>0 && compute.value()>0 && affordable(Cents{0});
+    if (can_work && lab.acquisitions.size() < 3 && lab.acquisitions.size() <= lab.models.size() &&
+        std::ranges::all_of(lab.acquisitions, [](const auto& job) { return job.output.has_value(); })) {
+        std::vector<std::string> sources;
+        const bool build_for_license = (draw & 1U) != 0;
+        for (const auto& terms : lab.catalog.acquisition)
+            if (terms.source && (!build_for_license || terms.source->transfers_ip)) sources.push_back(terms.dataset.id);
+        if (!sources.empty()) {
+            const auto first = variation.bounded(sources.size());
+            const auto number = std::to_string(lab.acquisitions.size()+1);
+            StartDataAcquisition project{"collected.mix."+number, allocation, {sources[first]}, definition.name + " collection " + number};
+            if (sources.size() > 1 && variation.bounded(2))
+                project.sources.push_back(sources[(first + 1 + variation.bounded(sources.size()-1)) % sources.size()]);
+            try {
+                const auto quote = preview_data_acquisition(s, project);
+                if (affordable(quote.fee)) offer(0, "data", project.offer_id, 515, project);
+            } catch (const std::invalid_argument&) { /* This collection cannot finish at the proposed allocation. */ }
+        }
+    }
     if (frontier_technology_block(s,FrontierTechnology::data,definition.data_id,s.date).empty() &&
         std::none_of(lab.licenses.begin(),lab.licenses.end(),[&](const auto& row){return row.offer_id==definition.data_id;})) {
         const auto& data=find(lab.catalog.data,definition.data_id);
@@ -165,6 +183,10 @@ std::vector<Candidate> candidates(const RivalCompany& rival,const content::Rival
         if (std::any_of(lab.models.begin(),lab.models.end(),[&](const auto& row){return row.recipe_id==recipe.id;})) continue;
         TrainingRequest request{"model."+recipe.id,recipe.id,"",{definition.data_id},source,allocation.daily_compute,allocation.staff,
             MilliCU{std::clamp(definition.training_work.value(),recipe.minimum_work.value(),recipe.maximum_work.value())}};
+        for (const auto& job : lab.acquisitions)
+            if (job.output && job.output->commercial_use) request.data_ids.push_back(job.offer_id);
+        for (const auto& license : lab.licenses)
+            if (license.offer_id.starts_with("trade.dataset.")) request.data_ids.push_back(license.offer_id);
         const auto preview=preview_training(lab,request);
         if (preview.licensed && preview.prerequisites_met) offer(2,"train",recipe.id,400-static_cast<std::int64_t>(i),StartTraining{std::move(request)});
     }
@@ -375,6 +397,7 @@ SimulationState opening_rival(const WorldState& world,const CompiledProgram& pro
     state.capacity=opening_capacity({{"lease.initial","cloud/"+definition.id,definition.id,"supplier.rival",CapacitySourceKind::leased,definition.capacity,definition.capacity,0,"general",true}},definition.staff,day,definition.id);
     state.liquidity=opening_liquidity(day,definition.id);
     LabState lab;lab.owner=definition.id;lab.starts_on=day;lab.catalog=world.simulation.lab->catalog;
+    restore_licensed_catalog(lab.catalog,world,definition.id);
     lab.research_stream_origin=state.random[static_cast<std::size_t>(RandomStream::research)];state.lab=std::move(lab);
     state.market=opening_market(day,definition.id);
     state.market->segments=content::scenario_market_setup(program.collection,authored).segments;
@@ -434,7 +457,7 @@ void review_rival(WorldState& world,const CompiledProgram& program,RivalCompany&
     if (rival.simulation.date<plan.next_review) return;
     if (rival.response && rival.response->phase!=HeavyweightPhase::compete) return;
     if (plan.decisions.size()>=rival_decision_limit) invalid("Rival strategy decision history exceeds its retention bound");
-    const auto& definition=rival_definition(program,rival.definition_id);diffuse(world,rival);
+    const auto& definition=rival_definition(world,program,rival.definition_id);diffuse(world,rival);
     const auto stream_index=static_cast<std::size_t>(RandomStream::rivals);const auto before=rival.simulation.random[stream_index];
     SplitMix64 stream{before};const auto draw=stream.next();rival.simulation.random[stream_index]=stream.state();
     const auto observation=observe(world,rival.simulation.date,draw);
@@ -443,6 +466,23 @@ void review_rival(WorldState& world,const CompiledProgram& program,RivalCompany&
     const auto collaboration=player_research || fellowship?std::string{}:plan_research_collaboration(world,program,rival.definition_id);
     auto actions=collaboration.empty() && !fellowship?candidates(rival,definition,observation,draw,world.simulation.civic ? &*world.simulation.civic : nullptr,
         world.society?&*world.society:nullptr,world.competition->setup->review_interval,player_research):std::vector<Candidate>{};
+    if (!fellowship && collaboration.empty() && std::ranges::none_of(rival.simulation.lab->licenses,
+        [](const auto& license) { return license.offer_id.starts_with("trade.dataset."); })) {
+        for (const auto& supplier : world.competition->companies) {
+            if (supplier.definition_id == rival.definition_id || !supplier.simulation.lab) continue;
+            for (const auto& job : supplier.simulation.lab->acquisitions) {
+                if (!job.output || !owns_dataset_ip(*supplier.simulation.lab, job.offer_id)) continue;
+                LicenseCompanyDataset deal{supplier.definition_id, rival.definition_id, job.offer_id};
+                try {
+                    (void)dataset_license_quote(world, program, deal);
+                    Candidate purchase{0, "data", supplier.definition_id + "/" + job.offer_id, 425, deal};
+                    auto slot = std::ranges::find_if(actions,[&](const auto& row) { return row.score < purchase.score; });
+                    actions.insert(slot,std::move(purchase));
+                    break;
+                } catch (const std::invalid_argument&) { /* No eligible offer from this supplier. */ }
+            }
+        }
+    }
     RivalDecision decision{rival.simulation.date,"wait","","Conserve runway; no feasible action met the company's resource and reserve limits.",false,before,stream.state(),observation};
     if(fellowship) decision.explanation="The institution is reserving its resources for the founder’s program.";
     if(!collaboration.empty()){decision.action="collaborate";decision.subject=collaboration;decision.explanation="A trusted industry connection arranged funded joint research, with named staff and compute committed at both labs.";decision.accepted=true;rival.attempted=true;}
@@ -464,7 +504,11 @@ void review_rival(WorldState& world,const CompiledProgram& program,RivalCompany&
         }
         if(selected_index<actions.size()) {
         auto selected=std::move(actions[selected_index]);decision.action=std::move(selected.action);decision.subject=std::move(selected.subject);
-        decision.accepted=submit(rival,std::move(selected.command),&decision.explanation);
+        if (const auto* purchase = std::get_if<LicenseCompanyDataset>(&selected.command)) {
+            license_company_dataset(world,program,*purchase);
+            decision.accepted = true;
+            decision.explanation = "Purchased a nonexclusive license to train on another company’s dataset.";
+        } else decision.accepted=submit(rival,std::move(selected.command),&decision.explanation);
         rival.attempted=true;
         }
     }
@@ -525,7 +569,7 @@ void prepare_rival_morning(WorldState& world,const CompiledProgram& program,Riva
         const auto& state=rival.simulation;
         const auto& risk=*state.deployments->risk;
         const auto report=capacity_report(*state.capacity);
-        const auto floor=rival_definition(program,rival.definition_id).planning->reserve_floor;
+        const auto floor=rival_definition(world,program,rival.definition_id).planning->reserve_floor;
         if (report.available_staff>report.assigned_staff) {
             for (const auto index:risk.open_incidents) {
                 const auto& incident=risk.incidents.at(static_cast<std::size_t>(index));
@@ -561,7 +605,7 @@ void prepare_rival_morning(WorldState& world,const CompiledProgram& program,Riva
     for (const auto& id:accepted_ids) {
         const auto offer=find(rival.simulation.business_offers->catalog,id);
         if (offer.renewable && lease_expiry(*rival.simulation.business_offers,offer.id)==day &&
-            rival.simulation.cash>=checked_unit_add(rival_definition(program,rival.definition_id).planning->reserve_floor,lease_commitment_ceiling(offer)))
+            rival.simulation.cash>=checked_unit_add(rival_definition(world,program,rival.definition_id).planning->reserve_floor,lease_commitment_ceiling(offer)))
             (void)submit(rival,RenewComputeLease{offer.id});
     }
 }

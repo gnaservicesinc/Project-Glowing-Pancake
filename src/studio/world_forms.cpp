@@ -32,6 +32,8 @@ std::vector<std::string> catalog_roots(const Json& doc,std::string_view scenario
     if(defs.contains(std::string(scenario))) {
         const auto& active=defs.at(std::string(scenario));
         const auto base="/definitions/"+escape(scenario);
+        if (active.contains("founding") && active.at("founding").contains("generation"))
+            result.push_back(base+"/founding/generation");
         for(const auto* section:{"lab","service_catalog","market","management","infrastructure","business_offers","rivals"})
             if(active.contains(section)) result.push_back(base+"/"+section);
     }
@@ -119,6 +121,8 @@ void outline(std::vector<WorldOutlineRow>& out,const Json& value,const std::stri
     if(out.size()>=32768) throw std::invalid_argument("World outline exceeds its bounded section count.");
     const bool voice=path.find("/social/conversation_replies/")!=path.npos && value.is_object() && value.contains("lines");
     if(voice) name="Coworker voice · "+label(value.at("activity").get<std::string>())+" · "+value.at("trait").get<std::string>();
+    if (value.is_object() && value.contains("dataset") && value.at("dataset").is_object())
+        name = value.at("dataset").value("name", name);
     std::string search=path+" "+name;
     if(voice) for(const auto& line:value.at("lines")) search+=" "+line.get<std::string>();
     if(value.is_object()) for(const auto& [key,v]:value.items()) if(v.is_primitive()) search+=" "+key+" "+label(key)+" "+scalar(v);
@@ -181,7 +185,7 @@ std::string index_label(std::string_view path,std::size_t index,std::size_t coun
 }
 std::string root_display_name(const DraftDocument& d,const Json& value,const std::string& path) {
     if(path.starts_with("/definitions/") && path.find('/',13)!=std::string::npos)
-        return "Campaign · "+label(last(path));
+        return label(last(path));
     if(value.is_object() && value.contains("id")) {
         const auto id=value.at("id").get<std::string>();
         const auto* def=d.collection().find(id);
@@ -278,7 +282,7 @@ void WorldForm::build(const DraftDocument& d,bool adding) {
         WorldField f;f.key=std::move(key);f.label=std::move(name);f.value=scalar(scalar_value);
         f.options=choices(d,doc,scenario_,field_path,scalar_value);
         f.control=!f.options.empty()?FormControl::choice:scalar_value.is_number_integer()?FormControl::integer:FormControl::text;
-        if(!adding && (f.key=="id" || f.key=="revision" || f.key=="deprecated" ||
+        if(!adding && (f.key=="id" || f.key=="dataset/id" || f.key=="revision" || f.key=="deprecated" ||
             (f.key=="kind" && path_.find("/business_offers/")==path_.npos && path_.find("/catalog/gates/")==path_.npos))) {
             f.control=FormControl::note;f.options.clear();
             f.help.clear();
@@ -293,19 +297,41 @@ void WorldForm::build(const DraftDocument& d,bool adding) {
         }
         fields_.push_back(std::move(f));
     };
-    if(adding && value.is_structured()) {
+    const bool source_rule = value.is_object() && value.contains("source") && value.contains("dataset");
+    if((adding || source_rule) && value.is_structured()) {
         const auto flatten=[&](const auto& self,const Json& v,std::string key,std::string name)->void {
             if(v.is_object()) for(const auto& [child,item]:v.items())
                 self(self,item,key.empty()?escape(child):key+"/"+escape(child),name.empty()?label(child):name+" · "+label(child));
             else if(v.is_array()) for(std::size_t i=0;i<v.size();++i)
                 self(self,v[i],key+"/"+std::to_string(i),name+" · "+index_label(key,i,v.size()));
-            else if(!v.is_null()) field(key,name,v,path_+"/0/"+key);
+            else if(!v.is_null()) field(key,name,v,path_+(adding ? "/0/" : "/")+key);
         };
         flatten(flatten,value,"","");
+        if (source_rule) {
+            const auto& dataset = value.at("dataset");
+            for (const auto* key : {"open_weight_release","third_party_controversy_risk","provenance_confidence_bp"}) {
+                if (dataset.contains(key)) continue;
+                const auto nested = std::string{"dataset/"} + key;
+                const Json fallback = std::string_view{key} == "provenance_confidence_bp" ? Json(10000) : Json(false);
+                field(nested,label(key),fallback,path_+"/"+nested);
+            }
+        }
         return;
     }
     if(value.is_object()) {
-        for(const auto& [key,v]:value.items()) if(v.is_primitive() && !v.is_null()) field(key,label(key),v,path_+"/"+escape(key));
+        const auto* definition = d.collection().find(scenario_);
+        const auto* scenario = definition ? std::get_if<content::ScenarioDefinition>(&definition->data) : nullptr;
+        const bool generated = scenario && scenario->founding && scenario->founding->generation;
+        const bool executive = generated && path_.find("/governance/executives/") != path_.npos;
+        const auto group = value.contains("planning") ? value.at("planning").value("group",std::string{}) : value.value("group",std::string{});
+        const bool rival = generated && path_.find("/rivals/") != path_.npos && !group.empty() &&
+                           group != "fellowship" && group != "restart" && group != "uscif";
+        for (const auto& [key,v] : value.items()) {
+            if (!v.is_primitive() || v.is_null() || ((executive || rival) && key == "name") ||
+                (rival && (key == "seed" || key == "leader"))) continue;
+            const auto baseline = rival && (key == "cash_cents" || key == "monthly_lease_cents" || key == "monthly_payroll_cents");
+            field(key,(baseline ? "Baseline · " : "") + label(key),v,path_+"/"+escape(key));
+        }
         if(path_.find("/social/conversation_replies/")!=path_.npos && value.contains("lines")) {
             const auto& lines=value.at("lines");
             for(std::size_t i=0;i<lines.size();++i) {
@@ -355,6 +381,10 @@ std::string WorldForm::proposal(const DraftDocument& d,const std::map<std::strin
         if(found->control==FormControl::choice && std::none_of(found->options.begin(),found->options.end(),[&](const auto& o){return o.value==text;}))
             throw std::invalid_argument("Choose an available typed reference or option.");
         if(key.starts_with('@')) continue;
+        if (value.contains("source") && value.contains("dataset") && key.starts_with("dataset/") &&
+            !value.contains(Json::json_pointer{"/"+key})) {
+            value[Json::json_pointer{"/"+key}] = key == "dataset/provenance_confidence_bp" ? Json(10000) : Json(false);
+        }
         auto& target=value.is_structured()?value.at(Json::json_pointer{"/"+key}):value;
         target=parsed(target,text);
     }

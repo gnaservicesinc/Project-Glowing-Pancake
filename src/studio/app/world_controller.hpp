@@ -105,6 +105,7 @@ signals:
     void changed();
     void pendingChanged();
     void documentEdited();
+    void documentReplaced();
     void identityRenamed(QString family,QString before,QString after);
     void flowRequested(QString id);
 private:

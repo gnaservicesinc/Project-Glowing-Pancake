@@ -775,6 +775,16 @@ RuntimeResult Runtime::submit(const core::Command& command) {
     if (command.expected_revision != checkpoint_.world.simulation.revision)
         return {RuntimeReason::stale_revision, checkpoint_.world.simulation.revision, "The command's observed revision is stale.", {}, {}};
     const auto& action=command.action;
+    if (const auto* license = std::get_if<core::LicenseCompanyDataset>(&action))
+        return transaction(program_,checkpoint_,command.expected_revision,[&](auto& next,auto& result,auto&,bool&) {
+            if (objective_time_stopped(next.world) || observing_world(next.world) || has_choice(next.runtime) ||
+                next.runtime.prepared_day != next.world.simulation.date || next.world.simulation.phase != core::DayPhase::work_ready)
+                fail(RuntimeReason::morning_not_ready,"Prepare the morning before signing a data license.");
+            if (license->buyer != next.world.company_id && license->seller != next.world.company_id)
+                fail(RuntimeReason::effect_rejected,"Choose a license involving your company.");
+            license_company_dataset(next.world,program_,*license);
+            result.explanation="Dataset license signed and paid.";
+        });
     if(const auto* decision=std::get_if<core::DecideCareerTransition>(&action))
         return transaction(program_,checkpoint_,command.expected_revision,[&](auto& next,auto& result,auto&,bool&) {
             try {

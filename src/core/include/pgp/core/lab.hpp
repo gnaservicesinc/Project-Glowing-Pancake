@@ -152,12 +152,18 @@ struct FeedbackConsent {
     BasisPoints opted_in_share{0};
     auto operator<=>(const FeedbackConsent&) const = default;
 };
+struct CollectionSource {
+    BasisPoints minimum_quality{0};
+    bool transfers_ip = false;
+    auto operator<=>(const CollectionSource&) const = default;
+};
 struct DataAcquisitionOffer {
     // Price is the commissioning fee. For feedback, unique_units is a cap.
     DataOffer dataset;
     Days collection_days{1}, staff_days{1};
     MilliCU review_work{0};
     std::optional<FeedbackConsent> feedback{};
+    std::optional<CollectionSource> source{};
     auto operator<=>(const DataAcquisitionOffer&) const = default;
 };
 struct CreativeResearchRule {
@@ -261,6 +267,8 @@ struct DataAcquisition {
     std::string offer_id, project_id;
     std::optional<std::uint64_t> settled_deliveries{};
     std::optional<DataOffer> output{};
+    std::vector<std::string> sources{};
+    std::string name{};
     auto operator<=>(const DataAcquisition&) const = default;
 };
 struct ProcessedDataset {
@@ -380,9 +388,14 @@ struct GenerateDataset {
     std::uint64_t attempted_units=0;
     LabAllocation allocation;
 };
+struct LicenseCompanyDataset {
+    std::string seller, buyer, dataset;
+};
 struct StartDataAcquisition {
     std::string offer_id;
     LabAllocation allocation;
+    std::vector<std::string> sources{};
+    std::string name{};
 };
 struct DataAcquisitionPreview {
     Cents fee{0};
@@ -439,6 +452,9 @@ struct LabReport {
 
 void validate_lab_catalog(const LabCatalog& catalog);
 void validate_synthetic_catalog(const LabCatalog&);
+[[nodiscard]] DataAcquisitionOffer collection_terms(const LabState&, std::string_view output_id,
+    const std::vector<std::string>& sources, std::string_view name);
+[[nodiscard]] bool owns_dataset_ip(const LabState&, std::string_view id);
 void validate_acquisition_catalog(const LabCatalog&);
 [[nodiscard]] const DataOffer& lab_data(const LabState&,std::string_view id);
 [[nodiscard]] std::optional<OrdinalDay> data_available_on(const LabState&,const CapacityState&,std::string_view id);

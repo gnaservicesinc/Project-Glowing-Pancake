@@ -11,6 +11,10 @@
 
 namespace pgp::studio {
 std::string readable_name(std::string_view name) {
+    if (name == "company.game_asi_today") return "First ASI qualification today";
+    if (name == "company.game_agi_today") return "First AGI qualification today";
+    if (name == "asi_notice") return "Artificial superintelligence confirmed";
+    if (name == "agi_notice") return "Artificial general intelligence confirmed";
     std::string result;
     bool initial = true;
     for (char character : name) {

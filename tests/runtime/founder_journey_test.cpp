@@ -28,6 +28,18 @@ int main() {
         revised.family="rich";revised.route="bootstrap";revised.office="home";
         revised.personal_investment_cents=1'000'000;
         auto solo=make(revised);
+        require(!solo.world.generated_rivals.empty(), "Fresh campaigns need a generated roster.");
+        runtime::ScenarioOptions alternate;
+        alternate.founding = revised;
+        alternate.identity = solo.world.identity;
+        alternate.seed = solo.world.root_seed + 1;
+        const auto other = runtime::begin_scenario(program,"scenario.founder_campaign","US-CA",{},alternate);
+        require(other.world.generated_rivals.front().name != solo.world.generated_rivals.front().name ||
+                other.world.generated_rivals.front().seed != solo.world.generated_rivals.front().seed,
+                "Campaign seeds must change the rival roster.");
+        require(other.world.simulation.lab->catalog.data != solo.world.simulation.lab->catalog.data &&
+                other.world.simulation.management->catalog.governance->executives != solo.world.simulation.management->catalog.governance->executives,
+                "New founders must see new publisher editions and executive candidates.");
         require(solo.world.simulation.succession->personal_cash==core::Cents{699'000'000} &&
             content::founding_terms(catalog,revised).personal_contribution_cents==1'000'000,
             "A wealthy founder automatically receives $7 million before the chosen personal investment.");

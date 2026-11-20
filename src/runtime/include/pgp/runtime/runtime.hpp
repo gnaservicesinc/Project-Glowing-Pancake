@@ -69,6 +69,8 @@ struct WorldState {
     bool playtest_unlimited = false;
     bool playtest_custom = false;
     int starting_industry_stage = 0;
+    // Rebuilt from the reviewed generation rules and root seed on load.
+    std::vector<content::RivalDefinition> generated_rivals{};
     auto operator<=>(const WorldState&) const = default;
 };
 

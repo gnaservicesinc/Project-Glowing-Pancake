@@ -9,7 +9,7 @@ QVariantList WorldController::industryPeople() const {
     for(const auto& rival:w.competition->companies) {
         const auto& s=rival.simulation;
         if(!s.management || !s.management->people || !s.infrastructure || !s.infrastructure->workplace || !s.infrastructure->workplace->headquarters)continue;
-        const auto& definition=runtime::rival_definition(*program_,rival.definition_id);
+        const auto& definition=runtime::rival_definition(w,*program_,rival.definition_id);
         const auto& premises=core::current_headquarters(s);
         const auto& markets=s.infrastructure->catalog.workplace->headquarters->markets;
         QString city,state,stateName;for(const auto& market:markets)if(market.id==premises.market){city=text(market.city);state=text(market.state);}

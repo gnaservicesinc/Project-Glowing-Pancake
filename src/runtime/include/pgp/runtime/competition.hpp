@@ -62,6 +62,11 @@ struct PublicProductRelease {
     core::OrdinalDay day{0};
     auto operator<=>(const PublicProductRelease&) const = default;
 };
+struct DatasetSale {
+    std::string seller, buyer, dataset;
+    core::OrdinalDay day{0};
+    auto operator<=>(const DatasetSale&) const = default;
+};
 struct CompetitionState {
     std::vector<RivalCompany> companies;
     std::vector<RivalNotice> notices;
@@ -72,9 +77,15 @@ struct CompetitionState {
     std::vector<AcquisitionRecord> acquisitions{};
     std::vector<WholesaleContract> wholesale{};
     std::vector<ResearchCollaboration> collaborations{};
+    std::vector<DatasetSale> dataset_sales{};
     auto operator<=>(const CompetitionState&) const = default;
 };
 [[nodiscard]] const content::RivalDefinition& rival_definition(const CompiledProgram& program,std::string_view id);
+[[nodiscard]] const content::RivalDefinition& rival_definition(const WorldState&, const CompiledProgram&, std::string_view id);
+[[nodiscard]] core::Cents dataset_license_quote(const WorldState&, const CompiledProgram&, const core::LicenseCompanyDataset&);
+void license_company_dataset(WorldState&, const CompiledProgram&, const core::LicenseCompanyDataset&);
+void restore_licensed_catalog(core::LabCatalog&, const WorldState&, std::string_view owner);
+void validate_dataset_sales(const WorldState&);
 using IndustryAllocations=std::map<std::string,core::AllocationResult,std::less<>>;
 void initialize_competition(WorldState& world,const CompiledProgram& program,const std::vector<content::RivalDefinition>& definitions,
     const std::optional<content::CompetitionSetup>& setup = {});

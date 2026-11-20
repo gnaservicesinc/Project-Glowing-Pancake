@@ -165,7 +165,7 @@ WholesaleQuote wholesale_quote(const WorldState& world,const CompiledProgram& pr
         free=MilliCUPerDay{std::max<std::int64_t>(0,checked_subtract(free.value(),work.requested.value()))};
     if (free<plan.capacity) invalid("This rack does not have enough powered capacity after existing reservations");
     const auto funded=ceiling(daily_ceiling(seller,owned,plan),plan.term);
-    const auto& policy=*rival_definition(program,buyer_id).planning;
+    const auto& policy=*rival_definition(world,program,buyer_id).planning;
     Cents bills{0},reserved{0};
     for (const auto& row:customer.accounts->recurring)
         if (row.starts_on<=day && (!row.ends_before || day<*row.ends_before)) bills=checked_unit_add(bills,row.monthly_amount);

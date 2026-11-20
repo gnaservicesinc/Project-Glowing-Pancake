@@ -85,6 +85,85 @@ std::optional<DataOffer> deliver(const DataAcquisitionOffer& terms,std::uint64_t
 std::string project_id(std::size_t index) { return "lab/collect/"+std::to_string(index+1); }
 } // namespace
 
+DataAcquisitionOffer collection_terms(const LabState& lab, std::string_view id,
+                                     const std::vector<std::string>& sources, std::string_view name) {
+    if (sources.empty()) {
+        const auto& offer = terms_for(lab.catalog, id);
+        if (offer.source) invalid("Select the source in the dataset builder.");
+        return offer;
+    }
+    if (sources.size() > 8 || !id.starts_with("collected.mix.") || name.empty() || name.size() > 80 ||
+        std::ranges::any_of(name, [](char c) { return static_cast<unsigned char>(c) < 32; }))
+        invalid("Give the dataset a name and select up to eight distinct sources.");
+    DataAcquisitionOffer result;
+    auto& output = result.dataset;
+    output.id = id;
+    output.name = name;
+    output.open_weight_release = true;
+    output.source_path = "company_created";
+    output.provenance = "Assembled by " + lab.owner + " from the recorded collection sources.";
+    output.collection_method = "Collection and review";
+    output.supplier_or_publisher = lab.owner;
+    result.staff_days = Days{0};
+    std::set<std::string_view> seen;
+    std::uint64_t quality = 0, contamination = 0;
+    std::array<std::uint64_t, lab_domain_count> relevance{}, coverage{};
+    bool owns = true;
+    for (const auto& key : sources) {
+        const auto& terms = terms_for(lab.catalog, key);
+        if (!terms.source || !seen.insert(key).second) invalid("Choose distinct data sources.");
+        const auto& data = terms.dataset;
+        if (!output.underlying_history.empty()) output.underlying_history += ", ";
+        output.underlying_history += data.name;
+        const auto units = data.unique_units;
+        // Draw once per source and dataset identity, reproducible during quote, settlement and reload.
+        SplitMix64 random{lab.research_stream_origin};
+        for (const auto token : {id, std::string_view{key}}) for (const char c : token)
+            random = SplitMix64{random.next() ^ static_cast<unsigned char>(c)};
+        const auto low = static_cast<std::uint64_t>(terms.source->minimum_quality.value());
+        quality += units * (low + random.bounded(static_cast<std::uint64_t>(data.quality.value()) - low + 1));
+        contamination += units * static_cast<std::uint64_t>(data.contamination.value());
+        for (std::size_t axis = 0; axis < coverage.size(); ++axis) {
+            coverage[axis] += units * static_cast<std::uint64_t>(data.coverage[axis].value());
+            relevance[axis] += units * static_cast<std::uint64_t>(data.relevance[axis].value());
+        }
+        output.unique_units += units;
+        output.price = checked_unit_add(output.price, data.price);
+        output.commercial_use &= data.commercial_use;
+        output.open_weight_release &= data.open_weight_release;
+        output.third_party_controversy_risk |= data.third_party_controversy_risk;
+        output.provenance_confidence_bp = std::min(output.provenance_confidence_bp, data.provenance_confidence_bp);
+        owns &= terms.source->transfers_ip;
+        result.collection_days = std::max(result.collection_days, terms.collection_days);
+        result.staff_days = checked_unit_add(result.staff_days, terms.staff_days);
+        result.review_work = checked_unit_add(result.review_work, terms.review_work);
+    }
+    output.quality = BasisPoints{quality / output.unique_units};
+    output.contamination = BasisPoints{contamination / output.unique_units};
+    for (std::size_t axis = 0; axis < coverage.size(); ++axis) {
+        output.coverage[axis] = BasisPoints{coverage[axis] / output.unique_units};
+        output.relevance[axis] = BasisPoints{relevance[axis] / output.unique_units};
+    }
+    output.rights = owns ? "Company owns all source IP and may license this dataset."
+                         : "Source permissions apply. The company cannot license the underlying dataset.";
+    return result;
+}
+
+bool owns_dataset_ip(const LabState& lab, std::string_view id) {
+    // Cleaning an owned corpus preserves IP. Following only completed parents also
+    // keeps a buyer from transferring a purchased license by processing its copy.
+    for (std::size_t depth=0; depth<=lab.processed.size(); ++depth) {
+        const auto derived = std::ranges::find(lab.processed,id,&ProcessedDataset::id);
+        if (derived == lab.processed.end()) break;
+        if (!derived->output || depth == lab.processed.size()) return false;
+        id = derived->source_dataset_id;
+    }
+    if (std::ranges::any_of(lab.creative_jobs, [&](const auto& job) { return job.id == id && job.output; })) return true;
+    const auto job = std::ranges::find(lab.acquisitions, id, &DataAcquisition::offer_id);
+    return job != lab.acquisitions.end() && job->output && !job->sources.empty() &&
+        std::ranges::all_of(job->sources, [&](const auto& key) { const auto& source = terms_for(lab.catalog, key).source; return source && source->transfers_ip; });
+}
+
 void validate_acquisition_catalog(const LabCatalog& catalog) {
     if(catalog.acquisition.size()>acquisition_limit) invalid("Data collection catalog exceeds its offer bound");
     std::set<std::string_view> ids;
@@ -94,12 +173,15 @@ void validate_acquisition_catalog(const LabCatalog& catalog) {
         if(!data.id.starts_with("collected.") || data.id.size()>64 || data.name.empty() || data.name.size()>128 ||
             data.provenance.empty() || data.provenance.size()>256 || data.rights.empty() || data.rights.size()>256 ||
             !ids.insert(data.id).second || std::ranges::find(catalog.data,data.id,&DataOffer::id)!=catalog.data.end() ||
-            data.unique_units==0 || data.unique_units>1'000'000'000 || data.price.value()<=0 ||
+            data.unique_units==0 || data.unique_units>1'000'000'000 || (offer.source ? data.price.value()<0 : data.price.value()<=0) ||
             data.price.value()>1'000'000'000 || data.quality.value()==0 ||
             offer.collection_days.value()<1 || offer.collection_days.value()>90 ||
             offer.staff_days.value()<1 || offer.staff_days.value()>365 || offer.review_work.value()<=0 ||
             offer.review_work.value()>1'000'000'000)
             invalid("Data collection needs distinct consent terms, paid work and a bounded corpus");
+        if (offer.source && (offer.feedback || (data.open_weight_release && !data.commercial_use) || offer.source->minimum_quality.value() == 0 ||
+            offer.source->minimum_quality > data.quality || data.id.starts_with("collected.mix.")))
+            invalid("Collection sources need a positive quality range and independent permissions.");
         bool useful=false;
         for(std::size_t i=0;i<lab_domain_count;++i) useful|=data.relevance[i].value()>0 && data.coverage[i].value()>0;
         if(!useful) invalid("A collected dataset needs measured coverage in a relevant domain");
@@ -117,7 +199,9 @@ DataAcquisitionPreview preview_data_acquisition(const SimulationState& state,con
     if(!state.lab || !state.capacity || !state.accounts || state.lab->acquisitions.size()>=acquisition_limit)
         invalid("No data collection slot is available");
     const auto& lab=*state.lab;
-    const auto& terms=terms_for(lab.catalog,request.offer_id);
+    if (!request.sources.empty() && request.offer_id != "collected.mix." + std::to_string(lab.acquisitions.size()+1))
+        invalid("Refresh the dataset quote before commissioning the next collection.");
+    const auto terms=collection_terms(lab,request.offer_id,request.sources,request.name);
     for(const auto& job:lab.acquisitions)
         if(job.offer_id==request.offer_id && precludes_retry(job,project_for(*state.capacity,job.project_id),state.date))
             invalid("This agreement already has a collection job or a delivered corpus");
@@ -149,16 +233,16 @@ void start_data_acquisition(SimulationState& state,const StartDataAcquisition& r
     work.total_work=quote.work;
     work.cause="Collect and review "+request.offer_id;
     reserve_project(*state.capacity,state.date,work);
-    record_cash(*state.accounts,state.date,Cents{-quote.fee.value()},Account::expenses,work.cause,work.id);
+    if (quote.fee.value()) record_cash(*state.accounts,state.date,Cents{-quote.fee.value()},Account::expenses,work.cause,work.id);
     state.cash=accounts_report(*state.accounts).cash;
-    lab.acquisitions.push_back({request.offer_id,work.id});
+    lab.acquisitions.push_back({request.offer_id,work.id,{},{},request.sources,request.name});
 }
 
 void close_data_acquisitions(SimulationState& state) {
     for(auto& job:state.lab->acquisitions) {
         const auto& work=project_for(*state.capacity,job.project_id);
         if(work.status!=ProjectStatus::completed || work.stopped_on!=state.date) continue;
-        const auto& terms=terms_for(state.lab->catalog,job.offer_id);
+        const auto terms=collection_terms(*state.lab,job.offer_id,job.sources,job.name);
         if(terms.feedback) job.settled_deliveries=settled_feedback(*state.market,*terms.feedback,work.starts_on,
             advance_days(work.starts_on,terms.collection_days));
         job.output=deliver(terms,job.settled_deliveries.value_or(0));
@@ -179,7 +263,8 @@ void validate_data_acquisitions(const SimulationState& state,bool deep) {
     std::optional<OrdinalDay> prior;
     for(std::size_t i=0;i<lab.acquisitions.size();++i) {
         const auto& job=lab.acquisitions[i];
-        const auto& terms=terms_for(lab.catalog,job.offer_id);
+        if (!job.sources.empty() && job.offer_id != "collected.mix." + std::to_string(i+1)) invalid("Unexpected dataset identity.");
+        const auto terms=collection_terms(lab,job.offer_id,job.sources,job.name);
         const auto& work=project_for(*state.capacity,job.project_id);
         const auto quote=quote_terms(terms,work.starts_on,{work.source_id,work.requested,work.staff});
         if(work.kind!=ProjectKind::data_acquisition || work.id!=project_id(i) ||
@@ -206,6 +291,10 @@ void validate_data_acquisitions(const SimulationState& state,bool deep) {
         if(job.output!=output || job.settled_deliveries!=tasks)
             invalid("Collected data differs from its completed work, consent or actual settled deliveries");
         const auto posting=std::ranges::find(state.accounts->postings,work.id,&Posting::key);
+        if (!quote.fee.value()) {
+            if (posting != state.accounts->postings.end()) invalid("A free source charged a license fee.");
+            continue;
+        }
         if(posting==state.accounts->postings.end() || posting->day!=work.starts_on ||
             posting->amount!=quote.fee || posting->debit!=Account::expenses || posting->credit!=Account::cash)
             invalid("Collected data is missing its actual paid fee");

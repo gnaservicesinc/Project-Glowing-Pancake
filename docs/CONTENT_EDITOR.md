@@ -1,5 +1,7 @@
 # Content Studio — graphical repository authoring
 
+Open **Game content → Campaign rules** to edit name pools, rival budgets and data sources for new games. A source sets the collection effort, fee, quality range, coverage and permissions. **Templates** holds role and subject profiles. **US states map** opens a state's own settings. In **Events**, read the trigger on the Story tab or open **Conditions & actions** to change it.
+
 Planning baseline 1.2 · Updated 2026-11-05 · E1a, typed canvas and graphical finalization implemented on Mac; broader tools and human qualification remain open
 
 ## 1. Purpose and product boundary

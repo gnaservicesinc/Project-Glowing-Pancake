@@ -107,7 +107,7 @@ int main(int argc,char** argv) {
         runtime::ScenarioOptions options;
         options.founding=setup.selection();
         options.charter=setup.form().value("charter").toString().toStdString();
-        options.identity=runtime::CampaignIdentity{"Test lab","Alex Vale","she/her"};
+        options.identity=runtime::CampaignIdentity{"Test lab",options.founding->first_name+" "+options.founding->last_name,"she/her"};
         const auto checkpoint=runtime::begin_scenario(program,"scenario.founder_campaign","US-CA",core::ObjectiveSelection{core::ObjectiveKind::survival,{}},options);
         const auto& catalog=*std::get<content::ScenarioDefinition>(program.collection.find("scenario.founder_campaign")->data).founding;
         const auto terms=content::founding_terms(catalog,*options.founding);
@@ -149,7 +149,7 @@ int main(int argc,char** argv) {
         runtime::ScenarioOptions funded_options;
         funded_options.founding=funded;
         funded_options.opening_contacts=setup.openingContacts();
-        funded_options.identity=runtime::CampaignIdentity{"Test lab","Alex Vale","xe/xem"};
+        funded_options.identity=runtime::CampaignIdentity{"Test lab",funded_options.founding->first_name+" "+funded_options.founding->last_name,"xe/xem"};
         auto financed=runtime::begin_scenario(program,"scenario.founder_campaign","US-CA",core::ObjectiveSelection{core::ObjectiveKind::survival,{}},funded_options);
         financed.world.enabled_flows=std::vector<std::string>{};
         runtime::Runtime conversation{program,financed};
@@ -202,6 +202,7 @@ int main(int argc,char** argv) {
         check(rejected_forgery,"A saved contact must not invent a signed agreement absent from the founding selection.");
         setup.setField("route","hired_ceo");
         check(setup.selection().route=="investment","A home form cannot bypass the recruiter's reply.");
+        const auto companyDraft = setup.form().value("company");
         check(setup.contactHomeOffer("northstar").isEmpty() && setup.respondHomeOffer("northstar","accept").isEmpty(),"An active invitation can open the appointment paperwork.");
         check(setup.form().value("charter").toString()=="charter.independent_lab","A CEO appointment must inherit the company's existing bylaws.");
         setup.setField("company","Hijacked Name");
@@ -215,7 +216,7 @@ int main(int argc,char** argv) {
         runtime::ScenarioOptions appointment_options;
         appointment_options.founding=setup.selection();
         appointment_options.opening_contacts=setup.openingContacts();
-        appointment_options.identity=runtime::CampaignIdentity{"Northstar Applied Labs","Alex Vale","xe/xem"};
+        appointment_options.identity=runtime::CampaignIdentity{"Northstar Applied Labs",appointment_options.founding->first_name+" "+appointment_options.founding->last_name,"xe/xem"};
         const auto appointed=runtime::begin_scenario(program,"scenario.founder_campaign","US-CA",core::ObjectiveSelection{core::ObjectiveKind::survival,{}},appointment_options);
         const auto& lab=appointed.world.simulation;
         check(lab.management->people->employees.size()==appointment.opening_staff && lab.cash==core::Cents{appointment.contributed_cents} &&
@@ -271,7 +272,7 @@ int main(int argc,char** argv) {
             world.contactThread("opening/commercial").value("status")=="Expired at opening",
             "Accepting Northstar must preserve the signed appointment and the unsigned investor conversation.");
         check(setup.respondHomeOffer("northstar","later").isEmpty() && setup.selection().route=="investment" &&
-            setup.form().value("company")=="Daybreak Research" && offer(setup,"commercial").value("status")=="considering", "Setting a selected appointment aside must restore the player's own company draft and preserve conversations.");
+            setup.form().value("company")==companyDraft && offer(setup,"commercial").value("status")=="considering", "Setting a selected appointment aside must restore the player's own company draft and preserve conversations.");
         {
             const auto find_opt=[](const QVariantMap& chapter,const QString& id) {
                 for(const auto& v:chapter.value("choices").toList()) if(v.toMap().value("id")==id) return v.toMap();
@@ -372,7 +373,7 @@ int main(int argc,char** argv) {
                   "Preview must disclose student debt, delayed launch years, and unambiguous research effort.");
             runtime::ScenarioOptions dr_options;
             dr_options.founding=school.selection();
-            dr_options.identity=runtime::CampaignIdentity{"Doctorate Labs","Alex Vale",school.form().value("pronouns").toString().toStdString()};
+            dr_options.identity=runtime::CampaignIdentity{"Doctorate Labs",dr_options.founding->first_name+" "+dr_options.founding->last_name,school.form().value("pronouns").toString().toStdString()};
             const auto dr_cp=runtime::begin_scenario(program,"scenario.founder_campaign","US-CA",core::ObjectiveSelection{core::ObjectiveKind::survival,{}},dr_options);
             update(dr_cp);
             check(world.founder().value("name").toString().startsWith("Dr. "),
@@ -388,7 +389,7 @@ int main(int argc,char** argv) {
             pgp::bridge::complete_formative_fixture(school);
             runtime::ScenarioOptions bully_options;
             bully_options.founding=school.selection();
-            bully_options.identity=runtime::CampaignIdentity{"Resilient Labs","Alex Vale",school.form().value("pronouns").toString().toStdString()};
+            bully_options.identity=runtime::CampaignIdentity{"Resilient Labs",bully_options.founding->first_name+" "+bully_options.founding->last_name,school.form().value("pronouns").toString().toStdString()};
             const auto bully_cp=runtime::begin_scenario(program,"scenario.founder_campaign","US-CA",core::ObjectiveSelection{core::ObjectiveKind::survival,{}},bully_options);
             update(bully_cp);
             const auto rel=world.relationships();

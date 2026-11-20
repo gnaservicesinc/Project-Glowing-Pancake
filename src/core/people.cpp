@@ -1,4 +1,5 @@
 #include <pgp/core/people.hpp>
+#include <pgp/core/person_name.hpp>
 #include <pgp/core/simulation.hpp>
 #include <algorithm>
 #include <set>
@@ -16,7 +17,8 @@ Applicant applicant(SimulationState& s,bool opening,std::string_view role_overri
     SplitMix64 rng{p.stream};
     PersonProfile person;
     person.id="employee/"+std::to_string(p.next_id++);
-    person.name=r.first_names[draw(rng,static_cast<std::uint32_t>(r.first_names.size()))]+" "+r.last_names[draw(rng,static_cast<std::uint32_t>(r.last_names.size()))];
+    person.name = draw_name_part(r.first_names, rng);
+    person.name += " " + draw_name_part(r.last_names, rng);
     // Identity draws are fixed-count and do not alter quality by gender/pronouns.
     const auto gender=draw(rng,3);
     person.gender=std::array{"woman","man","nonbinary"}[gender];

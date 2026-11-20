@@ -144,7 +144,7 @@ ScrollView {
                 Label {
                     visible: !editor.story.hasMessage
                     Layout.fillWidth: true
-                    text: qsTr("This event runs in the background. Open Steps to see what it changes or to add a message.")
+                    text: qsTr("This event runs in the background. Open Conditions & actions to see what it changes or to add a message.")
                     wrapMode: Text.Wrap
                     color: "#a8c1d8"
                 }

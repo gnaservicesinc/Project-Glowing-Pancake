@@ -1,3 +1,4 @@
+#include <pgp/runtime/scenario.hpp>
 #include "counties_json.hpp"
 #include <pgp/persistence/save.hpp>
 #include <pgp/persistence/sha256.hpp>
@@ -455,6 +456,8 @@ Json competition_json(const CompetitionState& state, bool packed_world) {
         result["offers"]=detail::competitive_offers_json(state.offers);
         if (!state.acquisitions.empty()) result["acquisitions"]=detail::acquisitions_json(state.acquisitions);
         if (!state.wholesale.empty()) result["wholesale"]=wholesale_json(state.wholesale);
+        for (const auto& sale : state.dataset_sales)
+            result["dataset_sales"].push_back({{"seller",sale.seller},{"buyer",sale.buyer},{"dataset",sale.dataset},{"day",sale.day.value()}});
         if(!state.collaborations.empty())result["collaborations"]=detail::collaborations_json(state.collaborations);
         result["releases"]=Json::array();for (const auto& row:state.releases) result["releases"].push_back({{"company",row.company_id},{"product",row.product_id},{"day",row.day.value()}});
         detail::HistoryRows adoptions{packed_world};
@@ -466,8 +469,16 @@ Json competition_json(const CompetitionState& state, bool packed_world) {
     }
     return result;
 }
-CompetitionState parse_competition(const Json& value, bool packed_world, const CompiledProgram& program, std::uint64_t root_seed) {
-    detail::fields(value,"competition",{"companies","notices"},{"setup","releases","adoptions","offers","acquisitions","wholesale","collaborations"}); CompetitionState result;
+CompetitionState parse_competition(const Json& value, bool packed_world, const CompiledProgram& program, const WorldState& world) {
+    detail::fields(value,"competition",{"companies","notices"},{"setup","releases","adoptions","offers","acquisitions","wholesale","collaborations","dataset_sales"}); CompetitionState result;
+    if (value.contains("dataset_sales")) {
+        detail::array(value.at("dataset_sales"),"dataset_sales",128);
+        for (const auto& row : value.at("dataset_sales")) {
+            detail::fields(row,"dataset sale",{"seller","buyer","dataset","day"});
+            result.dataset_sales.push_back({detail::text(row.at("seller"),"seller",128),detail::text(row.at("buyer"),"buyer",128),
+                detail::text(row.at("dataset"),"dataset",128),OrdinalDay{detail::i64(row.at("day"),"day")}});
+        }
+    }
     if(value.contains("collaborations"))result.collaborations=detail::parse_collaborations(value.at("collaborations"));
     if (value.contains("acquisitions")) result.acquisitions=detail::parse_acquisitions(value.at("acquisitions"));
     if (value.contains("offers")) result.offers=detail::parse_competitive_offers(value.at("offers"));
@@ -504,8 +515,8 @@ CompetitionState parse_competition(const Json& value, bool packed_world, const C
             detail::invalid("competition/history","Unsupported history storage format; original save was preserved");
         const auto& source = row.at("simulation");
         const auto definition_id=detail::text(row.at("definition_id"),"competition/definition_id",64);
-        const auto& definition=rival_definition(program,definition_id);
-        const auto seed=result.setup?root_seed^definition.seed:definition.seed;
+        const auto& definition=rival_definition(world,program,definition_id);
+        const auto seed=result.setup?world.root_seed^definition.seed:definition.seed;
         auto simulation = format.empty() || packed ? parse_simulation(source, packed, seed) :
             parse_simulation(detail::expand_competition_history(source, history_budget, format=="history-rows-v2"), false, seed);
         if (packed && (!row.contains("planning") || !archive_history(simulation)))
@@ -628,10 +639,11 @@ WorldState parse_world(Json& value,const CompiledProgram& program) {
     if (value.contains("objectives")) result.objectives=detail::parse_objectives(value.at("objectives"));
     if (value.contains("scenario_id")) result.scenario_id=detail::text(value.at("scenario_id"),"scenario_id",128);
     if (value.contains("competition")!=value.contains("competition_mode")) detail::invalid("competition","Competition mode and state must be present together");
+    generate_rival_roster(result, program);
     if (value.contains("competition_mode")) {
         const auto mode=detail::text(value.at("competition_mode"),"competition_mode",16);
         if (mode=="bounded" || mode=="planned") {
-            result.competition=parse_competition(value.at("competition"), packed, program, result.root_seed);
+            result.competition=parse_competition(value.at("competition"), packed, program, result);
             if ((mode=="planned")!=result.competition->setup.has_value()) detail::invalid("competition","Competition mode differs from its authored planner setup");
         }
         else if (mode!="foundation" || !value.at("competition").is_null()) detail::invalid("competition","Competition mode differs from its state");

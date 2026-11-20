@@ -466,6 +466,16 @@ core::TrainingRequest request(QString id,QString recipe,QString source,QStringLi
     result.daily_compute=core::MilliCUPerDay{compute(rate)}; result.staff=static_cast<std::uint32_t>(integer(staff,1'000'000));
     result.work=core::MilliCU{compute(work)}; return result;
 }
+bool allocation_available(const core::SimulationState& s, const core::LabAllocation& allocation) {
+    const auto* supply = find(s.capacity->sources,allocation.source_id);
+    std::int64_t assigned = 0;
+    for (const auto& work : s.capacity->projects)
+        if (work.status == core::ProjectStatus::active && work.source_id == allocation.source_id)
+            assigned = core::checked_add(assigned,work.requested.value());
+    const auto capacity = core::capacity_report(*s.capacity);
+    return supply && core::company_capacity(*supply).value() - assigned >= allocation.daily_compute.value() &&
+           capacity.available_staff >= capacity.assigned_staff + allocation.staff;
+}
 QVariantMap option(std::string_view id,QString label) { return {{QStringLiteral("id"),text(id)},{QStringLiteral("label"),std::move(label)}}; }
 core::PricingBounds pricing_bounds(const QString& floor,const QString& ceiling,const QString& step,const QString& low,const QString& high) {
     const core::PricingBounds b{policy_money(floor),policy_money(ceiling),policy_money(step),
@@ -827,12 +837,7 @@ void ManagementController::update(CampaignSnapshotPtr snapshot,const runtime::Co
         }
     }
     if (snapshot_->checkpoint.world.competition) for (const auto& notice:snapshot_->checkpoint.world.competition->notices) {
-        QString name=readable(notice.company_id);
-        for (const auto& [id,definition]:program.collection.definitions) {
-            (void)id; const auto* scenario=std::get_if<content::ScenarioDefinition>(&definition.data);
-            if (!scenario) continue;
-            for (const auto& rival:scenario->rivals) if (rival.id==notice.company_id) name=text(rival.name);
-        }
+        const auto name=text(runtime::rival_definition(snapshot_->checkpoint.world,program,notice.company_id).name);
         const auto response_detail=heavyweight_notice_detail(snapshot_->checkpoint.world,program,notice);
         rivals.push_back({text(notice.company_id)+QLatin1Char(':')+text(notice.kind)+QLatin1Char(':')+text(notice.subject),name,text(core::iso_date(notice.day)),
             !response_detail.isEmpty()?response_detail:notice.response_due ? QStringLiteral("Heavyweight mobilization warning: public customer traction was observed. Earliest response %1. Build a useful, funded service before then; rival capability is not public.").arg(text(core::iso_date(*notice.response_due))) :
@@ -844,7 +849,7 @@ void ManagementController::update(CampaignSnapshotPtr snapshot,const runtime::Co
         if (release.company_id==snapshot_->checkpoint.world.company_id) continue;
         const auto company=std::find_if(snapshot_->checkpoint.world.competition->companies.begin(),snapshot_->checkpoint.world.competition->companies.end(),[&](const auto& row){return row.definition_id==release.company_id;});
         if (company==snapshot_->checkpoint.world.competition->companies.end()) continue;
-        const auto& definition=runtime::rival_definition(program,release.company_id);const auto& rival=company->simulation;
+        const auto& definition=runtime::rival_definition(snapshot_->checkpoint.world,program,release.company_id);const auto& rival=company->simulation;
         const auto* product=find(rival.market->products,release.product_id);if (!product) continue;
         rivals.push_back({QStringLiteral("release:")+text(release.company_id)+QLatin1Char(':')+text(release.product_id),text(definition.name)+QStringLiteral(" · ")+readable(release.product_id),
             money(product->price_per_task)+QStringLiteral(" per task"),QStringLiteral("Public customer deliveries began %1. %2 · %3. This quote reveals the price of a released service; private model capability, cash and future decisions stay hidden.")
@@ -856,7 +861,7 @@ void ManagementController::update(CampaignSnapshotPtr snapshot,const runtime::Co
         const auto asi=core::earliest_frontier_qualification(frontier,true);
         const auto agi=core::earliest_frontier_qualification(frontier,false);
         if (!agi && !asi) continue;
-        const auto& definition=runtime::rival_definition(program,company.definition_id);
+        const auto& definition=runtime::rival_definition(snapshot_->checkpoint.world,program,company.definition_id);
         const auto day=asi?*asi:*agi;
         rivals.push_back({QStringLiteral("frontier:")+text(company.definition_id),text(definition.name),text(core::iso_date(day)),
             QStringLiteral("Independent assessment of a deployed system completed on %1. Qualification follows paid held-out panels, observed useful work and, for game ASI, independent physical replication.")
@@ -1082,14 +1087,7 @@ QVariantMap ManagementController::synthesisQuote(QString recipe,QString teacher,
         const auto request=synthesis_request(QStringLiteral("synthetic.preview"),recipe,teacher,evidence,verification,units,source,rate,staff);
         const auto& s=state();
         const auto quote=core::preview_synthesis(*s.lab,*s.capacity,s.date,request);
-        const auto* supply=find(s.capacity->sources,request.allocation.source_id);
-        std::int64_t assigned=0;
-        for (const auto& work:s.capacity->projects)
-            if (work.status==core::ProjectStatus::active && work.source_id==request.allocation.source_id)
-                assigned=core::checked_add(assigned,work.requested.value());
-        const auto capacity=core::capacity_report(*s.capacity);
-        const bool resources=supply && core::company_capacity(*supply).value()-assigned>=request.allocation.daily_compute.value() &&
-            capacity.available_staff-capacity.assigned_staff>=request.allocation.staff;
+        const bool resources = allocation_available(s,request.allocation);
         const bool funded=core::discretionary_cash(s)>=quote.fee;
         auto detail=tr("Generate %1 attempted records with teacher %2 and report %3. Verify against %4.\n\n"
             "%5 verification fee · %6 total CU · %7 staff · earliest %8 days\n"
@@ -1105,10 +1103,90 @@ QVariantMap ManagementController::synthesisQuote(QString recipe,QString teacher,
         return {{QStringLiteral("ready"),resources && funded},{QStringLiteral("detail"),detail}};
     } catch (const std::exception& error) { return {{QStringLiteral("ready"),false},{QStringLiteral("detail"),QString::fromUtf8(error.what())}}; }
 }
+QVariantList ManagementController::datasetDeals() const {
+    QVariantList rows;
+    if (!available() || !snapshot_->checkpoint.world.competition) return rows;
+    const auto& world = snapshot_->checkpoint.world;
+    const auto collect = [&](const core::LabState& lab, const std::string& buyer, const QString& counterparty) {
+        const auto quote = [&](const std::string& id) {
+            if (!core::owns_dataset_ip(lab,id)) return;
+            const core::LicenseCompanyDataset deal{lab.owner,buyer,id};
+            try {
+                const auto fee = runtime::dataset_license_quote(world,*program_,deal);
+                const auto name = text(core::lab_data(lab,id).name);
+                rows.push_back(QVariantMap{{"id",text(lab.owner+"/"+buyer+"/"+id)},{"seller",text(lab.owner)},{"buyer",text(buyer)},{"dataset",text(id)},
+                    {"label",lab.owner == world.company_id ? tr("License %1 to %2 for %3").arg(name,counterparty,money(fee)) :
+                                                            tr("Buy %1 from %2 for %3").arg(name,counterparty,money(fee))}});
+            } catch (const std::invalid_argument&) {}
+        };
+        for (const auto& job : lab.acquisitions) if (job.output) quote(job.offer_id);
+        for (const auto& job : lab.creative_jobs) if (job.output) quote(job.id);
+        for (const auto& job : lab.processed) if (job.output) quote(job.id);
+    };
+    for (const auto& rival : world.competition->companies) if (rival.simulation.lab) {
+        const auto name = text(runtime::rival_definition(world,*program_,rival.definition_id).name);
+        collect(*state().lab,rival.definition_id,name);
+        collect(*rival.simulation.lab,world.company_id,name);
+    }
+    return rows;
+}
+void ManagementController::licenseCompanyDataset(QString seller, QString buyer, QString id) {
+    if (editable()) emit actionRequested(core::LicenseCompanyDataset{seller.toStdString(),buyer.toStdString(),id.toStdString()});
+}
+
+QVariantList ManagementController::datasetSources() const {
+    QVariantList rows;
+    if (!available()) return rows;
+    for (const auto& offer : state().lab->catalog.acquisition) {
+        if (!offer.source) continue;
+        const auto& data = offer.dataset;
+        auto row = option(data.id, text(data.name));
+        row["detail"] = tr("%1–%2 quality · %3 records · %4 fee · %5 staff-days\n%6")
+            .arg(percent(offer.source->minimum_quality), percent(data.quality), number(data.unique_units),
+                 money(data.price), QString::number(offer.staff_days.value()), text(data.rights));
+        rows.push_back(row);
+    }
+    return rows;
+}
+
+namespace {
+core::StartDataAcquisition source_request(const core::LabState& lab, QString name, const QStringList& sources,
+                                          QString supply, QString rate, QString staff) {
+    core::StartDataAcquisition request{"collected.mix." + std::to_string(lab.acquisitions.size()+1),
+        allocation(supply,rate,staff), {}, name.trimmed().toStdString()};
+    for (const auto& source : sources) request.sources.push_back(source.toStdString());
+    return request;
+}
+}
+QVariantMap ManagementController::sourceCollectionQuote(QString name, QStringList sources, QString supply, QString rate, QString staff) const {
+    if (!available() || sources.empty()) return {};
+    try {
+        const auto& s = state();
+        const auto request = source_request(*s.lab,name,sources,supply,rate,staff);
+        const auto quote = core::preview_data_acquisition(s,request);
+        const auto terms = core::collection_terms(*s.lab,request.offer_id,request.sources,request.name);
+        const auto& data = terms.dataset;
+        const bool funded = core::discretionary_cash(s) >= quote.fee;
+        const bool resources = allocation_available(s,request.allocation);
+        auto detail = tr("%1 records · %2 fee · at least %3 days\n%4\nCommercial training: %5 · Open weights: %6")
+                .arg(number(data.unique_units),money(quote.fee),QString::number(quote.minimum_days.value()),text(data.rights),
+                     data.commercial_use ? tr("permitted") : tr("restricted"),data.open_weight_release ? tr("permitted") : tr("restricted"));
+        if (!resources) detail += tr("\nFree compute or staff are below the requested allocation.");
+        if (!funded) detail += tr("\nThe collection fee exceeds available cash.");
+        return {{"ready", funded && resources}, {"detail",detail}};
+    } catch (const std::exception& e) { return {{"ready",false},{"detail",text(e.what())}}; }
+}
+void ManagementController::collectSources(QString name, QStringList sources, QString supply, QString rate, QString staff) {
+    if (!editable() || sources.empty()) return;
+    try { emit actionRequested(source_request(*state().lab,name,sources,supply,rate,staff)); }
+    catch (const std::exception& e) { emit noticeRaised(text(e.what())); }
+}
+
 QVariantList ManagementController::collectionOffers() const {
     QVariantList result;
     if (!available()) return result;
     for (const auto& terms:state().lab->catalog.acquisition) {
+        if (terms.source) continue;
         const auto& dataset=terms.dataset;
         auto item=option(dataset.id,text(dataset.name));
         auto detail=tr("%1 · %2 collection days · %3 staff-days minimum\n%4\n%5\nCoverage · %6")
@@ -1130,19 +1208,26 @@ QVariantList ManagementController::collectionJobs() const {
     const auto& s=state();
     for (const auto& job:s.lab->acquisitions) {
         const auto* work=find(s.capacity->projects,job.project_id);
-        const auto terms=std::ranges::find(s.lab->catalog.acquisition,job.offer_id,[](const auto& row){return row.dataset.id;});
-        if (!work || terms==s.lab->catalog.acquisition.end()) continue;
+        if (!work) continue;
+        const auto terms=core::collection_terms(*s.lab,job.offer_id,job.sources,job.name);
         const bool active=work->status==core::ProjectStatus::active;
         const bool paused=work->status==core::ProjectStatus::paused;
         const auto status=job.output?tr("Delivered"):active?tr("Collecting and reviewing"):paused?tr("Paused"):
             work->status==core::ProjectStatus::completed?tr("Completed without opted-in records"):tr("Cancelled");
         auto detail=tr("Started %1 · fee paid %2 · %3 of %4 CU completed")
-            .arg(text(core::iso_date(work->starts_on)),money(terms->dataset.price),cu(work->completed_work.value()),cu(work->total_work.value()));
-        if (terms->feedback) detail+=tr("\nConsent window ends before %1.")
-            .arg(text(core::iso_date(core::advance_days(work->starts_on,terms->collection_days))));
+            .arg(text(core::iso_date(work->starts_on)),money(terms.dataset.price),cu(work->completed_work.value()),cu(work->total_work.value()));
+        if (terms.feedback) detail+=tr("\nConsent window ends before %1.")
+            .arg(text(core::iso_date(core::advance_days(work->starts_on,terms.collection_days))));
         if (job.settled_deliveries) detail+=tr("\n%1 settled deliveries in the consent window.").arg(number(*job.settled_deliveries));
-        if (job.output) detail+=tr("\n%1 records are available for fresh training.").arg(number(job.output->unique_units));
-        result.push_back(QVariantMap{{QStringLiteral("label"),text(terms->dataset.name)+QStringLiteral(" · ")+status},
+        if (!job.sources.empty()) {
+            QStringList names;
+            for (const auto& source : job.sources)
+                for (const auto& offer : s.lab->catalog.acquisition)
+                    if (offer.dataset.id == source) names.push_back(text(offer.dataset.name));
+            detail += tr("\nSources: %1").arg(names.join(", "));
+        }
+        if (job.output) detail+=tr("\n%1 records · %2 quality. %3").arg(number(job.output->unique_units),percent(job.output->quality),text(job.output->rights));
+        result.push_back(QVariantMap{{QStringLiteral("label"),text(terms.dataset.name)+QStringLiteral(" · ")+status},
             {QStringLiteral("detail"),detail},{QStringLiteral("projectId"),text(job.project_id)},
             {QStringLiteral("active"),active},{QStringLiteral("paused"),paused}});
     }
@@ -1155,14 +1240,7 @@ QVariantMap ManagementController::collectionQuote(QString offer,QString source,Q
         const auto& s=state();
         const auto quote=core::preview_data_acquisition(s,request);
         const auto terms=std::ranges::find(s.lab->catalog.acquisition,request.offer_id,[](const auto& row){return row.dataset.id;});
-        const auto* supply=find(s.capacity->sources,request.allocation.source_id);
-        std::int64_t assigned=0;
-        for (const auto& work:s.capacity->projects)
-            if (work.status==core::ProjectStatus::active && work.source_id==request.allocation.source_id)
-                assigned=core::checked_add(assigned,work.requested.value());
-        const auto capacity=core::capacity_report(*s.capacity);
-        const bool resources=supply && core::company_capacity(*supply).value()-assigned>=request.allocation.daily_compute.value() &&
-            capacity.available_staff-capacity.assigned_staff>=request.allocation.staff;
+        const bool resources = allocation_available(s,request.allocation);
         const bool funded=core::discretionary_cash(s)>=quote.fee;
         auto detail=tr("%1\n%2 fee · %3 total CU · %4 staff · earliest %5 days")
             .arg(text(terms->dataset.name),money(quote.fee),cu(quote.work.value()),staff,QString::number(quote.minimum_days.value()));

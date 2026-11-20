@@ -88,7 +88,7 @@ const RivalCompany* buyer(const WorldState& world) {
     return best;
 }
 Cents bid(const WorldState& world,const CompiledProgram& program,const RivalCompany& contender) {
-    const auto& rules=*rival_definition(program,contender.definition_id).planning;
+    const auto& rules=*rival_definition(world,program,contender.definition_id).planning;
     const auto& state=world.simulation;
     const auto amount=checked_unit_add(std::max(Cents{0},book_net_assets(accounts_report(*state.accounts))),
         state.management->catalog.governance->acquisition_premium);
@@ -192,7 +192,7 @@ void validate_career_transition(const WorldState& world,const CompiledProgram& p
            (row.kind=="acquisition"?row.consideration.value()<=0:row.consideration.value()!=0) ||
            row.personal_proceeds.value()<0 || row.personal_proceeds>row.consideration)
             throw std::invalid_argument("A career decision has invalid terms, dates or response history.");
-        if(row.kind=="acquisition") (void)rival_definition(program,row.source);
+        if(row.kind=="acquisition") (void)rival_definition(world,program,row.source);
     }
     if(!deep || !state.succession) return;
     for(const auto& term:state.succession->terms) if(!term.extraordinary_handover.empty()) {

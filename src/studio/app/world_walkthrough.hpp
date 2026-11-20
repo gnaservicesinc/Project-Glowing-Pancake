@@ -77,6 +77,8 @@ QJsonObject run_world_walkthrough(Browser& browser,QQuickWindow& window,const QS
     input(QStringLiteral("opening_founder_share_bp"),QString::number(old_share.toInt()-100));click(QStringLiteral("stageWorldSection"));
     click(QStringLiteral("applyWorldBatch"));require(!author->hasStaged() && author->message().isEmpty(),author->message());
     click(QStringLiteral("worldMapTab"));
+    require(!item(QStringLiteral("worldScenario"))->isVisible() && !author->selectedState().isEmpty(),
+            QStringLiteral("The map must display a state inspector without a scenario selector."));
     auto* list=item(QStringLiteral("worldSectionList"));int texas=-1;
     for(qsizetype i=0;i<author->states().size();++i) if(author->states()[i].toMap().value(QStringLiteral("id"))==QStringLiteral("US-TX")) texas=static_cast<int>(i);
     require(texas>=0,QStringLiteral("Texas is missing from the keyboard list."));

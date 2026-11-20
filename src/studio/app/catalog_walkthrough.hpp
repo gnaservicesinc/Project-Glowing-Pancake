@@ -67,7 +67,7 @@ QJsonObject run_catalog_walkthrough(Browser& browser,QQuickWindow& window,const 
     require(author->message().isEmpty(),author->message());
     enter(QStringLiteral("catalogNewId"),QStringLiteral("research.walkthrough_serving"));
     click(QStringLiteral("catalogReviewRename"));
-    require(author->renameChanges().size()>1,QStringLiteral("Research rename did not disclose the affected references."));
+    require(author->renameChanges().size()>1,QStringLiteral("Research rename did not disclose the affected references. %1 (%2)").arg(author->message(),author->selectedIdentity()));
     if(!screenshot.isEmpty()) {
         auto captured=window.grabWindow();
         require(!captured.isNull() && captured.save(screenshot,"PNG"),QStringLiteral("Catalog reference review screenshot failed."));

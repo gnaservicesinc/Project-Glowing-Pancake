@@ -66,6 +66,7 @@ void WorldController::set_document(DraftDocument* d,std::string_view preferred) 
     if(replaced) {setUnapplied({});path_.clear();search_.clear();family_filter_.clear();scenario_.clear();selected_state_.clear();}
     if(!preferred.empty()) {scenario_=preferred;path_.clear();}
     if(edited) {report_.clear();adding_=false;}
+    if (replaced) emit documentReplaced();
     refresh();
 }
 void WorldController::refresh() {

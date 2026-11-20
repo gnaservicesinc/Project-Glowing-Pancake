@@ -273,10 +273,17 @@ core::LabCatalog load_lab_catalog(std::string_view bytes) {
         for(const auto& row:doc.at("acquisition")) {
             auto shape=row;
             shape.erase("feedback");
+            shape.erase("source");
             fields(shape,{"dataset","collection_days","staff_days","review_work_milli_CU"});
             core::DataAcquisitionOffer offer{parse_data(row.at("dataset")),
                 core::Days{integer(row.at("collection_days"))},core::Days{integer(row.at("staff_days"))},
                 core::MilliCU{integer(row.at("review_work_milli_CU"))}};
+            if (row.contains("source")) {
+                const auto& source = row.at("source");
+                fields(source, {"minimum_quality_bp", "transfers_ip"});
+                offer.source = core::CollectionSource{core::BasisPoints{integer(source.at("minimum_quality_bp"))},
+                                                      boolean(source.at("transfers_ip"))};
+            }
             if(!valid_id(offer.dataset.id)) invalid("Collection needs a valid dataset ID");
             if(row.contains("feedback")) {
                 const auto& feedback=row.at("feedback");
@@ -376,6 +383,8 @@ std::string canonical_lab_catalog(const core::LabCatalog& catalog) {
         for(const auto* offer:offers) {
             rows.push_back({{"dataset",encode_data(offer->dataset)},{"collection_days",offer->collection_days.value()},
                 {"staff_days",offer->staff_days.value()},{"review_work_milli_CU",offer->review_work.value()}});
+            if (offer->source) rows.back()["source"] = {{"minimum_quality_bp", offer->source->minimum_quality.value()},
+                                                       {"transfers_ip", offer->source->transfers_ip}};
             if(offer->feedback) rows.back()["feedback"]={{"product",offer->feedback->product_id},
                 {"segment",offer->feedback->segment_id},{"opted_in_share_bp",offer->feedback->opted_in_share.value()}};
         }

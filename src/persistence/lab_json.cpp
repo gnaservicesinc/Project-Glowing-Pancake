@@ -78,6 +78,7 @@ Json lab_json(const core::LabState& state) {
         auto& rows=result["acquisitions"]=Json::array();
         for(const auto& job:state.acquisitions) {
             rows.push_back({{"offer_id",job.offer_id},{"project_id",job.project_id}});
+            if (!job.sources.empty()) { rows.back()["sources"]=job.sources; rows.back()["name"]=job.name; }
             if(job.settled_deliveries) rows.back()["settled_deliveries"]=*job.settled_deliveries;
             if(job.output) rows.back()["output"]=data_offer_json(*job.output);
         }
@@ -210,8 +211,9 @@ core::LabState parse_lab(const Json& value) {
     if(value.contains("acquisitions")) {
         array(value.at("acquisitions"),"lab/acquisitions",core::lab_catalog_limit);
         for(const auto& row:value.at("acquisitions")) {
-            fields(row,"lab/acquisition",{"offer_id","project_id"},{"settled_deliveries","output"});
+            fields(row,"lab/acquisition",{"offer_id","project_id"},{"settled_deliveries","output","sources","name"});
             core::DataAcquisition job{label(row.at("offer_id")),label(row.at("project_id"))};
+            if(row.contains("sources")) { job.sources=strings(row.at("sources"),8); job.name=label(row.at("name")); }
             if(row.contains("settled_deliveries")) job.settled_deliveries=u64(row.at("settled_deliveries"),"lab/acquisition/settled_deliveries");
             if(row.contains("output")) job.output=parse_data_offer(row.at("output"));
             state.acquisitions.push_back(std::move(job));

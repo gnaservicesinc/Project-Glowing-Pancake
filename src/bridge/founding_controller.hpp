@@ -72,6 +72,7 @@ public:
     QString portrait() const;
     QVariantList appearanceParts() const;
     QStringList pronounOptions() const;
+    Q_INVOKABLE QString suggestName(bool given, const QString& previous) const;
     void reset(bool save = true);
     [[nodiscard]] content::FoundingSelection selection() const;
     [[nodiscard]] std::vector<core::PeopleContact> openingContacts() const;
@@ -86,6 +87,8 @@ private:
     QVariantMap homeOffer(const QString& id) const;
     QString firstSchoolBeat() const;
     QString commitHomeDraft(QVariantMap next);
+    QVariantMap defaults() const;
+    std::vector<std::string> first_names_, last_names_;
     void saveDraft();
     void deriveOpening();
     void pruneChoices();

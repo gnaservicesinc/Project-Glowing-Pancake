@@ -56,7 +56,7 @@ void resources(const WorldState& world,const CompiledProgram& program,const Riva
         } else if (posting.key.starts_with("group.funding/") && rival.parent_company==world.company_id && posting.credit==Account::equity) {
             // The cross-company acquisition validator reconciles both actual
             // legs; this is paid owner capital, not a replacement subsidy.
-        } else if(posting.credit==Account::revenue && posting.key.starts_with("research-jam/")) {
+        } else if(posting.credit==Account::revenue && (posting.key.starts_with("research-jam/") || posting.key.starts_with("dataset-sale/"))) {
             // The bilateral validator checks the exact paying company, cash,
             // date and named research on both sides of this earned fee.
         } else if (posting.credit!=Account::receivables || !posting.document_id.starts_with("market.")) invalid("Rival invented cash, a hidden subsidy or non-customer revenue");
@@ -92,12 +92,12 @@ void validate_planning(const WorldState& world,const CompiledProgram& program,bo
     std::vector<std::string> expected,actual;
     for (const auto& row:scenario->rivals) if (content::selected_rival(row,*state.setup)) expected.push_back(row.id);
     if(world.objectives && world.objectives->career) for(const auto& job:*world.objectives->career)
-        if(career_entry_definition(rival_definition(program,job.employer))) expected.push_back(job.employer);
+        if(career_entry_definition(rival_definition(world,program,job.employer))) expected.push_back(job.employer);
     for (const auto& row:state.companies) actual.push_back(row.definition_id);
     if (expected!=actual) invalid("Saved planned roster differs from its configured slots");
     std::set<std::tuple<std::string,std::string,std::string>> notice_ids;
     for (const auto& rival:state.companies) {
-        const auto& authored=rival_definition(program,rival.definition_id);
+        const auto& authored=rival_definition(world,program,rival.definition_id);
         const auto risk_origin=RandomStreams{rival_seed(world,authored)}.snapshot()[static_cast<std::size_t>(RandomStream::risk)];
         if (rival.simulation.deployments && rival.simulation.deployments->risk) {
             if (rival.simulation.deployments->risk->stream_origin!=risk_origin)
@@ -125,8 +125,15 @@ void validate_planning(const WorldState& world,const CompiledProgram& program,bo
             rival.response?rival.response->mobilized_on.value_or(campaign_calendar_limit(world)):
             authored.player_deployment_threshold>0?(rival.warned_on?advance_days(*rival.warned_on,authored.warning_lead):campaign_calendar_limit(world)):earliest;
         const auto& simulation=rival.simulation;
+        const auto catalog_matches = [&] {
+            if (world.competition->dataset_sales.empty()) return simulation.lab->catalog == world.simulation.lab->catalog;
+            if (!deep) return true;
+            auto expected_catalog = world.simulation.lab->catalog;
+            restore_licensed_catalog(expected_catalog,world,authored.id);
+            return simulation.lab->catalog == expected_catalog;
+        };
         if (*plan.entered_on!=entry || *plan.entered_on>campaign_day(world) || !simulation.accounts || !simulation.lab || !simulation.capacity || !simulation.market || !simulation.deployments || !simulation.management || !simulation.liquidity ||
-            simulation.accounts->owner!=authored.id || simulation.lab->catalog!=world.simulation.lab->catalog || simulation.lab->starts_on!=entry ||
+            simulation.accounts->owner!=authored.id || !catalog_matches() || simulation.lab->starts_on!=entry ||
             simulation.end_date!=campaign_calendar_limit(world) || simulation.date>campaign_day(world) ||
             (simulation.date!=campaign_day(world) && simulation.phase!=DayPhase::closed) ||
             plan.next_review!=advance_days(rival.response?rival.response->ready_on.value_or(entry):entry,Days{static_cast<std::int64_t>(plan.decisions.size())*state.setup->review_interval.value()})) invalid("Rival entry, resource ownership or strategy/daily cursor is invalid");
@@ -158,7 +165,7 @@ void validate_planning(const WorldState& world,const CompiledProgram& program,bo
         if (notice.kind=="entry") {if (found->planning->entered_on!=notice.day || notice.response_due || !notice.subject.empty()) invalid("Rival entry notice is not an actual company opening");}
         else if (notice.kind=="warning" && found->response) { /* Checked against the response transition below. */ }
         else if (notice.kind=="response" || notice.kind=="offer") {if (!found->response) invalid("Competitive response/offer has no heavyweight policy");}
-        else if (notice.kind=="warning") {if (found->warned_on!=notice.day || notice.response_due!=advance_days(notice.day,rival_definition(program,notice.company_id).warning_lead) || !notice.subject.empty()) invalid("Heavyweight notice lost its real response window");}
+        else if (notice.kind=="warning") {if (found->warned_on!=notice.day || notice.response_due!=advance_days(notice.day,rival_definition(world,program,notice.company_id).warning_lead) || !notice.subject.empty()) invalid("Heavyweight notice lost its real response window");}
         else if (notice.kind=="closure") {if (found->simulation.phase!=DayPhase::closed || found->simulation.date!=notice.day || notice.response_due || !notice.subject.empty()) invalid("Rival closure has no actual insolvency closure");}
         else if (notice.kind=="publication") {if (!found->planning->entered_on || notice.response_due || std::none_of(found->simulation.lab->publications.begin(),found->simulation.lab->publications.end(),[&](const auto& row){return row.research_id==notice.subject && row.day==notice.day;})) invalid("Competitive publication lacks an actual completed research result");}
         else invalid("Unknown planned competitive notice");

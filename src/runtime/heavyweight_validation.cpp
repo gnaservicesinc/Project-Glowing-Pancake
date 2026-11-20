@@ -14,7 +14,7 @@ void offers(const WorldState& world,const CompiledProgram& program) {
     std::set<std::string> ids;std::set<std::pair<std::string,std::uint64_t>> reservations;
     std::set<std::string> paid_keys;
     for (const auto& offer:world.competition->offers) {
-        const auto& rival=owner(world,offer.company_id);const auto& policy=*rival_definition(program,offer.company_id).response;
+        const auto& rival=owner(world,offer.company_id);const auto& policy=*rival_definition(world,program,offer.company_id).response;
         const auto amount=offer.kind==CompetitiveOfferKind::publication?policy.publication_fee:policy.pilot_fee;
         const auto subject=offer.kind==CompetitiveOfferKind::publication?policy.publication_node:policy.pilot_product;
         const auto cutoff=OrdinalDay{campaign_calendar_limit(world).value()-1};
@@ -69,7 +69,7 @@ void offers(const WorldState& world,const CompiledProgram& program) {
     for (const auto& row:world.competition->notices) if (row.kind=="offer" && !ids.contains(row.subject)) invalid("Competitive notice refers to an absent funded offer");
 }
 void replay(const WorldState& world,const CompiledProgram& program,const RivalCompany& rival) {
-    const auto& saved=*rival.response;const auto& policy=*rival_definition(program,rival.definition_id).response;
+    const auto& saved=*rival.response;const auto& policy=*rival_definition(world,program,rival.definition_id).response;
     HeavyweightState state;state.next_review=world.campaign_start;std::size_t review_index=0,transition_index=0;
     std::optional<OrdinalDay> first_warning;
     const auto emit=[&](OrdinalDay day,HeavyweightPhase phase,std::string_view cause,std::optional<OrdinalDay> due={}) {
@@ -86,7 +86,7 @@ void replay(const WorldState& world,const CompiledProgram& program,const RivalCo
             if (review_index>=saved.reviews.size() || saved.reviews[review_index]!=observe_heavyweight_pressure(world,program,rival.definition_id,day)) invalid("Heavyweight pressure differs from last-settled public information");
             const auto& review=saved.reviews[review_index++];state.next_review=advance_days(state.next_review,policy.review_interval);
             state.high_reviews=review.score>=policy.entry_pressure?state.high_reviews+1:0;state.low_reviews=review.score<=policy.exit_pressure?state.low_reviews+1:0;
-            if (state.phase==HeavyweightPhase::watch && !state.mobilized_on && day>=advance_days(world.campaign_start,rival_definition(program,rival.definition_id).start_after)) {
+            if (state.phase==HeavyweightPhase::watch && !state.mobilized_on && day>=advance_days(world.campaign_start,rival_definition(world,program,rival.definition_id).start_after)) {
                 if (!state.warned_on && state.high_reviews>=2) {state.warned_on=day;if (!first_warning) first_warning=day;emit(day,HeavyweightPhase::watch,"warning",advance_days(day,policy.warning_lead));}
                 else if (state.warned_on && state.low_reviews>=2) {state.warned_on.reset();emit(day,HeavyweightPhase::watch,"warning_withdrawn");}
             } else if ((state.phase==HeavyweightPhase::mobilize || state.phase==HeavyweightPhase::compete) && state.low_reviews>=2) emit(day,HeavyweightPhase::consolidate,"low_pressure");
@@ -123,7 +123,7 @@ void validate_heavyweight_responses(const WorldState& world,const CompiledProgra
     if (world.competition->offers.size()>40) invalid("Competitive offers exceed their finite bound");
     bool any=false;
     for (const auto& rival:world.competition->companies) {
-        const auto& definition=rival_definition(program,rival.definition_id);
+        const auto& definition=rival_definition(world,program,rival.definition_id);
         if (rival.response.has_value()!=definition.response.has_value()) invalid("Heavyweight policy and saved response presence differ");
         if (!rival.response) continue;any=true;const auto& r=*rival.response;
         if (to_string(r.phase)=="invalid" || r.reviews.size()>8192 || r.transitions.size()>512 || r.next_review<world.campaign_start || r.high_reviews>8192 || r.low_reviews>8192) invalid("Heavyweight response exceeds its typed history bounds");

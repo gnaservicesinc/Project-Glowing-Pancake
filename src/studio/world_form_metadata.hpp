@@ -17,6 +17,13 @@ inline std::string short_name(std::string_view id) {
     return readable_name(dot==std::string_view::npos?id:id.substr(dot+1));
 }
 inline std::string label(std::string v) {
+    if(v=="lab") return "Research, training and data";
+    if(v=="acquisition") return "Data collection agreements";
+    if(v=="transfers_ip") return "Assigns the source IP to the collecting company";
+    if(v=="minimum_quality_bp") return "Minimum quality (bp)";
+    if(v=="generation") return "New campaign rules";
+    if(v=="rival_budget_spread_pct") return "Rival opening budget variation (%)";
+    if(v=="dataset_spread_pct") return "Source volume and price variation (%)";
     if(v=="cash_cents") return "Starting cash (cents)";
     if(v=="default_policy_budget_cents") return "Default policy budget (cents)";
     if(v=="default_reserve_floor_cents") return "Default cash reserve floor (cents)";
@@ -64,6 +71,7 @@ inline bool dynamic_map(std::string_view path) {
     return path.ends_with("/ownership_basis_points") || path.ends_with("/monthly_commitments_cents");
 }
 inline std::string units(std::string_view path) {
+    if (path.ends_with("_pct")) return "percent";
     if(path.ends_with("/scoring/weights") || path.find("/scoring/weights/")!=path.npos) return "score points; the five weights total 100";
     if(path.find("millicents")!=path.npos) return "thousandths of a constant-2014 cent per kWh";
     if(path.find("cents_per_1000_liters")!=path.npos) return "constant-2014 cents per 1,000 liters";
@@ -99,6 +107,9 @@ inline std::string help(std::string_view path) {
     if(key=="first_agenda_day") return "Date this public docket opens. Committee, chamber, executive, review and agency dates follow the authored terms.";
     if(key=="permit_watts") return "Limit on newly authorized site reservations in this state while the rule is effective.";
     if(key=="evidence_axis") return "Independent evaluation domain index, from 0 to 5 in Lab profile order.";
+    if(key=="rival_budget_spread_pct") return "A value of 20 allows opening capital, payroll and rent to vary up to 20% above or below their budget.";
+    if(key=="dataset_spread_pct") return "A value of 25 allows record counts and asking prices to vary up to 25% above or below the source terms.";
+    if(key=="rights" && path.find("/lab/")!=path.npos) return "Describe how this source may be collected, used and distributed.";
     if(key=="rights") return "Describe the actual regional procurement rights and operating obligations granted by this role.";
     if(key=="public_work") return "Public tasks required in the last settled regional month. Reviews prorate the same obligation to their actual interval.";
     if(key=="points_bp") return "Maximum authority from a fully operating role. Hard authority is reduced by regional resistance.";

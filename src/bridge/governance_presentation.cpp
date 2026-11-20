@@ -32,7 +32,7 @@ GovernanceModels governance_models(const runtime::Checkpoint& checkpoint,const r
         for (const auto& f:c.financing) if (f.id==id) return text(f.name);
         for (const auto& charter:c.charters) if(charter.id==id) return text(charter.name);
         for (const auto& e:c.executives) if (e.id==id) return text(e.name);
-        if (checkpoint.world.competition) for (const auto& r:checkpoint.world.competition->companies) if (r.definition_id==id) return text(runtime::rival_definition(program,id).name);
+        if (checkpoint.world.competition) for (const auto& r:checkpoint.world.competition->companies) if (r.definition_id==id) return text(runtime::rival_definition(checkpoint.world,program,id).name);
         return readable(id);
     };
     result.ownership=nonprofit?tr("The endowment belongs to the institution and its mission. The founder and donors receive no private ownership. Gifts add institutional funds without selling shares or increasing personal wealth.\n"):
@@ -58,7 +58,7 @@ GovernanceModels governance_models(const runtime::Checkpoint& checkpoint,const r
         for (const auto& f:c.financing) if (h.holder=="investor/"+f.id)
             label=c.public_listing && c.public_listing->offer_id==f.id?tr("Public shareholders"):text(f.name);
         for (const auto& f:s.management->catalog.financing) if (h.holder=="investor/"+f.id) label=text(f.name);
-        if (checkpoint.world.competition) for (const auto& q:checkpoint.world.competition->acquisitions) if (h.holder=="merger.sellers/"+q.target) label=tr("%1 · seller trust").arg(text(runtime::rival_definition(program,q.target).name));
+        if (checkpoint.world.competition) for (const auto& q:checkpoint.world.competition->acquisitions) if (h.holder=="merger.sellers/"+q.target) label=tr("%1 · seller trust").arg(text(runtime::rival_definition(checkpoint.world,program,q.target).name));
         result.ownership+=tr("%1: %2%3\n").arg(label,percent(h.shares),h.reserved_pool?tr(" (reserved pool)"):QString{});
     }
     if (checkpoint.world.competition && !checkpoint.world.competition->acquisitions.empty()) {
@@ -148,7 +148,7 @@ GovernanceModels governance_models(const runtime::Checkpoint& checkpoint,const r
             open && d.negotiated_on?tr("Negotiated response"):dispute_status(d.status),!d.acknowledged,{{QStringLiteral("waiver"),open && d.kind=="covenant"}}});
     }
     if (checkpoint.world.competition) for (const auto& rival:checkpoint.world.competition->companies) if (rival.planning && rival.planning->entered_on && !rival.response) {
-        const auto& definition=runtime::rival_definition(program,rival.definition_id);
+        const auto& definition=runtime::rival_definition(checkpoint.world,program,rival.definition_id);
         auto detail=tr("Review due diligence for a full-ownership acquisition. The seller quotes net book assets plus the disclosed %1 continuity premium. Choose cash or half cash plus a conserving equity counteroffer, within the %2 ceiling. Submit reviewed terms to the board. The target continues as an operating subsidiary, retaining all obligations and qualified services; its cash is not paid to the buyer.\n").arg(money(c.acquisition_premium),percent(c.acquisition_equity));
         if (!rival.parent_company.empty()) {
             const auto report=core::accounts_report(*rival.simulation.accounts);
@@ -165,6 +165,6 @@ GovernanceModels governance_models(const runtime::Checkpoint& checkpoint,const r
 }
 QString acquisition_terms(const runtime::Checkpoint& checkpoint,const runtime::CompiledProgram& program,std::string_view id,bool equity) {
     const auto q=runtime::quote_acquisition(checkpoint.world,program,id,equity);
-    return tr("Seller counteroffer for %1, dated %2:\nTotal consideration %3: %4 cash and %5 new fully diluted parent equity. The equity consideration is recorded as assets, not cash or product revenue.\nAll existing seller holdings transfer to the parent; actual cash/equity goes to those sellers by their outstanding shares. The unallocated target pool is dissolved; no target executive grant is outstanding. Assets, debt, bills, licenses, staff, customer contracts and product qualifications stay with the operating subsidiary.\nThe board must approve before its deadline; seller control/ownership and buyer cash are rechecked. Declining or expiration spends nothing. A merger does not cure subsidiary insolvency or create compatible products instantly.").arg(text(runtime::rival_definition(program,q.target).name),date(q.quoted_on),money(q.value),money(q.cash),percent(q.shares));
+    return tr("Seller counteroffer for %1, dated %2:\nTotal consideration %3: %4 cash and %5 new fully diluted parent equity. The equity consideration is recorded as assets, not cash or product revenue.\nAll existing seller holdings transfer to the parent; actual cash/equity goes to those sellers by their outstanding shares. The unallocated target pool is dissolved; no target executive grant is outstanding. Assets, debt, bills, licenses, staff, customer contracts and product qualifications stay with the operating subsidiary.\nThe board must approve before its deadline; seller control/ownership and buyer cash are rechecked. Declining or expiration spends nothing. A merger does not cure subsidiary insolvency or create compatible products instantly.").arg(text(runtime::rival_definition(checkpoint.world,program,q.target).name),date(q.quoted_on),money(q.value),money(q.cash),percent(q.shares));
 }
 }

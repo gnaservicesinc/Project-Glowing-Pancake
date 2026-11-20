@@ -110590,6 +110590,45 @@
         "prepared_headquarters": 24,
         "scenarios": 8
       }
+    },
+    {
+      "changed_definitions": [
+        {
+          "after_hash": "7787af562fd91dbd858ae4e74906658f4f83b76100bedc4eafa46a6c072d6fb8",
+          "before_hash": "a3171d31314b4a6b48e884ee9ba6936701c130edd372e05e2af11dd3a17719d8",
+          "change": "changed",
+          "id": "scenario.founder_campaign",
+          "kind": "scenario",
+          "old_revision": 57,
+          "revision": 58
+        }
+      ],
+      "changed_text_keys": [],
+      "collection_hash": "15cfff50179a7dd97ae97a192938801952da63156b3d8dbf3294608c8c218979",
+      "compatibility": {
+        "content_schema": 1,
+        "save_format": 1,
+        "simulation_rules": 1
+      },
+      "content_version": "0.86.0-dev.1",
+      "game_version_at_finalization": "0.0.0-dev",
+      "generation": 90,
+      "minimum_game_change": "minor",
+      "previous_content_version": "0.85.0-dev.1",
+      "previous_snapshot": "authoring/snapshots/000089.collection.json",
+      "purpose": "internal-playtest",
+      "required_game_version": "0.1.0-dev.1",
+      "save_policy": "reject-prior-content",
+      "snapshot": "authoring/snapshots/000090.collection.json",
+      "summary": "Generate campaign rosters and publisher editions, and define data collection sources and IP terms.",
+      "target": "data/runtime/first-playable.json",
+      "validation": {
+        "compiler": "shared-game-runtime",
+        "exact_prepared_save_roundtrips": 24,
+        "lints": [],
+        "prepared_headquarters": 24,
+        "scenarios": 8
+      }
     }
   ],
   "format": 1

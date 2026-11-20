@@ -39,7 +39,7 @@ FocusScope {
         signing.stop()
         autograph = beatId === "certificate" && reducedMotion ? 1 : 0
         if (beatId === "certificate" && !reducedMotion) signing.start()
-        if (birthPaper) {
+        if (beatId === "first_name" || beatId === "certificate") {
             givenName.text = story.form.first_name
             surname.text = story.form.last_name
         }
@@ -128,14 +128,17 @@ FocusScope {
                 spacing: 12
                 Label {
                     Layout.fillWidth: true
+                    id: sceneDate
+                    Layout.minimumWidth: 0
                     text: opening.beat.date || ""
                     color: ink.accent
                     font.pixelSize: opening.typeSize*0.8; font.letterSpacing: 2; font.bold: true
-                    elide: Text.ElideRight
+                    wrapMode: Text.Wrap
                 }
+                TextMetrics { id: dateMetrics; font: sceneDate.font; text: sceneDate.text }
                 Row {
                     id: sectionStrip
-                    visible: !opening.compact && !!opening.beat.section && (opening.beat.timeline || []).length > 0
+                    visible: !opening.compact && !!opening.beat.section && (opening.beat.timeline || []).length > 0 && implicitWidth + dateMetrics.advanceWidth + 14 <= stage.width
                     spacing: 6
                     Repeater {
                         model: opening.beat.timeline || []
@@ -167,6 +170,7 @@ FocusScope {
         Item {
             id: body
             Layout.fillWidth: true; Layout.fillHeight: true
+            Layout.minimumHeight: 0; Layout.preferredHeight: 0
             ScrollView {
                 id: choiceView
                 objectName: "foundingChoiceScroll"
@@ -225,7 +229,7 @@ FocusScope {
                         Layout.fillWidth: true
                         readonly property var rows: opening.beat.choices || []
                         readonly property var chosenIds: opening.selectedTokens()
-                        columns: width < opening.typeSize * 17 ? 1 : rows.length >= 3 && width >= opening.typeSize * 44 ? 3 : 2
+                        columns: width < opening.typeSize * 34 ? 1 : rows.length >= 3 && width >= opening.typeSize * 51 ? 3 : 2
                         rowSpacing: opening.compact ? 6 : 14; columnSpacing: rowSpacing
                         Repeater {
                             id: choiceOptions
@@ -243,8 +247,11 @@ FocusScope {
                                 enabled: modelData.available !== false && !atLimit
                                 checked: selected
                                 activeFocusOnTab: true
-                                onActiveFocusChanged: {
-                                    if (!activeFocus) return
+                                onActiveFocusChanged: revealChoice()
+                                onHeightChanged: if (activeFocus) Qt.callLater(revealChoice)
+                                onYChanged: if (activeFocus) Qt.callLater(revealChoice)
+                                function revealChoice() {
+                                    if (!activeFocus || !choiceView.visible) return
                                     const view = choiceView.contentItem
                                     const top = mapToItem(view.contentItem, 0, 0).y
                                     if (height >= view.height || top < view.contentY) view.contentY = top
@@ -358,8 +365,34 @@ FocusScope {
                     GridLayout {
                         Layout.fillWidth: true; Layout.fillHeight: true
                         columns: 2; columnSpacing: 22; rowSpacing: opening.compact ? 3 : 12
-                        Label { text: qsTr("GIVEN NAME"); color: "#635640"; font.pixelSize: opening.typeSize*0.75 }
-                        Label { text: qsTr("SURNAME"); color: "#635640"; font.pixelSize: opening.typeSize*0.75 }
+                        RowLayout {
+                            Layout.fillWidth: true
+                            Label { text: qsTr("GIVEN NAME"); color: "#635640"; font.pixelSize: opening.typeSize*0.75 }
+                            Item { Layout.fillWidth: true }
+                            WorldButton {
+                                objectName: "rollFoundingGiven"
+                                text: qsTr("Random")
+                                Accessible.name: qsTr("Random given name")
+                                visible: opening.beat.kind === "birth"
+                                textSize: opening.typeSize * 0.78
+                                padding: 4
+                                onClicked: givenName.text = opening.story.suggestName(true, givenName.text)
+                            }
+                        }
+                        RowLayout {
+                            Layout.fillWidth: true
+                            Label { text: qsTr("SURNAME"); color: "#635640"; font.pixelSize: opening.typeSize*0.75 }
+                            Item { Layout.fillWidth: true }
+                            WorldButton {
+                                objectName: "rollFoundingSurname"
+                                text: qsTr("Random")
+                                Accessible.name: qsTr("Random surname")
+                                visible: opening.beat.kind === "birth"
+                                textSize: opening.typeSize * 0.78
+                                padding: 4
+                                onClicked: surname.text = opening.story.suggestName(false, surname.text)
+                            }
+                        }
                         GameField {
                             id: givenName; objectName: "foundingAnswer"
                             Layout.fillWidth: true; Layout.minimumWidth: 0

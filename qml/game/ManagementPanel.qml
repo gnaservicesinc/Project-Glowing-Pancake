@@ -75,6 +75,7 @@ ColumnLayout {
     component Field: ColumnLayout {
         property string label
         property string initialValue: ""
+        property int maxLength: 15
         property alias value: input.text
         Layout.fillWidth: true
         Copy { text: parent.label }
@@ -86,7 +87,7 @@ ColumnLayout {
             font.pixelSize: panel.textSize
             Accessible.name: parent.label
             selectByMouse: true
-            maximumLength: 15
+            maximumLength: parent.maxLength
         }
     }
     component Choice: ColumnLayout {
@@ -193,12 +194,74 @@ ColumnLayout {
         Layout.fillWidth: true
         visible: panel.room === "lab" && panel.section === "data"
         DataApp {
+            id: dataApp
             Layout.fillWidth: true
             textSize: panel.textSize
             manager: panel.manager
         }
-        Copy { text: qsTr("License rights and coverage before training. Purchased data affects new training; an existing checkpoint keeps its original mixture.") }
+        ColumnLayout {
+            id: builder
+            Layout.fillWidth: true
+            visible: dataApp.activeTab === "collect" && manager.datasetSources.length > 0
+            property var selectedSources: []
+            Copy { text: qsTr("Choose the sources that will make up this dataset.") }
+            Field { id: datasetName; objectName: "newDatasetName"; label: qsTr("Dataset name"); maxLength: 80 }
+            Repeater {
+                model: builder.visible ? manager.datasetSources : []
+                ColumnLayout {
+                    required property var modelData
+                    Layout.fillWidth: true
+                    GameCheck {
+                        objectName: "datasetSource_" + parent.modelData.id
+                        text: parent.modelData.label
+                        font.pixelSize: panel.textSize
+                        checked: builder.selectedSources.includes(parent.modelData.id)
+                        onClicked: {
+                            const id = parent.modelData.id
+                            builder.selectedSources = checked ? builder.selectedSources.concat([id]) : builder.selectedSources.filter(key => key !== id)
+                        }
+                    }
+                    Copy { text: parent.modelData.detail }
+                }
+            }
+        }
+        ColumnLayout {
+            Layout.fillWidth: true
+            visible: builder.visible || (dataApp.activeTab === "catalog" && manager.collectionOffers.length > 0)
+            Choice { id: collectionSource; objectName: "collectionSourceChoice"; label: qsTr("Collection compute source"); options: manager.sources }
+            Field { id: collectionRate; objectName: "collectionRateField"; label: qsTr("Collection CU per day"); initialValue: "10" }
+            Field { id: collectionStaff; objectName: "collectionStaffField"; label: qsTr("Collection staff"); initialValue: "1" }
+        }
+        Action {
+            visible: builder.visible
+            objectName: "reviewSourceCollection"
+            text: qsTr("Review dataset and collection cost…")
+            enabled: panel.editable && datasetName.value.trim().length > 0 && builder.selectedSources.length > 0
+            onClicked: {
+                const request = [datasetName.value, builder.selectedSources, collectionSource.value, collectionRate.value, collectionStaff.value]
+                const quote = manager.sourceCollectionQuote(...request)
+                releaseDialog.review("sourceCollection", "", datasetName.value, quote.detail, quote.ready === true, request)
+            }
+        }
+        ColumnLayout {
+            Layout.fillWidth: true
+            visible: dataApp.activeTab === "catalog" && manager.datasetSources.length > 0
+            Copy { text: qsTr("Company dataset licenses"); font.bold: true }
+            Choice { id: datasetDeal; objectName: "datasetLicenseDeal"; visible: options.length > 0; label: qsTr("Available agreements"); options: parent.visible ? manager.datasetDeals : [] }
+            Copy { visible: datasetDeal.options.length === 0; text: qsTr("Agreements appear when a company owns a finished dataset and a buyer can afford the license.") }
+            Action {
+                visible: datasetDeal.options.length > 0
+                enabled: panel.editable && !!datasetDeal.selectedOption.dataset
+                text: qsTr("Review license…")
+                onClicked: {
+                    const deal = datasetDeal.selectedOption
+                    releaseDialog.review("datasetLicense", "", qsTr("Nonexclusive training license"), deal.label, true, [deal.seller, deal.buyer, deal.dataset])
+                }
+            }
+        }
+        Copy { visible: dataApp.activeTab === "catalog"; text: qsTr("Choose a published dataset to review its sources, coverage and training rights.") }
         DraftField {
+            visible: dataApp.activeTab === "catalog" || dataApp.activeTab === "process"
             objectName: "dataOfferFilter"
             Layout.fillWidth: true
             font.pixelSize: panel.textSize
@@ -207,8 +270,9 @@ ColumnLayout {
             text: manager.dataOffers.filterText
             onTextEdited: manager.dataOffers.filterText = text
         }
-        Selection { objectName: "managementDataOffersSelection"; heading: qsTr("Data offers"); rows: manager.dataOffers }
+        Selection { visible: dataApp.activeTab === "catalog" || dataApp.activeTab === "process"; objectName: "managementDataOffersSelection"; heading: qsTr("Data offers"); rows: manager.dataOffers }
         Action {
+            visible: dataApp.activeTab === "catalog"
             objectName: "buyDataButton"
             text: qsTr("Buy selected license")
             enabled: panel.editable && manager.dataOffers.selectedRow.actionable === true
@@ -216,7 +280,7 @@ ColumnLayout {
         }
         ColumnLayout {
             Layout.fillWidth: true
-            visible: manager.collectionOffers.length > 0
+            visible: dataApp.activeTab === "catalog" && manager.collectionOffers.length > 0
             Copy { text: qsTr("Commission data or collect opted-in feedback"); font.bold: true }
             Choice {
                 id: collectionOffer
@@ -225,9 +289,6 @@ ColumnLayout {
                 options: manager.collectionOffers
             }
             Copy { text: collectionOffer.selectedOption.detail || "" }
-            Choice { id: collectionSource; objectName: "collectionSourceChoice"; label: qsTr("Collection compute source"); options: manager.sources }
-            Field { id: collectionRate; objectName: "collectionRateField"; label: qsTr("Collection CU per day"); initialValue: "10" }
-            Field { id: collectionStaff; objectName: "collectionStaffField"; label: qsTr("Collection staff"); initialValue: "1" }
             Action {
                 objectName: "reviewCollectionButton"
                 text: qsTr("Review data collection…")
@@ -240,7 +301,7 @@ ColumnLayout {
             }
         }
         Repeater {
-            model: manager.collectionJobs
+            model: dataApp.activeTab === "catalog" || dataApp.activeTab === "collect" ? manager.collectionJobs : []
             ColumnLayout {
                 required property var modelData
                 Layout.fillWidth: true
@@ -267,7 +328,7 @@ ColumnLayout {
         }
         ColumnLayout {
             Layout.fillWidth: true
-            visible: manager.synthesisRecipes.length > 0
+            visible: dataApp.activeTab === "catalog" && manager.synthesisRecipes.length > 0
             Copy { text: qsTr("Generate verified training data"); font.bold: true }
             Copy { text: qsTr("Choose a frozen teacher, independent evidence, and a licensed verification source outside its training mixture. Generation and filtering use paid staff and compute.") }
             Choice {
@@ -1268,6 +1329,8 @@ ColumnLayout {
         onAccepted: {
             if (!confirmable) return
             if (kind === "synthesis") manager.generateData(...request)
+            else if (kind === "sourceCollection") manager.collectSources(...request)
+            else if (kind === "datasetLicense") manager.licenseCompanyDataset(...request)
             else if (kind === "collection") manager.startCollection(...request)
             else if (kind === "cancelCollection") campaign.projectCancel(request[0])
             else if (kind === "incidentResponse") manager.respondDeploymentIncident(...request)

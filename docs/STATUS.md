@@ -1,8 +1,8 @@
 # Current implementation
 
-The local Mac game and Content Studio are the development baseline. The founder campaign uses internal content **0.85.0-dev.1**, generation **89**.
+The local Mac game and Content Studio are the development baseline. The founder campaign uses internal content **0.86.0-dev.1**, generation **90**.
 
-New Game follows the protagonist from childhood into founding or an inherited CEO appointment. Six family backgrounds have different savings and home workspaces. Paid work, ownership, financing and board authority are part of the company simulation. The development menu can also start an isolated, configured campaign directly in the paused office.
+New Game follows the protagonist from childhood into founding or an inherited CEO appointment. The childhood wealth question offers three financial backgrounds. Each new world draws its rival companies, executives and publisher editions from campaign rules. Paid work, ownership, financing and board authority are part of the company simulation. The development menu can also start an isolated, configured campaign directly in the paused office.
 
 Each physical device has an independent workspace. Research, data, training, evaluation, deployment and accounts use the saved company state. The founder research catalog includes 141 topics. The player can prototype software, balance dataset samples, arrange a walkable workplace and compare branch designs against state network, power, cooling, staffing and cost constraints.
 

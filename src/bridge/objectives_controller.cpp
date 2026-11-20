@@ -38,7 +38,7 @@ QString status(ObjectiveResult result) {
 }
 QString institution(std::string_view id,const WorldState& w,const CompiledProgram& program) {
     if(id==w.company_id) return QStringLiteral("Your institution");
-    const auto& row=rival_definition(program,id);
+    const auto& row=rival_definition(w,program,id);
     return text(row.name);
 }
 QString loss_cause(const WorldState& w,const CompiledProgram& program,const CampaignEnd& end) {
@@ -133,7 +133,7 @@ QVariantMap ObjectivesController::career() const {
     const auto* employer=career_employer(world());
     QVariantList jobs,options,projects;
     for(const auto& job:research_job_offers(world(),*program_)) {
-        const auto& group=rival_definition(*program_,job.employer).planning->group;
+        const auto& group=rival_definition(world(),*program_,job.employer).planning->group;
         if(group=="restart" || group=="uscif") {
             jobs.push_back(QVariantMap{{"id",text(job.employer)},{"label",group=="restart"?tr("Form a new company"):tr("Civilian Administrator · USCIF")},
                 {"kind",text(group)},{"detail",group=="restart"?tr("A new sponsor funds a separate lab, staff and compute. Choose the company name. Your biography and personal assets carry forward."):
@@ -147,7 +147,7 @@ QVariantMap ObjectivesController::career() const {
     }
     QString title=tr("Find a research appointment"),detail;
     if(employer) {
-        const auto& definition=rival_definition(*program_,employer->definition_id);
+        const auto& definition=rival_definition(world(),*program_,employer->definition_id);
         const auto& job=objectives().career->back();
         title=definition.planning->group=="uscif"?tr("Civilian Administrator · USCIF"):
             tr("Research desk at %1").arg(text(job.organization_name.empty()?definition.name:job.organization_name));

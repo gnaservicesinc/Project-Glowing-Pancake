@@ -51,8 +51,14 @@ QString fitting_error(QQuickItem& item, const QRectF& viewport) {
     for(auto* parent=item.parentItem();parent;parent=parent->parentItem()) if(parent->clip())
         bounds=bounds.intersected(parent->mapRectToScene({0,0,parent->width(),parent->height()}));
     if(bounds.isEmpty()) return {};
-    if (!bounds.isEmpty() && !viewport.contains(bounds))
-        return QStringLiteral("%1 %2 at %3,%4 %5×%6 lies outside %7×%8").arg(item.metaObject()->className(),item.objectName()).arg(bounds.x()).arg(bounds.y()).arg(bounds.width()).arg(bounds.height()).arg(viewport.width()).arg(viewport.height());
+    if (!viewport.contains(bounds)) {
+        QStringList ancestry;
+        for (auto* parent = &item; parent; parent = parent->parentItem()) {
+            ancestry << QStringLiteral("%1/%2 [%3,%4 %5×%6]").arg(parent->metaObject()->className(),parent->objectName())
+                .arg(parent->x()).arg(parent->y()).arg(parent->width()).arg(parent->height());
+        }
+        return QStringLiteral("Outside %1×%2: %3").arg(viewport.width()).arg(viewport.height()).arg(ancestry.join(" in "));
+    }
     if (item.property("truncated").toBool())
         return QStringLiteral("Clipped copy: ") + item.property("text").toString();
     for (auto* child : item.childItems())
@@ -69,7 +75,7 @@ void schedule_founding_smoke(QQuickWindow& window, pgp::bridge::CampaignControll
         Phase phase = Phase::launch;
         int ticks = 0,home_phase=0,frames=0,keepsake_frames=0;
         QString layout_beat;
-        int layout_phase=0, fit_retries=0;
+        int layout_phase=0, fit_retries=0, layout_frames=0;
         bool saw_opening_animation = false;
         bool retried_name = false;
         std::uint64_t world_seed = 0;
@@ -143,6 +149,17 @@ void schedule_founding_smoke(QQuickWindow& window, pgp::bridge::CampaignControll
                 !paper || !item("foundingSurname") || !item("foundingSurname")->isVisible()) {
                 fail("The accessible name field must be printed on the actual certificate"); return;
             }
+            auto* surname = item("foundingSurname");
+            const auto givenBefore = input->property("text").toString();
+            const auto surnameBefore = surname->property("text").toString();
+            if (givenBefore.isEmpty() || surnameBefore.isEmpty() || story->form().value("birth_sex") == "indeterminate" ||
+                !click("rollFoundingGiven") || input->property("text") == givenBefore || surname->property("text") != surnameBefore) {
+                fail(QString("Given name reroll: %1 to %2, surname %3 to %4, birth sex %5").arg(givenBefore,input->property("text").toString(),surnameBefore,surname->property("text").toString(),story->form().value("birth_sex").toString())); return;
+            }
+            const auto givenAfter = input->property("text");
+            if (!click("rollFoundingSurname") || surname->property("text") == surnameBefore || input->property("text") != givenAfter) {
+                fail("Reroll the surname without changing the given name"); return;
+            }
             if (!capture(".name")) { fail("Full size name screenshot"); return; }
             window.resize(650, 480);
             state->phase = Phase::compact;
@@ -181,13 +198,18 @@ void schedule_founding_smoke(QQuickWindow& window, pgp::bridge::CampaignControll
             if(!choices.empty() && !id.endsWith("-after")) {
                 if(state->layout_beat!=id) {state->layout_beat=id;state->layout_phase=0;}
                 if(state->layout_phase==0) {
-                    campaign.setTextScalePercent(100);window.resize(1440,900);state->layout_phase=1;return;
+                    campaign.setTextScalePercent(100);window.showNormal();window.resize(1440,900);
+                    state->layout_frames=0;state->layout_phase=1;return;
                 }
                 if(state->layout_phase==1) {
+                    if (window.size()!=QSize{1440,900}) {window.resize(1440,900); return;}
+                    if (++state->layout_frames < 3) return;
                     if(!capture(".choices-"+id+"-normal")) {fail("Normal choice layout");return;}
-                    campaign.setTextScalePercent(200);window.resize(650,480);state->layout_phase=2;return;
+                    campaign.setTextScalePercent(200);window.resize(650,480);state->layout_frames=0;state->layout_phase=2;return;
                 }
                 if(state->layout_phase==2) {
+                    if (window.size()!=QSize{650,480}) {window.showNormal();window.resize(650,480);return;}
+                    if (++state->layout_frames < 3) return;
                     auto* choices_scroll=item("foundingChoiceScroll");
                     if (!choices_scroll) { fail("The compact decision view needs a scrollable scene."); return; }
                     const auto scroll_bounds=choices_scroll->mapRectToScene({0,0,choices_scroll->width(),choices_scroll->height()});
@@ -207,7 +229,9 @@ void schedule_founding_smoke(QQuickWindow& window, pgp::bridge::CampaignControll
                         control->forceActiveFocus(Qt::TabFocusReason);
                         const auto bounds=control->mapRectToScene({0,0,control->width(),control->height()});
                         if (!scroll_bounds.adjusted(-1,-1,1,1).contains(bounds)) {
-                            fail("Keyboard focus must reveal the complete choice: "+option.value("id").toString());return;
+                            fail(QString("Keyboard focus must reveal %1 (%2,%3 %4×%5 in %6,%7 %8×%9)")
+                                .arg(option.value("id").toString()).arg(bounds.x()).arg(bounds.y()).arg(bounds.width()).arg(bounds.height())
+                                .arg(scroll_bounds.x()).arg(scroll_bounds.y()).arg(scroll_bounds.width()).arg(scroll_bounds.height()));return;
                         }
                     }
                     if(!capture(".choices-"+id+"-compact")) {fail("Enlarged choice layout");return;}
@@ -215,7 +239,7 @@ void schedule_founding_smoke(QQuickWindow& window, pgp::bridge::CampaignControll
                 }
             }
             const auto advance = [&] { return click("foundingNextButton"); };
-            if (id == "last_name" && !story->form().value("first_name").toString().startsWith("Mira")) {
+            if (id == "certificate" && (story->form().value("first_name") != "Mira" || story->form().value("last_name") != "Vale")) {
                 fail("Edited name was lost after resizing"); return;
             }
             if (id.startsWith("chapter-") && !id.endsWith("-after")) {
@@ -296,6 +320,9 @@ void schedule_founding_smoke(QQuickWindow& window, pgp::bridge::CampaignControll
                 state->saw_founder_audience=true;
                 campaign.setTextScalePercent(100);
                 return;
+            }
+            if (id=="family" && (item("foundingChoice_workshop") || item("foundingChoice_cooperative") || item("foundingChoice_bookshop"))) {
+                fail("The family wealth question displayed a business or housing background"); return;
             }
             if (id=="family" && partner) {
                 if(!click("foundingChoice_rich") && !click("foundingMoreChoices"))fail("Choose a background with investor connections");
@@ -396,7 +423,7 @@ void schedule_founding_smoke(QQuickWindow& window, pgp::bridge::CampaignControll
                 if(state->home_phase==2) {if(!click("homeApplyCEO")){fail("Submit a leadership application");return;}++state->home_phase;return;}
                 if(state->home_phase==3) {
                     auto* reply=item("homeOfferMessage");
-                    if(!reply || !reply->isVisible() || !reply->property("text").toString().contains("cannot offer") || item("homeAcceptOffer")->isVisible()) {
+                    if(!reply || !reply->isVisible() || reply->property("text").toString().isEmpty() || story->form().value("home_replies").toMap().value("northstar").toMap().value("status") != "rejected" || item("homeAcceptOffer")->isVisible()) {
                         fail("Ineligible application should have a saved rejection and no acceptance");return;
                     }
                     reply->forceActiveFocus(Qt::TabFocusReason);++state->home_phase;return;
@@ -537,7 +564,10 @@ void schedule_founding_smoke(QQuickWindow& window, pgp::bridge::CampaignControll
             if(++state->frames<3)return;
             const auto& checkpoint=campaign.snapshot()->checkpoint;
             const auto& contacts=checkpoint.world.simulation.management->people->contacts;
-            const auto& history=contacts.back().messages;
+            const auto contact = std::ranges::find(contacts,partner ? "opening/partner_okafor" : "opening/commercial",
+                                                   &pgp::core::PeopleContact::person);
+            if (contact == contacts.end()) { fail("The chosen contact is missing after reload"); return; }
+            const auto& history=contact->messages;
             auto* reply=find_visible(window.contentItem(),"contactMessageCard");
             auto* viewport=find_visible(window.contentItem(),"managementScroll");
             pgp::persistence::CurrentCampaign current{paths.saves_directory/"continuing"};

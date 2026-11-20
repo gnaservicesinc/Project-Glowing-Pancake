@@ -107,11 +107,12 @@ std::vector<CampaignRow> inbox_rows(const runtime::Checkpoint& checkpoint,const 
     const auto* definition=collection.find(checkpoint.world.scenario_id);
     const auto* scenario=definition ? std::get_if<content::ScenarioDefinition>(&definition->data) : nullptr;
     if(scenario && checkpoint.world.competition) {
+        const auto& roster = checkpoint.world.generated_rivals.empty() ? scenario->rivals : checkpoint.world.generated_rivals;
         const auto& notices=checkpoint.world.competition->notices;
         for(std::size_t i=0;i<notices.size();++i) {
             const auto& notice=notices[i];
-            const auto rival=std::ranges::find(scenario->rivals,notice.company_id,&content::RivalDefinition::id);
-            if(rival==scenario->rivals.end()) continue;
+            const auto rival=std::ranges::find(roster,notice.company_id,&content::RivalDefinition::id);
+            if(rival==roster.end()) continue;
             const auto name=text(rival->name);
             QString title,detail;
             int priority=1;
@@ -121,7 +122,12 @@ std::vector<CampaignRow> inbox_rows(const runtime::Checkpoint& checkpoint,const 
                 detail=quote ? text(*quote) : rival->planning ?
                     QObject::tr("%1 opened %2 in %3.").arg(text(rival->planning->leader),name,text(rival->planning->region)) :
                     QObject::tr("%1 has started operations.").arg(name);
-                if(quote) priority=2;
+                if (quote) {
+                    const auto source = std::ranges::find(scenario->rivals,rival->id,&content::RivalDefinition::id);
+                    if (source != scenario->rivals.end() && source->planning && rival->planning)
+                        detail.replace(text(source->planning->leader),text(rival->planning->leader));
+                    priority=2;
+                }
             } else if(notice.kind=="publication") {
                 const auto* topic=collection.message(notice.subject+".title");
                 title=QObject::tr("%1 publishes its findings").arg(name);
@@ -139,8 +145,8 @@ std::vector<CampaignRow> inbox_rows(const runtime::Checkpoint& checkpoint,const 
         const auto& releases=checkpoint.world.competition->releases;
         for(std::size_t i=0;i<releases.size();++i) {
             const auto& release=releases[i];
-            const auto rival=std::ranges::find(scenario->rivals,release.company_id,&content::RivalDefinition::id);
-            if(rival==scenario->rivals.end()) continue;
+            const auto rival=std::ranges::find(roster,release.company_id,&content::RivalDefinition::id);
+            if(rival==roster.end()) continue;
             const auto* product_title=collection.message(release.product_id+".title");
             const auto product=product_title?text(*product_title):readable(release.product_id);
             const auto title=QObject::tr("%1 delivers its first %2 order").arg(text(rival->name),product);

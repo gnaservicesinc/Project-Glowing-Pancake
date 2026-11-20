@@ -17,7 +17,7 @@ QString date(core::OrdinalDay day) {return text(core::iso_date(day));}
 HeavyweightModels heavyweight_models(const runtime::Checkpoint& checkpoint,const runtime::CompiledProgram& program) {
     HeavyweightModels result;const auto& world=checkpoint.world;if (!world.competition) return result;
     for (const auto& rival:world.competition->companies) if (rival.response) {
-        const auto& state=*rival.response;const auto& definition=runtime::rival_definition(program,rival.definition_id);const auto& policy=*definition.response;
+        const auto& state=*rival.response;const auto& definition=runtime::rival_definition(world,program,rival.definition_id);const auto& policy=*definition.response;
         QString detail=QCoreApplication::translate("HeavyweightBriefings","Reviews every %1 days; two reviews at or above %2 start a visible %3-day warning. Two reviews at or below %4 cause consolidation. Next public review: %5.\n")
             .arg(policy.review_interval.value()).arg(percent(policy.entry_pressure)).arg(policy.warning_lead.value()).arg(percent(policy.exit_pressure),date(state.next_review));
         QString score=QCoreApplication::translate("HeavyweightBriefings","Public review pending");
@@ -37,7 +37,7 @@ HeavyweightModels heavyweight_models(const runtime::Checkpoint& checkpoint,const
             {{QStringLiteral("phase"),text(runtime::to_string(state.phase))},{QStringLiteral("pressure"),state.reviews.empty()?QStringLiteral("0"):QString::number(state.reviews.back().score.value())}}});
     }
     for (const auto& offer:world.competition->offers) {
-        const auto& definition=runtime::rival_definition(program,offer.company_id);
+        const auto& definition=runtime::rival_definition(world,program,offer.company_id);
         QString detail=QCoreApplication::translate("HeavyweightBriefings","%1 reserves %2 from its own finite program cash. Reply before %3; ignoring the offer releases the reservation. This nonexclusive agreement pays once when its actual milestone is met.\n")
             .arg(text(definition.name),money(offer.amount),date(offer.respond_by));
         if (offer.kind==runtime::CompetitiveOfferKind::publication) detail+=QCoreApplication::translate("HeavyweightBriefings","Publish completed %1 research after acceptance and before the stated fulfillment date. Completion and publication must be real. Publication enables the existing delayed knowledge diffusion.\n").arg(readable(offer.subject));
@@ -60,7 +60,7 @@ QString heavyweight_notice_detail(const runtime::WorldState& world,const runtime
     if (notice.kind!="response" && notice.kind!="warning") return {};
     const auto& rows=company->response->transitions;
     for (std::size_t i=0;i<rows.size();++i) if (notice.subject=="response."+std::to_string(i+1)) {
-        const auto& event=rows[i];const auto& policy=*runtime::rival_definition(program,company->definition_id).response;
+        const auto& event=rows[i];const auto& policy=*runtime::rival_definition(world,program,company->definition_id).response;
         QString result=QCoreApplication::translate("HeavyweightBriefings","Public response: %1 · %2 on %3.\n").arg(readable(std::string(runtime::to_string(event.phase))),readable(event.cause),date(event.day));
         if (event.due) result+=QCoreApplication::translate("HeavyweightBriefings","Announced boundary: %1.\n").arg(date(*event.due));
         result+=QCoreApplication::translate("HeavyweightBriefings","The pressure components and thresholds are visible in the public response briefing. Mobilization requires at least %1 days of warning, a finite budget, a paid specialist/compute order and the actual delivery lead time.").arg(policy.warning_lead.value());return result;

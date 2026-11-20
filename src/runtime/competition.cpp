@@ -39,7 +39,7 @@ std::size_t public_deployments_on(const WorldState& world,OrdinalDay day) {
     return count;
 }
 void plan(WorldState& world,const CompiledProgram& program,RivalCompany& rival) {
-    const auto& definition=rival_definition(program,rival.definition_id);
+    const auto& definition=rival_definition(world,program,rival.definition_id);
     auto& simulation=rival.simulation;
     if (simulation.phase==DayPhase::closed || simulation.phase==DayPhase::finished) return;
     const auto day=simulation.date;
@@ -83,6 +83,12 @@ const content::RivalDefinition& rival_definition(const CompiledProgram& program,
     }
     if (!result) invalid("Rival definition is missing");
     return *result;
+}
+const content::RivalDefinition& rival_definition(const WorldState& world, const CompiledProgram& program, std::string_view id) {
+    if (world.generated_rivals.empty()) return rival_definition(program, id);
+    const auto found = std::ranges::find(world.generated_rivals, id, &content::RivalDefinition::id);
+    if (found == world.generated_rivals.end()) invalid("Unknown rival in this campaign.");
+    return *found;
 }
 void initialize_competition(WorldState& world,const CompiledProgram& program,const std::vector<content::RivalDefinition>& definitions,const std::optional<content::CompetitionSetup>& setup) {
     if (setup) {competition_detail::initialize_planning(world,program,definitions,*setup);return;}
@@ -137,6 +143,7 @@ void validate_competition(const WorldState& world,const CompiledProgram& program
     validate_industry_people(world,program);
     validate_collaborations(world,program,deep);
     competition_detail::validate_wholesale(world,program,deep);
+    if (deep && world.competition) validate_dataset_sales(world);
     if (!world.competition) return;
     if (world.competition->setup) {competition_detail::validate_planning(world,program,deep);return;}
     const auto& competition=*world.competition;
@@ -146,7 +153,7 @@ void validate_competition(const WorldState& world,const CompiledProgram& program
         invalid("Competition state exceeds its bounds or has no lab catalog");
     std::set<std::string_view> ids;
     for (const auto& rival:competition.companies) {
-        const auto& definition=rival_definition(program,rival.definition_id);
+        const auto& definition=rival_definition(world,program,rival.definition_id);
         const auto& simulation=rival.simulation;
         if (!ids.insert(rival.definition_id).second || !simulation.lab || !simulation.accounts || !simulation.capacity || !simulation.liquidity ||
             simulation.market || simulation.business_offers || simulation.accounts->owner!=definition.id ||
@@ -201,7 +208,7 @@ void validate_competition(const WorldState& world,const CompiledProgram& program
         const auto rival=std::find_if(competition.companies.begin(),competition.companies.end(),[&](const auto& row){return row.definition_id==notice.company_id;});
         if (rival==competition.companies.end() || !notices.emplace(notice.company_id,notice.kind).second ||
             notice.day<world.campaign_start || notice.day>world.simulation.date) invalid("Competitive notice has invalid source, date or duplicate identity");
-        const auto& definition=rival_definition(program,notice.company_id);
+        const auto& definition=rival_definition(world,program,notice.company_id);
         if (notice.kind=="warning") {
             if (rival->warned_on!=notice.day || notice.response_due!=advance_days(notice.day,definition.warning_lead)) invalid("Competitive warning lost its response window");
         } else if (notice.kind=="publication") {

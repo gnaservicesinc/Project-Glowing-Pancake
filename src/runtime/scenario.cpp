@@ -33,7 +33,6 @@ Checkpoint begin_scenario(const CompiledProgram& program, std::string_view scena
 #if !PGP_DISTRIBUTION
     if (custom_setup) opening.launch_day = *options.playtest_start;
 #endif
-    const auto management=content::scenario_management(*scenario,options.difficulty,founding);
     const auto* partner=founding && scenario->founding?content::founding_partner(*scenario->founding,founding->partner):nullptr;
     if(partner) {
         const auto mission=*core::objective_kind(partner->objective);
@@ -71,6 +70,8 @@ Checkpoint begin_scenario(const CompiledProgram& program, std::string_view scena
     world.background = std::move(options.background);
     world.difficulty = std::move(options.difficulty);
     world.founding = std::move(options.founding);
+    const auto management = campaign_management(*scenario, world);
+    generate_rival_roster(world, program);
     world.enabled_flows = scenario->flows;
     world.campaign_start = scenario->starts_on;
     world.scope_created = opening.launch_day;
@@ -92,7 +93,7 @@ Checkpoint begin_scenario(const CompiledProgram& program, std::string_view scena
     if (scenario->lab) {
         core::LabState lab;
         lab.owner = world.company_id; lab.starts_on = scenario->starts_on;
-        lab.catalog = content::scenario_lab_catalog(program.collection, *scenario);
+        lab.catalog = campaign_lab_catalog(program.collection, *scenario, world);
         lab.research_stream_origin = world.simulation.random[static_cast<std::size_t>(core::RandomStream::research)];
         world.simulation.lab = std::move(lab);
     }
@@ -144,7 +145,7 @@ Checkpoint begin_scenario(const CompiledProgram& program, std::string_view scena
     else if (headquarters == "US-WA") world.state_id = "state.us_wa";
     else throw std::invalid_argument("Headquarters has no implemented scope binding");
     if(scenario->counties) world.counties=core::initialize_counties(*scenario->counties,world.simulation.date,seed);
-    initialize_competition(world,program,scenario->rivals,competition);
+    initialize_competition(world,program,world.generated_rivals.empty() ? scenario->rivals : world.generated_rivals,competition);
     std::optional<core::PeopleRules> delayed_people;
     std::optional<core::SuccessionCatalog> delayed_succession;
     std::optional<core::WorkplaceRules> delayed_workplace;
